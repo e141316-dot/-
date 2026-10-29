@@ -1,0 +1,1452 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>節慶猜謎遊戲 - 認知訓練 App</title>
+  <style>
+    /* ==========================================
+       1. 全局樣式與奶油白柔和綠色系主題
+       ========================================== */
+    :root {
+      --primary-color: #78947D;      /* 鼠尾草綠 */
+      --primary-dark: #35473C;       /* 深綠色 */
+      --primary-light: #F3F6F0;      /* 淺綠白 */
+      --accent-color: #5C7761;       /* 強調綠 */
+      --bg-color: #FCFBF7;           /* 統一奶油白背景 */
+      --card-bg: #FCFBF7;
+      --text-main: #35473C;          /* 深綠色文字 */
+      --text-muted: #66776C;         /* 柔和深綠文字 */
+      --border-color: #E4E9DF;       /* 淡灰綠邊框 */
+      --border-radius: 16px;
+      --shadow: none;
+      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+      --font-scale: 1;
+      --base-font-size: 18px;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: var(--font-family);
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding-bottom: 20px;
+      overflow-x: hidden;
+      font-size: calc(var(--base-font-size) * var(--font-scale));
+      line-height: 1.6;
+    }
+
+    /* 頂部導覽列（返回按鈕、大標題與進度標籤） */
+    header {
+      width: 100%;
+      background-color: var(--bg-color);
+      color: var(--primary-dark);
+      padding: 14px 16px 4px 16px;
+      text-align: center;
+      border-bottom: none;
+    }
+    .top-nav-bar {
+      width: 92%;
+      max-width: 800px;
+      margin: 0 auto 8px auto;
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+    }
+    header h1 {
+      font-size: calc(36px * var(--font-scale));
+      font-weight: 900;
+      color: var(--primary-dark);
+      margin-bottom: 4px;
+      line-height: 1.25;
+      text-align: center;
+    }
+    .nav-bar {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      width: 92%;
+      max-width: 800px;
+      margin: 0 auto;
+      min-height: 32px;
+    }
+    .progress-badge {
+      background-color: var(--primary-light);
+      color: var(--primary-dark);
+      border: 1px solid var(--border-color);
+      padding: 4px 18px;
+      border-radius: 30px;
+      font-size: calc(16px * var(--font-scale));
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+
+    /* 主要內容容器 - 無外框與無陰影 */
+    main {
+      width: 92%;
+      max-width: 800px;
+      background: var(--card-bg);
+      border-radius: var(--border-radius);
+      box-shadow: none;
+      border: none;
+      margin: 0 auto;
+      padding: clamp(8px, 2.5vw, 16px);
+    }
+    /* ==========================================
+       2. 說明首頁專用視覺樣式
+       ========================================== */
+    .home-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      padding: 4px 0;
+      text-align: center;
+      width: 100%;
+    }
+    .intro-back-wrap {
+      display: flex;
+      justify-content: flex-start;
+      margin-bottom: 0;
+    }
+    .home-subtitle {
+      font-size: calc(20px * var(--font-scale));
+      color: var(--text-muted);
+      font-weight: 600;
+      line-height: 1.5;
+    }
+    .home-reminder-box {
+      background-color: var(--primary-light);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 16px 18px;
+      text-align: left;
+      font-size: calc(16.5px * var(--font-scale));
+      color: var(--primary-dark);
+      line-height: 1.6;
+    }
+    .home-reminder-title {
+      font-size: calc(20px * var(--font-scale));
+      font-weight: bold;
+      color: var(--primary-dark);
+      margin-bottom: 6px;
+      text-align: center;
+    }
+    .home-ready-text {
+      font-size: calc(20px * var(--font-scale));
+      font-weight: bold;
+      color: var(--primary-dark);
+      margin-top: 2px;
+    }
+    .home-action-bar {
+      display: flex;
+      justify-content: center;
+      margin-top: 6px;
+    }
+    .btn-start-game {
+      width: 100%;
+      max-width: 420px;
+      height: 48px;
+      background-color: var(--primary-color);
+      color: #ffffff;
+      font-size: calc(20px * var(--font-scale));
+      font-weight: 800;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(120, 148, 125, 0.25);
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-start-game:hover {
+      background-color: var(--primary-dark);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(53, 71, 60, 0.3);
+    }
+    .btn-start-game:active {
+      transform: scale(0.98);
+    }
+
+    /* ==========================================
+       3. 題目區塊（左右並排與響應式）
+       ========================================== */
+    .question-box {
+      background-color: var(--primary-light);
+      border: 1px solid var(--border-color);
+      padding: 10px 14px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .question-text-side {
+      flex: 0 0 58%;
+      text-align: left;
+    }
+    .question-prompt-text {
+      font-size: calc(20px * var(--font-scale));
+      font-weight: bold;
+      color: var(--primary-dark);
+      line-height: 1.35;
+    }
+    .question-img-side {
+      flex: 0 0 40%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .question-img {
+      max-width: 100%;
+      max-height: 120px;
+      object-fit: contain;
+      border-radius: 8px;
+    }
+    @media (max-width: 600px) {
+      .question-box {
+        flex-direction: column;
+        text-align: center;
+        padding: 12px;
+      }
+      .question-text-side, .question-img-side {
+        flex: 1 1 100%;
+        width: 100%;
+      }
+      .question-text-side {
+        text-align: center;
+      }
+      .question-img {
+        max-height: 140px;
+      }
+    }
+
+    /* ==========================================
+       4. 選項卡片區域
+       ========================================== */
+    .options-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: clamp(8px, 1.8vw, 12px);
+      margin: 12px 0;
+    }
+    .option-card {
+      border: 2px solid var(--border-color);
+      border-radius: var(--border-radius);
+      padding: clamp(6px, 1.2vw, 10px);
+      text-align: center;
+      cursor: pointer;
+      background: #ffffff;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      user-select: none;
+    }
+    .option-card:hover:not(.disabled) {
+      border-color: var(--primary-color);
+      transform: translateY(-2px);
+    }
+    .option-card.selected {
+      border-color: var(--primary-dark);
+      background-color: var(--primary-light);
+      box-shadow: 0 0 0 2px var(--primary-dark);
+    }
+    .option-card.disabled {
+      cursor: default;
+      opacity: 0.85;
+    }
+    .option-img-wrapper {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      max-height: clamp(75px, 11vw, 100px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 6px;
+      overflow: hidden;
+      border-radius: 8px;
+      background-color: #FCFBF7;
+      border: 1px solid #eeeeee;
+    }
+    .option-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+    }
+    .option-label-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      width: 100%;
+      margin-top: 2px;
+    }
+    .option-badge {
+      background-color: var(--primary-color);
+      color: white;
+      font-size: calc(15px * var(--font-scale));
+      font-weight: bold;
+      padding: 2px 8px;
+      border-radius: 6px;
+      flex-shrink: 0;
+    }
+    .option-card.selected .option-badge {
+      background-color: var(--primary-dark);
+    }
+    .option-text {
+      font-size: calc(17px * var(--font-scale));
+      font-weight: bold;
+      color: var(--text-main);
+    }
+
+    /* ==========================================
+       5. 按鈕與操作控制列
+       ========================================== */
+    .action-bar {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .btn {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 8px 22px;
+      font-size: calc(20px * var(--font-scale));
+      font-weight: bold;
+      border-radius: 30px;
+      cursor: pointer;
+      min-height: 46px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      box-shadow: 0 3px 8px rgba(120, 148, 125, 0.25);
+    }
+    .btn:hover:not(:disabled) {
+      background-color: var(--primary-dark);
+      transform: translateY(-2px);
+      box-shadow: 0 5px 12px rgba(53, 71, 60, 0.3);
+    }
+    .btn:active:not(:disabled) {
+      transform: scale(0.98);
+    }
+    .btn:disabled {
+      background-color: #e0e0e0;
+      color: #888888;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    .btn-submit {
+      width: 100%;
+      max-width: 420px;
+      height: 48px;
+      font-size: calc(20px * var(--font-scale));
+      font-weight: 800;
+    }
+
+    /* 結算頁下方導覽按鈕群組 */
+    .summary-actions-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      max-width: 480px;
+      margin: 14px auto 0 auto;
+      position: relative;
+      z-index: 2;
+    }
+    .summary-actions-group .btn-start-game {
+      width: 100%;
+      max-width: 100%;
+      margin: 0;
+    }
+    .secondary-btn-row {
+      display: flex;
+      gap: 12px;
+      width: 100%;
+      justify-content: center;
+      flex-wrap: nowrap;
+    }
+    .btn-secondary {
+      background-color: var(--primary-light);
+      color: var(--primary-dark);
+      border: 2px solid var(--primary-color);
+      padding: 8px 16px;
+      font-size: calc(16px * var(--font-scale));
+      font-weight: bold;
+      border-radius: 25px;
+      cursor: pointer;
+      flex: 1 1 0px;
+      height: 46px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+      white-space: nowrap;
+      text-decoration: none;
+    }
+    .btn-secondary:hover {
+      background-color: #E2EADF;
+      border-color: var(--primary-dark);
+      transform: translateY(-1px);
+    }
+    .btn-secondary:active {
+      transform: scale(0.98);
+    }
+    @media (max-width: 380px) {
+      .secondary-btn-row {
+        flex-wrap: wrap;
+      }
+      .btn-secondary {
+        flex: 1 1 100%;
+      }
+    }
+
+    /* ==========================================
+       6. 回饋與單題結果樣式
+       ========================================== */
+    .result-box {
+      width: 100%;
+      padding: 16px;
+      border-radius: 16px;
+      text-align: center;
+      animation: fadeIn 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    .result-box.correct {
+      background-color: #EEF7ED;
+      border: 1.5px solid #C8E6C9;
+    }
+    .result-box.incorrect {
+      background-color: #FFFEF2;
+      border: 1.5px solid #FFE082;
+    }
+    .settlement-title {
+      color: var(--primary-dark);
+      font-size: calc(26px * var(--font-scale));
+      font-weight: 800;
+      line-height: 1.3;
+    }
+    .result-box.incorrect .settlement-title {
+      color: #795548;
+    }
+    .settlement-stars {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      font-size: clamp(2rem, 6vw, 2.5rem);
+      color: #FBC02D;
+      margin: 2px 0;
+      filter: drop-shadow(0 2px 4px rgba(251, 192, 45, 0.4));
+    }
+    .star-icon {
+      display: inline-block;
+      font-size: clamp(2rem, 6vw, 2.5rem);
+      line-height: 1;
+      color: #FBC02D;
+      opacity: 0;
+      transform: scale(0.2);
+      animation: starPopIn 0.45s ease-out forwards;
+      filter: drop-shadow(0 3px 5px rgba(245, 158, 11, 0.3));
+    }
+
+    @keyframes starPopIn {
+      0% { opacity: 0; transform: scale(0.2); }
+      70% { transform: scale(1.25); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    .settlement-score-pill {
+      background-color: #E8F5E9;
+      border: 1.5px solid #A5D6A7;
+      color: var(--primary-dark);
+      padding: 5px 18px;
+      border-radius: 30px;
+      display: inline-block;
+      font-size: calc(18px * var(--font-scale));
+      font-weight: bold;
+    }
+    .result-box.incorrect .settlement-score-pill {
+      background-color: #FFF8E1;
+      border: 1.5px solid #FFE082;
+      color: #795548;
+    }
+    .settlement-tags-group {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      font-size: calc(16.5px * var(--font-scale));
+      font-weight: bold;
+      margin: 2px 0;
+    }
+    .tag-correct {
+      background: #E8F5E9;
+      border: 1.5px solid #A5D6A7;
+      color: #2E7D32;
+      padding: 4px 14px;
+      border-radius: 10px;
+    }
+    .tag-wrong {
+      background: #FFF8E1;
+      border: 1.5px solid #FFE082;
+      color: #8D6E63;
+      padding: 4px 14px;
+      border-radius: 10px;
+    }
+    .settlement-encouragement {
+      font-size: calc(17px * var(--font-scale));
+      font-weight: bold;
+      color: var(--text-main);
+      line-height: 1.45;
+    }
+    .result-box.incorrect .settlement-encouragement {
+      color: #5D4037;
+    }
+    .feedback-divider {
+      width: 100%;
+      border: none;
+      border-top: 1px solid #C8E6C9;
+      margin: 4px 0;
+    }
+    .result-box.incorrect .feedback-divider {
+      border-top: 1px solid #FFE082;
+    }
+    .feedback-correct-label {
+      font-size: calc(20px * var(--font-scale));
+      font-weight: bold;
+      color: var(--primary-dark);
+    }
+    .feedback-explanation {
+      font-size: calc(16.5px * var(--font-scale));
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
+    .btn-settlement-next {
+      width: 100%;
+      max-width: 420px;
+      height: 48px;
+      background-color: var(--primary-color);
+      color: #ffffff;
+      font-size: calc(20px * var(--font-scale));
+      font-weight: 800;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(120, 148, 125, 0.25);
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn-settlement-next:hover {
+      background-color: var(--primary-dark);
+      transform: translateY(-2px);
+    }
+
+    /* ==========================================
+       7. 總結算畫面專用視覺
+       ========================================== */
+    .summary-cream-card {
+      position: relative;
+      background-color: #FCFBF7;
+      border: 2px solid #FFE082;
+      border-radius: 20px;
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      text-align: center;
+      box-shadow: none;
+      overflow: hidden;
+    }
+    .summary-breakdown-box {
+      background-color: #F1F8E9;
+      border: 1.5px solid #C8E6C9;
+      border-radius: 14px;
+      padding: 10px 16px;
+      margin: 4px 0;
+      text-align: left;
+    }
+    .summary-breakdown-row {
+      position: relative;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: calc(17px * var(--font-scale));
+      font-weight: bold;
+      color: #37474F;
+      padding: 8px 0;
+      border-bottom: 1px dashed #C8E6C9;
+    }
+    .summary-breakdown-row:last-child {
+      border-bottom: none;
+    }
+    .summary-breakdown-score {
+      color: #1B5E20;
+      font-weight: 800;
+    }
+
+    .table-clap-container {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+    }
+    .table-clap-emoji {
+      font-size: clamp(36px, 6vw, 44px);
+      display: inline-block;
+      line-height: 1;
+      opacity: 1 !important;
+      visibility: visible !important;
+      transform-origin: center center;
+      animation: continuousClapping 0.5s ease-in-out infinite alternate;
+      filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.15));
+    }
+    @keyframes continuousClapping {
+      0% { transform: scale(0.9) rotate(-12deg); }
+      100% { transform: scale(1.25) rotate(12deg); }
+    }
+    .clap-impact-ring {
+      position: absolute;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 3px solid #FFC107;
+      opacity: 0;
+      animation: clapRingPulse 0.8s ease-out infinite;
+    }
+    @keyframes clapRingPulse {
+      0% { transform: scale(0.4); opacity: 0.9; }
+      80% { transform: scale(1.6); opacity: 0; }
+      100% { transform: scale(1.8); opacity: 0; }
+    }
+
+    .perfect-graphic-group {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 10px 0 6px 0;
+      position: relative;
+      width: 100%;
+    }
+    .trophy-wrapper {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .star-decor {
+      position: absolute;
+      top: 50%;
+      width: 36px;
+      height: 36px;
+      transform: translateY(-50%);
+      filter: drop-shadow(0 2px 6px rgba(255, 179, 0, 0.5));
+      animation: starTwinkle 1.8s ease-in-out infinite alternate;
+    }
+    .star-decor.star-left { left: -46px; animation-delay: 0s; }
+    .star-decor.star-right { right: -46px; animation-delay: 0.4s; }
+    @keyframes starTwinkle {
+      0% { transform: translateY(-50%) scale(0.85) rotate(-10deg); opacity: 0.8; }
+      100% { transform: translateY(-50%) scale(1.15) rotate(15deg); opacity: 1; }
+    }
+
+    .perfect-trophy-svg {
+      width: clamp(68px, 18vw, 84px);
+      height: clamp(68px, 18vw, 84px);
+      filter: drop-shadow(0 6px 14px rgba(255, 179, 0, 0.5));
+      animation: trophyPopIn 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, trophyFloat 3s ease-in-out 0.7s infinite alternate;
+    }
+    @keyframes trophyPopIn {
+      0% { transform: translateY(-40px) scale(0.2); opacity: 0; }
+      60% { transform: translateY(6px) scale(1.15); opacity: 1; }
+      80% { transform: translateY(-3px) scale(0.95); }
+      100% { transform: translateY(0) scale(1); opacity: 1; }
+    }
+    @keyframes trophyFloat {
+      0% { transform: translateY(0) rotate(0deg); }
+      100% { transform: translateY(-6px) rotate(3deg); }
+    }
+    .confetti-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 1;
+    }
+    .confetti-piece {
+      position: absolute;
+      top: -20px;
+      opacity: 0;
+      animation: confettiFall 2.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
+    }
+    @keyframes confettiFall {
+      0% { transform: translateY(0) rotate(0deg) scaleX(1); opacity: 0.95; }
+      75% { opacity: 0.85; }
+      100% { transform: translateY(380px) rotate(720deg) scaleX(0.5); opacity: 0; }
+    }
+    .btn-clap-sound {
+      background-color: #ffffff;
+      border: 2px solid var(--primary-color);
+      color: var(--primary-dark);
+      padding: 6px 20px;
+      border-radius: 25px;
+      font-size: calc(16px * var(--font-scale));
+      font-weight: bold;
+      cursor: pointer;
+      margin: 4px 0;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    }
+    .btn-clap-sound:hover {
+      background-color: var(--primary-light);
+    }
+    .audio-status-msg {
+      font-size: calc(16px * var(--font-scale));
+      font-weight: bold;
+      margin-top: 2px;
+      color: var(--primary-color);
+    }
+    .img-fallback {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 6px;
+      color: var(--primary-dark);
+      font-size: calc(16px * var(--font-scale));
+      text-align: center;
+      height: 100%;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 頂部標題與動態進度 -->
+  <header id="main-header">
+    <div class="top-nav-bar" id="top-nav-bar">
+      <div class="intro-back-wrap">
+        <button type="button" onclick="goToLevelSelect()" class="btn-secondary" style="flex: initial; padding: 6px 18px;">
+          ← 返回遊戲分類
+        </button>
+      </div>
+    </div>
+    <h1 id="header-title">節慶猜謎遊戲</h1>
+    <div class="nav-bar">
+      <div class="progress-badge" id="progress-text" style="display: none;"></div>
+    </div>
+  </header>
+
+  <!-- 主要內容容器 -->
+  <main id="game-container">
+    <!-- 動態內容載入處 -->
+  </main>
+
+  <script>
+    /*****************************************************************
+     * 1. 完整選項類圖庫 (OPTION_IMAGES)
+     *****************************************************************/
+    const OPTION_IMAGES = {
+      '大掃除': 'https://lh3.googleusercontent.com/d/1ZZPA1Q_vsWTtw7OwrzR4W8DZredKeLPJ',
+      '元宵': 'https://lh3.googleusercontent.com/d/1DMQ9uFL8KwMJ8mSyXoouZYRApYcXeseZ',
+      '月餅': 'https://lh3.googleusercontent.com/d/1hWPLCITXnXRy4O-N0dcr2fDqem2-jueC',
+      '牛排': 'https://lh3.googleusercontent.com/d/1lLPopGu_jes__N6Awi2BUfHY0scCVqhW',
+      '春捲': 'https://lh3.googleusercontent.com/d/1RO6o5i0kMsljbnp9iCm8TatnuB6BDDd3',
+      '蛋糕': 'https://lh3.googleusercontent.com/d/1NuYl1pRx_UqEqndHL9vuvbqlTKX-D5Mh',
+      '釣魚': 'https://lh3.googleusercontent.com/d/1eoKP0M5D0qgG7830gZzBo8IZ1V6bxxlg',
+      '湯圓': 'https://lh3.googleusercontent.com/d/1XgnSZCWLO0daaR0RcY5ZfppxBThW2QUo',
+      '運動': 'https://lh3.googleusercontent.com/d/1qxZDrydd90k44tKuzbYHMR9WK6LIQl_4',
+      '壽司': 'https://lh3.googleusercontent.com/d/1mDkSyrhKE-NevaDVYA-R-EcbZb9cdyeG',
+      '粽子': 'https://lh3.googleusercontent.com/d/1RZ_k-OCH7kmoExfHxC4R1cIceLHfbIL2',
+      '看電影': 'https://lh3.googleusercontent.com/d/1_-Q0zRSP0EcbN1kQWtzEKdYdB6gkxWWV',
+      '堆雪人': 'https://lh3.googleusercontent.com/d/10HaA6A9TigyDSPq6XuoxHjnjAuVpFntK',
+      '賞花': 'https://lh3.googleusercontent.com/d/1wc0Ga4ar57DrOHwNmxE999Ut90GEY1m5',
+      '掃墓': 'https://lh3.googleusercontent.com/d/1OSBmmWFPkgYvou6MiwTuKOtE1BQTqcMo',
+      '龍舟': 'https://lh3.googleusercontent.com/d/1CKJI8sFXkXSBlHyEb-5N1hnFyPfIA4EG',
+      '賞月': 'https://lh3.googleusercontent.com/d/1khesKU8DQfSB6PMbbD7Sf8o-OIqcszmf',
+      '放煙火': 'https://lh3.googleusercontent.com/d/1W1vJ9J65KWYRRm4fnDjGcwlgG79huax6',
+      '跑步': 'https://lh3.googleusercontent.com/d/1Szz0gTQK-pFpcGxgcUhSZbnzEensDeyl'
+    };
+
+    /*****************************************************************
+     * 2. 完整題目大圖圖庫 (FESTIVAL_QUESTION_IMAGES)
+     *****************************************************************/
+    const FESTIVAL_QUESTION_IMAGES = {
+      '冬至': 'https://lh3.googleusercontent.com/d/1XiPOeNPimVlKJT6-0KPJzxG_bnW6ISW8',
+      '春節': 'https://lh3.googleusercontent.com/d/1xyqw7A6xvDQly_4BVmds9L-kxuxfIYCq',
+      '清明節': 'https://lh3.googleusercontent.com/d/1OYpLLzMkWzkvNKQtDFIkyeWeGN0kNLDu',
+      '端午節': 'https://lh3.googleusercontent.com/d/1CMDz1oQbSTC_G1xeGn2l1DVXZ6du3gb3',
+      '中秋節': 'https://lh3.googleusercontent.com/d/1SSZctxOcG9FW3nK56RKYLR4gHfCkRtfF',
+      '元宵節': 'https://lh3.googleusercontent.com/d/1yj8PMGGHYiVpzFw0K63jfhYXTCBXpROh'
+    };
+
+    /*****************************************************************
+     * 3. 完整 8 道題目與配對邏輯
+     *****************************************************************/
+    const QUESTION_BANK = [
+      {
+        id: 1,
+        festival: '中秋節',
+        prompt: '「中秋節」你會聯想到什麼應景的食物呢？',
+        qImage: FESTIVAL_QUESTION_IMAGES['中秋節'],
+        correctAns: 'A',
+        explanation: '中秋節常吃月餅，也象徵團圓。',
+        options: [
+          { key: 'A', text: '月餅', img: OPTION_IMAGES['月餅'] },
+          { key: 'B', text: '粽子', img: OPTION_IMAGES['粽子'] },
+          { key: 'C', text: '湯圓', img: OPTION_IMAGES['湯圓'] },
+          { key: 'D', text: '春捲', img: OPTION_IMAGES['春捲'] }
+        ]
+      },
+      {
+        id: 2,
+        festival: '端午節',
+        prompt: '「端午節」你會聯想到什麼應景的食物呢？',
+        qImage: FESTIVAL_QUESTION_IMAGES['端午節'],
+        correctAns: 'A',
+        explanation: '端午節常吃粽子，祈求平安順利。',
+        options: [
+          { key: 'A', text: '粽子', img: OPTION_IMAGES['粽子'] },
+          { key: 'B', text: '月餅', img: OPTION_IMAGES['月餅'] },
+          { key: 'C', text: '湯圓', img: OPTION_IMAGES['湯圓'] },
+          { key: 'D', text: '蛋糕', img: OPTION_IMAGES['蛋糕'] }
+        ]
+      },
+      {
+        id: 3,
+        festival: '冬至',
+        prompt: '「冬至」你會聯想到什麼應景的食物呢？',
+        qImage: FESTIVAL_QUESTION_IMAGES['冬至'],
+        correctAns: 'A',
+        explanation: '冬至常吃湯圓，象徵添歲與圓滿。',
+        options: [
+          { key: 'A', text: '湯圓', img: OPTION_IMAGES['湯圓'] },
+          { key: 'B', text: '粽子', img: OPTION_IMAGES['粽子'] },
+          { key: 'C', text: '壽司', img: OPTION_IMAGES['壽司'] },
+          { key: 'D', text: '牛排', img: OPTION_IMAGES['牛排'] }
+        ]
+      },
+      {
+        id: 4,
+        festival: '元宵節',
+        prompt: '「元宵節」你會聯想到什麼應景的食物呢？',
+        qImage: FESTIVAL_QUESTION_IMAGES['元宵節'],
+        correctAns: 'A',
+        explanation: '元宵節吃湯圓，象徵新的一年圓圓滿滿。',
+        options: [
+          { key: 'A', text: '湯圓', img: OPTION_IMAGES['元宵'] },
+          { key: 'B', text: '月餅', img: OPTION_IMAGES['月餅'] },
+          { key: 'C', text: '春捲', img: OPTION_IMAGES['春捲'] },
+          { key: 'D', text: '粽子', img: OPTION_IMAGES['粽子'] }
+        ]
+      },
+      {
+        id: 5,
+        festival: '春節（過年前）',
+        prompt: '「春節（過年前）」你在家裡會做什麼準備呢？',
+        qImage: FESTIVAL_QUESTION_IMAGES['春節'],
+        correctAns: 'A',
+        explanation: '過年前大家會大掃除，象徵除舊佈新迎好運。',
+        options: [
+          { key: 'A', text: '大掃除', img: OPTION_IMAGES['大掃除'] },
+          { key: 'B', text: '釣魚', img: OPTION_IMAGES['釣魚'] },
+          { key: 'C', text: '運動', img: OPTION_IMAGES['運動'] },
+          { key: 'D', text: '看電影', img: OPTION_IMAGES['看電影'] }
+        ]
+      },
+      {
+        id: 6,
+        festival: '清明節',
+        prompt: '「清明節」你通常會做什麼活動呢？',
+        qImage: FESTIVAL_QUESTION_IMAGES['清明節'],
+        correctAns: 'A',
+        explanation: '清明節大家會掃墓，表達對祖先的懷念。',
+        options: [
+          { key: 'A', text: '掃墓、祭祖', img: OPTION_IMAGES['掃墓'] },
+          { key: 'B', text: '賞月', img: OPTION_IMAGES['賞月'] },
+          { key: 'C', text: '划龍舟', img: OPTION_IMAGES['龍舟'] },
+          { key: 'D', text: '放煙火', img: OPTION_IMAGES['放煙火'] }
+        ]
+      },
+      {
+        id: 7,
+        festival: '端午節',
+        prompt: '「端午節」你可能會參與什麼活動呢？',
+        qImage: FESTIVAL_QUESTION_IMAGES['端午節'],
+        correctAns: 'A',
+        explanation: '端午節划龍舟與看龍舟比賽，是非常熱鬧的傳統活動。',
+        options: [
+          { key: 'A', text: '看或參加龍舟比賽', img: OPTION_IMAGES['龍舟'] },
+          { key: 'B', text: '掃墓', img: OPTION_IMAGES['掃墓'] },
+          { key: 'C', text: '賞花', img: OPTION_IMAGES['賞花'] },
+          { key: 'D', text: '堆雪人', img: OPTION_IMAGES['堆雪人'] }
+        ]
+      },
+      {
+        id: 8,
+        festival: '中秋節',
+        prompt: '「中秋節」你可能會做什麼活動呢？',
+        qImage: FESTIVAL_QUESTION_IMAGES['中秋節'],
+        correctAns: 'A',
+        explanation: '中秋節全家人聚在一起賞月，溫馨又團圓。',
+        options: [
+          { key: 'A', text: '賞月', img: OPTION_IMAGES['賞月'] },
+          { key: 'B', text: '掃墓', img: OPTION_IMAGES['掃墓'] },
+          { key: 'C', text: '跑步比賽', img: OPTION_IMAGES['跑步'] },
+          { key: 'D', text: '划龍舟', img: OPTION_IMAGES['龍舟'] }
+        ]
+      }
+    ];
+
+    /*****************************************************************
+     * 4. 全局遊戲狀態管理 (Game State)
+     *****************************************************************/
+    const gameState = {
+      currentStep: 0, // 0: 說明首頁, 1~3: 題目, 4: 結算頁
+      selectedQuestions: [],
+      userAnswers: []
+    };
+
+    window.addEventListener('DOMContentLoaded', () => {
+      renderCurrentStep();
+    });
+
+ /*****************************************************************
+     * 導覽處理函式：直接使用 Apps Script 樣板變數 baseUrl 跳轉
+     *****************************************************************/
+    function replayGame() {
+      startGame();
+    }
+
+    function goToLevelSelect() {
+      var baseUrl = "<?= baseUrl ?>";
+      window.top.location.href = baseUrl + "?page=level_select";
+    }
+
+    function goToHome() {
+      var baseUrl = "<?= baseUrl ?>";
+      window.top.location.href = baseUrl + "?page=home";
+    }
+    /*****************************************************************
+     * 音效引擎
+     *****************************************************************/
+    const CHEER_AUDIO_URLS = [
+      "https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3",
+      "https://actions.google.com/sounds/v1/crowd/cheering.ogg",
+      "https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3"
+    ];
+    let cheerAudioPlayer = null;
+    let currentSourceIndex = 0;
+
+    function getCheerAudioPlayer() {
+      if (!cheerAudioPlayer) {
+        cheerAudioPlayer = new Audio();
+        cheerAudioPlayer.volume = 0.6;
+        cheerAudioPlayer.src = CHEER_AUDIO_URLS[currentSourceIndex];
+        cheerAudioPlayer.onerror = function() {
+          currentSourceIndex++;
+          if (currentSourceIndex < CHEER_AUDIO_URLS.length) {
+            cheerAudioPlayer.src = CHEER_AUDIO_URLS[currentSourceIndex];
+            cheerAudioPlayer.load();
+          } else {
+            const statusTag = document.getElementById('audio-status-tag');
+            if (statusTag) {
+              statusTag.innerHTML = "<span style='color:#c62828;'>❌ 音訊檔案載入失敗</span>";
+            }
+          }
+        };
+      }
+      return cheerAudioPlayer;
+    }
+
+    function unlockAudioOnGesture() {
+      const player = getCheerAudioPlayer();
+      if (player && player.paused && player.readyState === 0) {
+        player.load();
+      }
+    }
+    document.addEventListener('click', unlockAudioOnGesture, { once: false });
+    document.addEventListener('touchstart', unlockAudioOnGesture, { once: false });
+
+    function playCheerSound(isManualClick = false) {
+      const player = getCheerAudioPlayer();
+      if (!player) return;
+      player.currentTime = 0;
+      player.volume = 0.6;
+      const playPromise = player.play();
+      if (playPromise !== undefined) {
+        playPromise.then(() => {});
+      }
+    }
+
+    function stopCheerSound() {
+      if (cheerAudioPlayer) {
+        cheerAudioPlayer.pause();
+        cheerAudioPlayer.currentTime = 0;
+      }
+    }
+
+    /*****************************************************************
+     * 5. 遊戲流程控制 (Game Flow)
+     *****************************************************************/
+    function startGame() {
+      stopCheerSound();
+      const shuffled = [...QUESTION_BANK].sort(() => Math.random() - 0.5);
+      gameState.selectedQuestions = shuffled.slice(0, 3);
+      gameState.userAnswers = [
+        { selectedOption: null, submitted: false, score: 0, shuffledOptions: null },
+        { selectedOption: null, submitted: false, score: 0, shuffledOptions: null },
+        { selectedOption: null, submitted: false, score: 0, shuffledOptions: null }
+      ];
+      gameState.currentStep = 1;
+      renderCurrentStep();
+    }
+
+    function renderCurrentStep() {
+      const card = document.getElementById('game-container');
+      const progressBadge = document.getElementById('progress-text');
+      const headerTitle = document.getElementById('header-title');
+      const topNavBar = document.getElementById('top-nav-bar');
+
+      if (gameState.currentStep === 0) {
+        if (headerTitle) headerTitle.textContent = "節慶猜謎遊戲";
+        if (topNavBar) topNavBar.style.display = 'flex';
+        if (progressBadge) {
+          progressBadge.style.display = 'none';
+        }
+        renderWelcome();
+      } else if (gameState.currentStep >= 1 && gameState.currentStep <= 3) {
+        if (headerTitle) headerTitle.textContent = "節慶猜謎遊戲";
+        if (topNavBar) topNavBar.style.display = 'none';
+        if (progressBadge) {
+          progressBadge.style.display = 'inline-block';
+          progressBadge.textContent = `第 ${gameState.currentStep} 題 ／ 共 3 題`;
+        }
+        renderQuestion(card, gameState.currentStep - 1);
+      } else if (gameState.currentStep === 4) {
+        if (headerTitle) headerTitle.textContent = "節慶猜謎遊戲";
+        if (topNavBar) topNavBar.style.display = 'none';
+        if (progressBadge) {
+          progressBadge.style.display = 'inline-block';
+          progressBadge.textContent = "遊戲結算";
+        }
+        renderSummary(card);
+      }
+    }
+
+    /*****************************************************************
+     * 6. 說明首頁渲染
+     *****************************************************************/
+    function renderWelcome() {
+      const container = document.getElementById('game-container');
+      const html = `
+        <div class="home-wrapper">
+          <div class="home-subtitle">我們準備了 3 道有趣的小題目，一起動動腦，認識生活中的節慶吧！</div>
+          <div class="home-reminder-box">
+            <div class="home-reminder-title">遊戲說明</div>
+            1. 仔細看看題目和圖片。<br>
+            2. 點選您認為正確的答案。<br>
+            3. 按下「完成並查看結果」，看看自己的表現。<br>
+            4. 按照自己的步調慢慢來，不用緊張！
+          </div>
+          <div class="home-ready-text">準備好了嗎？讓我們開始吧！</div>
+          <div class="home-action-bar">
+            <button class="btn-start-game" onclick="startGame()">開始遊戲</button>
+          </div>
+        </div>
+      `;
+      container.innerHTML = html;
+    }
+
+    /*****************************************************************
+     * 7. 單一題目渲染（左右並排版型）
+     *****************************************************************/
+    function renderQuestion(container, qIndex) {
+      const q = gameState.selectedQuestions[qIndex];
+      const answerState = gameState.userAnswers[qIndex];
+
+      if (answerState.submitted) {
+        renderFeedback(container, qIndex);
+        return;
+      }
+
+      if (!answerState.shuffledOptions) {
+        answerState.shuffledOptions = [...q.options]
+          .sort(() => Math.random() - 0.5);
+      }
+
+      let html = `
+        <div class="question-box">
+          <div class="question-text-side">
+            <div class="question-prompt-text">${q.prompt}</div>
+          </div>
+          <div class="question-img-side">
+            <img src="${q.qImage}" alt="${q.festival}" class="question-img" onerror="handleImgError(this, '${q.festival}')" />
+          </div>
+        </div>
+        <div class="options-grid">
+          ${(answerState.shuffledOptions || q.options).map(opt => `
+            <div class="option-card ${answerState.selectedOption === opt.key ? 'selected' : ''}"
+                 onclick="selectOption(${qIndex}, '${opt.key}')">
+              <div class="option-img-wrapper">
+                <img src="${opt.img}" alt="${opt.text}" class="option-img" onerror="handleImgError(this, '${opt.text}')" />
+              </div>
+              <div class="option-label-container">
+                <span class="option-badge">${opt.key}</span>
+                <span class="option-text">${opt.text}</span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+        <div class="action-bar">
+          <button class="btn btn-submit" id="btn-submit" 
+                  onclick="submitAnswer(${qIndex})" 
+                  ${!answerState.selectedOption ? 'disabled' : ''}>
+            完成並查看結果
+          </button>
+        </div>
+      `;
+      container.innerHTML = html;
+    }
+
+    /*****************************************************************
+     * 8. 作答選擇與提交邏輯
+     *****************************************************************/
+    function selectOption(qIndex, optionKey) {
+      const answerState = gameState.userAnswers[qIndex];
+      if (answerState.submitted) return;
+      answerState.selectedOption = optionKey;
+      renderCurrentStep();
+    }
+
+    function submitAnswer(qIndex) {
+      const answerState = gameState.userAnswers[qIndex];
+      if (answerState.submitted || !answerState.selectedOption) return;
+      const q = gameState.selectedQuestions[qIndex];
+      const isCorrect = (answerState.selectedOption === q.correctAns);
+      answerState.submitted = true;
+      answerState.score = isCorrect ? 100 : 0;
+      renderCurrentStep();
+    }
+
+    function nextQuestion() {
+      if (gameState.currentStep < 3) {
+        gameState.currentStep += 1;
+      } else {
+        gameState.currentStep = 4;
+      }
+      renderCurrentStep();
+    }
+
+    /*****************************************************************
+     * 9. 獨立單題結果畫面
+     *****************************************************************/
+    function renderFeedback(container, qIndex) {
+      const q = gameState.selectedQuestions[qIndex];
+      const answerState = gameState.userAnswers[qIndex];
+      
+      const score = answerState.score;
+      const correctOption = q.options.find(o => o.key === q.correctAns);
+      const levelTitles = ['第一關完成！', '第二關完成！', '第三關完成！'];
+      const currentLevelTitle = levelTitles[qIndex];
+      const starsCount = qIndex + 1;
+      const starsHtml = Array(starsCount).fill('<span class="star-icon">★</span>').join('');
+      let encouragementMsg = '';
+      if (score >= 100) {
+        encouragementMsg = '答得很好！真棒！';
+      } else {
+        encouragementMsg = '沒關係！一起看看正確答案，多練習就會越來越熟悉！';
+      }
+      const correctCount = score > 0 ? 1 : 0;
+      const wrongCount = score > 0 ? 0 : 1;
+      const html = `
+        <div class="result-box ${score >= 100 ? 'correct' : 'incorrect'}">
+          <div class="settlement-title">${currentLevelTitle}</div>
+          <div class="settlement-stars">${starsHtml}</div>
+          <div class="settlement-score-pill">本題得分：${score} 分</div>
+          <div class="settlement-tags-group">
+            <span class="tag-correct">答對：${correctCount} 題</span>
+            <span class="tag-wrong">未答對：${wrongCount} 題</span>
+          </div>
+          <div class="settlement-encouragement" style="margin-top: 4px;">${encouragementMsg}</div>
+          <hr class="feedback-divider" />
+          <div class="feedback-correct-label">正確答案：${correctOption.text}</div>
+          <div class="feedback-explanation">${q.explanation}</div>
+        </div>
+        <div class="action-bar">
+          <button class="btn btn-settlement-next" onclick="nextQuestion()">
+            ${qIndex === 2 ? '查看總成績' : '下一題'}
+          </button>
+        </div>
+      `;
+      container.innerHTML = html;
+    }
+
+    /*****************************************************************
+     * 10. 最終結算頁面
+     *****************************************************************/
+    function renderSummary(container) {
+      stopCheerSound();
+      const ans = gameState.userAnswers;
+      const totalScore = ans.reduce((sum, item) => sum + item.score, 0);
+      const avgScore = totalScore / 3;
+      
+      const formattedAvg = Number.isInteger(avgScore) ? avgScore.toString() : avgScore.toFixed(1);
+      let summaryMsg = '';
+      if (avgScore === 100) {
+        summaryMsg = '太厲害了！全部答對，您對傳統節慶非常瞭解！給自己一個大大的掌聲！';
+      } else if (avgScore >= 60) {
+        summaryMsg = '表現得非常好！多動腦練習，大腦會越來越靈活喔！';
+      } else {
+        summaryMsg = '非常棒的嘗試！多玩幾次認識節慶，會一次比一次進步！';
+      }
+      const levelLabels = ['第一關', '第二關', '第三關'];
+      
+      // 彩帶顆粒
+      const confettiColors = ['#e91e63', '#4caf50', '#2196f3', '#ffeb3b', '#ff9800', '#9c27b0', '#00bcd4', '#ff5722'];
+      let confettiHTML = '';
+      for (let i = 0; i < 24; i++) {
+        const left = Math.floor((i / 24) * 92 + 4 + (Math.random() * 3 - 1.5));
+        const color = confettiColors[i % confettiColors.length];
+        const delay = (Math.random() * 2.5).toFixed(2);
+        const duration = (2.4 + Math.random() * 1.2).toFixed(2);
+        const isCircle = i % 3 === 0;
+        const width = isCircle ? '8px' : '7px';
+        const height = isCircle ? '13px' : '9px';
+        const borderRadius = isCircle ? '50%' : '2px';
+        confettiHTML += `<span class="confetti-piece" style="left:${left}%; background:${color}; width:${width}; height:${height}; border-radius:${borderRadius}; animation-delay:${delay}s; animation-duration:${duration}s;"></span>`;
+      }
+      
+      // 金黃色四角星 SVG
+      const decorStarSVG = `
+        <svg viewBox="0 0 40 40" style="width:100%; height:100%;">
+          <path d="M20 2 L23.5 15.5 L37 19 L23.5 22.5 L20 36 L16.5 22.5 L3 19 L16.5 15.5 Z" fill="#FFB74D"/>
+          <path d="M20 6 L22 16 L31 19 L22 22 L20 32 L18 22 L9 19 L18 16 Z" fill="#FFE082"/>
+        </svg>
+      `;
+
+      // 立體金色獎盃 SVG
+      const trophySVG = `
+        <svg class="perfect-trophy-svg" viewBox="0 0 100 100">
+          <defs>
+            <linearGradient id="gold-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#FFE082"/>
+              <stop offset="30%" stop-color="#FFD54F"/>
+              <stop offset="55%" stop-color="#FFB300"/>
+              <stop offset="85%" stop-color="#FF8F00"/>
+              <stop offset="100%" stop-color="#FF6F00"/>
+            </linearGradient>
+            <linearGradient id="base-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#8D6E63"/>
+              <stop offset="50%" stop-color="#5D4037"/>
+              <stop offset="100%" stop-color="#3E2723"/>
+            </linearGradient>
+            <linearGradient id="stem-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#FFB300"/>
+              <stop offset="50%" stop-color="#FFE082"/>
+              <stop offset="100%" stop-color="#FF8F00"/>
+            </linearGradient>
+          </defs>
+          <path d="M 24 22 C 8 22, 8 46, 26 48 M 76 22 C 92 22, 92 46, 74 48" fill="none" stroke="url(#gold-grad)" stroke-width="5" stroke-linecap="round"/>
+          <path d="M 22 18 L 78 18 L 70 54 C 66 68, 34 68, 30 54 Z" fill="url(#gold-grad)"/>
+          <ellipse cx="50" cy="18" rx="28" ry="5" fill="#FFE082"/>
+          <path d="M 32 22 L 40 22 C 37 38, 38 48, 36 56 C 34 54, 33 40, 32 22 Z" fill="#FFFFFF" opacity="0.45"/>
+          <rect x="43" y="66" width="14" height="12" fill="url(#stem-grad)"/>
+          <ellipse cx="50" cy="66" rx="10" ry="3" fill="#FFA000"/>
+          <path d="M 28 78 L 72 78 L 76 92 L 24 92 Z" fill="url(#base-grad)"/>
+          <rect x="24" y="78" width="52" height="4" fill="#A1887F"/>
+        </svg>
+      `;
+
+      let html = `
+        <div class="summary-cream-card">
+          <div class="confetti-container">${confettiHTML}</div>
+          <h2 class="settlement-title" style="font-size: calc(26px * var(--font-scale)); position: relative; z-index: 2;">恭喜完成全部三關！</h2>
+          
+          ${avgScore === 100 ? `
+            <div class="perfect-graphic-group" style="position: relative; z-index: 2;">
+              <div class="trophy-wrapper">
+                <div class="star-decor star-left">${decorStarSVG}</div>
+                ${trophySVG}
+                <div class="star-decor star-right">${decorStarSVG}</div>
+              </div>
+            </div>
+          ` : ''}
+
+          <div class="settlement-stars" style="position: relative; z-index: 2;">
+            <span class="star-icon">★</span>
+            <span class="star-icon">★</span>
+            <span class="star-icon">★</span>
+          </div>
+
+          <div class="settlement-score-pill" style="align-self: center; position: relative; z-index: 2;">總平均成績：<strong>${formattedAvg}</strong> 分</div>
+
+          <div class="summary-breakdown-box" style="position: relative; z-index: 2;">
+            ${gameState.selectedQuestions.map((q, idx) => `
+              <div class="summary-breakdown-row">
+                <span>${levelLabels[idx]}（${q.festival}）</span>
+                ${idx === 1 ? `
+                  <div class="table-clap-container">
+                    <span class="table-clap-emoji">👏</span>
+                    <span class="clap-impact-ring"></span>
+                  </div>
+                ` : ''}
+                <span class="summary-breakdown-score">${ans[idx].score} 分</span>
+              </div>
+            `).join('')}
+          </div>
+
+          ${avgScore === 100 ? `
+            <div style="position: relative; z-index: 2;">
+              <button class="btn-clap-sound" onclick="playCheerSound(true)">🎉 播放歡呼聲</button>
+              <div id="audio-status-tag" class="audio-status-msg"></div>
+            </div>
+          ` : ''}
+
+          <div class="home-reminder-box" style="text-align: center; background-color: #E8F5E9; border: 1.5px solid #C8E6C9; position: relative; z-index: 2;">
+            <div style="font-size: calc(16.5px * var(--font-scale)); color: var(--primary-dark); font-weight: bold;">
+              ${summaryMsg}
+            </div>
+          </div>
+          
+          <!-- 已修改：簡化後的結算導覽按鈕列 -->
+          <div class="summary-actions-group">
+            <button class="btn-start-game" onclick="replayGame()">再玩一次</button>
+            <div class="secondary-btn-row">
+              <button class="btn-secondary" onclick="goToLevelSelect()">回到遊戲分類</button>
+              <button class="btn-secondary" onclick="goToHome()">回首頁</button>
+            </div>
+          </div>
+
+        </div>
+      `;
+      container.innerHTML = html;
+      
+      // 彩帶噴發動畫
+      setTimeout(triggerConfetti, 100);
+      
+      // 滿分播放歡呼聲
+      if (avgScore === 100) {
+        playCheerSound();
+      }
+    }
+
+    /*****************************************************************
+     * 11. 彩色彩帶噴發動畫 與 圖片備援
+     *****************************************************************/
+    function triggerConfetti() {
+      if (document.getElementById('confetti-canvas')) return;
+      const canvas = document.createElement('canvas');
+      canvas.id = 'confetti-canvas';
+      canvas.style.position = 'fixed';
+      canvas.style.top = '0';
+      canvas.style.left = '0';
+      canvas.style.width = '100vw';
+      canvas.style.height = '100vh';
+      canvas.style.pointerEvents = 'none';
+      canvas.style.zIndex = '9999';
+      document.body.appendChild(canvas);
+      const ctx = canvas.getContext('2d');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      const particles = [];
+      const colors = ['#4caf50', '#81c784', '#ffeb3b', '#ff9800', '#2196f3', '#e91e63'];
+      for (let i = 0; i < 120; i++) {
+        particles.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height - canvas.height,
+          r: Math.random() * 8 + 4,
+          d: Math.random() * 120,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          tilt: Math.floor(Math.random() * 10) - 10,
+          tiltAngleIncremental: Math.random() * 0.07 + 0.05,
+          tiltAngle: 0
+        });
+      }
+      let animationId;
+      function render() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach((p, i) => {
+          p.tiltAngle += p.tiltAngleIncremental;
+          p.y += (Math.cos(p.d) + 3 + p.r / 2) / 2;
+          p.x += Math.sin(p.d);
+          p.tilt = Math.sin(p.tiltAngle) * 15;
+          ctx.beginPath();
+          ctx.lineWidth = p.r;
+          ctx.strokeStyle = p.color;
+          ctx.moveTo(p.x + p.tilt + p.r / 2, p.y);
+          ctx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r / 2);
+          ctx.stroke();
+          if (p.y > canvas.height) {
+            particles[i] = {
+              x: Math.random() * canvas.width,
+              y: -20,
+              r: p.r,
+              d: p.d,
+              color: p.color,
+              tilt: p.tilt,
+              tiltAngleIncremental: p.tiltAngleIncremental,
+              tiltAngle: p.tiltAngle
+            };
+          }
+        });
+        animationId = requestAnimationFrame(render);
+      }
+      render();
+      setTimeout(() => {
+        cancelAnimationFrame(animationId);
+        if (canvas.parentNode) canvas.parentNode.removeChild(canvas);
+      }, 4000);
+    }
+
+    function handleImgError(imgEl, titleText) {
+      const wrapper = imgEl.parentElement;
+      wrapper.innerHTML = `
+        <div class="img-fallback">
+          <strong>${titleText}</strong>
+        </div>
+      `;
+    }
+  </script>
+</body>
+</html>
