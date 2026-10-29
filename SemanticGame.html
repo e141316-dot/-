@@ -1,0 +1,2961 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <base target="_self">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>認知訓練 App - 語意聯想</title>
+  <style>
+    /* ==========================================
+       1. 全局樣式與奶油白柔和綠色系主題
+       ========================================== */
+    :root {
+      --page-bg: #FCFBF7;       /* 奶油米白背景 */
+      --card-bg: #FFFFFF;       /* 卡片背景 */
+      --primary-color: #4F7058; /* 主要綠色（鼠尾草綠） */
+      --primary-dark: #35473C;  /* 主要文字 / 深綠色 */
+      --primary-light: #EAF0E7; /* 淡綠色背景 */
+      --text-muted: #6E8075;    /* 次要文字 */
+      --border-color: #E4E9DF;  /* 淡灰綠邊框 */
+      --tip-bg: #FFFDF0;
+      --tip-border: #E5C365;
+      --shadow: 0 4px 12px rgba(53, 71, 60, 0.06);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--page-bg);
+      color: var(--primary-dark);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding: 16px 12px;
+    }
+
+    /* 畫面淡入動畫：0.3 秒 */
+    .intro-screen, .category-screen, main, .summary-screen {
+      animation: pageFadeIn 0.3s ease-in-out;
+    }
+
+    @keyframes pageFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    #app-container {
+      width: 100%;
+      max-width: 820px;
+      background-color: var(--page-bg);
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+      display: flex;
+      flex-direction: column;
+      min-height: 88vh;
+      position: relative;
+    }
+
+    /* 通用頂部導航按鈕 */
+    .btn-back-nav {
+      background-color: var(--primary-light);
+      color: var(--primary-dark);
+      border: 1.5px solid var(--primary-color);
+      padding: 6px 16px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+    }
+
+    .btn-back-nav:hover { background-color: #DCE8DA; }
+
+    /* ================= 1. 第一層：等級選擇頁面 (Tier Intro Screen) ================= */
+    .intro-screen {
+      padding: 12px 18px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      background-color: var(--page-bg);
+      flex: 1;
+    }
+
+    .intro-top-bar {
+      width: 100%;
+      display: flex;
+      justify-content: flex-start;
+    }
+
+    .intro-title-area {
+      text-align: center;
+      margin-top: 2px;
+      margin-bottom: 0px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .intro-main-title {
+      font-size: 2.1rem;
+      font-weight: 800;
+      color: var(--primary-dark);
+      letter-spacing: 2px;
+      line-height: 1.2;
+      margin: 0;
+    }
+
+    .intro-sub-tip {
+      font-size: 1.05rem;  
+      font-weight: 600;
+      color: #6E8075;      
+      margin-top: 10px;    
+      text-align: center;
+      line-height: 1.4;
+    }
+
+    .level-cards-container {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .level-entry-card {
+      background-color: #FFFFFF;
+      border-radius: 20px;
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      box-shadow: var(--shadow);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      user-select: none;
+      position: relative;
+    }
+
+    .level-entry-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(79, 112, 88, 0.15);
+    }
+
+    .level-entry-card.level-locked {
+      background-color: #F8FAF7 !important;
+      border-color: #D8E0D7 !important;
+      cursor: not-allowed;
+      box-shadow: none !important;
+    }
+
+    .level-entry-card.level-locked:hover { transform: none; }
+
+    .level-entry-card.level-locked .level-num-box,
+    .level-entry-card.level-locked .level-card-info { opacity: 0.45; }
+
+    .level-entry-card.level-locked .level-num-box {
+      background-color: #E0E6DF !important;
+      color: #9AAEA0 !important;
+      border: none !important;
+    }
+
+    .level-entry-card.level-locked .btn-level-start {
+      background-color: #C0CFC3 !important;
+      color: #728575 !important;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .locked-center-overlay {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 64px;
+      height: 64px;
+      background-color: #EAF0E7;
+      border: 2px solid #A8C2A5;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(53, 71, 60, 0.15);
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .locked-center-overlay svg {
+      width: 32px;
+      height: 32px;
+      stroke: #35473C;
+    }
+
+    .level-num-box {
+      width: 68px;
+      height: 68px;
+      min-width: 68px;
+      border-radius: 16px;
+      font-size: 2.3rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.04);
+    }
+
+    .level-card-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .level-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .level-card-title {
+      font-size: 1.35rem;
+      font-weight: 800;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .level-rank { color: var(--primary-dark); }
+    .level-name { color: var(--primary-color); }
+
+    .level-desc {
+      font-size: 1.02rem;
+      color: var(--primary-dark);
+      font-weight: 600;
+      line-height: 1.4;
+      margin: 2px 0 0 0;
+    }
+
+    .level-card-footer {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 4px;
+    }
+
+    .btn-level-start {
+      background-color: var(--primary-color);
+      color: #FFFFFF;
+      border: none;
+      padding: 8px 22px;
+      font-size: 0.98rem;
+      font-weight: 700;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    .difficulty-tag {
+      font-size: 0.85rem;
+      font-weight: bold;
+      padding: 3px 10px;
+      border-radius: 12px;
+      white-space: nowrap;
+    }
+
+    .level-1-card { border: 2px solid var(--border-color); }
+    .level-1-card .level-num-box {
+      background-color: var(--primary-light);
+      color: var(--primary-color);
+      border: 1.5px solid #D2E0CE;
+    }
+    .tag-easy {
+      background-color: var(--primary-light);
+      color: var(--primary-color);
+      border: 1px solid #C5D8C1;
+    }
+
+    .level-2-card { border: 2px solid #C0D0C1; }
+    .level-2-card .level-num-box {
+      background-color: #78947D;
+      color: #FFFFFF;
+    }
+    .tag-medium {
+      background-color: #D8E4D5;
+      color: var(--primary-dark);
+      border: 1px solid #A8C2A5;
+    }
+
+    .level-3-card { border: 2px solid var(--primary-color); }
+    .level-3-card .level-num-box {
+      background-color: var(--primary-dark);
+      color: #FFFFFF;
+    }
+    .tag-hard {
+      background-color: var(--primary-color);
+      color: #FFFFFF;
+    }
+
+    .tag-locked {
+      background-color: #E8EFE9;
+      color: #728575;
+      border: 1px solid #D0DDD2;
+    }
+
+    /* ================= 2. 第二層：主題選擇頁面 (Category Screen) ================= */
+    .category-screen {
+      padding: 18px 16px;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      background-color: var(--page-bg);
+      flex: 1;
+    }
+
+    .category-header-bar {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-bottom: 14px;
+      border-bottom: 2px solid var(--border-color);
+      position: relative;
+    }
+
+    .category-header-top {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      min-height: 42px;
+    }
+
+    .btn-back-tier {
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 2;
+    }
+
+    .selected-tier-title {
+      font-size: 31px;
+      font-weight: 800;
+      color: var(--primary-color);
+      margin: 0;
+      text-align: center;
+      line-height: 1.2;
+    }
+
+    .category-tip-text {
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-align: center;
+      margin-top: 10px;
+      line-height: 1.4;
+    }
+
+    .category-cards-grid {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    @media (max-width: 640px) {
+      .category-cards-grid { grid-template-columns: 1fr; }
+    }
+
+    .category-card {
+      background-color: #FFFFFF;
+      border: 2px solid var(--border-color);
+      border-radius: 20px;
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 18px;
+      box-shadow: var(--shadow);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .category-card:hover {
+      transform: translateY(-3px);
+      border-color: var(--primary-color);
+      box-shadow: 0 8px 18px rgba(79, 112, 88, 0.15);
+    }
+
+    .category-card.category-locked {
+      background-color: #F8FAF7 !important;
+      border-color: #D8E0D7 !important;
+      cursor: not-allowed;
+      box-shadow: none !important;
+    }
+
+    .category-card.category-locked:hover { transform: none; }
+
+    .category-card.category-locked .category-card-img,
+    .category-card.category-locked .category-card-body {
+      opacity: 0.45;
+    }
+
+    .category-card-img {
+      width: 90px;
+      height: 90px;
+      min-width: 90px;
+      object-fit: contain;
+      background-color: var(--primary-light);
+      border-radius: 16px;
+      padding: 8px;
+      flex-shrink: 0;
+    }
+
+    .category-card-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      text-align: left;
+      gap: 6px;
+    }
+
+    .category-card-title {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--primary-dark);
+      margin: 0;
+      line-height: 1.2;
+    }
+
+    .category-card-desc {
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      line-height: 1.4;
+      margin: 0;
+    }
+
+    .btn-category-start {
+      background-color: var(--primary-color);
+      color: #FFFFFF;
+      border: none;
+      padding: 8px 20px;
+      font-size: 0.98rem;
+      font-weight: 700;
+      border-radius: 20px;
+      cursor: pointer;
+      margin-top: 4px;
+      align-self: flex-start;
+      transition: background-color 0.2s ease;
+    }
+
+    .btn-category-start:disabled {
+      background-color: #C0CFC3 !important;
+      color: #728575 !important;
+      cursor: not-allowed;
+    }
+
+    /* ================= 3. 第三層：正式遊戲畫面 (Game Main) ================= */
+    main {
+      padding: 0 12px 18px 12px;
+      flex: 1;
+      display: none;
+      flex-direction: column;
+      gap: 16px;
+      position: relative;
+    }
+
+    .game-header-banner {
+      background-color: transparent;
+      padding: 0;
+      border-radius: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      box-shadow: none;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .game-header-title {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #4F7058;
+      letter-spacing: 1px;
+      margin: 0;
+      text-align: center;
+    }
+
+    .level-nav-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+    }
+
+    .level-nav-btn {
+      flex: 1;
+      min-width: 0;
+      padding: 10px 8px;
+      border-radius: 25px;
+      font-size: 1rem;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s ease;
+      background-color: #EAF0E7;
+      color: #4F7058;
+      user-select: none;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .level-nav-btn.active {
+      background-color: #4F7058;
+      color: #FFFFFF;
+      box-shadow: 0 3px 8px rgba(79, 112, 88, 0.2);
+    }
+
+    .question-banner {
+      width: 100%;
+      background-color: var(--primary-light);
+      border-left: 6px solid var(--primary-color);
+      padding: 14px 18px;
+      border-radius: 10px;
+    }
+
+    .question-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--primary-dark);
+      margin-bottom: 4px;
+    }
+
+    .question-subtext {
+      font-size: 0.98rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .cards-grid {
+      display: grid;
+      gap: 14px;
+      margin-top: 4px;
+      user-select: none;
+      min-height: 140px;
+      border: 2px dashed transparent;
+      border-radius: 16px;
+      padding: 6px;
+      transition: border-color 0.2s ease, background-color 0.2s ease;
+    }
+
+    .cards-grid.drag-over-candidate {
+      border-color: var(--primary-color);
+      background-color: var(--primary-light);
+    }
+
+    .cards-grid.level-1 { grid-template-columns: repeat(4, 1fr); }
+    .cards-grid.level-2 { grid-template-columns: repeat(3, 1fr); }
+    .cards-grid.level-3 { grid-template-columns: repeat(4, 1fr); }
+
+    @media (max-width: 640px) {
+      .cards-grid.level-1 { grid-template-columns: repeat(2, 1fr); }
+      .cards-grid.level-2 { grid-template-columns: repeat(2, 1fr); }
+      .cards-grid.level-3 { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    .item-card {
+      background: var(--card-bg);
+      border: 2px solid var(--border-color);
+      border-radius: 16px;
+      padding: 8px 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: grab;
+      position: relative;
+      transition: all 0.2s ease;
+      box-shadow: var(--shadow);
+      touch-action: none;
+    }
+
+    .item-card:active { cursor: grabbing; }
+
+    .item-card img {
+      width: 100%;
+      height: 90px;
+      object-fit: contain;
+      border-radius: 8px;
+      margin-bottom: 6px;
+      background-color: #FFFFFF;
+      padding: 4px;
+      pointer-events: none;
+    }
+
+    .item-card .item-label {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--primary-dark);
+      text-align: center;
+      margin-top: 2px;
+      pointer-events: none;
+    }
+
+    .item-card.selected {
+      border: 3px solid var(--primary-color);
+      background-color: var(--primary-light);
+      transform: scale(1.02);
+      box-shadow: 0 4px 12px rgba(79, 112, 88, 0.25);
+    }
+
+    .bucket-container {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+      margin-top: 10px;
+    }
+
+    .bucket {
+      width: 100%;
+      padding: 16px;
+      border-radius: 20px;
+      border: 2.5px solid var(--primary-color);
+      background-color: var(--primary-light);
+      color: var(--primary-dark);
+      min-height: 160px;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: flex-start;
+      gap: 12px;
+      position: relative;
+      box-shadow: var(--shadow);
+      transition: all 0.2s ease;
+      user-select: none;
+      cursor: pointer;
+    }
+
+    .bucket.drag-over {
+      border: 3px solid var(--primary-color) !important;
+      background-color: #C8E6C9 !important;
+      transform: scale(1.01);
+      box-shadow: 0 6px 16px rgba(79, 112, 88, 0.3);
+    }
+
+    .bucket-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      padding-bottom: 8px;
+      border-bottom: 2px dashed var(--border-color);
+      pointer-events: none;
+    }
+
+    .bucket-title-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .bucket-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--primary-dark);
+      width: 26px;
+      height: 26px;
+    }
+
+    .bucket-icon svg {
+      width: 24px;
+      height: 24px;
+      stroke: var(--primary-dark);
+    }
+
+    .bucket-title {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--primary-dark);
+    }
+
+    .btn-undo {
+      background-color: #FFFFFF;
+      color: var(--primary-dark);
+      border: 1.5px solid var(--primary-color);
+      padding: 5px 14px;
+      font-size: 0.92rem;
+      font-weight: 700;
+      border-radius: 16px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-undo:hover:not(:disabled) {
+      background-color: var(--primary-light);
+    }
+
+    .btn-undo:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      border-color: #C0CFC3;
+      color: #728575;
+    }
+
+    .bucket-count-badge {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--primary-dark);
+      background: #FFFFFF;
+      border: 1px solid var(--border-color);
+      padding: 3px 12px;
+      border-radius: 14px;
+    }
+
+    .bucket-content-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
+      gap: 10px;
+      width: 100%;
+      max-height: 200px;
+      overflow-y: auto;
+      padding: 4px;
+      pointer-events: auto;
+    }
+
+    .folder-item-card {
+      background-color: #FFFFFF;
+      border: 1.5px solid var(--border-color);
+      border-radius: 12px;
+      padding: 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      cursor: grab;
+      touch-action: none;
+      transition: all 0.2s ease;
+    }
+
+    .folder-item-card:active {
+      cursor: grabbing;
+    }
+
+    .folder-item-card img {
+      width: 48px;
+      height: 48px;
+      object-fit: contain;
+      margin-bottom: 4px;
+      pointer-events: none;
+    }
+
+    .folder-item-card span {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--primary-dark);
+      text-align: center;
+      width: 100%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      pointer-events: none;
+    }
+
+    .bucket.active-hint {
+      animation: pulse 1.2s infinite;
+      border-color: var(--primary-dark);
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.01); }
+      100% { transform: scale(1); }
+    }
+
+    .feedback-toast {
+      min-height: 40px;
+      text-align: center;
+      font-size: 1.12rem;
+      font-weight: bold;
+      padding: 8px 12px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .feedback-toast:empty {
+      display: none;
+      min-height: 0;
+      padding: 0;
+      margin: 0;
+    }
+
+    .action-bar {
+      display: flex;
+      justify-content: center;
+      padding-top: 0;
+      gap: 12px;
+    }
+
+    .btn-finish-level {
+      width: 100%;
+      background-color: var(--primary-color);
+      color: white;
+      border: 2px solid var(--primary-color);
+      padding: 11px 16px;
+      font-size: 1.08rem;
+      font-weight: bold;
+      border-radius: 28px;
+      cursor: pointer;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.12);
+      transition: all 0.2s ease;
+    }
+
+    .btn-finish-level:hover {
+      background-color: var(--primary-dark);
+      border-color: var(--primary-dark);
+      transform: translateY(-2px);
+    }
+
+    .btn-next-level {
+      background-color: #1976D2;
+      color: white;
+      border: none;
+      padding: 12px 38px;
+      font-size: 1.15rem;
+      font-weight: bold;
+      border-radius: 30px;
+      cursor: pointer;
+      display: none;
+    }
+
+    /* ================= 4. 彈出提醒視窗 (Modal Popups Specs) ================= */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background-color: rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      z-index: 9999;
+      padding: 20px 12px;
+    }
+
+    .modal-box {
+      background-color: var(--page-bg);
+      border: 2.5px solid #4F7058;
+      border-radius: 28px;
+      padding: 32px 28px 26px 28px;
+      width: calc(100% - 24px);
+      max-width: 440px;
+      max-height: calc(100vh - 40px);
+      overflow-y: auto;
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      animation: modalEnter 0.25s ease-out forwards;
+    }
+
+    @keyframes modalEnter {
+      from { opacity: 0; transform: scale(0.92); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .modal-title {
+      font-size: 1.85rem;
+      font-weight: 900;
+      letter-spacing: 0.8px;
+      color: var(--primary-dark);
+      margin: 0 0 16px 0;
+    }
+
+    .modal-desc {
+      font-size: 1.18rem;
+      font-weight: 700;
+      line-height: 1.6;
+      letter-spacing: 0.3px;
+      color: var(--text-muted);
+      padding: 0 8px;
+      margin: 0 0 28px 0;
+    }
+
+    .modal-btn {
+      background-color: var(--primary-color);
+      color: #FFFFFF;
+      border: none;
+      padding: 8px 32px;
+      font-size: 1.2rem;
+      font-weight: 800;
+      border-radius: 25px;
+      cursor: pointer;
+      margin-top: 4px;
+      box-shadow: 0 4px 10px rgba(79, 112, 88, 0.2);
+      transition: background-color 0.2s ease;
+    }
+
+    .modal-btn:hover { background-color: var(--primary-dark); }
+
+    /* ================= 5. 結算畫面 (Summary Screen) & 特效排版 ================= */
+    .summary-screen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 16px 12px 32px 12px;
+      gap: 12px;
+      position: relative;
+      width: 100%;
+    }
+
+    .confetti-container {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 1;
+    }
+
+    .confetti-piece {
+      position: absolute;
+      top: -20px;
+      border-radius: 2px;
+      opacity: 0.85;
+      animation: confettiFall linear infinite;
+    }
+
+    @keyframes confettiFall {
+      0% { transform: translateY(-20px) rotate(0deg) translateX(0); opacity: 0.9; }
+      25% { transform: translateY(225px) rotate(180deg) translateX(15px); }
+      50% { transform: translateY(450px) rotate(360deg) translateX(-15px); opacity: 0.85; }
+      75% { transform: translateY(675px) rotate(540deg) translateX(15px); }
+      100% { transform: translateY(900px) rotate(720deg) translateX(0); opacity: 0.2; }
+    }
+
+    .summary-cream-card {
+      position: relative;
+      background-color: transparent;
+      border: none;
+      border-radius: 0;
+      padding: 8px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      text-align: center;
+      box-shadow: none;
+      width: 100%;
+      max-width: 520px;
+      z-index: 2;
+    }
+
+    .celebration-container {
+      position: relative;
+      width: 100%;
+      height: 85px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 0 auto;
+    }
+
+    .trophy-glow-halo {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 70px; height: 70px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(251, 191, 36, 0.45) 0%, rgba(245, 158, 11, 0.2) 55%, rgba(252, 251, 247, 0) 100%);
+      pointer-events: none;
+      animation: haloPulse 2.5s ease-in-out infinite alternate;
+    }
+
+    @keyframes haloPulse {
+      0% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.7; }
+      100% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
+    }
+
+    /* 獎盃彈出動畫：0.6 秒 */
+    .trophy-permanent {
+      font-size: 3.6rem;
+      line-height: 1;
+      display: inline-block;
+      z-index: 2;
+      filter: drop-shadow(0 4px 10px rgba(245, 158, 11, 0.4));
+      animation: trophyPopIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+
+    @keyframes trophyPopIn {
+      0% { transform: scale(0.2); opacity: 0; }
+      70% { transform: scale(1.18); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    /* 左右閃光動畫：1.6 秒無限循環 */
+    .sparkle-svg-side {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 36px;
+      height: 36px;
+      z-index: 3;
+      pointer-events: none;
+      overflow: visible !important;
+      transform-origin: center center;
+      animation: starTwinkle 1.6s ease-in-out infinite alternate;
+    }
+
+    .sparkle-svg-side.left {
+      left: calc(50% - 88px);
+      animation-delay: 0s;
+    }
+
+    .sparkle-svg-side.right {
+      right: calc(50% - 88px);
+      animation-delay: 0.6s;
+    }
+
+    @keyframes starTwinkle {
+      0% { transform: translateY(-50%) scale(0.85) rotate(-10deg); opacity: 0.7; }
+      100% { transform: translateY(-50%) scale(1.25) rotate(15deg); opacity: 1; filter: drop-shadow(0 0 6px #FBBF24); }
+    }
+
+    .settlement-stars {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      font-size: clamp(2.1rem, 6vw, 2.7rem);
+      color: #FBC02D;
+      margin: 0 0 4px 0;
+    }
+
+    /* 星星動畫：每顆 0.45 秒，動畫結束後保留於畫面 */
+    .star-icon {
+      display: inline-block;
+      opacity: 0;
+      transform: scale(0.3);
+      text-shadow: 0 0 10px rgba(251, 192, 45, 0.5), 0 2px 4px rgba(0,0,0,0.12);
+      animation: starPopGlow 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+
+    .star-icon:nth-child(1) { animation-delay: 0.1s; }
+    .star-icon:nth-child(2) { animation-delay: 0.55s; }
+    .star-icon:nth-child(3) { animation-delay: 1.0s; }
+
+    @keyframes starPopGlow {
+      0% { opacity: 0; transform: scale(0.3); text-shadow: 0 0 0px rgba(251, 192, 45, 0); }
+      70% { opacity: 1; transform: scale(1.25); text-shadow: 0 0 20px rgba(251, 192, 45, 0.9), 0 0 30px rgba(251, 192, 45, 0.6); }
+      100% { opacity: 1; transform: scale(1); text-shadow: 0 0 12px rgba(251, 192, 45, 0.6), 0 2px 4px rgba(0,0,0,0.12); }
+    }
+
+    /* 拍手圖示動畫：2.2 秒後消失 */
+    .clapping-overlay {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 3.8rem;
+      pointer-events: none;
+      z-index: 5;
+      animation: clapPopFade 2.2s ease-out forwards;
+      filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.18));
+    }
+
+    @keyframes clapPopFade {
+      0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3) rotate(-15deg); }
+      25% { opacity: 1; transform: translate(-50%, -50%) scale(1.2) rotate(10deg); }
+      50% { opacity: 1; transform: translate(-50%, -50%) scale(1.0) rotate(0deg); }
+      80% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.0) rotate(0deg); }
+      100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8) rotate(0deg); visibility: hidden; }
+    }
+
+    .btn-replay-sound {
+      background-color: #FFFFFF;
+      border: 1.5px solid var(--primary-color);
+      color: var(--primary-dark);
+      padding: 5px 16px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin: 6px auto 2px auto;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    }
+
+    .btn-replay-sound:hover {
+      background-color: var(--primary-light);
+    }
+
+    .settlement-title {
+      color: var(--primary-dark);
+      font-size: clamp(1.4rem, 4.5vw, 1.8rem);
+      font-weight: 800;
+    }
+
+    .settlement-score-pill {
+      background-color: #E8F5E9;
+      border: 1.5px solid #A5D6A7;
+      color: var(--primary-dark);
+      padding: 6px 22px;
+      border-radius: 30px;
+      display: inline-block;
+      font-size: clamp(1rem, 3.2vw, 1.15rem);
+      font-weight: bold;
+      align-self: center;
+    }
+
+    .sublevel-encouragement {
+      font-size: 1.02rem;
+      font-weight: 600;
+      color: var(--primary-dark);
+      text-align: center;
+      line-height: 1.5;
+      margin: 8px 0;
+      padding: 0 8px;
+    }
+
+    .summary-breakdown-box {
+      background-color: #F1F8E9;
+      border: 1.5px solid #C8E6C9;
+      border-radius: 16px;
+      padding: 12px 18px;
+      margin: 2px 0;
+      text-align: left;
+    }
+
+    .summary-breakdown-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: clamp(0.95rem, 3.2vw, 1.05rem);
+      font-weight: bold;
+      color: #37474F;
+      padding: 6px 0;
+      border-bottom: 1px dashed #C8E6C9;
+    }
+
+    .summary-breakdown-row:last-child { border-bottom: none; }
+    .summary-breakdown-score { color: #1B5E20; font-weight: 800; }
+
+    .summary-actions-group {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      width: 100%;
+      max-width: 520px;
+      margin: 14px auto 0 auto;
+    }
+
+    .summary-actions-group .summary-full-btn {
+      grid-column: 1 / -1;
+      width: 100%;
+      background-color: var(--primary-color);
+      color: #FFFFFF;
+      border: 2px solid var(--primary-color);
+      padding: 12px 16px;
+      font-size: 1.08rem;
+      font-weight: 800;
+      border-radius: 28px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(79, 112, 88, 0.2);
+      transition: all 0.2s ease;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .summary-actions-group .summary-full-btn:hover {
+      background-color: var(--primary-dark);
+      border-color: var(--primary-dark);
+      transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+      width: 100%;
+      background-color: var(--primary-light);
+      color: var(--primary-dark);
+      border: 1.5px solid var(--primary-color);
+      padding: 10px 6px;
+      font-size: clamp(0.86rem, 2.5vw, 0.98rem);
+      font-weight: 700;
+      border-radius: 24px;
+      cursor: pointer;
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+    }
+
+    .btn-secondary:hover {
+      background-color: #E2EADF;
+      border-color: var(--primary-dark);
+    }
+
+    .btn-text-back {
+      grid-column: 1 / -1;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-decoration: underline;
+      cursor: pointer;
+      padding: 8px;
+      margin-top: 4px;
+      transition: color 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-text-back:hover {
+      color: var(--primary-dark);
+    }
+
+    @media (max-width: 480px) {
+      .summary-actions-group { gap: 8px; }
+      .btn-secondary { font-size: 0.82rem; padding: 8px 4px; min-height: 42px; }
+    }
+
+    /* ================= 6. 解鎖動畫 Pop-up Modal (0.3 秒縮放) ================= */
+    .unlock-modal-card {
+      background-color: #FCFBF7;
+      border: 3px solid #4F7058;
+      border-radius: 24px;
+      padding: 26px 20px;
+      width: calc(100% - 32px);
+      max-width: 380px;
+      text-align: center;
+      box-shadow: 0 12px 32px rgba(53, 71, 60, 0.2);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      position: relative;
+      overflow: hidden;
+      animation: unlockPopIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+
+    @keyframes unlockPopIn {
+      0% { opacity: 0; transform: scale(0.8); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    .unlock-icon-wrapper {
+      position: relative;
+      width: 100px;
+      height: 100px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 4px 0;
+    }
+
+    .unlock-glow-circle {
+      position: absolute;
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(251, 192, 45, 0.45) 0%, rgba(79, 112, 88, 0.25) 60%, rgba(252, 251, 247, 0) 100%);
+      transform: scale(0.5);
+      opacity: 0.2;
+      animation: glowExpand 1.2s ease-out 0.3s forwards;
+    }
+
+    @keyframes glowExpand {
+      0% { transform: scale(0.5); opacity: 0.2; }
+      50% { transform: scale(1.6); opacity: 0.85; }
+      100% { transform: scale(1.35); opacity: 0.6; }
+    }
+
+    .padlock-svg {
+      width: 54px;
+      height: 72px;
+      z-index: 2;
+      overflow: visible;
+    }
+
+    .shackle-path {
+      transform-origin: 17px 11px;
+      animation: shackleOpen 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.45s forwards;
+    }
+
+    @keyframes shackleOpen {
+      0% { transform: translateY(0) rotate(0deg); }
+      100% { transform: translateY(-5px) rotate(-22deg); }
+    }
+
+    .sparkle-star {
+      position: absolute;
+      color: #FBC02D;
+      font-size: 1.2rem;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    .sparkle-star.s1 { top: 2px; left: 8px; animation: sparklePop 0.8s ease 0.65s forwards; }
+    .sparkle-star.s2 { top: 6px; right: 10px; animation: sparklePop 0.8s ease 0.8s forwards; }
+    .sparkle-star.s3 { bottom: 4px; left: 12px; animation: sparklePop 0.8s ease 0.9s forwards; }
+    .sparkle-star.s4 { bottom: 8px; right: 8px; animation: sparklePop 0.8s ease 0.75s forwards; }
+
+    @keyframes sparklePop {
+      0% { opacity: 0; transform: scale(0.2) rotate(0deg); }
+      50% { opacity: 1; transform: scale(1.3) rotate(45deg); }
+      100% { opacity: 0.8; transform: scale(1) rotate(90deg); }
+    }
+
+    .unlock-anim-pill-box {
+      opacity: 0;
+      transform: translateY(8px);
+      animation: pillFadeUp 0.5s ease 0.9s forwards;
+    }
+
+    @keyframes pillFadeUp {
+      0% { opacity: 0; transform: translateY(8px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+<div id="app-container">
+  <!-- 1. 第一層：選擇等級 (Intro Tier Screen) -->
+  <div class="intro-screen" id="intro-screen">
+    <!-- 請將原本的頂部按鈕替換成這行： -->
+<div class="intro-top-bar">
+  <button class="btn-back-nav" onclick="goToMainCategory()">← 返回遊戲分類</button>
+</div>
+    <div class="intro-title-area">
+      <h2 class="intro-main-title">語意聯想</h2>
+      <p class="intro-sub-tip">每個主題分開計算，三關都拿到滿分，才能挑戰下一等級。</p>
+    </div>
+
+    <div class="level-cards-container" id="level-cards-container"></div>
+  </div>
+
+  <!-- 2. 第二層：選擇主題 (Category Selection Screen) -->
+  <div class="category-screen" id="category-screen">
+    <div class="category-header-bar">
+      <div class="category-header-top">
+        <button class="btn-back-nav btn-back-tier" onclick="goBackToTierSelect()">❮ 返回等級選擇</button>
+        <h2 class="selected-tier-title" id="selected-tier-title">等級一</h2>
+      </div>
+      <p class="category-tip-text">選擇您想練習的主題，隨後將直接進入對應的 3 個關卡遊戲！</p>
+    </div>
+
+    <div class="category-cards-grid" id="category-cards-grid"></div>
+  </div>
+
+  <!-- 3. 第三層：正式遊戲畫面 (Game Main) -->
+  <main id="game-main">
+    <div class="game-header-banner">
+      <h2 class="game-header-title" id="game-header-title">等級一</h2>
+      <div class="level-nav-bar">
+        <button class="level-nav-btn active" id="nav-btn-1" onclick="handleNavClick(1)">關卡一</button>
+        <button class="level-nav-btn" id="nav-btn-2" onclick="handleNavClick(2)">關卡二</button>
+        <button class="level-nav-btn" id="nav-btn-3" onclick="handleNavClick(3)">關卡三</button>
+      </div>
+    </div>
+
+    <div class="question-banner">
+      <div class="question-title" id="question-title">載入中...</div>
+      <div class="question-subtext" id="question-subtext">請將符合題目的物品拖進下方收納區，完成後按『完成分類』。</div>
+    </div>
+
+    <div id="game-workspace">
+      <div class="cards-grid" id="standard-cards-grid"></div>
+
+      <div class="bucket-container" id="bucket-container">
+        <div class="bucket" id="bucket-primary" onclick="handleBucketClick(true)">
+          <div class="bucket-header">
+            <div class="bucket-title-group">
+              <span id="bucket-icon" class="bucket-icon"></span>
+              <span id="bucket-primary-text" class="bucket-title">收納籃</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; pointer-events: auto;">
+              <button id="btn-undo" class="btn-undo" onclick="undoLastClassification(event)" disabled>↺ 撤回上一步</button>
+              <span id="bucket-primary-count" class="bucket-count-badge">已收納 0 件</span>
+            </div>
+          </div>
+          <div class="bucket-content-grid" id="bucket-primary-content"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="feedback-toast" id="feedback-toast"></div>
+
+    <div class="action-bar">
+      <button class="btn-finish-level" id="btn-finish-level" onclick="finishSubLevelClassification()">完成分類</button>
+      <button class="btn-next-level" id="btn-next-level" onclick="nextSubLevel()">前往下一關 ➔</button>
+    </div>
+  </main>
+
+  <!-- 4. 結算畫面 (Summary Screen) -->
+  <div class="summary-screen" id="summary-screen">
+    <div id="confetti-container" class="confetti-container"></div>
+    <div class="summary-cream-card" id="summary-card"></div>
+  </div>
+
+  <!-- 5. 提醒視窗 1：等級未解鎖 -->
+  <div class="modal-overlay" id="modal-locked" style="display: none;">
+    <div class="modal-box">
+      <h3 class="modal-title">尚未解鎖</h3>
+      <p class="modal-desc" id="modal-locked-desc">請先完成此主題前一等級的三關滿分。</p>
+      <button class="modal-btn" onclick="closeModal('modal-locked')">我知道了</button>
+    </div>
+  </div>
+
+  <!-- 6. 提醒視窗 2：先完成當前關卡提示 -->
+  <div class="modal-overlay" id="modal-step-by-step" style="display: none;">
+    <div class="modal-box">
+      <h3 class="modal-title">先完成當前關卡喔！</h3>
+      <p class="modal-desc">您已經完成之前的關卡，請繼續往前挑戰喔！</p>
+      <button class="modal-btn" onclick="closeModal('modal-step-by-step')">我知道了</button>
+    </div>
+  </div>
+
+  <!-- 7. 解鎖動畫視窗 (Unlock Animation Modal) -->
+  <div class="modal-overlay" id="modal-unlock-anim" style="display: none;">
+    <div class="unlock-modal-card">
+      <div class="unlock-icon-wrapper">
+        <div class="unlock-glow-circle"></div>
+        <svg class="padlock-svg" viewBox="0 -8 24 32" fill="none" stroke="#35473C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path class="shackle-path" d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          <rect x="4" y="11" width="16" height="10" rx="2" fill="#EAF0E7" stroke="#35473C"></rect>
+          <circle cx="12" cy="15" r="1" fill="#35473C"></circle>
+          <path d="M12 16v2"></path>
+        </svg>
+        <span class="sparkle-star s1">✦</span>
+        <span class="sparkle-star s2">✦</span>
+        <span class="sparkle-star s3">✦</span>
+        <span class="sparkle-star s4">✦</span>
+      </div>
+      <div class="modal-title" style="font-size: 1.4rem;">突破新等級！</div>
+      <div class="unlock-anim-pill-box">
+        <div class="settlement-score-pill" id="unlock-modal-pill" style="background-color: #D4EDDA; color: #155724; border-color: #C3E6CB;">
+          已成功解鎖【食｜等級二】！
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+ // 通用頁面跳轉函式（直接透過 Google Apps Script 樣板 baseUrl 跳轉，徹底防範 iframe 跨域白屏）
+  function navTo(pageKey) {
+    var baseUrl = "<?= baseUrl ?>";
+    window.top.location.href = baseUrl + "?page=" + pageKey;
+  }
+
+  // 動態判斷玩家進入來源並執行「返回上一層」
+  function getEntrySource() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const fromParam = urlParams.get('from');
+    if (fromParam) return fromParam;
+
+    if (document.referrer) {
+      if (document.referrer.includes('page=level_select')) return 'level_select';
+      if (document.referrer.includes('page=home')) return 'home';
+      if (document.referrer.includes('page=language')) return 'language';
+    }
+
+    return 'level_select'; // 預設返回遊戲分類
+  }
+
+  function goBackToPreviousLayer() {
+    const targetSource = getEntrySource();
+    navTo(targetSource);
+  }
+
+  const UNIFIED_PROMPT = "請將符合題目的物品拖進下方收納區，完成後按『完成分類』。";
+
+  // 音效 1: 翻牌音效（正弦波 320 Hz -> 120 Hz, 0.08 秒）
+  function playFlipSound() {
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return;
+      const ctx = new AudioContext();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(320, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(120, ctx.currentTime + 0.08);
+      
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.08);
+      
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      
+      osc.start();
+      osc.stop(ctx.currentTime + 0.08);
+    } catch(e) {}
+  }
+
+  // 音效 2: 配對成功音效（三角波 523.25 Hz -> 659.25 Hz, 0.25 秒，延遲 0.4 秒播放）
+  function playMatchSound() {
+    setTimeout(() => {
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        const ctx = new AudioContext();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(523.25, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(659.25, ctx.currentTime + 0.25);
+        
+        gain.gain.setValueAtTime(0.3, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
+        
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        
+        osc.start();
+        osc.stop(ctx.currentTime + 0.25);
+      } catch(e) {}
+    }, 400);
+  }
+
+  // MP3 掌聲音檔與備援音效
+  const applauseAudio = new Audio("https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3");
+  applauseAudio.preload = "auto";
+  let hasPlayedApplauseForRun = false;
+
+  function unlockAudioContext() {
+    if (applauseAudio) {
+      applauseAudio.load();
+    }
+    window.removeEventListener('click', unlockAudioContext);
+    window.removeEventListener('touchstart', unlockAudioContext);
+  }
+  window.addEventListener('click', unlockAudioContext);
+  window.addEventListener('touchstart', unlockAudioContext);
+
+  // 備援掌聲音效（約 1.65 秒，僅於 MP3 播放失敗時調用）
+  function playSynthApplause() {
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return;
+      const ctx = new AudioContext();
+      for (let i = 0; i < 25; i++) {
+        setTimeout(() => {
+          const bufferSize = ctx.sampleRate * 0.08;
+          const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+          const data = buffer.getChannelData(0);
+          for (let j = 0; j < bufferSize; j++) data[j] = Math.random() * 2 - 1;
+          const noise = ctx.createBufferSource();
+          noise.buffer = buffer;
+          const filter = ctx.createBiquadFilter();
+          filter.type = 'bandpass';
+          filter.frequency.value = 1000 + Math.random() * 1200;
+          const gain = ctx.createGain();
+          gain.gain.setValueAtTime(0.4, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.08);
+          noise.connect(filter);
+          filter.connect(gain);
+          gain.connect(ctx.destination);
+          noise.start();
+        }, i * (60 + Math.random() * 80));
+      }
+    } catch(e) {}
+  }
+
+  function playPerfectApplauseSound() {
+    try {
+      applauseAudio.currentTime = 0;
+      const playPromise = applauseAudio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(error => {
+          playSynthApplause();
+        });
+      }
+    } catch (e) {
+      playSynthApplause();
+    }
+  }
+
+  // 母體庫：食
+  const foodMasterItems = [
+    { id: "s_f1", name: "蘋果", subCategory: "水果", img: "https://lh3.googleusercontent.com/d/13SmepkMY9oDmTm98bS4y_J9CdiTJJF1e" },
+    { id: "s_f2", name: "芭樂", subCategory: "水果", img: "https://lh3.googleusercontent.com/d/1nJd0wbmNksAmrEAVa4fbWGlhnP1faYtb" },
+    { id: "s_f3", name: "木瓜", subCategory: "水果", img: "https://lh3.googleusercontent.com/d/1QccMT1kvhWRtbvLxQ9xSPZF3LO8I4ke3" },
+    { id: "s_f4", name: "柚子", subCategory: "水果", img: "https://lh3.googleusercontent.com/d/1IYNdLsQcOpca6uILXfxepEv55vxWw9x7" },
+    { id: "s_f5", name: "龍眼", subCategory: "水果", img: "https://lh3.googleusercontent.com/d/1rXdxV32H4DCede1aBz9SYCplsrBudvYI" },
+    { id: "s_f6", name: "芒果", subCategory: "水果", img: "https://lh3.googleusercontent.com/d/1egPStFuJEoWA9r6MUlw-JG2uly6wetQd" },
+    { id: "s_v1", name: "小白菜", subCategory: "蔬菜", img: "https://lh3.googleusercontent.com/d/19H-HMSiU26u3AAsbk4XWnh1KV-Mjnofy" },
+    { id: "s_v2", name: "空心菜", subCategory: "蔬菜", img: "https://lh3.googleusercontent.com/d/1RfC9xmSpp5M6sRXEx1JvVOw9xcBuqaRR" },
+    { id: "s_v3", name: "青椒", subCategory: "蔬菜", img: "https://lh3.googleusercontent.com/d/1Y1VMq8sRj8s0w-0rXbwqf5eTAOpsEVw8" },
+    { id: "s_v4", name: "萵苣", subCategory: "蔬菜", img: "https://lh3.googleusercontent.com/d/10j7SRVQGcf2jXrvYGCmmv3uPPOLKY_9X" },
+    { id: "s_v5", name: "高麗菜", subCategory: "蔬菜", img: "https://lh3.googleusercontent.com/d/15QrPfQlJYp-yeFx2VNwC06yuqrdD9Tzv" },
+    { id: "s_s1", name: "蝦子", subCategory: "海鮮", img: "https://lh3.googleusercontent.com/d/113c02Ws7HprJUIIFHe0SF5QhTcRYaspp" },
+    { id: "s_s2", name: "干貝", subCategory: "海鮮", img: "https://lh3.googleusercontent.com/d/1W1EEXQFgQnn2PNbLbElkef1oJZ1vQ3dD" },
+    { id: "s_s3", name: "魷魚", subCategory: "海鮮", img: "https://lh3.googleusercontent.com/d/1bwoc-i2IWAdIppGR4-WSM3pDXt0eyhaJ" },
+    { id: "s_s4", name: "龍蝦", subCategory: "海鮮", img: "https://lh3.googleusercontent.com/d/1lcC9j41Nu-41CiskiXuUpFbuK8SkGHEk" },
+    { id: "s_s5", name: "螃蟹", subCategory: "海鮮", img: "https://lh3.googleusercontent.com/d/1Krm2MI_H2Z6ylxHGvjIlodI1roMroUrG" },
+    { id: "s_d1", name: "鳳梨酥", subCategory: "甜點", img: "https://lh3.googleusercontent.com/d/1r4c5evt2m0G_EYErpMs_R2vQ4FbQd5ph" },
+    { id: "s_d2", name: "太陽餅", subCategory: "甜點", img: "https://lh3.googleusercontent.com/d/14KtrqaoHr58u0O2T9UMW0o8O7xg4dyfH" },
+    { id: "s_d3", name: "蛋黃酥", subCategory: "甜點", img: "https://lh3.googleusercontent.com/d/1bR5bmPrzUoFQp9bRVLiRQk7AP2Db5zbT" },
+    { id: "s_m1", name: "牛肉", subCategory: "肉類", img: "https://lh3.googleusercontent.com/d/1DfbC-7gpPeS8qICTi5Ehzfu38q8JsU1L" },
+    { id: "s_m2", name: "雞肉", subCategory: "肉類", img: "https://lh3.googleusercontent.com/d/1_E1DmCSJ5NBuV77B2UwdkUyG0a6iWIfS" },
+    { id: "s_m3", name: "羊肉", subCategory: "肉類", img: "https://lh3.googleusercontent.com/d/1u5YaeAZjljGbnAU4cXlq6TWuOUZNOk__" },
+    { id: "s_m4", name: "豬肉", subCategory: "肉類", img: "https://lh3.googleusercontent.com/d/1qrie9cOTiVPccDRRyeYdnLS6W48TgCDn" },
+    { id: "s_o1", name: "平底鍋", subCategory: "其他", img: "https://lh3.googleusercontent.com/d/13FaFPdezUmqyeBPExSpeivuW0SOrsxNX" },
+    { id: "s_o2", name: "玫瑰", subCategory: "其他", img: "https://lh3.googleusercontent.com/d/13L77xUQlbqgfJO6MURcO0Q_8muKvLcsb" },
+    { id: "s_o3", name: "仙人掌", subCategory: "其他", img: "https://lh3.googleusercontent.com/d/11jdYlQqbbfxQBFAvpnR_0I568N16-y92" },
+    { id: "s_o4", name: "臭豆腐", subCategory: "其他", img: "https://lh3.googleusercontent.com/d/1aoQsAnFZlIQg8h4UTNp-c5s4mPg-w8bT" },
+    { id: "s_o5", name: "熱狗", subCategory: "其他", img: "https://lh3.googleusercontent.com/d/1ckNXLqYV01V4k-eBhcQfZ8XfCpX-dUKM" },
+    { id: "s_o6", name: "菜刀", subCategory: "其他", img: "https://lh3.googleusercontent.com/d/1asa3-A-P1zNPA6MYQI7ACggi28B3-Dgg" },
+    { id: "s_o7", name: "康乃馨", subCategory: "其他", img: "https://lh3.googleusercontent.com/d/1wmoj0mfsTtmnsXwSmR88GmIttUhiPX0J" },
+    { id: "s_o8", name: "雞排", subCategory: "其他", img: "https://lh3.googleusercontent.com/d/1xyqt_XkMf08PH1MaFPrA-Lsq7o5PiCAI" }
+  ];
+
+  // 母體庫：衣
+  const clothingMasterItems = [
+    { id: "c_1", name: "帽子", img: "https://lh3.googleusercontent.com/d/1IdWPzGoySkTyqI8ijmM3noPEOQX3E8QO" },
+    { id: "c_2", name: "眼鏡", img: "https://lh3.googleusercontent.com/d/18N7SL0YCwZjGb6zEK9vlxupZEYDA2opd" },
+    { id: "c_3", name: "口罩", img: "https://lh3.googleusercontent.com/d/1uG03a90VbIniLpYJnBAmnWPdw4cM0hAf" },
+    { id: "c_4", name: "安全帽", img: "https://lh3.googleusercontent.com/d/1Up2P6-ckmU2bSn0ffcKenRwhkMuoIFL8" },
+    { id: "c_5", name: "墨鏡", img: "https://lh3.googleusercontent.com/d/1jTtZxuYupDlpDfBK6inESna63YxPuT6h" },
+    { id: "c_6", name: "短袖上衣", img: "https://lh3.googleusercontent.com/d/1Wvb8FWd7jd_j2OgxybOn9HTYLt8PHPNI" },
+    { id: "c_7", name: "襯衫", img: "https://lh3.googleusercontent.com/d/1plzjFxLA9uPCawiqnvS8jOMFHe3WNA73" },
+    { id: "c_8", name: "毛衣", img: "https://lh3.googleusercontent.com/d/1KyjEpbv9PQHAI61GGFZd2eii7emJz0xZ" },
+    { id: "c_9", name: "外套", img: "https://lh3.googleusercontent.com/d/1hEQ3B4I9SctC_qOxcHDNBIhTc5kll996" },
+    { id: "c_10", name: "背心", img: "https://lh3.googleusercontent.com/d/19Ji-ExYz7bd1MTE638d9zA6k9OEXE4lQ" },
+    { id: "c_11", name: "球鞋", img: "https://lh3.googleusercontent.com/d/1sFzfbr0gX1AwNaB-Q5MQoGHi-KytMLpr" },
+    { id: "c_12", name: "拖鞋", img: "https://lh3.googleusercontent.com/d/1Ga4ujEsoTmrH4j5Tm0xC9adzEXrohg0I" },
+    { id: "c_13", name: "短襪", img: "https://lh3.googleusercontent.com/d/1qp5IkzIineSMxXRwyu5IDc8zUg_s1aaZ" },
+    { id: "c_14", name: "皮鞋", img: "https://lh3.googleusercontent.com/d/1OyD6upbcZ-He9uznDrqhKkw05Ph-SXsh" },
+    { id: "c_15", name: "靴子", img: "https://lh3.googleusercontent.com/d/1b_loi9_be_pNHiZZQIL3Ceq2Ipqdoys3" },
+    { id: "c_16", name: "羽絨衣", img: "https://lh3.googleusercontent.com/d/1I_-G1K2S_eHKICFp6TvTkMtvzTf9M_Ci" },
+    { id: "c_17", name: "圍巾", img: "https://lh3.googleusercontent.com/d/1rJdcXOklxqWIRgBVDqQtysz66Heo8Fgk" },
+    { id: "c_18", name: "毛帽", img: "https://lh3.googleusercontent.com/d/1BDT-LUQiAuCqa5zPu_nyPFNZ6me_zMwq" },
+    { id: "c_19", name: "厚手套", img: "https://lh3.googleusercontent.com/d/1_gIttMImqtdwMJLQcXM1DC5GNH451TOl" },
+    { id: "c_20", name: "發熱衣", img: "https://lh3.googleusercontent.com/d/1xK6njiR4Wi_6FHZO-NDrz7qVYQIVHc0V" },
+    { id: "c_21", name: "皮帶", img: "https://lh3.googleusercontent.com/d/1g0-SM5RbynZMnlYghRW7uMe6tCo3ABAy" },
+    { id: "c_22", name: "戒指", img: "https://lh3.googleusercontent.com/d/1aBHlPFpAk0MwiHIpTOztrwu0YyoVpw1b" },
+    { id: "c_23", name: "長襪", img: "https://lh3.googleusercontent.com/d/1dlDDDvhtMe-G-yl1EEWC2qJCK80jeu3z" },
+    { id: "c_24", name: "泳衣", img: "https://lh3.googleusercontent.com/d/12v3n5neRHKptEpQSr3IHY4hF5xc8MPbR" },
+    { id: "c_25", name: "牛仔褲", img: "https://lh3.googleusercontent.com/d/1KG8W5jdwy3ckb0Xsn6umhZhgbRHn94DJ" },
+    { id: "c_26", name: "手套", img: "https://lh3.googleusercontent.com/d/1kAsQDwQvJ7DdPDG9DA21tougBpoVa5rK" },
+    { id: "c_27", name: "無袖背心", img: "https://lh3.googleusercontent.com/d/1MMJpHXuL-AcMNe_fg5OvRLiwHLRMFlLr" },
+    { id: "c_28", name: "沙灘褲", img: "https://lh3.googleusercontent.com/d/1pYE8rRkWTEekZSG_MxM9Gz0Z3EgffJEF" },
+    { id: "c_29", name: "手錶", img: "https://lh3.googleusercontent.com/d/1lFrgGsdkZewDAEenJveY4Dh9WRhuxPtv" }
+  ];
+
+  const clothingQuestionsDef = [
+    { title: "哪些戴在頭或臉上？", prompt: UNIFIED_PROMPT, primaryBucket: "配件籃", correctNames: ["帽子", "眼鏡", "口罩", "安全帽", "墨鏡"], preferredDistractorNames: ["皮帶", "手錶", "戒指"] },
+    { title: "哪些穿在上半身？", prompt: UNIFIED_PROMPT, primaryBucket: "上衣籃", correctNames: ["短袖上衣", "襯衫", "毛衣", "外套", "背心"], preferredDistractorNames: ["牛仔褲", "長襪", "球鞋"] },
+    { title: "哪些穿在腳上？", prompt: UNIFIED_PROMPT, primaryBucket: "鞋襪籃", correctNames: ["球鞋", "拖鞋", "短襪", "皮鞋", "靴子"], preferredDistractorNames: ["手套", "口罩", "圍巾"] },
+    { title: "哪些適合冬天？", prompt: UNIFIED_PROMPT, primaryBucket: "冬衣籃", correctNames: ["羽絨衣", "圍巾", "毛帽", "厚手套", "發熱衣"], preferredDistractorNames: ["泳衣", "沙灘褲", "無袖背心"] }
+  ];
+
+  // 母體庫：住
+  const homeMasterItems = [
+    { id: "h_1", name: "蓮蓬頭", img: "https://lh3.googleusercontent.com/d/1ZBKbyU9t5F7CrCCH7St2V4oW-uU0DDds" },
+    { id: "h_2", name: "洗髮精", img: "https://lh3.googleusercontent.com/d/18eNrWlqSUMj-3vsKxnhT1tbiddtnTpb6" },
+    { id: "h_3", name: "毛巾", img: "https://lh3.googleusercontent.com/d/1yx95rZ_SNAbTWLKbnPttzuDWdu7hNcik" },
+    { id: "h_4", name: "肥皂", img: "https://lh3.googleusercontent.com/d/1wml-jgrfUyla0mSLQZnWcePtGvrXYsVn" },
+    { id: "h_5", name: "洗手台", img: "https://lh3.googleusercontent.com/d/1JN1BzgJ2iaBZ0k6cQSBESXDJ7v7d2WP0" },
+    { id: "h_6", name: "平底鍋", img: "https://lh3.googleusercontent.com/d/1qTa-pXz_YpBI4FiHcV9g6gXbl6TAQZ-Y" },
+    { id: "h_7", name: "枕頭", img: "https://lh3.googleusercontent.com/d/1O90DtPeUYWzNtDxZObNMigN3TpXvoafb" },
+    { id: "h_8", name: "微波爐", img: "https://lh3.googleusercontent.com/d/1589ywt6IhYWU9UoDY4_Zc5uCfdzNwRcK" },
+    { id: "h_9", name: "瓦斯爐", img: "https://lh3.googleusercontent.com/d/1PG8XCPyO8e4h7IFjU-nRLF4pHHEk0k4y" },
+    { id: "h_10", name: "砧板", img: "https://lh3.googleusercontent.com/d/118iqIGeoCyPhaoeprCJI_cPn9c2UWXw0" },
+    { id: "h_11", name: "菜刀", img: "https://lh3.googleusercontent.com/d/10135i0nJQPz7EYckwELIfoPfKAK1Wvle" },
+    { id: "h_12", name: "抽油煙機", img: "https://lh3.googleusercontent.com/d/1U2nE_KwUDdIVLYbTdSj6Ux2ZIOFpZZk9" },
+    { id: "h_13", name: "棉被", img: "https://lh3.googleusercontent.com/d/1Gwj0WLuPX7sm_LKBYPZHybJQGxsjoJvE" },
+    { id: "h_14", name: "安全帽", img: "https://lh3.googleusercontent.com/d/1xKRXJ66rGK_8Zdkg4p_tfcAJ-W0gGM_Q" },
+    { id: "h_15", name: "梳妝台", img: "https://lh3.googleusercontent.com/d/1Ie7nJPEScLgKfF7UC6hLOo1te1IEzjxz" },
+    { id: "h_16", name: "沙發", img: "https://lh3.googleusercontent.com/d/1lv7_Q1OQ5QIF9ffGaEm4ORGisa_b9z3T" },
+    { id: "h_17", name: "單人床", img: "https://lh3.googleusercontent.com/d/116-Zkvj26Os4vey6xtKCDZo4DanXYekb" },
+    { id: "h_18", name: "椅子", img: "https://lh3.googleusercontent.com/d/1XfY6eJ_zzb9_rQ3-gC3fy-eGSAQNJrOC" },
+    { id: "h_19", name: "躺椅", img: "https://lh3.googleusercontent.com/d/1ep5krbISyBHy4VR6FSDGxo4S5Tx9_E9g" },
+    { id: "h_20", name: "長凳", img: "https://lh3.googleusercontent.com/d/1LTGcyeGJzQp5gEWUIZ-zqNIiUQLeHXlw" },
+    { id: "h_21", name: "書櫃", img: "https://lh3.googleusercontent.com/d/15ZIS_KHqc_9AQB7clxJCZ_th0xHmUCpR" },
+    { id: "h_22", name: "洗衣機", img: "https://lh3.googleusercontent.com/d/19gIXCFZwUpEP6i9N68Bq-e7ECxJx92w4" },
+    { id: "h_23", name: "垃圾桶", img: "https://lh3.googleusercontent.com/d/11lUyBdjzrSasBixOYzXbP9t22HxXSaOW" },
+    { id: "h_24", name: "電風扇", img: "https://lh3.googleusercontent.com/d/1bN7H7nsTaaOil1UiYRsx_NJ1US2KMzMn" },
+    { id: "h_25", name: "吹風機", img: "https://lh3.googleusercontent.com/d/1Qbd_8pq_DfNu33iTUIQ_6ymGFkLx_BYi" },
+    { id: "h_26", name: "電鍋", img: "https://lh3.googleusercontent.com/d/1-CBzPRy7KCXh2UplwZUqCX4EgFAXLdR9" },
+    { id: "h_27", name: "吸塵器", img: "https://lh3.googleusercontent.com/d/184BSFJqTghdZdGxu-EZJ5Tlrox9spMi0" },
+    { id: "h_28", name: "掃把", img: "https://lh3.googleusercontent.com/d/1F6WyISNR8ZtPn0DeRvVPObTNZfwEBDZo" },
+    { id: "h_29", name: "雨傘", img: "https://lh3.googleusercontent.com/d/1JHCygv5RMt_644wiWQhPHvDdZv0TpkKA" },
+    { id: "h_30", name: "指甲剪", img: "https://lh3.googleusercontent.com/d/1JN1BzgJ2iaBZ0k6cQSBESXDJ7v7d2WP0" }
+  ];
+
+  const homeQuestionsDef = [
+    { title: "哪些在浴室？", prompt: UNIFIED_PROMPT, primaryBucket: "浴室用品籃", correctNames: ["蓮蓬頭", "洗髮精", "毛巾", "肥皂", "洗手台"], preferredDistractorNames: ["平底鍋", "枕頭", "微波爐"] },
+    { title: "哪些在廚房？", prompt: UNIFIED_PROMPT, primaryBucket: "廚房用品籃", correctNames: ["瓦斯爐", "砧板", "菜刀", "平底鍋", "抽油煙機"], preferredDistractorNames: ["棉被", "安全帽", "梳妝台"] },
+    { title: "哪些休息時可以坐或躺？", prompt: UNIFIED_PROMPT, primaryBucket: "家具籃", correctNames: ["沙發", "單人床", "椅子", "躺椅", "長凳"], preferredDistractorNames: ["書櫃", "洗衣機", "垃圾桶"] },
+    { title: "哪些是家用電器？", prompt: UNIFIED_PROMPT, primaryBucket: "家電籃", correctNames: ["電風扇", "微波爐", "吹風機", "電鍋", "吸塵器"], preferredDistractorNames: ["掃把", "雨傘", "指甲剪"] }
+  ];
+
+  // 母體庫：行
+  const trafficMasterItems = [
+    { id: "t_1", name: "公車", img: "https://lh3.googleusercontent.com/d/1eMytnOGbsgffA0TG4hP22szD5HKRNH2l" },
+    { id: "t_2", name: "計程車", img: "https://lh3.googleusercontent.com/d/1341qCH3gcQ8HKzSqxRUI2Zul-pqDIaMd" },
+    { id: "t_3", name: "機車", img: "https://lh3.googleusercontent.com/d/1No47oe7tTFR1Rba-FXy9PrtNbGdslHX6" },
+    { id: "t_4", name: "遊覽車", img: "https://lh3.googleusercontent.com/d/1icZDEXmjvmtBTxVEXcv8Cqeeyk66FTSM" },
+    { id: "t_5", name: "救護車", img: "https://lh3.googleusercontent.com/d/1TxhHLsl8-KlNAFOTI8JTp1YT_6xuA3Ap" },
+    { id: "t_6", name: "飛機", img: "https://lh3.googleusercontent.com/d/1fzK5j9vzcv9edjSLLyjEMY3-oO_gNa_8" },
+    { id: "t_7", name: "小船", img: "https://lh3.googleusercontent.com/d/1TN3gdaRweaHHEYdWe8FXn-PeAxTugsix" },
+    { id: "t_8", name: "潛水艇", img: "https://lh3.googleusercontent.com/d/1UuTFofL-lU-mkySihbE4iwTry2cWNhEP" },
+    { id: "t_9", name: "紅綠燈", img: "https://lh3.googleusercontent.com/d/1Xp9QNLSXiyMYmFzlL45vEEUAsqqWlsh_" },
+    { id: "t_10", name: "注意落石", img: "https://lh3.googleusercontent.com/d/19PV_pOoqN8S_IOTn-3OapeZ78ze7tHXj" },
+    { id: "t_11", name: "限速標誌", img: "https://lh3.googleusercontent.com/d/10FV1APaWYB-DtWXQd5kN-WoWP4yaNVTU" },
+    { id: "t_12", name: "隧道", img: "https://lh3.googleusercontent.com/d/1ZYXpZ9Qy-ka4Nq4jGA3jtz1eM5-kjXQI" },
+    { id: "t_13", name: "有柵門鐵路平交道", img: "https://lh3.googleusercontent.com/d/1Ge9_O6EOKbj508Jb49H2pvIwCxwZDLdk" },
+    { id: "t_14", name: "廣告看板", img: "https://lh3.googleusercontent.com/d/1eWPNA4hrjJpYzWn72FOmtAq1Jaj8y_Sh" },
+    { id: "t_15", name: "商家招牌", img: "https://lh3.googleusercontent.com/d/12eEJWudnjRbNXpSWrWWnnMjABMeF2Vp-" },
+    { id: "t_16", name: "店家旗幟", img: "https://lh3.googleusercontent.com/d/1HMdJESdqo94Dtq4nb4wtxgTfdRi1jQ1j" },
+    { id: "t_17", name: "火車", img: "https://lh3.googleusercontent.com/d/1F_ZVDR4TnWV8OaTX9NutcQrKnpHYEOfa" },
+    { id: "t_18", name: "捷運", img: "https://lh3.googleusercontent.com/d/1KaUCtpEz99hCN-B3k-rdOEze9rq5SLAU" },
+    { id: "t_19", name: "高鐵", img: "https://lh3.googleusercontent.com/d/1fD5k_FrC0CGkV6vK94URr0fE43VlKDDd" },
+    { id: "t_20", name: "腳踏車", img: "https://lh3.googleusercontent.com/d/1-hOvPPm1QJPtmtoL78fnOLBUW9_C-UXX" },
+    { id: "t_21", name: "三輪車", img: "https://lh3.googleusercontent.com/d/1CItQzIDDM8iUCrqgWzRF1Yn9uY9q-4JT" },
+    { id: "t_22", name: "汽車", img: "https://lh3.googleusercontent.com/d/1yE2lsu7KhxyhmTwXsVYiIEs3LWe3Vlgp" },
+    { id: "t_23", name: "熱氣球", img: "https://lh3.googleusercontent.com/d/1z1bWWXdU9xR411HFJ9BT6AVZMZyjYQum" },
+    { id: "t_24", name: "帆船", img: "https://lh3.googleusercontent.com/d/1aNc_TJ4O6QDrSybM88qf8s-Pva7buExW" },
+    { id: "t_25", name: "纜車", img: "https://lh3.googleusercontent.com/d/1JVwQ4MoQqWmDMEq3uC637KHpACAyo2UG" }
+  ];
+
+  const trafficQuestionsDef = [
+    { title: "哪些是在馬路上行駛的車？", prompt: UNIFIED_PROMPT, primaryBucket: "車輛籃", correctNames: ["公車", "計程車", "機車", "遊覽車", "救護車"], preferredDistractorNames: ["飛機", "小船", "潛水艇"] },
+    { title: "哪些是交通號誌？", prompt: UNIFIED_PROMPT, primaryBucket: "號誌籃", correctNames: ["紅綠燈", "注意落石", "限速標誌", "隧道", "有柵門鐵路平交道"], preferredDistractorNames: ["廣告看板", "商家招牌", "店家旗幟"] },
+    { title: "哪些是大眾運輸工具？", prompt: UNIFIED_PROMPT, primaryBucket: "大眾運輸籃", correctNames: ["公車", "火車", "捷運", "高鐵", "飛機"], preferredDistractorNames: ["腳踏車", "三輪車", "機車"] },
+    { title: "哪些有輪子？", prompt: UNIFIED_PROMPT, primaryBucket: "輪子籃", correctNames: ["腳踏車", "三輪車", "公車", "汽車", "機車"], preferredDistractorNames: ["熱氣球", "帆船", "纜車"] }
+  ];
+
+  // 全域狀態
+  let currentTier = 1;
+  let selectedCategory = "食";
+  let currentSubLevelIndex = 0;
+  let activeQuestion = null;
+  let selectedItemId = null;
+  let classifiedItems = {};
+  let placementHistory = [];
+  let currentRunScores = [0, 0, 0];
+  let isSubLevelFinished = false;
+
+  const lastDrawnMap = {}; 
+
+  let categoryTierUnlockedMap = {
+    "食": { 1: true, 2: false, 3: false },
+    "衣": { 1: true, 2: false, 3: false },
+    "住": { 1: true, 2: false, 3: false },
+    "行": { 1: true, 2: false, 3: false }
+  };
+
+  /* ================= 彩紙飄落機制 (每片 2~3.5 秒) ================= */
+  function startConfetti() {
+    stopConfetti();
+    const container = document.getElementById("confetti-container");
+    if (!container) return;
+
+    const colors = ["#4F7058", "#F59E0B", "#E5C365", "#A8C2A5", "#FBBF24", "#6E8075", "#EF4444", "#3B82F6"];
+    const pieceCount = 40;
+
+    for (let i = 0; i < pieceCount; i++) {
+      const piece = document.createElement("div");
+      piece.className = "confetti-piece";
+      const color = colors[Math.floor(Math.random() * colors.length)];
+      const left = Math.random() * 100;
+      const duration = 2.0 + Math.random() * 1.5;
+      const delay = Math.random() * 1.5;
+      const width = 8 + Math.random() * 6;
+      const height = 14 + Math.random() * 10;
+
+      piece.style.backgroundColor = color;
+      piece.style.left = `${left}%`;
+      piece.style.width = `${width}px`;
+      piece.style.height = `${height}px`;
+      piece.style.animationDuration = `${duration}s`;
+      piece.style.animationDelay = `${delay}s`;
+
+      container.appendChild(piece);
+    }
+  }
+
+  function stopConfetti() {
+    const container = document.getElementById("confetti-container");
+    if (container) container.innerHTML = "";
+  }
+
+  function getThemeBucketIcon(category) {
+    switch(category) {
+      case "食":
+        return `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 10V20a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V10"/><path d="M4 10h16"/><path d="M12 4a4 4 0 0 0-4 4v2h8V8a4 4 0 0 0-4-4z"/></svg>`;
+      case "衣":
+        return `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9l1.2 10.2a2 2 0 0 0 2 1.8h7.6a2 2 0 0 0 2-1.8L19 9"/><path d="M3 9h18"/><path d="M9 13v4"/><path d="M12 13v4"/><path d="M15 13v4"/><path d="M12 3a3 3 0 0 1 3 3v3H9V6a3 3 0 0 1 3-3z"/></svg>`;
+      case "住":
+        return `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="9" width="18" height="11" rx="2"/><path d="M2 5h20v4H2z"/><path d="M10 13h4"/></svg>`;
+      case "行":
+        return `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10l9-6 9 6v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V10z"/><path d="M7 13h10"/><path d="M7 16h10"/><path d="M7 19h10"/></svg>`;
+      default:
+        return `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="9" width="18" height="11" rx="2"/><path d="M2 5h20v4H2z"/></svg>`;
+    }
+  }
+
+  function shuffleArray(array) {
+    const arr = [...array];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  function getRandomSubarray(arr, count) {
+    return shuffleArray(arr).slice(0, count);
+  }
+
+  function getDrawnKey(category, tier, subIdx) {
+    return `${category}_${tier}_${subIdx}`;
+  }
+
+  function isSameCombination(itemsA, namesB) {
+    if (!namesB || itemsA.length !== namesB.length) return false;
+    const setA = new Set(itemsA.map(i => i.name));
+    return namesB.every(name => setA.has(name));
+  }
+
+  // 出題邏輯
+  function generateFoodQuestion(tier, subIdx) {
+    const targetCorrectCount = tier === 1 ? 2 : (tier === 2 ? 3 : 4);
+    const targetDistractorCount = tier === 1 ? 2 : (tier === 2 ? 3 : 4);
+    const key = getDrawnKey("食", tier, subIdx);
+    const lastNames = lastDrawnMap[key];
+
+    const allSubCategories = ["甜點", "蔬菜", "水果", "海鮮", "肉類"];
+    const validSubCategories = allSubCategories.filter(subCat => {
+      const count = foodMasterItems.filter(item => item.subCategory === subCat).length;
+      return count >= targetCorrectCount;
+    });
+
+    let chosenSubCategory = "";
+    let selectedCorrect = [];
+    let selectedDistractors = [];
+
+    for (let attempt = 0; attempt < 20; attempt++) {
+      chosenSubCategory = validSubCategories[Math.floor(Math.random() * validSubCategories.length)];
+      const correctCandidates = foodMasterItems.filter(item => item.subCategory === chosenSubCategory);
+      const distractorCandidates = foodMasterItems.filter(item => item.subCategory !== chosenSubCategory);
+
+      selectedCorrect = getRandomSubarray(correctCandidates, targetCorrectCount);
+      selectedDistractors = getRandomSubarray(distractorCandidates, targetDistractorCount);
+
+      const candidateItems = [...selectedCorrect, ...selectedDistractors];
+      if (!lastNames || !isSameCombination(candidateItems, lastNames)) {
+        break;
+      }
+    }
+
+    const candidateItems = [...selectedCorrect, ...selectedDistractors];
+    lastDrawnMap[key] = candidateItems.map(i => i.name);
+
+    const mappedCorrect = selectedCorrect.map(item => ({
+      id: `${item.id}_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+      name: item.name,
+      img: item.img,
+      isCorrect: true
+    }));
+
+    const mappedDistractors = selectedDistractors.map(item => ({
+      id: `${item.id}_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+      name: item.name,
+      img: item.img,
+      isCorrect: false
+    }));
+
+    return {
+      category: "食",
+      level: tier,
+      title: `哪些是${chosenSubCategory}？`,
+      prompt: UNIFIED_PROMPT,
+      primaryBucket: `${chosenSubCategory}籃`,
+      items: shuffleArray([...mappedCorrect, ...mappedDistractors])
+    };
+  }
+
+  function generateClothingQuestion(tier, subIdx) {
+    const targetCorrectCount = tier === 1 ? 2 : (tier === 2 ? 3 : 4);
+    const targetDistractorCount = tier === 1 ? 2 : (tier === 2 ? 3 : 4);
+    const key = getDrawnKey("衣", tier, subIdx);
+    const lastNames = lastDrawnMap[key];
+
+    let qDef = null;
+    let selectedCorrect = [];
+    let selectedDistractors = [];
+
+    for (let attempt = 0; attempt < 20; attempt++) {
+      qDef = clothingQuestionsDef[Math.floor(Math.random() * clothingQuestionsDef.length)];
+      const correctSet = new Set(qDef.correctNames);
+      const preferredSet = new Set(qDef.preferredDistractorNames);
+
+      const correctCandidates = clothingMasterItems.filter(item => correctSet.has(item.name));
+      const preferredCandidates = clothingMasterItems.filter(item => preferredSet.has(item.name) && !correctSet.has(item.name));
+      const otherCandidates = clothingMasterItems.filter(item => !correctSet.has(item.name) && !preferredSet.has(item.name));
+
+      selectedCorrect = getRandomSubarray(correctCandidates, targetCorrectCount);
+
+      let chosenDistractorItems = getRandomSubarray(preferredCandidates, Math.min(preferredCandidates.length, targetDistractorCount));
+      if (chosenDistractorItems.length < targetDistractorCount) {
+        const needed = targetDistractorCount - chosenDistractorItems.length;
+        const extraDistractors = getRandomSubarray(otherCandidates, needed);
+        chosenDistractorItems = [...chosenDistractorItems, ...extraDistractors];
+      }
+      selectedDistractors = chosenDistractorItems;
+
+      const candidateItems = [...selectedCorrect, ...selectedDistractors];
+      if (!lastNames || !isSameCombination(candidateItems, lastNames)) {
+        break;
+      }
+    }
+
+    const candidateItems = [...selectedCorrect, ...selectedDistractors];
+    lastDrawnMap[key] = candidateItems.map(i => i.name);
+
+    const mappedCorrect = selectedCorrect.map(item => ({
+      id: `${item.id}_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+      name: item.name,
+      img: item.img,
+      isCorrect: true
+    }));
+
+    const mappedDistractors = selectedDistractors.map(item => ({
+      id: `${item.id}_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+      name: item.name,
+      img: item.img,
+      isCorrect: false
+    }));
+
+    return {
+      category: "衣",
+      level: tier,
+      title: qDef.title,
+      prompt: UNIFIED_PROMPT,
+      primaryBucket: qDef.primaryBucket,
+      items: shuffleArray([...mappedCorrect, ...mappedDistractors])
+    };
+  }
+
+  function generateHomeQuestion(tier, subIdx) {
+    const targetCorrectCount = tier === 1 ? 2 : (tier === 2 ? 3 : 4);
+    const targetDistractorCount = tier === 1 ? 2 : (tier === 2 ? 3 : 4);
+    const key = getDrawnKey("住", tier, subIdx);
+    const lastNames = lastDrawnMap[key];
+
+    let qDef = null;
+    let selectedCorrect = [];
+    let selectedDistractors = [];
+
+    for (let attempt = 0; attempt < 20; attempt++) {
+      qDef = homeQuestionsDef[Math.floor(Math.random() * homeQuestionsDef.length)];
+      const correctSet = new Set(qDef.correctNames);
+      const preferredSet = new Set(qDef.preferredDistractorNames);
+
+      const correctCandidates = homeMasterItems.filter(item => correctSet.has(item.name));
+      const preferredCandidates = homeMasterItems.filter(item => preferredSet.has(item.name) && !correctSet.has(item.name));
+      const otherCandidates = homeMasterItems.filter(item => !correctSet.has(item.name) && !preferredSet.has(item.name));
+
+      selectedCorrect = getRandomSubarray(correctCandidates, targetCorrectCount);
+
+      let chosenDistractorItems = getRandomSubarray(preferredCandidates, Math.min(preferredCandidates.length, targetDistractorCount));
+      if (chosenDistractorItems.length < targetDistractorCount) {
+        const needed = targetDistractorCount - chosenDistractorItems.length;
+        const extraDistractors = getRandomSubarray(otherCandidates, needed);
+        chosenDistractorItems = [...chosenDistractorItems, ...extraDistractors];
+      }
+      selectedDistractors = chosenDistractorItems;
+
+      const candidateItems = [...selectedCorrect, ...selectedDistractors];
+      if (!lastNames || !isSameCombination(candidateItems, lastNames)) {
+        break;
+      }
+    }
+
+    const candidateItems = [...selectedCorrect, ...selectedDistractors];
+    lastDrawnMap[key] = candidateItems.map(i => i.name);
+
+    const mappedCorrect = selectedCorrect.map(item => ({
+      id: `${item.id}_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+      name: item.name,
+      img: item.img,
+      isCorrect: true
+    }));
+
+    const mappedDistractors = selectedDistractors.map(item => ({
+      id: `${item.id}_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+      name: item.name,
+      img: item.img,
+      isCorrect: false
+    }));
+
+    return {
+      category: "住",
+      level: tier,
+      title: qDef.title,
+      prompt: UNIFIED_PROMPT,
+      primaryBucket: qDef.primaryBucket,
+      items: shuffleArray([...mappedCorrect, ...mappedDistractors])
+    };
+  }
+
+  function generateTrafficQuestion(tier, subIdx) {
+    const targetCorrectCount = tier === 1 ? 2 : (tier === 2 ? 3 : 4);
+    const targetDistractorCount = tier === 1 ? 2 : (tier === 2 ? 3 : 4);
+    const key = getDrawnKey("行", tier, subIdx);
+    const lastNames = lastDrawnMap[key];
+
+    let qDef = null;
+    let selectedCorrect = [];
+    let selectedDistractors = [];
+
+    for (let attempt = 0; attempt < 20; attempt++) {
+      qDef = trafficQuestionsDef[Math.floor(Math.random() * trafficQuestionsDef.length)];
+      const correctSet = new Set(qDef.correctNames);
+      const preferredSet = new Set(qDef.preferredDistractorNames);
+
+      const correctCandidates = trafficMasterItems.filter(item => correctSet.has(item.name));
+      const preferredCandidates = trafficMasterItems.filter(item => preferredSet.has(item.name) && !correctSet.has(item.name));
+      const otherCandidates = trafficMasterItems.filter(item => !correctSet.has(item.name) && !preferredSet.has(item.name));
+
+      selectedCorrect = getRandomSubarray(correctCandidates, targetCorrectCount);
+
+      let chosenDistractorItems = getRandomSubarray(preferredCandidates, Math.min(preferredCandidates.length, targetDistractorCount));
+      if (chosenDistractorItems.length < targetDistractorCount) {
+        const needed = targetDistractorCount - chosenDistractorItems.length;
+        const extraDistractors = getRandomSubarray(otherCandidates, needed);
+        chosenDistractorItems = [...chosenDistractorItems, ...extraDistractors];
+      }
+      selectedDistractors = chosenDistractorItems;
+
+      const candidateItems = [...selectedCorrect, ...selectedDistractors];
+      if (!lastNames || !isSameCombination(candidateItems, lastNames)) {
+        break;
+      }
+    }
+
+    const candidateItems = [...selectedCorrect, ...selectedDistractors];
+    lastDrawnMap[key] = candidateItems.map(i => i.name);
+
+    const mappedCorrect = selectedCorrect.map(item => ({
+      id: `${item.id}_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+      name: item.name,
+      img: item.img,
+      isCorrect: true
+    }));
+
+    const mappedDistractors = selectedDistractors.map(item => ({
+      id: `${item.id}_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+      name: item.name,
+      img: item.img,
+      isCorrect: false
+    }));
+
+    return {
+      category: "行",
+      level: tier,
+      title: qDef.title,
+      prompt: UNIFIED_PROMPT,
+      primaryBucket: qDef.primaryBucket,
+      items: shuffleArray([...mappedCorrect, ...mappedDistractors])
+    };
+  }
+
+  // 初始化網頁
+  window.addEventListener('DOMContentLoaded', () => {
+    categoryTierUnlockedMap = {
+      "食": { 1: true, 2: false, 3: false },
+      "衣": { 1: true, 2: false, 3: false },
+      "住": { 1: true, 2: false, 3: false },
+      "行": { 1: true, 2: false, 3: false }
+    };
+    renderTierCards();
+  });
+
+  function isCategoryTierUnlocked(category, tier) {
+    if (tier === 1) return true;
+    return !!(categoryTierUnlockedMap[category] && categoryTierUnlockedMap[category][tier]);
+  }
+
+  function isTierUnlockedAny(tier) {
+    if (tier === 1) return true;
+    return ["食", "衣", "住", "行"].some(cat => isCategoryTierUnlocked(cat, tier));
+  }
+
+  // 第一層：等級選擇
+  function renderTierCards() {
+    const container = document.getElementById("level-cards-container");
+    if (!container) return;
+
+    const tierInfo = [
+      { tier: 1, rank: "等級一", name: "入門", desc: "從 4 個物品中找出 2 個正確物品。", defaultTag: "難度低", class: "level-1-card", easyTagClass: "tag-easy" },
+      { tier: 2, rank: "等級二", name: "進階", desc: "從 6 個物品中找出 3 個正確物品。", defaultTag: "難度中", class: "level-2-card", easyTagClass: "tag-medium" },
+      { tier: 3, rank: "等級三", name: "挑戰", desc: "從 8 個物品中找出 4 個正確物品。", defaultTag: "難度高", class: "level-3-card", easyTagClass: "tag-hard" }
+    ];
+
+    container.innerHTML = tierInfo.map(info => {
+      const unlocked = isTierUnlockedAny(info.tier);
+      let cardClass = `level-entry-card ${info.class}`;
+      if (!unlocked) cardClass += " level-locked";
+
+      let tagHtml = `<span class="difficulty-tag ${info.easyTagClass}">${info.defaultTag}</span>`;
+      if (!unlocked) {
+        tagHtml = `<span class="difficulty-tag tag-locked">尚未解鎖</span>`;
+      }
+
+      let btnText = unlocked ? "選擇此等級 ❯" : "尚未解鎖";
+      const lockOverlayHtml = !unlocked ? `
+        <div class="locked-center-overlay" title="尚未解鎖">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#35473C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+        </div>
+      ` : '';
+
+      return `
+        <div class="${cardClass}" onclick="handleTierCardClick(${info.tier})">
+          ${lockOverlayHtml}
+          <div class="level-num-box">${info.tier}</div>
+          <div class="level-card-info">
+            <div class="level-card-header">
+              <h3 class="level-card-title">
+                <span class="level-rank">${info.rank}</span>
+                <span class="level-name">${info.name}</span>
+              </h3>
+              ${tagHtml}
+            </div>
+            <p class="level-desc">${info.desc}</p>
+            <div class="level-card-footer">
+              <button class="btn-level-start" ${!unlocked ? 'disabled' : ''}>${btnText}</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function handleTierCardClick(tier) {
+    if (!isTierUnlockedAny(tier)) {
+      showLockedNotice(tier);
+      return;
+    }
+    currentTier = tier;
+    renderCategoryCards();
+
+    document.getElementById("intro-screen").style.display = "none";
+    document.getElementById("category-screen").style.display = "flex";
+
+    const tierNames = { 1: "等級一", 2: "等級二", 3: "等級三" };
+    document.getElementById("selected-tier-title").innerText = tierNames[tier];
+  }
+
+  function showLockedNotice(tier) {
+    const descEl = document.getElementById("modal-locked-desc");
+    if (descEl) {
+      descEl.innerText = "請先完成此主題前一等級的三關滿分。";
+    }
+    showModal('modal-locked');
+  }
+
+  // 第二層：主題選擇
+  function renderCategoryCards() {
+    const grid = document.getElementById("category-cards-grid");
+    if (!grid) return;
+
+    const categories = [
+      { name: "食", desc: "水果、蔬菜、海鮮、甜點、肉類", img: "https://lh3.googleusercontent.com/d/13SmepkMY9oDmTm98bS4y_J9CdiTJJF1e" },
+      { name: "衣", desc: "配件、上衣、鞋襪、保暖衣物", img: "https://lh3.googleusercontent.com/d/1IdWPzGoySkTyqI8ijmM3noPEOQX3E8QO" },
+      { name: "住", desc: "浴室用品、廚房用品、家用電器", img: "https://lh3.googleusercontent.com/d/1ZBKbyU9t5F7CrCCH7St2V4oW-uU0DDds" },
+      { name: "行", desc: "車輛、交通號誌、大眾運輸", img: "https://lh3.googleusercontent.com/d/1eMytnOGbsgffA0TG4hP22szD5HKRNH2l" }
+    ];
+
+    grid.innerHTML = categories.map(cat => {
+      const unlocked = isCategoryTierUnlocked(cat.name, currentTier);
+      let cardClass = "category-card";
+      if (!unlocked) cardClass += " category-locked";
+
+      let btnText = unlocked ? "開始遊戲 ❯" : "尚未解鎖";
+      let lockOverlayHtml = !unlocked ? `
+        <div class="locked-center-overlay" title="尚未解鎖">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#35473C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+        </div>
+      ` : '';
+
+      return `
+        <div class="${cardClass}" onclick="handleCategoryCardClick('${cat.name}')">
+          ${lockOverlayHtml}
+          <img src="${cat.img}" alt="${cat.name}" class="category-card-img">
+          <div class="category-card-body">
+            <h3 class="category-card-title">${cat.name}</h3>
+            <p class="category-card-desc">${cat.desc}</p>
+            <button class="btn-category-start" ${!unlocked ? 'disabled' : ''}>${btnText}</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function handleCategoryCardClick(category) {
+    if (!isCategoryTierUnlocked(category, currentTier)) {
+      const descEl = document.getElementById("modal-locked-desc");
+      if (descEl) {
+        descEl.innerText = "請先完成此主題前一等級的三關滿分。";
+      }
+      showModal('modal-locked');
+      return;
+    }
+    selectCategoryAndStart(category);
+  }
+
+  function selectCategoryAndStart(category) {
+    selectedCategory = category;
+    currentSubLevelIndex = 0;
+    currentRunScores = [0, 0, 0];
+    hasPlayedApplauseForRun = false;
+
+    stopConfetti();
+    document.getElementById("category-screen").style.display = "none";
+    document.getElementById("summary-screen").style.display = "none";
+    document.getElementById("game-main").style.display = "flex";
+
+    loadSubLevel(currentSubLevelIndex);
+  }
+
+  // 修正：返回「第二層（選擇其他主題）」
+  function goBackToCategorySelect() {
+    stopConfetti();
+    document.getElementById("game-main").style.display = "none";
+    document.getElementById("summary-screen").style.display = "none";
+    document.getElementById("intro-screen").style.display = "none"; // 隱藏第一層
+    document.getElementById("category-screen").style.display = "flex"; // 顯示第二層
+    renderCategoryCards();
+  }
+
+  // 修正：返回「第一層（選擇等級）」
+  function goBackToTierSelect() {
+    stopConfetti();
+    document.getElementById("game-main").style.display = "none";
+    document.getElementById("summary-screen").style.display = "none";
+    document.getElementById("category-screen").style.display = "none"; // 隱藏第二層
+    document.getElementById("intro-screen").style.display = "flex"; // 顯示第一層
+    renderTierCards();
+  }
+
+  // 1. 強制跳轉至「主要遊戲分類（圖三 level_select）」
+  function goToMainCategory() {
+    var baseUrl = "<?= baseUrl ?>";
+    window.top.location.href = baseUrl + "?page=level_select";
+  }
+
+  // 2. 舊有的 navTo 函式防呆（防止別的地方呼叫到）
+  function navTo(pageKey) {
+    goToMainCategory();
+  }
+
+  // 3. 返回上一層函式防呆
+  function goBackToPreviousLayer() {
+    goToMainCategory();
+  }
+
+  function getTierName(tier) {
+    if (tier === 1) return "等級一";
+    if (tier === 2) return "等級二";
+    return "等級三";
+  }
+
+  function getCategoryFullName(cat) {
+    if (cat === "食") return "飲食主題";
+    if (cat === "衣") return "服飾主題";
+    if (cat === "住") return "居家主題";
+    return "交通主題";
+  }
+
+  // 第三層：載入關卡與卡片控制
+  function loadSubLevel(subIdx) {
+    currentSubLevelIndex = subIdx;
+    isSubLevelFinished = false;
+
+    if (selectedCategory === "食") {
+      activeQuestion = generateFoodQuestion(currentTier, subIdx);
+    } else if (selectedCategory === "衣") {
+      activeQuestion = generateClothingQuestion(currentTier, subIdx);
+    } else if (selectedCategory === "住") {
+      activeQuestion = generateHomeQuestion(currentTier, subIdx);
+    } else if (selectedCategory === "行") {
+      activeQuestion = generateTrafficQuestion(currentTier, subIdx);
+    }
+
+    selectedItemId = null;
+    classifiedItems = {};
+    placementHistory = [];
+
+    for (let i = 0; i < 3; i++) {
+      const navBtn = document.getElementById(`nav-btn-${i + 1}`);
+      if (navBtn) {
+        if (i === subIdx) navBtn.classList.add("active");
+        else navBtn.classList.remove("active");
+      }
+    }
+
+    document.getElementById("game-header-title").innerText = getTierName(currentTier);
+    document.getElementById("question-title").innerText = activeQuestion.title;
+    document.getElementById("question-subtext").innerText = UNIFIED_PROMPT;
+    
+    document.getElementById("feedback-toast").innerText = "";
+    document.getElementById("feedback-toast").className = "feedback-toast";
+
+    document.getElementById("btn-finish-level").style.display = "inline-block";
+    document.getElementById("btn-next-level").style.display = "none";
+
+    const stdGrid = document.getElementById("standard-cards-grid");
+    stdGrid.className = `cards-grid level-${currentTier}`;
+
+    const iconEl = document.getElementById("bucket-icon");
+    if (iconEl) {
+      iconEl.innerHTML = getThemeBucketIcon(selectedCategory);
+    }
+
+    let basketTitle = activeQuestion.primaryBucket || "收納區";
+    document.getElementById("bucket-primary-text").innerText = basketTitle;
+
+    updateBucketHints(false);
+    updateUndoButtonState();
+    renderStandardCardGrid();
+    renderFolderContents();
+  }
+
+  function handleNavClick(targetSubIdx) {
+    const targetZeroIdx = targetSubIdx - 1;
+    if (targetZeroIdx === currentSubLevelIndex) return;
+
+    showModal('modal-step-by-step');
+  }
+
+  function renderStandardCardGrid() {
+    const grid = document.getElementById("standard-cards-grid");
+    grid.innerHTML = "";
+
+    activeQuestion.items.forEach(item => {
+      if (classifiedItems[item.id] && classifiedItems[item.id].inBasket) return;
+
+      const card = document.createElement("div");
+      card.className = "item-card";
+      card.id = `card-${item.id}`;
+
+      if (selectedItemId === item.id) card.classList.add("selected");
+
+      card.innerHTML = `
+        <img src="${item.img}" alt="${item.name}" onerror="this.onerror=null;this.src='https://via.placeholder.com/150/78947D/FFFFFF?text=${encodeURIComponent(item.name)}';">
+        <div class="item-label">${item.name}</div>
+      `;
+
+      initCardDragAndClick(card, item);
+      grid.appendChild(card);
+    });
+  }
+
+  function selectCard(itemId) {
+    if (isSubLevelFinished || (classifiedItems[itemId] && classifiedItems[itemId].inBasket)) return;
+
+    playFlipSound(); // 點擊尚未翻開的卡牌觸發翻牌音效
+
+    selectedItemId = itemId;
+    activeQuestion.items.forEach(item => {
+      const card = document.getElementById(`card-${item.id}`);
+      if (card && (!classifiedItems[item.id] || !classifiedItems[item.id].inBasket)) {
+        if (item.id === itemId) card.classList.add("selected");
+        else card.classList.remove("selected");
+      }
+    });
+
+    const item = activeQuestion.items.find(i => i.id === itemId);
+    const basketTitle = document.getElementById("bucket-primary-text").innerText;
+    showFeedback(`已選擇「${item.name}」，點擊【${basketTitle}】或拖進收納區即可歸頭`, "correct");
+    updateBucketHints(true);
+  }
+
+  function initCardDragAndClick(card, item) {
+    let startX = 0, startY = 0;
+    let isDragging = false;
+    let ghostEl = null;
+
+    const handlePointerDown = (e) => {
+      if (isSubLevelFinished) return;
+      if (e.button !== undefined && e.button !== 0) return;
+
+      startX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
+      startY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
+      isDragging = false;
+
+      const handlePointerMove = (e) => {
+        if (isSubLevelFinished) return;
+        const currentX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
+        const currentY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
+        const dist = Math.hypot(currentX - startX, currentY - startY);
+
+        if (dist > 8 && !isDragging) {
+          isDragging = true;
+          selectCard(item.id);
+
+          ghostEl = card.cloneNode(true);
+          ghostEl.id = "drag-ghost";
+          ghostEl.style.position = "fixed";
+          ghostEl.style.width = `${card.offsetWidth}px`;
+          ghostEl.style.height = `${card.offsetHeight}px`;
+          ghostEl.style.left = `${currentX - card.offsetWidth / 2}px`;
+          ghostEl.style.top = `${currentY - card.offsetHeight / 2}px`;
+          ghostEl.style.pointerEvents = "none";
+          ghostEl.style.zIndex = "9999";
+          ghostEl.style.opacity = "0.9";
+          ghostEl.style.boxShadow = "0 10px 20px rgba(0,0,0,0.2)";
+          document.body.appendChild(ghostEl);
+        }
+
+        if (isDragging && ghostEl) {
+          if (e.cancelable) e.preventDefault();
+          ghostEl.style.left = `${currentX - card.offsetWidth / 2}px`;
+          ghostEl.style.top = `${currentY - card.offsetHeight / 2}px`;
+
+          const elemBelow = document.elementFromPoint(currentX, currentY);
+          const bPrimary = document.getElementById("bucket-primary");
+
+          if (bPrimary && bPrimary.contains(elemBelow)) {
+            bPrimary.classList.add("drag-over");
+          } else if (bPrimary) {
+            bPrimary.classList.remove("drag-over");
+          }
+        }
+      };
+
+      const handlePointerUp = (e) => {
+        window.removeEventListener("mousemove", handlePointerMove);
+        window.removeEventListener("mouseup", handlePointerUp);
+        window.removeEventListener("touchmove", handlePointerMove);
+        window.removeEventListener("touchend", handlePointerUp);
+
+        const bPrimary = document.getElementById("bucket-primary");
+        if (bPrimary) bPrimary.classList.remove("drag-over");
+
+        if (isDragging) {
+          if (ghostEl && ghostEl.parentNode) ghostEl.parentNode.removeChild(ghostEl);
+
+          const endX = e.clientX || (e.changedTouches && e.changedTouches[0].clientX) || startX;
+          const endY = e.clientY || (e.changedTouches && e.changedTouches[0].clientY) || startY;
+          const elemBelow = document.elementFromPoint(endX, endY);
+
+          if (bPrimary && bPrimary.contains(elemBelow)) {
+            classifyItemIntoBasket(item.id);
+          }
+        } else {
+          selectCard(item.id);
+        }
+      };
+
+      window.addEventListener("mousemove", handlePointerMove, { passive: false });
+      window.addEventListener("mouseup", handlePointerUp);
+      window.addEventListener("touchmove", handlePointerMove, { passive: false });
+      window.addEventListener("touchend", handlePointerUp);
+    };
+
+    card.addEventListener("mousedown", handlePointerDown);
+    card.addEventListener("touchstart", handlePointerDown, { passive: false });
+  }
+
+  function handleBucketClick(isPrimaryChosen) {
+    if (isSubLevelFinished) return;
+    if (isPrimaryChosen) classifyItemIntoBasket(selectedItemId);
+  }
+
+  function classifyItemIntoBasket(itemId) {
+    if (isSubLevelFinished) return;
+    if (!itemId) {
+      showFeedback("請先點選或拖曳上方的物品卡片", "incorrect");
+      return;
+    }
+    if (classifiedItems[itemId] && classifiedItems[itemId].inBasket) return;
+
+    const item = activeQuestion.items.find(i => i.id === itemId);
+    if (!item) return;
+
+    classifiedItems[itemId] = { inBasket: true };
+    placementHistory.push(itemId);
+
+    playMatchSound(); // 成功將物品歸類觸發配對音效 (內部包含 0.4 秒延遲)
+
+    selectedItemId = null;
+    updateBucketHints(false);
+    updateUndoButtonState();
+
+    showFeedback(`已將「${item.name}」放入收納區`, "correct");
+    renderStandardCardGrid();
+    renderFolderContents();
+  }
+
+  function undoLastClassification(e) {
+    if (e) e.stopPropagation();
+    if (isSubLevelFinished || placementHistory.length === 0) return;
+
+    const lastItemId = placementHistory.pop();
+    const item = activeQuestion.items.find(i => i.id === lastItemId);
+
+    if (classifiedItems[lastItemId]) {
+      delete classifiedItems[lastItemId];
+    }
+
+    updateUndoButtonState();
+    renderStandardCardGrid();
+    renderFolderContents();
+
+    if (item) {
+      showFeedback(`已撤回最近放置的「${item.name}」`, "correct");
+    }
+  }
+
+  function initFolderCardDragAndClick(card, item) {
+    let startX = 0, startY = 0;
+    let isDragging = false;
+    let ghostEl = null;
+
+    const handlePointerDown = (e) => {
+      if (isSubLevelFinished) return;
+      if (e.button !== undefined && e.button !== 0) return;
+      e.stopPropagation();
+
+      startX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
+      startY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
+      isDragging = false;
+
+      const candidateGrid = document.getElementById("standard-cards-grid");
+
+      const handlePointerMove = (e) => {
+        if (isSubLevelFinished) return;
+        const currentX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
+        const currentY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
+        const dist = Math.hypot(currentX - startX, currentY - startY);
+
+        if (dist > 8 && !isDragging) {
+          isDragging = true;
+          ghostEl = card.cloneNode(true);
+          ghostEl.id = "drag-ghost-folder";
+          ghostEl.style.position = "fixed";
+          ghostEl.style.width = `${card.offsetWidth}px`;
+          ghostEl.style.height = `${card.offsetHeight}px`;
+          ghostEl.style.left = `${currentX - card.offsetWidth / 2}px`;
+          ghostEl.style.top = `${currentY - card.offsetHeight / 2}px`;
+          ghostEl.style.pointerEvents = "none";
+          ghostEl.style.zIndex = "9999";
+          ghostEl.style.opacity = "0.9";
+          ghostEl.style.boxShadow = "0 10px 20px rgba(0,0,0,0.2)";
+          document.body.appendChild(ghostEl);
+          card.style.opacity = "0.3";
+        }
+
+        if (isDragging && ghostEl) {
+          if (e.cancelable) e.preventDefault();
+          ghostEl.style.left = `${currentX - card.offsetWidth / 2}px`;
+          ghostEl.style.top = `${currentY - card.offsetHeight / 2}px`;
+
+          const elemBelow = document.elementFromPoint(currentX, currentY);
+          if (candidateGrid && (candidateGrid.contains(elemBelow) || elemBelow === candidateGrid)) {
+            candidateGrid.classList.add("drag-over-candidate");
+          } else if (candidateGrid) {
+            candidateGrid.classList.remove("drag-over-candidate");
+          }
+        }
+      };
+
+      const handlePointerUp = (e) => {
+        window.removeEventListener("mousemove", handlePointerMove);
+        window.removeEventListener("mouseup", handlePointerUp);
+        window.removeEventListener("touchmove", handlePointerMove);
+        window.removeEventListener("touchend", handlePointerUp);
+
+        if (candidateGrid) candidateGrid.classList.remove("drag-over-candidate");
+        card.style.opacity = "1";
+
+        if (isDragging) {
+          if (ghostEl && ghostEl.parentNode) ghostEl.parentNode.removeChild(ghostEl);
+
+          const endX = e.clientX || (e.changedTouches && e.changedTouches[0].clientX) || startX;
+          const endY = e.clientY || (e.changedTouches && e.changedTouches[0].clientY) || startY;
+          const elemBelow = document.elementFromPoint(endX, endY);
+          const gameWorkspace = document.getElementById("game-workspace");
+
+          if (candidateGrid && (candidateGrid.contains(elemBelow) || elemBelow === candidateGrid || (gameWorkspace && gameWorkspace.contains(elemBelow) && !document.getElementById("bucket-primary").contains(elemBelow)))) {
+            delete classifiedItems[item.id];
+            placementHistory = placementHistory.filter(id => id !== item.id);
+
+            updateUndoButtonState();
+            renderStandardCardGrid();
+            renderFolderContents();
+            showFeedback(`已將「${item.name}」放回待選區`, "correct");
+          }
+        }
+      };
+
+      window.addEventListener("mousemove", handlePointerMove, { passive: false });
+      window.addEventListener("mouseup", handlePointerUp);
+      window.addEventListener("touchmove", handlePointerMove, { passive: false });
+      window.addEventListener("touchend", handlePointerUp);
+    };
+
+    card.addEventListener("mousedown", handlePointerDown);
+    card.addEventListener("touchstart", handlePointerDown, { passive: false });
+  }
+
+  function updateUndoButtonState() {
+    const undoBtn = document.getElementById("btn-undo");
+    if (!undoBtn) return;
+    undoBtn.disabled = placementHistory.length === 0 || isSubLevelFinished;
+  }
+
+  function finishSubLevelClassification() {
+    isSubLevelFinished = true;
+    updateUndoButtonState();
+
+    let correctCount = 0;
+    let incorrectCount = 0;
+
+    activeQuestion.items.forEach(item => {
+      if (classifiedItems[item.id] && classifiedItems[item.id].inBasket) {
+        if (item.isCorrect) {
+          correctCount++;
+        } else {
+          incorrectCount++;
+        }
+      }
+    });
+
+    let score = 0;
+    if (currentTier === 1) {
+      let grossScore = correctCount * 50;
+      let penalty = incorrectCount * 50;
+      score = Math.max(0, Math.min(100, grossScore - penalty));
+    } else if (currentTier === 2) {
+      const scoreMap = [0, 33, 66, 100];
+      let grossScore = scoreMap[correctCount] || 0;
+      let penalty = incorrectCount * 34;
+      score = Math.max(0, Math.min(100, grossScore - penalty));
+    } else if (currentTier === 3) {
+      let grossScore = correctCount * 25;
+      let penalty = incorrectCount * 25;
+      score = Math.max(0, Math.min(100, grossScore - penalty));
+    }
+
+    currentRunScores[currentSubLevelIndex] = score;
+
+    showSubLevelSummary(currentSubLevelIndex, score, correctCount, incorrectCount);
+  }
+
+  // 單關結算：第一關 1 顆星、第二關 2 顆星、第三關 3 顆星；不論分數高低皆播放掌聲與彩帶
+  function showSubLevelSummary(subIdx, score, correctCount, incorrectCount) {
+    document.getElementById("game-main").style.display = "none";
+    const summaryScreen = document.getElementById("summary-screen");
+    summaryScreen.style.display = "flex";
+
+    // 每一關結算都播放掌聲與彩帶，不論分數高低
+    startConfetti();
+    playPerfectApplauseSound();
+
+    const subLevelTitles = ['第一關', '第二關', '第三關'];
+    const currentTitle = subLevelTitles[subIdx];
+    const starCount = subIdx + 1; // 星星數量嚴格依關卡決定
+    const totalTargetCount = activeQuestion ? activeQuestion.items.filter(i => i.isCorrect).length : 0;
+
+    let starsHtml = '';
+    for (let i = 0; i < starCount; i++) {
+      starsHtml += `<span class="star-icon">★</span>`;
+    }
+
+    let encouragement = '';
+    if (score === 100) {
+      encouragement = `太棒了！本關完整找出 ${correctCount}/${totalTargetCount} 個目標物，且完全無誤選！`;
+    } else {
+      encouragement = `做得很好！本關答對 ${correctCount}/${totalTargetCount} 個目標物。持續練習，下一次挑戰一定能拿到滿分喔！`;
+    }
+
+    let buttonHtml = '';
+    if (subIdx === 0) {
+      buttonHtml = `<button class="summary-full-btn" onclick="goToNextSubLevel(1)">前往第二關 ➔</button>`;
+    } else if (subIdx === 1) {
+      buttonHtml = `<button class="summary-full-btn" onclick="goToNextSubLevel(2)">前往第三關 ➔</button>`;
+    } else {
+      buttonHtml = `<button class="summary-full-btn" onclick="showSummary()">查看等級結算 ➔</button>`;
+    }
+
+    const summaryCard = document.getElementById("summary-card");
+    summaryCard.innerHTML = `
+      <h2 class="settlement-title">${currentTitle}完成！</h2>
+
+      <div class="settlement-stars">
+        ${starsHtml}
+      </div>
+
+      <div class="settlement-score-pill">本關得分：<strong>${score}</strong> 分</div>
+
+      <div class="sublevel-encouragement">
+        ${encouragement}
+      </div>
+
+      <div class="summary-breakdown-box">
+        <div class="summary-breakdown-row">
+          <span>答對目標物</span>
+          <span class="summary-breakdown-score" style="color: #1B5E20;">${correctCount} / ${totalTargetCount} 個</span>
+        </div>
+        <div class="summary-breakdown-row">
+          <span>誤選錯誤項</span>
+          <span class="summary-breakdown-score" style="color: ${incorrectCount === 0 ? '#1B5E20' : '#D32F2F'};">${incorrectCount} 個</span>
+        </div>
+      </div>
+
+      <div class="summary-actions-group">
+        ${buttonHtml}
+      </div>
+    `;
+  }
+
+  function goToNextSubLevel(nextSubIdx) {
+    stopConfetti();
+    document.getElementById("summary-screen").style.display = "none";
+    document.getElementById("game-main").style.display = "flex";
+    loadSubLevel(nextSubIdx);
+  }
+
+  function updateBucketHints(active) {
+    const bPrimary = document.getElementById("bucket-primary");
+    if (bPrimary) {
+      if (active) bPrimary.classList.add("active-hint");
+      else bPrimary.classList.remove("active-hint");
+    }
+  }
+
+  function renderFolderContents() {
+    const primaryContainer = document.getElementById("bucket-primary-content");
+    if (!primaryContainer) return;
+
+    primaryContainer.innerHTML = "";
+    let primaryCount = 0;
+
+    activeQuestion.items.forEach(item => {
+      const record = classifiedItems[item.id];
+      if (record && record.inBasket) {
+        const itemCard = document.createElement("div");
+        itemCard.className = "folder-item-card";
+        itemCard.innerHTML = `
+          <img src="${item.img}" alt="${item.name}">
+          <span>${item.name}</span>
+        `;
+        initFolderCardDragAndClick(itemCard, item);
+        primaryContainer.appendChild(itemCard);
+        primaryCount++;
+      }
+    });
+
+    const pCountEl = document.getElementById("bucket-primary-count");
+    if (pCountEl) pCountEl.innerText = `已收納 ${primaryCount} 件`;
+  }
+
+  function showFeedback(msg, type) {
+    const fb = document.getElementById("feedback-toast");
+    fb.innerText = msg;
+    fb.className = `feedback-toast ${type}`;
+  }
+
+  function nextSubLevel() {
+    stopConfetti();
+    if (currentSubLevelIndex < 2) {
+      loadSubLevel(currentSubLevelIndex + 1);
+    } else {
+      showSummary();
+    }
+  }
+
+  function replayCurrentTier() {
+    stopConfetti();
+    selectCategoryAndStart(selectedCategory);
+  }
+
+  function showModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) modal.style.display = 'flex';
+  }
+
+  function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) modal.style.display = 'none';
+  }
+
+  function triggerUnlockAnimation(category, unlockedTier) {
+    const modal = document.getElementById("modal-unlock-anim");
+    const pillEl = document.getElementById("unlock-modal-pill");
+    
+    const romanNums = { 2: "二", 3: "三" };
+    if (pillEl) {
+      pillEl.innerText = `已成功解鎖【${category}｜等級${romanNums[unlockedTier] || unlockedTier}】！`;
+    }
+
+    if (modal) {
+      modal.style.display = "flex";
+      setTimeout(() => {
+        modal.style.display = "none";
+      }, 2000);
+    }
+  }
+
+  // 總結算：呈現三關平均分數；只有三關平均 100 分時解鎖下一等級，解鎖動畫延遲 0.6 秒彈出
+  function showSummary() {
+    document.getElementById("game-main").style.display = "none";
+    const summaryScreen = document.getElementById("summary-screen");
+    summaryScreen.style.display = "flex";
+
+    startConfetti();
+    playPerfectApplauseSound();
+
+    const totalScore = currentRunScores.reduce((sum, score) => sum + score, 0);
+    const avgScore = (totalScore / 3).toFixed(0);
+    const isAll100ThisRun = currentRunScores.every(score => score === 100);
+
+    let mainTitle = isAll100ThisRun 
+      ? "太棒了！三關滿分！" 
+      : `${getTierName(currentTier)} (${getCategoryFullName(selectedCategory)}) - 結算報告`;
+
+    const celebrationHtml = isAll100ThisRun ? `
+      <div class="celebration-container">
+        <div class="trophy-glow-halo"></div>
+        <svg class="sparkle-svg-side left" viewBox="-12 -12 48 48" overflow="visible" fill="#F59E0B">
+          <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z"/>
+        </svg>
+        <span class="trophy-permanent">🏆</span>
+        <svg class="sparkle-svg-side right" viewBox="-12 -12 48 48" overflow="visible" fill="#F59E0B">
+          <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 9.41L12 0Z"/>
+        </svg>
+      </div>
+    ` : '';
+
+    const clappingOverlayHtml = isAll100ThisRun ? `<div class="clapping-overlay">👏</div>` : '';
+    
+    const replaySoundBtnHtml = `
+      <div>
+        <button class="btn-replay-sound" onclick="playPerfectApplauseSound()">👏 重新播放掌聲</button>
+      </div>
+    `;
+
+    let unlockMsgHtml = '';
+    let isNewUnlock = false;
+
+    if (isAll100ThisRun) {
+      if (currentTier === 1) {
+        unlockMsgHtml = `<div class="settlement-score-pill" style="background-color: #D4EDDA; color: #155724; border-color: #C3E6CB; margin-top: 6px;">已成功解鎖【${selectedCategory}｜等級二】！</div>`;
+        if (!categoryTierUnlockedMap[selectedCategory][2]) {
+          isNewUnlock = true;
+          categoryTierUnlockedMap[selectedCategory][2] = true;
+        }
+      } else if (currentTier === 2) {
+        unlockMsgHtml = `<div class="settlement-score-pill" style="background-color: #D4EDDA; color: #155724; border-color: #C3E6CB; margin-top: 6px;">已成功解鎖【${selectedCategory}｜等級三】！</div>`;
+        if (!categoryTierUnlockedMap[selectedCategory][3]) {
+          isNewUnlock = true;
+          categoryTierUnlockedMap[selectedCategory][3] = true;
+        }
+      } else {
+        unlockMsgHtml = '<div class="settlement-score-pill" style="background-color: #FFF3CD; color: #856404; border-color: #FFEEBA; margin-top: 6px;">恭喜榮獲本主題全通關大滿貫！</div>';
+      }
+    }
+
+    const subLevelTitles = ['第一關', '第二關', '第三關'];
+
+    const summaryCard = document.getElementById("summary-card");
+    summaryCard.innerHTML = `
+      <h2 class="settlement-title">${mainTitle}</h2>
+
+      ${celebrationHtml}
+
+      <div class="settlement-stars">
+        <span class="star-icon">★</span>
+        <span class="star-icon">★</span>
+        <span class="star-icon">★</span>
+      </div>
+
+      <div class="settlement-score-pill">總平均成績：<strong>${avgScore}</strong> 分</div>
+      ${unlockMsgHtml}
+
+      <div class="summary-breakdown-box" style="position: relative;">
+        ${clappingOverlayHtml}
+        ${currentRunScores.map((score, idx) => `
+          <div class="summary-breakdown-row">
+            <span>${subLevelTitles[idx]}</span>
+            <span class="summary-breakdown-score" style="color: ${score === 100 ? '#1B5E20' : '#D32F2F'};">
+              ${score} 分
+            </span>
+          </div>
+        `).join('')}
+      </div>
+
+      ${replaySoundBtnHtml}
+
+      <div class="summary-actions-group">
+  <button class="summary-full-btn" onclick="replayCurrentTier()">重新挑戰</button>
+  <button class="btn-secondary" onclick="goBackToCategorySelect()">選擇其他主題</button>
+  <button class="btn-secondary" onclick="goBackToTierSelect()">回到等級選擇</button>
+  
+  <!-- 第三步要改的是這一列： -->
+  <button class="btn-text-back" onclick="goToMainCategory()">← 返回遊戲分類</button>
+</div>
+    `;
+
+    renderTierCards();
+
+    // 解鎖動畫於總結算畫面出現後延遲 0.6 秒觸發，不可與彩帶動畫重疊
+    if (isNewUnlock) {
+      setTimeout(() => {
+        triggerUnlockAnimation(selectedCategory, currentTier + 1);
+      }, 600);
+    }
+  }
+</script>
+</body>
+</html>
