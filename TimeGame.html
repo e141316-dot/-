@@ -828,44 +828,15 @@
   <main id="game-container"></main>
 
   <script>
- /* ==========================================
-     Google 官方安全跳轉機制 (徹底解決 A/B 互相跳轉白畫面)
-     ========================================== */
-  function getCleanBaseUrl() {
-    // 取得 top 層級的完整 URL 並剔除 ? 之後的參數
-    try {
-      var topUrl = window.top.location.href;
-      return topUrl.split('?')[0].split('#')[0];
-    } catch(e) {
-      // 防止跨域安全限制導致讀取 top 失敗的防護備案
-      return window.location.href.split('?')[0].split('#')[0];
-    }
-  }
-
-function goToLevelSelect() {
-    var baseUrl = "<?= baseUrl ?>";
-    window.top.location.href = baseUrl + "?page=level_select";
-  }
-
-  function goToHome() {
-    var baseUrl = "<?= baseUrl ?>";
-    window.top.location.href = baseUrl + "?page=home";
-  }
-
-  function navToGameCategories() {
-    goToLevelSelect();
-  }
-
-  function navToPlatformHome() {
-    goToHome();
-  }
-
-    function navToGameCategories() {
-      goToLevelSelect();
+    /* ==========================================
+       頁面靜態跳轉機制 (適應 GitHub Pages 與一般網頁)
+       ========================================== */
+    function goToLevelSelect() {
+      window.location.href = "LevelSelect.html";
     }
 
-    function navToPlatformHome() {
-      goToHome();
+    function goToHome() {
+      window.location.href = "index.html";
     }
 
     /* ==========================================
@@ -1195,8 +1166,8 @@ function goToLevelSelect() {
         <div class="summary-action-group">
           <button type="button" class="btn-play-again" onclick="restartGame()">再玩一次</button>
           <div class="sub-nav-row">
-            <button type="button" class="btn-sub-nav" onclick="navToGameCategories()">回到遊戲分類</button>
-            <button type="button" class="btn-sub-nav" onclick="navToPlatformHome()">回首頁</button>
+            <button type="button" class="btn-sub-nav" onclick="goToLevelSelect()">回到遊戲分類</button>
+            <button type="button" class="btn-sub-nav" onclick="goToHome()">回首頁</button>
           </div>
         </div>
       `;
@@ -1362,9 +1333,23 @@ function goToLevelSelect() {
           }
         }
       };
-      svg.addEventListener('pointerdown', (e) => { isDragging = true; handlePointer(e); });
-      svg.addEventListener('pointermove', (e) => { if (isDragging) handlePointer(e); });
-      svg.addEventListener('pointerup', () => { isDragging = false; });
+
+      svg.addEventListener('pointerdown', (e) => {
+        isDragging = true;
+        try { svg.setPointerCapture(e.pointerId); } catch(err) {}
+        handlePointer(e);
+      });
+      svg.addEventListener('pointermove', (e) => {
+        if (isDragging) handlePointer(e);
+      });
+      svg.addEventListener('pointerup', (e) => {
+        isDragging = false;
+        try { svg.releasePointerCapture(e.pointerId); } catch(err) {}
+      });
+      svg.addEventListener('pointercancel', (e) => {
+        isDragging = false;
+        try { svg.releasePointerCapture(e.pointerId); } catch(err) {}
+      });
     }
     function submitLevel1() {
       const lvl = gameState.levels[1];
