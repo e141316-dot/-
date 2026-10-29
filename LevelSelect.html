@@ -285,36 +285,22 @@
     </main>
   </div>
 
-  <script>
-    function onSelectCategory(target) {
-      if (target === 'home') {
-        window.location.href = 'index.html';
-      } else if (target === 'time-game') {
-        window.location.href = 'TimeGame.html';
-      } else if (target === 'festival-game') {
-        window.location.href = 'FestivalGame.html';
-      } else {
-        alert('該遊戲開發中，敬請期待！');
-      }
+<script>
+  function onSelectCategory(target) {
+    if (target === 'home') {
+      // 回首頁
+      window.location.href = './index.html';
+    } else if (target === 'time-game') {
+      // 進入看時間回答遊戲
+      window.location.href = './TimeGame.html';
+    } else if (target === 'festival-game') {
+      // 進入節慶猜謎遊戲
+      window.location.href = './FestivalGame.html';
+    } else {
+      // 其他尚未上線的遊戲跳出提醒
+      alert('該遊戲開發中，敬請期待！');
     }
-  </scriptfunction onSelectCategory(target) {
-  if (target === 'home') {
-    window.location.href = './index.html';
-  } else if (target === 'time-game') {
-    window.location.href = './TimeGame.html';
-  } else if (target === 'festival-game') {
-    window.location.href = './FestivalGame.html';
-  } else if (target === 'situation-game') {
-    window.location.href = './SituationGame.html';
-  } else if (target === 'semantic-game') {
-    window.location.href = './SemanticGame.html';
-  } else if (target === 'visual-game') {
-    window.location.href = './VisualGame.html';
-  } else if (target === 'attention-game') {
-    window.location.href = './AttentionGame.html';
-  } else {
-    alert('該遊戲開發中，敬請期待！');
   }
-}
+</script>
 </body>
 </html>
