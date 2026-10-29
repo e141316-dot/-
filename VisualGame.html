@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <base target="_top">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>視覺建構｜畫畫看連連看 - 認知訓練 App</title>
@@ -1026,24 +1025,14 @@
 (function () {
   document.addEventListener('contextmenu', function (e) { e.preventDefault(); });
 
-  /* 強制導頁至最上層視窗 (window.top)，徹底解決 iframe 白屏阻擋問題 */
+  /* 修改導頁機制，適用於 GitHub Pages 獨立託管 */
   function goToLevelSelect() {
-    var targetUrl = "<?= baseUrl ?>?page=level_select";
-    if (window.top) {
-      window.top.location.href = targetUrl;
-    } else {
-      window.location.href = targetUrl;
-    }
+    window.location.href = "LevelSelect.html";
   }
   window.goToLevelSelect = goToLevelSelect;
 
   function goToHome() {
-    var targetUrl = "<?= baseUrl ?>?page=home";
-    if (window.top) {
-      window.top.location.href = targetUrl;
-    } else {
-      window.location.href = targetUrl;
-    }
+    window.location.href = "index.html";
   }
   window.goToHome = goToHome;
 
@@ -1599,7 +1588,6 @@
           <button type="button" class="btn-submit" onclick="window.restartGame()">再玩一次</button>
         </div>
 
-        <!-- 導覽按鈕區域：使用 Top frame 機制進行網頁切換 -->
         <div class="settlement-nav-wrap">
           <button type="button" onclick="goToHome()" class="btn-settlement-nav">
             <svg viewBox="0 0 24 24">
