@@ -1220,11 +1220,11 @@
 
   <div class="app-container">
 
-    <!-- 畫面 1：等級選擇畫面 (修正點：使用 target="_top" 直跳父視窗) -->
+    <!-- 畫面 1：等級選擇畫面 -->
     <div id="screen-level-select" class="screen active">
       <div class="header-nav">
         <div class="btn-back-wrap">
-          <a href="<?= baseUrl ?>?page=level_select" target="_top" class="btn-back">
+          <a href="index.html" class="btn-back">
             ❮ 返回遊戲分類
           </a>
         </div>
@@ -1518,20 +1518,9 @@
   </div>
 
   <script>
-    // 安全跳轉至遊戲分類 (相容 Google Apps Script / Google Sites 嵌入模式)
+    // 安全跳轉至主頁 index.html
     function goToMainCategory() {
-      try {
-        var currentUrl = window.top.location.href;
-        if (currentUrl.indexOf('?') !== -1) {
-          var baseUrl = currentUrl.split('?')[0];
-          window.top.location.href = baseUrl + "?page=level_select";
-        } else {
-          window.top.location.href = currentUrl + "?page=level_select";
-        }
-      } catch (e) {
-        window.parent.postMessage({ type: 'NAVIGATE', page: 'level_select' }, '*');
-        window.location.href = "<?= baseUrl ?>?page=level_select";
-      }
+      window.location.href = "index.html";
     }
 
     function goBackToPreviousLayer() {
@@ -2277,7 +2266,6 @@
       }
     }
 
-    /* 掛載至全域 window，避免 GAS 沙盒作用域隔離 */
     window.goToMainCategory = goToMainCategory;
     window.goBackToPreviousLayer = goBackToPreviousLayer;
     window.clickLevelCard = clickLevelCard;
