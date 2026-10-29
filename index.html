@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <base target="_self">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>高齡駕照輔助平台</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    * { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0; 
+      -webkit-tap-highlight-color: transparent; 
+    }
+
+    body {
+      background-color: #FCFBF7; 
+      color: #35473C;
+      font-family: "Noto Sans TC", -apple-system, BlinkMacSystemFont, "PingFang TC", "Microsoft JhengHei", sans-serif;
+      min-height: 100vh; 
+      display: flex; 
+      flex-direction: column; 
+      align-items: center;
+      justify-content: flex-start; 
+      padding: 36px 16px 40px; 
+      overflow-x: hidden; 
+      line-height: 1.5;
+    }
+
+    .main-container { 
+      width: 100%; 
+      max-width: 680px; 
+      display: flex; 
+      flex-direction: column; 
+      align-items: center; 
+      text-align: center; 
+    }
+
+    .badge-capsule { 
+      display: inline-flex; 
+      align-items: center; 
+      gap: 8px; 
+      background-color: #EAF0E7; 
+      color: #4F7058; 
+      font-size: 16px; 
+      font-weight: 700; 
+      padding: 8px 22px; 
+      border-radius: 9999px; 
+      margin-bottom: 24px; 
+    }
+
+    .badge-icon { 
+      width: 16px; 
+      height: 16px; 
+      stroke: #4F7058; 
+      stroke-width: 3; 
+      fill: none; 
+      stroke-linecap: round; 
+      stroke-linejoin: round; 
+    }
+
+    .header-section { margin-bottom: 28px; }
+
+    .main-title { 
+      font-size: 38px; 
+      font-weight: 800; 
+      color: #35473C; 
+      letter-spacing: 1px; 
+      margin-bottom: 16px; 
+      line-height: 1.25; 
+    }
+
+    .subtitle-primary { 
+      font-size: 20px; 
+      font-weight: 700; 
+      color: #35473C; 
+      margin-bottom: 8px; 
+    }
+
+    .subtitle-secondary { 
+      font-size: 16px; 
+      font-weight: 500; 
+      color: #6E8075; 
+    }
+
+    .slogan-box { 
+      width: 100%; 
+      max-width: 560px; 
+      background-color: #FFFDF9; 
+      border: 1.5px solid #F8D7C4; 
+      border-radius: 9999px; 
+      padding: 14px 28px; 
+      margin-bottom: 32px; 
+      box-shadow: 0 2px 8px rgba(217, 99, 40, 0.04); 
+    }
+
+    .slogan-text { 
+      color: #D96328; 
+      font-size: 19px; 
+      font-weight: 700; 
+      letter-spacing: 1px; 
+    }
+
+    .action-section { margin-bottom: 36px; }
+
+    .start-btn {
+      display: inline-flex; 
+      align-items: center; 
+      justify-content: center;
+      background-color: #4F7058; 
+      color: #FFFFFF; 
+      font-size: 22px; 
+      font-weight: 700;
+      padding: 16px 64px; 
+      border-radius: 9999px; 
+      text-decoration: none; 
+      border: none;
+      cursor: pointer; 
+      box-shadow: 0 8px 20px rgba(79, 112, 88, 0.28);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
+      outline: none; 
+      min-width: 220px;
+    }
+
+    .start-btn:hover { 
+      background-color: #43604B; 
+      transform: translateY(-2px); 
+      box-shadow: 0 10px 24px rgba(79, 112, 88, 0.35); 
+    }
+
+    .illustration-box { 
+      width: 100%; 
+      max-width: 480px; 
+      margin: 0 auto; 
+      display: flex; 
+      justify-content: center; 
+      align-items: center; 
+    }
+
+    .illustration-img { 
+      width: 100%; 
+      height: auto; 
+      max-width: 100%; 
+      display: block; 
+      object-fit: contain; 
+    }
+
+    @media (max-width: 600px) {
+      body { padding: 24px 16px 32px; }
+      .badge-capsule { font-size: 14px; padding: 6px 16px; margin-bottom: 20px; }
+      .main-title { font-size: 28px; margin-bottom: 12px; }
+      .subtitle-primary { font-size: 17px; }
+      .subtitle-secondary { font-size: 14px; }
+      .slogan-box { padding: 12px 18px; margin-bottom: 28px; border-radius: 28px; }
+      .slogan-text { font-size: 16px; }
+      .start-btn { font-size: 20px; padding: 14px 48px; width: 85%; max-width: 280px; }
+      .illustration-box { max-width: 360px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="main-container">
+    <div class="badge-capsule">
+      <svg class="badge-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+      <span>認知練習・安心出行</span>
+    </div>
+
+    <div class="header-section">
+      <h1 class="main-title">高齡駕照輔助平台</h1>
+      <p class="subtitle-primary">本平台依據 MMSE 認知功能架構設計</p>
+      <p class="subtitle-secondary">多種生活化小遊戲，輕鬆鍛鍊六大腦力</p>
+    </div>
+
+    <div class="slogan-box">
+      <span class="slogan-text">動動腦、練認知，安心每一天</span>
+    </div>
+
+    <div class="action-section">
+      <!-- 前往第二層：主要關卡分類頁 -->
+      <a href="<?= baseUrl ?>?page=level_select" id="startBtn" class="start-btn" target="_self">
+        開始練習
+      </a>
+    </div>
+
+    <div class="illustration-box">
+      <img src="https://lh3.googleusercontent.com/d/18FNiYEZFQIqeIJGOuxUTNGi2g1GN_gcv" alt="主視覺" class="illustration-img" />
+    </div>
+  </div>
+</body>
+</html>
