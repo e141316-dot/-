@@ -88,7 +88,7 @@
     <header class="category-header">
       <div class="category-nav">
         <!-- 返回首頁 -->
-        <button type="button" class="category-back-btn" onclick="onSelectCategory('home')">← 返回首頁</button>
+        <a href="./index.html" class="category-back-btn">← 返回首頁</a>
       </div>
       <h1 class="category-title">遊戲分類</h1>
       <p class="category-subtitle">輕鬆玩遊戲，一起動動腦</p>
@@ -103,7 +103,7 @@
         <div class="category-info">
           <h2 class="category-name">定向感｜看時間回答</h2>
           <span class="category-tag">時間・辨識・判斷</span>
-          <button type="button" class="category-action-btn" onclick="onSelectCategory('time-game')">進入遊戲</button>
+          <a href="./TimeGame.html" class="category-action-btn">進入遊戲</a>
         </div>
       </div>
 
@@ -115,7 +115,7 @@
         <div class="category-info">
           <h2 class="category-name">定向感｜節慶猜謎</h2>
           <span class="category-tag">節日・習俗・記憶</span>
-          <button type="button" class="category-action-btn" onclick="onSelectCategory('festival-game')">進入遊戲</button>
+          <a href="./FestivalGame.html" class="category-action-btn">進入遊戲</a>
         </div>
       </div>
 
@@ -127,7 +127,7 @@
         <div class="category-info">
           <h2 class="category-name">定向感｜生活情境</h2>
           <span class="category-tag">場所・人物・判斷</span>
-          <button type="button" class="category-action-btn" onclick="onSelectCategory('situation-game')">進入遊戲</button>
+          <a href="./SituationGame.html" class="category-action-btn">進入遊戲</a>
         </div>
       </div>
 
@@ -139,7 +139,7 @@
         <div class="category-info">
           <h2 class="category-name">語言能力｜語意聯想</h2>
           <span class="category-tag">詞語・分類・聯想</span>
-          <button type="button" class="category-action-btn" onclick="onSelectCategory('semantic-game')">進入遊戲</button>
+          <a href="./SemanticGame.html" class="category-action-btn">進入遊戲</a>
         </div>
       </div>
 
@@ -151,7 +151,7 @@
         <div class="category-info">
           <h2 class="category-name">視覺建構｜畫畫看連連看</h2>
           <span class="category-tag">觀察・圖形・空間</span>
-          <button type="button" class="category-action-btn" onclick="onSelectCategory('visual-game')">進入遊戲</button>
+          <a href="./VisualGame.html" class="category-action-btn">進入遊戲</a>
         </div>
       </div>
 
@@ -163,7 +163,7 @@
         <div class="category-info">
           <h2 class="category-name">注意力｜翻卡牌配對</h2>
           <span class="category-tag">專注・記憶・配對</span>
-          <button type="button" class="category-action-btn" onclick="onSelectCategory('attention-game')">進入遊戲</button>
+          <a href="./AttentionGame.html" class="category-action-btn">進入遊戲</a>
         </div>
       </div>
 
@@ -181,26 +181,5 @@
     </main>
   </div>
 
-  <script>
-    function onSelectCategory(target) {
-      if (target === 'home') {
-        window.location.href = './index.html';
-      } else if (target === 'time-game') {
-        window.location.href = './TimeGame.html';
-      } else if (target === 'festival-game') {
-        window.location.href = './FestivalGame.html';
-      } else if (target === 'situation-game') {
-        window.location.href = './SituationGame.html';
-      } else if (target === 'semantic-game') {
-        window.location.href = './SemanticGame.html';
-      } else if (target === 'visual-game') {
-        window.location.href = './VisualGame.html';
-      } else if (target === 'attention-game') {
-        window.location.href = './AttentionGame.html';
-      } else {
-        alert('該遊戲開發中，敬請期待！');
-      }
-    }
-  </script>
 </body>
 </html>
