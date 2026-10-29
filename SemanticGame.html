@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <base target="_self">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>認知訓練 App - 語意聯想</title>
@@ -1357,10 +1356,9 @@
 <div id="app-container">
   <!-- 1. 第一層：選擇等級 (Intro Tier Screen) -->
   <div class="intro-screen" id="intro-screen">
-    <!-- 請將原本的頂部按鈕替換成這行： -->
-<div class="intro-top-bar">
-  <button class="btn-back-nav" onclick="goToMainCategory()">← 返回遊戲分類</button>
-</div>
+    <div class="intro-top-bar">
+      <button class="btn-back-nav" onclick="goToMainCategory()">← 返回遊戲分類</button>
+    </div>
     <div class="intro-title-area">
       <h2 class="intro-main-title">語意聯想</h2>
       <p class="intro-sub-tip">每個主題分開計算，三關都拿到滿分，才能挑戰下一等級。</p>
@@ -1477,30 +1475,13 @@
 </div>
 
 <script>
- // 通用頁面跳轉函式（直接透過 Google Apps Script 樣板 baseUrl 跳轉，徹底防範 iframe 跨域白屏）
-  function navTo(pageKey) {
-    var baseUrl = "<?= baseUrl ?>";
-    window.top.location.href = baseUrl + "?page=" + pageKey;
-  }
-
-  // 動態判斷玩家進入來源並執行「返回上一層」
-  function getEntrySource() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const fromParam = urlParams.get('from');
-    if (fromParam) return fromParam;
-
-    if (document.referrer) {
-      if (document.referrer.includes('page=level_select')) return 'level_select';
-      if (document.referrer.includes('page=home')) return 'home';
-      if (document.referrer.includes('page=language')) return 'language';
-    }
-
-    return 'level_select'; // 預設返回遊戲分類
+  // 修改為獨立網頁跳轉，適應 GitHub Pages 託管環境
+  function goToMainCategory() {
+    window.location.href = "LevelSelect.html";
   }
 
   function goBackToPreviousLayer() {
-    const targetSource = getEntrySource();
-    navTo(targetSource);
+    goToMainCategory();
   }
 
   const UNIFIED_PROMPT = "請將符合題目的物品拖進下方收納區，完成後按『完成分類』。";
@@ -2266,40 +2247,24 @@
     loadSubLevel(currentSubLevelIndex);
   }
 
-  // 修正：返回「第二層（選擇其他主題）」
+  // 返回「第二層（選擇其他主題）」
   function goBackToCategorySelect() {
     stopConfetti();
     document.getElementById("game-main").style.display = "none";
     document.getElementById("summary-screen").style.display = "none";
-    document.getElementById("intro-screen").style.display = "none"; // 隱藏第一層
-    document.getElementById("category-screen").style.display = "flex"; // 顯示第二層
+    document.getElementById("intro-screen").style.display = "none";
+    document.getElementById("category-screen").style.display = "flex";
     renderCategoryCards();
   }
 
-  // 修正：返回「第一層（選擇等級）」
+  // 返回「第一層（選擇等級）」
   function goBackToTierSelect() {
     stopConfetti();
     document.getElementById("game-main").style.display = "none";
     document.getElementById("summary-screen").style.display = "none";
-    document.getElementById("category-screen").style.display = "none"; // 隱藏第二層
-    document.getElementById("intro-screen").style.display = "flex"; // 顯示第一層
+    document.getElementById("category-screen").style.display = "none";
+    document.getElementById("intro-screen").style.display = "flex";
     renderTierCards();
-  }
-
-  // 1. 強制跳轉至「主要遊戲分類（圖三 level_select）」
-  function goToMainCategory() {
-    var baseUrl = "<?= baseUrl ?>";
-    window.top.location.href = baseUrl + "?page=level_select";
-  }
-
-  // 2. 舊有的 navTo 函式防呆（防止別的地方呼叫到）
-  function navTo(pageKey) {
-    goToMainCategory();
-  }
-
-  // 3. 返回上一層函式防呆
-  function goBackToPreviousLayer() {
-    goToMainCategory();
   }
 
   function getTierName(tier) {
@@ -2525,7 +2490,7 @@
     classifiedItems[itemId] = { inBasket: true };
     placementHistory.push(itemId);
 
-    playMatchSound(); // 成功將物品歸類觸發配對音效 (內部包含 0.4 秒延遲)
+    playMatchSound(); // 成功將物品歸類觸發配對音效
 
     selectedItemId = null;
     updateBucketHints(false);
@@ -2698,13 +2663,12 @@
     const summaryScreen = document.getElementById("summary-screen");
     summaryScreen.style.display = "flex";
 
-    // 每一關結算都播放掌聲與彩帶，不論分數高低
     startConfetti();
     playPerfectApplauseSound();
 
     const subLevelTitles = ['第一關', '第二關', '第三關'];
     const currentTitle = subLevelTitles[subIdx];
-    const starCount = subIdx + 1; // 星星數量嚴格依關卡決定
+    const starCount = subIdx + 1;
     const totalTargetCount = activeQuestion ? activeQuestion.items.filter(i => i.isCorrect).length : 0;
 
     let starsHtml = '';
@@ -2847,7 +2811,7 @@
     }
   }
 
-  // 總結算：呈現三關平均分數；只有三關平均 100 分時解鎖下一等級，解鎖動畫延遲 0.6 秒彈出
+  // 總結算
   function showSummary() {
     document.getElementById("game-main").style.display = "none";
     const summaryScreen = document.getElementById("summary-screen");
@@ -2872,7 +2836,7 @@
         </svg>
         <span class="trophy-permanent">🏆</span>
         <svg class="sparkle-svg-side right" viewBox="-12 -12 48 48" overflow="visible" fill="#F59E0B">
-          <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 9.41L12 0Z"/>
+          <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z"/>
         </svg>
       </div>
     ` : '';
@@ -2938,18 +2902,15 @@
       ${replaySoundBtnHtml}
 
       <div class="summary-actions-group">
-  <button class="summary-full-btn" onclick="replayCurrentTier()">重新挑戰</button>
-  <button class="btn-secondary" onclick="goBackToCategorySelect()">選擇其他主題</button>
-  <button class="btn-secondary" onclick="goBackToTierSelect()">回到等級選擇</button>
-  
-  <!-- 第三步要改的是這一列： -->
-  <button class="btn-text-back" onclick="goToMainCategory()">← 返回遊戲分類</button>
-</div>
+        <button class="summary-full-btn" onclick="replayCurrentTier()">重新挑戰</button>
+        <button class="btn-secondary" onclick="goBackToCategorySelect()">選擇其他主題</button>
+        <button class="btn-secondary" onclick="goBackToTierSelect()">回到等級選擇</button>
+        <button class="btn-text-back" onclick="goToMainCategory()">← 返回遊戲分類</button>
+      </div>
     `;
 
     renderTierCards();
 
-    // 解鎖動畫於總結算畫面出現後延遲 0.6 秒觸發，不可與彩帶動畫重疊
     if (isNewUnlock) {
       setTimeout(() => {
         triggerUnlockAnimation(selectedCategory, currentTier + 1);
