@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <base target="_top">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>節慶猜謎遊戲 - 認知訓練 App</title>
@@ -102,6 +101,7 @@
       margin: 0 auto;
       padding: clamp(8px, 2.5vw, 16px);
     }
+
     /* ==========================================
        2. 說明首頁專用視覺樣式
        ========================================== */
@@ -169,6 +169,7 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
+      touch-action: manipulation;
     }
     .btn-start-game:hover {
       background-color: var(--primary-dark);
@@ -256,6 +257,8 @@
       justify-content: space-between;
       position: relative;
       user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
     }
     .option-card:hover:not(.disabled) {
       border-color: var(--primary-color);
@@ -340,6 +343,7 @@
       gap: 8px;
       transition: all 0.2s ease;
       box-shadow: 0 3px 8px rgba(120, 148, 125, 0.25);
+      touch-action: manipulation;
     }
     .btn:hover:not(:disabled) {
       background-color: var(--primary-dark);
@@ -405,6 +409,7 @@
       box-shadow: 0 2px 6px rgba(0,0,0,0.04);
       white-space: nowrap;
       text-decoration: none;
+      touch-action: manipulation;
     }
     .btn-secondary:hover {
       background-color: #E2EADF;
@@ -562,6 +567,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      touch-action: manipulation;
     }
     .btn-settlement-next:hover {
       background-color: var(--primary-dark);
@@ -733,6 +739,7 @@
       align-items: center;
       gap: 6px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+      touch-action: manipulation;
     }
     .btn-clap-sound:hover {
       background-color: var(--primary-light);
@@ -951,22 +958,21 @@
       renderCurrentStep();
     });
 
- /*****************************************************************
-     * 導覽處理函式：直接使用 Apps Script 樣板變數 baseUrl 跳轉
+    /*****************************************************************
+     * 導覽處理函式：標準靜態頁面跳轉
      *****************************************************************/
     function replayGame() {
       startGame();
     }
 
     function goToLevelSelect() {
-      var baseUrl = "<?= baseUrl ?>";
-      window.top.location.href = baseUrl + "?page=level_select";
+      window.location.href = "LevelSelect.html";
     }
 
     function goToHome() {
-      var baseUrl = "<?= baseUrl ?>";
-      window.top.location.href = baseUrl + "?page=home";
+      window.location.href = "index.html";
     }
+
     /*****************************************************************
      * 音效引擎
      *****************************************************************/
@@ -1349,7 +1355,7 @@
             </div>
           </div>
           
-          <!-- 已修改：簡化後的結算導覽按鈕列 -->
+          <!-- 導覽按鈕列 -->
           <div class="summary-actions-group">
             <button class="btn-start-game" onclick="replayGame()">再玩一次</button>
             <div class="secondary-btn-row">
