@@ -297,6 +297,24 @@
         alert('該遊戲開發中，敬請期待！');
       }
     }
-  </script>
+  </scriptfunction onSelectCategory(target) {
+  if (target === 'home') {
+    window.location.href = './index.html';
+  } else if (target === 'time-game') {
+    window.location.href = './TimeGame.html';
+  } else if (target === 'festival-game') {
+    window.location.href = './FestivalGame.html';
+  } else if (target === 'situation-game') {
+    window.location.href = './SituationGame.html';
+  } else if (target === 'semantic-game') {
+    window.location.href = './SemanticGame.html';
+  } else if (target === 'visual-game') {
+    window.location.href = './VisualGame.html';
+  } else if (target === 'attention-game') {
+    window.location.href = './AttentionGame.html';
+  } else {
+    alert('該遊戲開發中，敬請期待！');
+  }
+}
 </body>
 </html>
