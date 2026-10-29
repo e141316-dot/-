@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <base target="_self">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>主要關卡分類 - 高齡駕照輔助平台</title>
+</head>
+<body style="background-color: #FCFBF7; margin: 0; padding: 32px 20px 60px;">
+
+  <!-- 引用單一真實來源組件 -->
+  <?!= HtmlService.createHtmlOutputFromFile('LevelSelectComponent').getContent(); ?>
+
+  <script>
+    window.onSelectCategory = function(categoryKey) {
+      var baseUrl = "<?= baseUrl ?>";
+      if (baseUrl) {
+        window.location.assign(baseUrl + "?page=" + categoryKey);
+      }
+    };
+  </script>
+</body>
+</html>
+<script>
+  function onSelectCategory(target) {
+    // 1. 取得當前網址，並精準保留 Google Apps Script 的 exec 基礎路徑
+    var currentUrl = window.top.location.href;
+    var baseUrl = currentUrl.split('?')[0].split('#')[0];
+
+    // 2. 顯示載入動畫，避免使用者以為卡住
+    document.body.innerHTML = `
+      <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:80vh; font-family:sans-serif;">
+        <div style="font-size:1.3rem; color:#4F7058; font-weight:bold; margin-bottom:12px;">載入遊戲中...</div>
+        <div style="color:#6E8075; font-size:0.95rem;">請稍候片刻</div>
+      </div>
+    `;
+
+    // 3. 判斷頁面路由並進行跳轉
+    if (target === 'time-game') {
+      window.top.location.href = baseUrl + '?page=time-game';
+    } else if (target === 'home') {
+      window.top.location.href = baseUrl + '?page=home';
+    } else {
+      alert('該遊戲開發中，敬請期待！');
+      // 若是跳出提示，則刷新恢復頁面
+      window.top.location.href = baseUrl + '?page=level_select';
+    }
+  }
+<script>
+  function onSelectCategory(target) {
+    var baseUrl = "<?= baseUrl ?>";
+    if (target === 'time-game') {
+      window.top.location.href = baseUrl + "?page=time-game";
+    } else if (target === 'home') {
+      window.top.location.href = baseUrl + "?page=home";
+    } else {
+      alert('該遊戲開發中，敬請期待！');
+    }
+  }
+</script>
