@@ -1,0 +1,2102 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <base target="_self">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>生活情境遊戲 - 認知訓練 App</title>
+  <style>
+    /* ==========================================
+       1. 全局視覺主題 (奶油白、鼠尾草綠風格)
+       ========================================== */
+    :root {
+      --primary-color: #4F7058;     /* 主要按鈕：深鼠尾草綠 */
+      --primary-dark: #35473C;      /* 主要文字/深綠灰 */
+      --primary-light: #EAF0E7;     /* 次要區塊：淡綠色 */
+      --accent-color: #6E8075;      /* 次要文字：柔和灰綠 */
+      --bg-color: #FCFBF7;          /* 頁面背景：奶油白 */
+      --card-bg: #FCFBF7;           /* 卡片背景：奶油白 */
+      --text-main: #35473C;         /* 主要文字：深綠灰 */
+      --text-muted: #6E8075;        /* 次要文字：柔和灰綠 */
+      --border-color: #E4E9DF;      /* 邊框：淡灰綠 */
+      --border-radius: 16px;        /* 卡片圓角 */
+      --shadow: 0 4px 12px rgba(53, 71, 60, 0.08);
+      --star-gold: #ffb800;         /* 金黃色星星 */
+      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Microsoft JhengHei", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: var(--font-family);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding-bottom: 16px;
+      overflow-x: hidden;
+    }
+
+    /* 頂部導覽列 */
+    header {
+      width: 100%;
+      background-color: var(--bg-color);
+      color: var(--primary-dark);
+      padding: 8px 16px 6px 16px;
+      text-align: center;
+    }
+    header h1 {
+      font-size: clamp(24px, 5vw, 32px);
+      font-weight: 800;
+      color: var(--primary-dark);
+      margin-bottom: 6px;
+      line-height: 1.25;
+      text-align: center;
+    }
+
+    /* 關卡區域外層導覽列 */
+    .nav-bar {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      width: 92%;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    .nav-item {
+      flex: 1 1 0px;
+      height: 44px;
+      background-color: var(--primary-light);
+      color: var(--primary-dark);
+      padding: 0 4px;
+      border-radius: 30px;
+      border: 1.5px solid var(--border-color);
+      font-size: clamp(0.95rem, 3.4vw, 1.15rem);
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+      white-space: nowrap;
+    }
+    .nav-item.active {
+      background-color: var(--primary-color);
+      color: #ffffff;
+      border-color: var(--primary-color);
+      box-shadow: 0 2px 8px rgba(79, 112, 88, 0.25);
+    }
+    .nav-item.done {
+      border: 2px solid #B7C9B5;
+    }
+    .nav-item.locked {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* 主要內容容器 */
+    main.game-container {
+      width: 92%;
+      max-width: 720px;
+      background: var(--bg-color);
+      border-radius: 0;
+      border: none;
+      box-shadow: none;
+      margin-top: 4px;
+      padding: clamp(6px, 2vw, 10px) clamp(16px, 3.5vw, 24px) clamp(12px, 3vw, 18px) clamp(16px, 3.5vw, 24px);
+      position: relative;
+    }
+
+    /* 各關卡標題 */
+    .section-title {
+      text-align: center;
+      color: var(--primary-dark);
+      font-size: clamp(1.3rem, 4vw, 1.65rem);
+      margin-bottom: 12px;
+      font-weight: 800;
+    }
+
+    /* 題目說明提示區 */
+    .question-box {
+      background-color: var(--primary-light);
+      border-left: 6px solid var(--primary-color);
+      padding: 10px 14px;
+      border-radius: 12px;
+      margin-bottom: 14px;
+      text-align: center;
+    }
+    .question-text {
+      font-size: clamp(1.1rem, 3.6vw, 1.35rem);
+      font-weight: bold;
+      color: var(--primary-dark);
+      line-height: 1.4;
+    }
+    .hint-text {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+      font-weight: 600;
+    }
+
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    /* ==========================================
+       2. 首頁與主題選擇器樣式
+       ========================================== */
+    .home-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      padding: 4px 0;
+    }
+    .intro-back-wrap {
+      display: flex;
+      justify-content: flex-start;
+      margin-bottom: 2px;
+    }
+    .home-header {
+      text-align: center;
+      margin-bottom: 4px;
+    }
+    .home-main-title {
+      font-size: clamp(1.4rem, 4.5vw, 1.8rem);
+      color: var(--primary-dark);
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+    .home-subtitle {
+      font-size: clamp(0.95rem, 3.2vw, 1.1rem);
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    .home-card {
+      background-color: var(--primary-light);
+      border: 2px solid var(--border-color);
+      border-radius: 16px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .home-icon-box {
+      width: 68px;
+      height: 68px;
+      min-width: 68px;
+      background: #ffffff;
+      border: 2px solid var(--border-color);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px;
+    }
+    .home-icon-box svg {
+      width: 100%;
+      height: 100%;
+    }
+    .home-card-content {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 3px;
+    }
+    .home-badge {
+      background-color: var(--primary-color);
+      color: #ffffff;
+      font-size: 0.85rem;
+      font-weight: bold;
+      padding: 3px 12px;
+      border-radius: 12px;
+      display: inline-block;
+    }
+    .home-card-title {
+      font-size: clamp(1.1rem, 3.6vw, 1.25rem);
+      color: var(--primary-dark);
+      font-weight: 800;
+    }
+    .home-card-desc {
+      font-size: clamp(0.9rem, 3vw, 1.02rem);
+      color: var(--text-main);
+      line-height: 1.35;
+      font-weight: 500;
+    }
+    .home-reminder-box {
+      background-color: #FAF6ED;
+      border: 2px dashed #D6C7A1;
+      border-radius: 12px;
+      padding: 12px 16px;
+      text-align: center;
+      font-size: clamp(0.95rem, 3.2vw, 1.08rem);
+      color: #524636;
+      font-weight: bold;
+      margin-top: 2px;
+      line-height: 1.5;
+    }
+
+    .home-theme-box {
+      width: 100%;
+      text-align: center;
+      margin-top: 2px;
+    }
+    .home-theme-box label {
+      font-size: clamp(1rem, 3.4vw, 1.15rem);
+      font-weight: 800;
+      color: var(--primary-dark);
+      display: block;
+      margin-bottom: 6px;
+    }
+    .home-theme-box select {
+      width: 100%;
+      font-size: 1.1rem;
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 2px solid var(--primary-color);
+      background: #ffffff;
+      color: var(--primary-dark);
+      font-weight: 800;
+      cursor: pointer;
+      outline: none;
+      text-align-last: center;
+    }
+
+    .btn-start-game {
+      width: 100%;
+      max-width: 420px;
+      height: 52px;
+      background-color: var(--primary-color);
+      color: #ffffff;
+      font-size: clamp(1.2rem, 4vw, 1.35rem);
+      font-weight: 800;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(79, 112, 88, 0.3);
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin: 8px auto 0 auto;
+    }
+    .btn-start-game:hover {
+      background-color: var(--primary-dark);
+      transform: translateY(-2px);
+    }
+
+    /* 通用按鈕 */
+    .btn {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      font-size: 1.15rem;
+      font-weight: bold;
+      border-radius: 30px;
+      cursor: pointer;
+      min-height: 48px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background-color 0.2s, transform 0.1s;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+    }
+    .btn:hover { background-color: var(--primary-dark); }
+    .btn:active { transform: scale(0.98); }
+    .btn-submit {
+      width: 100%;
+      max-width: 380px;
+      margin: 14px auto 0 auto;
+      display: flex;
+    }
+
+    /* ==========================================
+       3. 第一關：配對連線樣式
+       ========================================== */
+    .matching-wrapper { position: relative; margin-top: 8px; }
+    .l1-svg-canvas {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none; z-index: 5;
+    }
+    .matching-container {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+      position: relative; z-index: 1;
+    }
+    .column-title {
+      text-align: center; font-size: 1.1rem; font-weight: 800;
+      color: var(--primary-dark); margin-bottom: 8px;
+    }
+    .match-item {
+      background: #ffffff; border: 2.5px solid var(--border-color); border-radius: 12px;
+      padding: 2px; margin-bottom: 10px; cursor: pointer; text-align: center;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      height: 88px; width: 100%; position: relative; box-sizing: border-box;
+      transition: all 0.2s ease;
+    }
+    .match-item .img-wrapper {
+      width: 100%; height: 100%; display: flex; justify-content: center;
+      align-items: center; overflow: hidden; border-radius: 8px;
+    }
+    .match-item img {
+      width: 100%; height: 100%; object-fit: cover; object-position: center;
+      border-radius: 8px; display: block;
+    }
+    .match-item.text-item {
+      font-size: 1.15rem; font-weight: 800; color: var(--text-main); padding: 4px;
+    }
+    .match-item.selected {
+      border-color: var(--primary-color) !important;
+      background-color: var(--primary-light) !important;
+      box-shadow: 0 0 10px rgba(79, 112, 88, 0.3);
+    }
+
+    /* ==========================================
+       4. 第二與三關：單張圖片與選項網格
+       ========================================== */
+    .single-img-container { text-align: center; margin-bottom: 12px; }
+    .single-img-container img {
+      max-width: 100%; max-height: 180px; border-radius: 12px;
+      object-fit: contain; box-shadow: 0 3px 10px rgba(0,0,0,0.06);
+      border: 2px solid var(--border-color);
+    }
+
+    .options-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    #l3OptionsGrid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+    @media (max-width: 480px) {
+      #l3OptionsGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    .option-card {
+      border: 3px solid var(--border-color);
+      border-radius: var(--border-radius);
+      padding: 8px;
+      text-align: center;
+      cursor: pointer;
+      background: #ffffff;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .option-card:hover { border-color: var(--accent-color); }
+    .option-card.selected {
+      border-color: var(--primary-color) !important;
+      background-color: var(--primary-light) !important;
+      box-shadow: 0 0 0 2px var(--primary-color);
+    }
+
+    #l3OptionsGrid .option-card { height: 125px; padding: 6px; }
+    #l3OptionsGrid .option-card .img-wrapper {
+      width: 100%; height: 72px; display: flex; justify-content: center;
+      align-items: center; overflow: hidden; border-radius: 8px; margin-bottom: 4px;
+      background: #f9f9f9;
+    }
+    #l3OptionsGrid .option-card img { width: 100%; height: 100%; object-fit: contain; }
+    #l3OptionsGrid .option-card p {
+      font-size: 1.05rem; font-weight: 800; color: var(--text-main);
+      margin: 0; text-align: center; white-space: nowrap;
+    }
+
+    /* ==========================================
+       5. 獨立結算與總成績畫面樣式
+       ========================================== */
+    .settlement-card {
+      position: relative;
+      background: transparent;
+      border: none;
+      border-radius: 0;
+      padding: 0;
+      margin-bottom: 4px;
+      text-align: center;
+      box-shadow: none;
+      overflow: visible;
+      perspective: 1000px;
+    }
+    .settlement-card > *:not(#confetti-canvas) {
+      position: relative; z-index: 2;
+    }
+    .settlement-title {
+      color: var(--primary-color);
+      font-size: clamp(1.2rem, 3.8vw, 1.5rem);
+      font-weight: 800;
+      margin-bottom: 4px;
+      line-height: 1.25;
+    }
+
+    /* 總成績滿分專屬 3D 慶祝區域 */
+    .celebration-container {
+      position: relative;
+      width: 100%;
+      height: 85px;
+      margin: 2px 0 4px 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: visible;
+      transform-style: preserve-3d;
+    }
+
+    .trophy-wrapper {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transform-style: preserve-3d;
+    }
+    .trophy-wrapper::before {
+      content: '';
+      position: absolute;
+      width: 80px;
+      height: 80px;
+      background: radial-gradient(circle, rgba(255, 224, 130, 0.95) 0%, rgba(255, 184, 0, 0.45) 50%, rgba(255, 255, 255, 0) 75%);
+      border-radius: 50%;
+      z-index: 1;
+      filter: blur(4px);
+    }
+
+    .trophy-permanent {
+      font-size: 3.6rem;
+      line-height: 1;
+      filter: drop-shadow(0 8px 14px rgba(0,0,0,0.2)) drop-shadow(0 0 16px #ffb800);
+      opacity: 0;
+      transform: scale(0);
+      z-index: 5;
+      position: relative;
+      display: inline-block;
+      transform-style: preserve-3d;
+    }
+    .celebration-container.active-anim .trophy-permanent {
+      animation: trophyPopIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.25) 0.1s forwards;
+    }
+
+    @keyframes trophyPopIn {
+      0% { opacity: 0; transform: scale(0) translateY(15px) rotate(-10deg); }
+      60% { opacity: 1; transform: scale(1.25) translateY(-5px) rotate(5deg); }
+      100% { opacity: 1; transform: scale(1) translateY(0) rotate(0deg); }
+    }
+
+    .sparkle-svg-side {
+      position: absolute;
+      top: 10px;
+      width: 36px;
+      height: 36px;
+      opacity: 0;
+      transform: scale(0);
+      filter: drop-shadow(0 6px 12px rgba(0,0,0,0.15)) drop-shadow(0 0 12px #ffe082);
+      z-index: 6;
+      overflow: visible;
+    }
+    .sparkle-svg-side.left { left: calc(50% - 132px); }
+    .sparkle-svg-side.right { right: calc(50% - 132px); }
+
+    .celebration-container.active-anim .sparkle-svg-side.left {
+      animation: sparkleSidePop 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.25) 0.3s forwards;
+    }
+    .celebration-container.active-anim .sparkle-svg-side.right {
+      animation: sparkleSidePop 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.25) 0.5s forwards;
+    }
+
+    @keyframes sparkleSidePop {
+      0% { opacity: 0; transform: scale(0) rotate(-20deg); }
+      60% { opacity: 1; transform: scale(1.2) rotate(8deg); }
+      100% { opacity: 1; transform: scale(1) rotate(0deg); }
+    }
+
+    .settlement-stars {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      margin: 4px 0 6px 0;
+    }
+    .star-icon {
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      font-size: clamp(2.3rem, 6.5vw, 2.8rem);
+      color: #ffb800;
+      line-height: 1;
+      user-select: none;
+      position: relative;
+      filter: drop-shadow(0 6px 12px rgba(0,0,0,0.18)) drop-shadow(0 0 16px #ffb800) drop-shadow(0 0 24px #ffe082);
+      opacity: 0;
+      transform: scale(0);
+      transition: all 0.3s ease;
+      transform-style: preserve-3d;
+    }
+
+    .settlement-stars.active-anim .star-icon {
+      animation: starBottomPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.25) forwards;
+    }
+    .settlement-stars.active-anim .star-icon:nth-child(1) { animation-delay: 0.5s; }
+    .settlement-stars.active-anim .star-icon:nth-child(2) { animation-delay: 0.75s; }
+    .settlement-stars.active-anim .star-icon:nth-child(3) { animation-delay: 1.0s; }
+
+    @keyframes starBottomPop {
+      0% { opacity: 0; transform: scale(0) translateY(10px); }
+      70% { opacity: 1; transform: scale(1.25) translateY(-3px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .settlement-score-pill {
+      background-color: var(--primary-light);
+      border: 1.5px solid #C5D4C3;
+      color: var(--primary-dark);
+      padding: 4px 18px;
+      border-radius: 30px;
+      display: inline-block;
+      font-size: clamp(0.98rem, 3.2vw, 1.12rem);
+      font-weight: bold;
+      margin: 2px 0 8px 0;
+    }
+
+    .settlement-result-box {
+      border: 1.5px solid var(--border-color);
+      border-radius: 14px;
+      padding: 10px;
+      margin-bottom: 10px;
+      background: #ffffff;
+    }
+    .settlement-result-title {
+      color: var(--text-main); font-weight: bold;
+      font-size: clamp(0.95rem, 3vw, 1.05rem); margin-bottom: 6px;
+    }
+    .settlement-tags-group {
+      display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;
+    }
+    .tag-correct {
+      background: #EAF0E7; border: 1.5px solid #B7C9B5; color: #35473C;
+      padding: 5px 14px; border-radius: 12px; font-weight: bold;
+      font-size: clamp(0.9rem, 2.8vw, 1rem);
+    }
+    .tag-wrong {
+      background: #FDF2F0; border: 1.5px solid #E2A7A0; color: #9C3327;
+      padding: 5px 14px; border-radius: 12px; font-weight: bold;
+      font-size: clamp(0.9rem, 2.8vw, 1rem);
+    }
+    .settlement-encouragement {
+      background: var(--primary-light); border: 1.5px solid var(--border-color); border-radius: 12px;
+      padding: 8px 12px; color: var(--primary-dark); font-size: clamp(0.9rem, 3vw, 1rem);
+      font-weight: bold; line-height: 1.4; margin-top: 6px;
+    }
+
+    .btn-settlement-next {
+      width: 100%;
+      max-width: 480px;
+      height: 46px;
+      background-color: var(--primary-color);
+      color: #ffffff;
+      font-size: clamp(1.1rem, 3.6vw, 1.25rem);
+      font-weight: 800;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(79, 112, 88, 0.25);
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 10px auto 0 auto;
+    }
+    .btn-settlement-next:hover {
+      background-color: var(--primary-dark);
+      transform: translateY(-2px);
+    }
+
+    .settlement-nav-group {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      margin-top: 8px;
+      width: 100%;
+      max-width: 520px;
+      margin-left: auto;
+      margin-right: auto;
+      flex-wrap: wrap;
+    }
+    .btn-sub-nav {
+      flex: 1 1 130px;
+      min-width: 110px;
+      height: 40px;
+      background-color: #ffffff;
+      border: 2px solid var(--primary-color);
+      color: var(--primary-dark);
+      font-size: clamp(0.92rem, 2.8vw, 1.02rem);
+      font-weight: 800;
+      border-radius: 25px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+      white-space: nowrap;
+    }
+    .btn-sub-nav:hover {
+      background-color: var(--primary-light);
+      border-color: var(--primary-dark);
+      transform: translateY(-1px);
+    }
+    .btn-sub-nav:active {
+      transform: scale(0.98);
+    }
+
+    @media (max-width: 520px) {
+      .settlement-nav-group {
+        gap: 8px;
+      }
+      .btn-sub-nav {
+        flex: 1 1 45%;
+        font-size: 0.9rem;
+        height: 38px;
+      }
+    }
+
+    .summary-breakdown-box {
+      position: relative;
+      background-color: var(--primary-light);
+      border-radius: 12px;
+      padding: 8px 14px;
+      margin-bottom: 8px;
+      text-align: left;
+      overflow: visible;
+      perspective: 1000px;
+    }
+    .summary-breakdown-row {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: clamp(0.92rem, 3vw, 1.05rem); font-weight: bold; color: var(--text-main);
+      padding: 5px 0; border-bottom: 1px dashed var(--border-color);
+    }
+    .summary-breakdown-row:last-child { border-bottom: none; }
+    .summary-breakdown-score { color: var(--primary-color); font-weight: 800; }
+
+    .clapping-hand-breakdown {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      font-size: clamp(3rem, 9vw, 4rem);
+      line-height: 1;
+      opacity: 0;
+      z-index: 10;
+      filter: drop-shadow(0 10px 18px rgba(0,0,0,0.22)) drop-shadow(0 0 16px rgba(255,184,0,0.6));
+      pointer-events: none;
+      transform-style: preserve-3d;
+    }
+
+    .summary-breakdown-box.active-anim .clapping-hand-breakdown {
+      animation: breakdownClapAnim 3.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+
+    @keyframes breakdownClapAnim {
+      0% { opacity: 0; transform: translate(-50%, -50%) scale(0) rotate(-20deg); }
+      18% { opacity: 1; transform: translate(-50%, -50%) scale(1.35) rotate(0deg); }
+      32% { transform: translate(-50%, -50%) scale(0.95) rotate(-12deg); }
+      48% { transform: translate(-50%, -50%) scale(1.3) rotate(10deg); }
+      64% { transform: translate(-50%, -50%) scale(1.0) rotate(-6deg); }
+      78% { opacity: 1; transform: translate(-50%, -50%) scale(1.15) rotate(0deg); }
+      100% { opacity: 0; transform: translate(-50%, -50%) scale(0.3) translateY(-25px); }
+    }
+
+    .btn-sound {
+      background: #ffffff; border: 2px solid var(--primary-color);
+      color: var(--primary-dark); font-size: 0.92rem; font-weight: 800;
+      padding: 4px 14px; border-radius: 20px; cursor: pointer; margin: 4px 0;
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+
+    /* ==========================================
+       6. 溫馨提示彈窗 (Custom Modal)
+       ========================================== */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: rgba(53, 71, 60, 0.45);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      z-index: 1000;
+      padding: 20px 12px;
+      box-sizing: border-box;
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    @media (max-width: 768px) {
+      .modal-overlay {
+        padding-top: calc(env(safe-area-inset-top, 0px) + 12px);
+        padding-left: 12px;
+        padding-right: 12px;
+        padding-bottom: 12px;
+      }
+    }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .modal-card {
+      background-color: var(--bg-color);
+      border: 3px solid var(--primary-color);
+      border-radius: 20px;
+      padding: 22px 18px;
+      max-width: 400px;
+      width: 100%;
+      max-height: calc(100vh - 40px);
+      overflow-y: auto;
+      text-align: center;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+      animation: popUp 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-sizing: border-box;
+    }
+
+    @media (max-width: 768px) {
+      .modal-card {
+        max-height: calc(100vh - env(safe-area-inset-top, 0px) - 24px);
+      }
+    }
+
+    @keyframes popUp { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .modal-title { color: var(--primary-dark); font-size: clamp(1.25rem, 3.8vw, 1.5rem); font-weight: 800; margin-bottom: 10px; }
+    .modal-content { color: var(--text-main); font-size: clamp(1rem, 3.4vw, 1.15rem); line-height: 1.55; margin-bottom: 20px; font-weight: 500; }
+    .btn-modal-close {
+      background-color: var(--primary-color); color: #ffffff; border: none; padding: 10px 32px;
+      font-size: clamp(1rem, 3.4vw, 1.15rem); font-weight: bold; border-radius: 30px;
+      cursor: pointer; box-shadow: 0 4px 10px rgba(79, 112, 88, 0.25);
+    }
+
+    .img-fallback {
+      display: flex; align-items: center; justify-content: center;
+      background: var(--primary-light); color: var(--primary-color); font-size: 1rem;
+      font-weight: 800; border: 1.5px dashed var(--border-color); border-radius: 8px;
+      padding: 4px; width: 100%; height: 100%; text-align: center;
+    }
+    #confetti-canvas {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none; z-index: 10;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 頂部導覽列 -->
+  <header id="main-header" style="display: none;">
+    <h1>生活情境遊戲</h1>
+    <div id="nav-bar" class="nav-bar">
+      <div id="navL1" class="nav-item active" onclick="navigateToLevel('l1')">第一關</div>
+      <div id="navL2" class="nav-item locked" onclick="navigateToLevel('l2')">第二關</div>
+      <div id="navL3" class="nav-item locked" onclick="navigateToLevel('l3')">第三關</div>
+    </div>
+  </header>
+
+  <!-- 主要遊戲容器 -->
+  <main class="game-container">
+    <canvas id="confetti-canvas"></canvas>
+
+    <!-- 說明首頁 -->
+    <div id="screenIntro" class="screen active">
+      <div class="home-wrapper">
+        <div class="intro-back-wrap">
+          <a href="<?= baseUrl ?>?page=level_select" target="_self" class="btn-sub-nav" style="flex: initial; padding: 6px 18px;">
+            ← 返回遊戲分類
+          </a>
+        </div>
+        <div class="home-header">
+          <h2 class="home-main-title">生活情境遊戲</h2>
+          <div class="home-subtitle">透過生活圖片，動動腦、想一想！</div>
+        </div>
+
+        <div class="home-card">
+          <div class="home-icon-box">
+            <svg viewBox="0 0 100 100" fill="none">
+              <rect x="20" y="45" width="60" height="42" rx="6" fill="#EAF0E7" stroke="#4F7058" stroke-width="3"/>
+              <path d="M12 48L50 18L88 48" stroke="#4F7058" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+              <rect x="40" y="60" width="20" height="27" rx="3" fill="#4F7058"/>
+            </svg>
+          </div>
+          <div class="home-card-content">
+            <span class="home-badge">第一關</span>
+            <div class="home-card-title">看圖片，配對地點</div>
+            <div class="home-card-desc">觀察場所圖片，點選對應名稱連線。</div>
+          </div>
+        </div>
+
+        <div class="home-card">
+          <div class="home-icon-box">
+            <svg viewBox="0 0 100 100" fill="none">
+              <circle cx="50" cy="38" r="18" fill="#EAF0E7" stroke="#4F7058" stroke-width="3"/>
+              <path d="M22 84C22 65 34 58 50 58C66 58 78 65 78 84" fill="#EAF0E7" stroke="#4F7058" stroke-width="3"/>
+            </svg>
+          </div>
+          <div class="home-card-content">
+            <span class="home-badge">第二關</span>
+            <div class="home-card-title">看人物，想想他在哪裡</div>
+            <div class="home-card-desc">觀察人物行為情境，選出所在地點。</div>
+          </div>
+        </div>
+
+        <div class="home-card">
+          <div class="home-icon-box">
+            <svg viewBox="0 0 100 100" fill="none">
+              <path d="M25 42H75L68 82H32L25 42Z" fill="#EAF0E7" stroke="#4F7058" stroke-width="3" stroke-linejoin="round"/>
+              <path d="M36 42C36 28 64 28 64 42" stroke="#4F7058" stroke-width="3.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="home-card-content">
+            <span class="home-badge">第三關</span>
+            <div class="home-card-title">看看情境，選出正確做法</div>
+            <div class="home-card-desc">判斷日常場合，選出 3 個合適活動。</div>
+          </div>
+        </div>
+
+        <div class="home-reminder-box">
+          💡 遊戲小提醒：仔細看圖片，依自己的步調輕鬆選擇即可！
+        </div>
+
+        <div class="home-theme-box">
+          <label for="themeSelect">今天想玩哪一類？</label>
+          <select id="themeSelect">
+            <option value="random">🎲 隨機抽取主題</option>
+            <option value="dining" selected>🍎 飲食相關</option>
+            <option value="home">🏠 居家生活</option>
+            <option value="traffic">🚗 交通與外出</option>
+            <option value="clothes">👕 穿著相關</option>
+          </select>
+        </div>
+
+        <button class="btn-start-game" id="startBtn" onclick="startGame()">開始遊戲 ❯</button>
+      </div>
+    </div>
+
+    <!-- 第一關：看圖片，配對地點 -->
+    <div id="screenLevel1" class="screen">
+      <h2 class="section-title">看圖片，配對地點</h2>
+      <div class="question-box">
+        <div class="question-text">請將圖片與對應的地點名稱連線</div>
+        <div class="hint-text">點擊左邊「地點圖片」，再點擊右邊「地點名稱」進行配對。</div>
+      </div>
+      <div class="matching-wrapper" id="l1MatchingWrapper">
+        <svg class="l1-svg-canvas" id="l1SvgCanvas"></svg>
+        <div class="matching-container" id="l1MatchingContainer">
+          <div>
+            <div class="column-title">地點圖片</div>
+            <div id="l1ImageList"></div>
+          </div>
+          <div>
+            <div class="column-title">地點名稱</div>
+            <div id="l1TextList"></div>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-submit" onclick="submitLevel1()">完成作答</button>
+    </div>
+
+    <!-- 第二關：看人物，想想他在哪裡 -->
+    <div id="screenLevel2" class="screen">
+      <h2 class="section-title">看人物，想想他在哪裡</h2>
+      <div class="question-box">
+        <div class="question-text" id="l2QuestionText">請看圖片，選擇最適合的答案：</div>
+        <div class="hint-text">請觀察圖片與人物行為，點選下方最符合的地點。</div>
+      </div>
+      <div class="single-img-container" id="l2ImageContainer"></div>
+      <div class="options-grid" id="l2OptionsGrid"></div>
+      <button class="btn btn-submit" onclick="submitLevel2()">完成作答</button>
+    </div>
+
+    <!-- 第三關：看看情境，選出正確做法 -->
+    <div id="screenLevel3" class="screen">
+      <h2 class="section-title">看看情境，選出正確做法</h2>
+      <div class="question-box">
+        <div class="question-text" id="l3QuestionText">哪些事情是在這裡做的？</div>
+        <div class="hint-text">請從下方圖片選項中，點選 3 個合適的活動。</div>
+      </div>
+      <div id="l3OptionsGrid"></div>
+      <button class="btn btn-submit" onclick="submitLevel3()">完成作答</button>
+    </div>
+
+    <!-- 獨立關卡完成結果頁面 -->
+    <div id="screenLevelResult" class="screen">
+      <div class="settlement-card">
+        <h2 id="lResultTitle" class="settlement-title">第一關完成！</h2>
+        <div class="settlement-stars" id="lResultStars"></div>
+        <div class="settlement-score-pill" id="lResultScore">本關得分：100 分</div>
+
+        <div class="settlement-result-box">
+          <div class="settlement-result-title">本關答題結果</div>
+          <div class="settlement-tags-group">
+            <span class="tag-correct">答對：<strong id="lResultCorrect">0</strong> 題</span>
+            <span class="tag-wrong">未答對：<strong id="lResultWrong">0</strong> 題</span>
+          </div>
+        </div>
+
+        <div class="settlement-encouragement" id="lResultMsg">答得很好！真棒！</div>
+      </div>
+      <button class="btn-settlement-next" id="lResultNextBtn" onclick="onLevelResultNext()">前往第二關</button>
+    </div>
+
+    <!-- 總成績畫面 -->
+    <div id="screenResult" class="screen">
+      <div class="settlement-card">
+        <h2 id="resultGreeting" class="settlement-title">恭喜完成全部三關！</h2>
+        
+        <!-- 總成績滿分專屬 3D 慶祝區域 -->
+        <div id="perfectCelebrationOverlay" class="celebration-container" style="display: none;">
+          <svg class="sparkle-svg-side left" viewBox="0 0 100 100" style="overflow: visible;">
+            <path d="M 50 10 Q 50 50 10 50 Q 50 50 50 90 Q 50 50 90 50 Q 50 50 50 10 Z" fill="#FFB703"/>
+            <path d="M 50 20 Q 50 50 20 50 Q 50 50 50 80 Q 50 50 80 50 Q 50 50 50 20 Z" fill="#FFE082"/>
+            <path d="M 82 62 Q 82 72 72 72 Q 82 72 82 82 Q 82 72 92 72 Q 82 72 82 62 Z" fill="#FFE382"/>
+          </svg>
+
+          <div class="trophy-wrapper">
+            <span class="trophy-permanent">🏆</span>
+          </div>
+
+          <svg class="sparkle-svg-side right" viewBox="0 0 100 100" style="overflow: visible;">
+            <path d="M 50 10 Q 50 50 10 50 Q 50 50 50 90 Q 50 50 90 50 Q 50 50 50 10 Z" fill="#FFB703"/>
+            <path d="M 50 20 Q 50 50 20 50 Q 50 50 50 80 Q 50 50 80 50 Q 50 50 50 20 Z" fill="#FFE082"/>
+            <path d="M 82 62 Q 82 72 72 72 Q 82 72 82 82 Q 82 72 92 72 Q 82 72 82 62 Z" fill="#FFE382"/>
+          </svg>
+        </div>
+
+        <!-- 關卡完成進度 3D 星星 -->
+        <div class="settlement-stars" id="finalResultStars"></div>
+
+        <div class="settlement-score-pill" id="finalScoreText">總平均成績：100 分</div>
+
+        <!-- 成績細項區域 -->
+        <div class="summary-breakdown-box" id="summaryBreakdownBox">
+          <div class="clapping-hand-breakdown">👏</div>
+          <div class="summary-breakdown-row">
+            <span>第一關 (看圖配對)：</span><span class="summary-breakdown-score" id="scoreL1">0 分</span>
+          </div>
+          <div class="summary-breakdown-row">
+            <span>第二關 (人物聯想)：</span><span class="summary-breakdown-score" id="scoreL2">0 分</span>
+          </div>
+          <div class="summary-breakdown-row">
+            <span>第三關 (情境判斷)：</span><span class="summary-breakdown-score" id="scoreL3">0 分</span>
+          </div>
+        </div>
+
+        <div id="soundControlArea" style="display: none;">
+          <button class="btn-sound" onclick="playPerfectApplauseSound(true)">👏 重新播放掌聲</button>
+        </div>
+
+        <div class="settlement-encouragement" id="resultFeedback">今天辛苦了！完成三關練習，給自己一個鼓勵！</div>
+      </div>
+
+      <button class="btn-settlement-next" onclick="restartGame()">再玩一次</button>
+
+      <!-- 三個返回按鈕 -->
+      <div class="settlement-nav-group">
+        <button class="btn-sub-nav" onclick="goToOrientationCategory()">回到定向感分類</button>
+        <button class="btn-sub-nav" onclick="goToGameCategories()">回到遊戲分類</button>
+        <button class="btn-sub-nav" onclick="goToHomePage()">回首頁</button>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    /* 配對線條顏色：鼠尾草綠與灰綠深淺色系 */
+    const PAIR_COLORS = ['#4F7058', '#6E8075', '#35473C', '#587B62', '#7A9181', '#3B5843'];
+
+    /* 關卡順序權重 */
+    const levelOrder = { 'l1': 1, 'l2': 2, 'l3': 3 };
+
+    /* 導頁動作（避免框架破框跳轉） */
+    function goToOrientationCategory() {
+      window.location.href = "<?= baseUrl ?>?page=orientation";
+    }
+    function goToGameCategories() {
+      window.location.href = "<?= baseUrl ?>?page=level_select";
+    }
+    function goToHomePage() {
+      window.location.href = "<?= baseUrl ?>?page=home";
+    }
+
+    /* 隨機打亂 */
+    function shuffleArray(arr) {
+      const array = [...arr];
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    function shuffleDifferentOrder(arr, refArr) {
+      let shuffled = shuffleArray(arr);
+      if (arr.length <= 1) return shuffled;
+      let allSame = true;
+      for (let i = 0; i < shuffled.length; i++) {
+        if (shuffled[i].id !== refArr[i].id) {
+          allSame = false; break;
+        }
+      }
+      if (allSame) shuffled.push(shuffled.shift());
+      return shuffled;
+    }
+
+    /* 提取 Drive ID */
+    function parseDriveId(url) {
+      if (!url) return '';
+      const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
+      return match ? match[1] : '';
+    }
+
+    /* 圖片備援載入 */
+    function createImageElement(url, altText) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'img-wrapper';
+      const driveId = parseDriveId(url);
+      if (!driveId && !url) {
+        wrapper.innerHTML = '<div class="img-fallback">' + (altText || '圖片') + '</div>';
+        return wrapper;
+      }
+      const img = document.createElement('img');
+      img.alt = altText || '圖片';
+      if (driveId) {
+        const primaryUrl = 'https://lh3.googleusercontent.com/d/' + driveId;
+        const secondaryUrl = 'https://drive.google.com/thumbnail?id=' + driveId + '&sz=w800';
+        const tertiaryUrl = 'https://drive.google.com/uc?export=view&id=' + driveId;
+        img.src = primaryUrl;
+        img.onerror = function() {
+          if (this.src === primaryUrl) this.src = secondaryUrl;
+          else if (this.src === secondaryUrl) this.src = tertiaryUrl;
+          else wrapper.innerHTML = '<div class="img-fallback">' + (altText || '圖片') + '</div>';
+        };
+      } else {
+        img.src = url;
+        img.onerror = function() {
+          wrapper.innerHTML = '<div class="img-fallback">' + (altText || '圖片') + '</div>';
+        };
+      }
+      wrapper.appendChild(img);
+      return wrapper;
+    }
+
+    /* 溫馨提示彈窗 (Modal) */
+    function showCustomModal(title, content) {
+      let existingOverlay = document.getElementById('custom-modal-overlay');
+      if (existingOverlay) existingOverlay.remove();
+      
+      const overlay = document.createElement('div');
+      overlay.id = 'custom-modal-overlay';
+      overlay.className = 'modal-overlay';
+      overlay.innerHTML = `
+        <div class="modal-card">
+          <div class="modal-title">${title}</div>
+          <div class="modal-content">${content}</div>
+          <button class="btn-modal-close" onclick="closeCustomModal()">我知道了</button>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+    }
+    function closeCustomModal() {
+      const overlay = document.getElementById('custom-modal-overlay');
+      if (overlay) overlay.remove();
+    }
+
+    /* 完整關卡題庫資料 */
+    const GAME_DATA = {
+      dining: {
+        title: "飲食相關",
+        level1: [
+          { id: 'restaurant', label: '餐廳', img: 'https://lh3.googleusercontent.com/d/1NmJ7jUs6HbAFSuNvWD4OxDj9a5R-FQpy' },
+          { id: 'kitchen', label: '家中廚房', img: 'https://lh3.googleusercontent.com/d/1ukB6lm2d6p9ZVY71_VH46pa4wMBGneVD' },
+          { id: 'market', label: '市場', img: 'https://lh3.googleusercontent.com/d/1pHf7ukDQXxlekP4btV5fXRtLjhhDfToh' }
+        ],
+        level2: [
+          {
+            question: "爸爸圍著圍裙炒菜，他在哪？",
+            img: "https://lh3.googleusercontent.com/d/1oqS4TnwLHvsU4wJThfnlmXD-RGZWGYCu",
+            options: [
+              { text: "餐廳", correct: false },
+              { text: "家中廚房", correct: true },
+              { text: "市場", correct: false }
+            ]
+          },
+          {
+            question: "阿嬤拿著菜籃買菜，她在哪？",
+            img: "https://lh3.googleusercontent.com/d/1B5X7mBHqiiJoxpGM2wbLzZa2tf-ueklX",
+            options: [
+              { text: "餐廳", correct: false },
+              { text: "家中廚房", correct: false },
+              { text: "市場", correct: true }
+            ]
+          },
+          {
+            question: "服務生幫客人點餐，他在哪？",
+            img: "https://lh3.googleusercontent.com/d/1f3qIBepAYFWr8x_TVfwcX0pdbtGX9T_3",
+            options: [
+              { text: "餐廳", correct: true },
+              { text: "家中廚房", correct: false },
+              { text: "市場", correct: false }
+            ]
+          }
+        ],
+        level3: [
+          {
+            question: "在「餐廳」會做的事：（請選出 3 個選項）",
+            options: [
+              { text: "點餐", img: "https://lh3.googleusercontent.com/d/1yXc1numOwOMXU4CZoJRgZhOuyBl9_8Pe", correct: true },
+              { text: "吃飯", img: "https://lh3.googleusercontent.com/d/19vgj8EoKRaIp5Yh_nWwl3UXjgt4Pnisz", correct: true },
+              { text: "付錢", img: "https://lh3.googleusercontent.com/d/1yXc1numOwOMXU4CZoJRgZhOuyBl9_8Pe", correct: true },
+              { text: "種菜", img: "https://lh3.googleusercontent.com/d/1l5z0aaH96zEbDQL6DJOl5_LpwPl-dFCA", correct: false },
+              { text: "洗衣服", img: "https://lh3.googleusercontent.com/d/1I9TQhMmhIzoUdu2nxBUVgfNoZTrg8iqm", correct: false },
+              { text: "看醫生", img: "https://lh3.googleusercontent.com/d/1-tKYSOIdmiCNhuqSXGouN257NIzJkbwy", correct: false }
+            ]
+          },
+          {
+            question: "在「市場」會做的事：（請選出 3 個選項）",
+            options: [
+              { text: "買菜", img: "https://lh3.googleusercontent.com/d/1NNnP4cPk6NqZkw1VD9Bf6d0xOvaZf05E", correct: true },
+              { text: "挑選水果", img: "https://lh3.googleusercontent.com/d/1hyhnRqOWVyqFNNyJl4tJsKgZjahKn8iG", correct: true },
+              { text: "付錢", img: "https://lh3.googleusercontent.com/d/1-4f3st2KywUBi3m8IUAOaMNGSqT77NH2", correct: true },
+              { text: "煮飯", img: "https://lh3.googleusercontent.com/d/1PRHa06yyg-Y0xOD2RJb3PNfamfr51-Cc", correct: false },
+              { text: "睡覺", img: "https://lh3.googleusercontent.com/d/1ZMIM9Gj4YqyPWDkwFb2YQcj97I0Kx-1m", correct: false },
+              { text: "運動", img: "https://lh3.googleusercontent.com/d/14Y1iuJ3W7HkIXrVT6QaWuvwKOPtcmPaI", correct: false }
+            ]
+          },
+          {
+            question: "在「家中廚房」會做的事：（請選出 3 個選項）",
+            options: [
+              { text: "煮飯", img: "https://lh3.googleusercontent.com/d/1uz7H-Dr_qGtcWlUwgaLAwqkFp2dywXsC", correct: true },
+              { text: "炒菜", img: "https://lh3.googleusercontent.com/d/1yqxtEJte6hH8C17vQQy0Hhd4pkjH956K", correct: true },
+              { text: "洗菜", img: "https://lh3.googleusercontent.com/d/1LLqvFb4UQQJDSj5UV_v6jQnX8MS22fjE", correct: true },
+              { text: "掛號", img: "https://lh3.googleusercontent.com/d/1WaroqGNlqxMlYnmCElXU73i1IA2fonTq", correct: false },
+              { text: "遛狗", img: "https://lh3.googleusercontent.com/d/1lE-DtPgihbHsw9cMKxcrKsPwdqpQ1g8i", correct: false },
+              { text: "看醫生", img: "https://lh3.googleusercontent.com/d/1HjpgyVLDclTEFJz7mbtn_8sRbbyz6Von", correct: false }
+            ]
+          }
+        ]
+      },
+      home: {
+        title: "居家生活",
+        level1: [
+          { id: 'kitchen', label: '廚房', img: 'https://lh3.googleusercontent.com/d/1ukB6lm2d6p9ZVY71_VH46pa4wMBGneVD' },
+          { id: 'bedroom', label: '臥室', img: 'https://lh3.googleusercontent.com/d/1t2C2bC3W6JG5Qt-1BrA2dtJVxet4IH_7' },
+          { id: 'bathroom', label: '浴室', img: 'https://lh3.googleusercontent.com/d/1zhR0B29eopSHS3TOabU0bi72I6VidPN5' }
+        ],
+        level2: [
+          {
+            question: "阿嬤躺在床上睡覺，她在哪？",
+            img: "https://lh3.googleusercontent.com/d/1QZrSgW-yg-pCkAecrMHAib2g_fnxDX8T",
+            options: [
+              { text: "廚房", correct: false },
+              { text: "臥室", correct: true },
+              { text: "浴室", correct: false }
+            ]
+          },
+          {
+            question: "爸爸站在瓦斯爐前炒菜，他在哪？",
+            img: "https://lh3.googleusercontent.com/d/1EkaCQKlpNXiXCNRsltMIg_Zz9cFDH65j",
+            options: [
+              { text: "廚房", correct: true },
+              { text: "臥室", correct: false },
+              { text: "浴室", correct: false }
+            ]
+          },
+          {
+            question: "小孩在用蓮蓬頭沖澡，他在哪？",
+            img: "https://lh3.googleusercontent.com/d/1oPDY5gY_CVWqdh6y3bihQEOeSicT1yJV",
+            options: [
+              { text: "廚房", correct: false },
+              { text: "臥室", correct: false },
+              { text: "浴室", correct: true }
+            ]
+          }
+        ],
+        level3: [
+          {
+            question: "在「廚房」會做的事：（請選出 3 個選項）",
+            options: [
+              { text: "洗菜", img: "https://lh3.googleusercontent.com/d/1OHO6bbkGPv_-BNzW7pO1qZiH6-n7W0zn", correct: true },
+              { text: "洗碗", img: "https://lh3.googleusercontent.com/d/1_F2G_XQq6vsOmaKr8cX65-YPD9phB9Kw", correct: true },
+              { text: "炒菜", img: "https://lh3.googleusercontent.com/d/1twUhiESWamgzJgYQvdDA1Le4YnEyaXSY", correct: true },
+              { text: "睡覺", img: "https://lh3.googleusercontent.com/d/1hCcxpg6u70o0FNjSeiOvfCJA7kze7oiQ", correct: false },
+              { text: "洗澡", img: "https://lh3.googleusercontent.com/d/1_6tdBQpSKXOR0Fg-oiZLX7Ksy53XUuaG", correct: false },
+              { text: "掛號", img: "https://lh3.googleusercontent.com/d/1IJOmQi9dy9IB_zVWivKBw2idqOL2OVZs", correct: false }
+            ]
+          },
+          {
+            question: "在「臥室」會做的事：（請選出 3 個選項）",
+            options: [
+              { text: "睡覺", img: "https://lh3.googleusercontent.com/d/1V1iZ-ma78P8UKK5QxNQWyMZ0TcoWLt1D", correct: true },
+              { text: "坐著休息", img: "https://lh3.googleusercontent.com/d/12npKOHBjDWMp7gAu9P1Rkl1-NYjtZu5W", correct: true },
+              { text: "整理床鋪", img: "https://lh3.googleusercontent.com/d/1euUWjftz2rp1-akZqeV2iX4lfbNJR8E7", correct: true },
+              { text: "買菜", img: "https://lh3.googleusercontent.com/d/1ooRqy1Vyriz-10tfORNUPJWPyC3N0Zpa", correct: false },
+              { text: "運動", img: "https://lh3.googleusercontent.com/d/1bvu5MBOBqlonQ0hNukVedJQ7auDhtNyJ", correct: false },
+              { text: "看醫生", img: "https://lh3.googleusercontent.com/d/1WqLny8CY2cfTMW-Z9tNlnun3xcgCGZ28", correct: false }
+            ]
+          },
+          {
+            question: "在「浴室」會做的事：（請選出 3 個選項）",
+            options: [
+              { text: "洗澡", img: "https://lh3.googleusercontent.com/d/1_rtV_uBkKjgoGz-3fCyfzHIv3JdFbGld", correct: true },
+              { text: "刷牙", img: "https://lh3.googleusercontent.com/d/1q3FApaweY8aI2RPSxebf151r5dwca5QY", correct: true },
+              { text: "洗臉", img: "https://lh3.googleusercontent.com/d/1Jj0M03i2Pky2LYNMqFY-iPHgnXmNeF7T", correct: true },
+              { text: "煮飯", img: "https://lh3.googleusercontent.com/d/13O-AiajrpCN2BN61GyuSkEQIhEWSppa8", correct: false },
+              { text: "遛狗", img: "https://lh3.googleusercontent.com/d/1EGM6uygvYL6llsCEnUQxGN6ybUxz1Kca", correct: false },
+              { text: "看電視", img: "https://lh3.googleusercontent.com/d/1KMdlz7MQirxdliDjREVZp06LrvjdQyYm", correct: false }
+            ]
+          }
+        ]
+      },
+      traffic: {
+        title: "交通與外出",
+        level1: [
+          { id: 'bus_stop', label: '公車站', img: 'https://lh3.googleusercontent.com/d/19rfMdvjgRzPi6uUm4mYdE-AKbHdw5gqn' },
+          { id: 'train_station', label: '火車站', img: 'https://lh3.googleusercontent.com/d/17xj1t_oOo1sT7-SLqq8fafTVHWKJxa1Z' },
+          { id: 'road', label: '馬路', img: 'https://lh3.googleusercontent.com/d/1rfX40zihVhy3T2WvXkFaBnxqqw128ZF7' }
+        ],
+        level2: [
+          {
+            question: "阿公在路邊等公車，他在哪？",
+            img: "https://lh3.googleusercontent.com/d/1eyCqtCwaPzdshCGv2-2OxhVcEH8A_o-c",
+            options: [
+              { text: "公車站", correct: true },
+              { text: "火車站", correct: false },
+              { text: "馬路", correct: false }
+            ]
+          },
+          {
+            question: "站務員在幫旅客查票，他在哪？",
+            img: "https://lh3.googleusercontent.com/d/1fJ7qkaw1FsJ6XNDRBsBdpp90k_ogv0A1",
+            options: [
+              { text: "公車站", correct: false },
+              { text: "火車站", correct: true },
+              { text: "馬路", correct: false }
+            ]
+          },
+          {
+            question: "婦人走在斑馬線上，她在哪？",
+            img: "https://lh3.googleusercontent.com/d/1gawPBhJSf_WIOA27DU28fT8o_y_cVkVf",
+            options: [
+              { text: "公車站", correct: false },
+              { text: "火車站", correct: false },
+              { text: "馬路", correct: true }
+            ]
+          }
+        ],
+        level3: [
+          {
+            question: "在「公車站」會做的事：（請選出 3 個選項）",
+            options: [
+              { text: "等車", img: "https://lh3.googleusercontent.com/d/1fyejZH5IgGn5z1AO86RKBOmPiVSnLz-3", correct: true },
+              { text: "排隊", img: "https://lh3.googleusercontent.com/d/1nubyts4B6-Ke3QUivKYXI31kmYyCuFIN", correct: true },
+              { text: "上車", img: "https://lh3.googleusercontent.com/d/14ay9Lv8SmJTM7mzUJTtMU-euhXS_Re44", correct: true },
+              { text: "炒菜", img: "https://lh3.googleusercontent.com/d/1JScELdSh1Y_-2BIYeokwkZ4lubBEye5z", correct: false },
+              { text: "洗澡", img: "https://lh3.googleusercontent.com/d/11sUz1s3-uG0Qi0RXa8qh_8mRFh7M_sUz", correct: false },
+              { text: "睡覺", img: "https://lh3.googleusercontent.com/d/1nubyts4B6-Ke3QUivKYXI31kmYyCuFIN", correct: false }
+            ]
+          },
+          {
+            question: "在「火車站」會做的事：（請選出 3 個選項）",
+            options: [
+              { text: "買票", img: "https://lh3.googleusercontent.com/d/1HtRUnF98VA2QrREE728wQp_9b6nf-doI", correct: true },
+              { text: "等車", img: "https://lh3.googleusercontent.com/d/1EbjRAHKajJOgqGBdn4XMK_JQfBOCzerh", correct: true },
+              { text: "上車", img: "https://lh3.googleusercontent.com/d/1V1CEUAC5yDr1jXWB1cFQmTZAwGNLdS-1", correct: true },
+              { text: "洗衣服", img: "https://lh3.googleusercontent.com/d/1OxrKvrxI9WfKeiAIEXRGivSQqmRT647R", correct: false },
+              { text: "看醫生", img: "https://lh3.googleusercontent.com/d/1cW9rUvTt54CXSXnoYHCB_WwV7naWbqHn", correct: false },
+              { text: "煮菜", img: "https://lh3.googleusercontent.com/d/1sRhhQGC2ze2oGnv23QDP7NYi9ZwlqQ9n", correct: false }
+            ]
+          },
+          {
+            question: "在「馬路」會做的事：（請選出 3 個選項）",
+            options: [
+              { text: "走斑馬線", img: "https://lh3.googleusercontent.com/d/1SOTC0dul-9jIUNI8QaPjQfEYEvDD4Bkx", correct: true },
+              { text: "看紅綠燈", img: "https://lh3.googleusercontent.com/d/1c8-sZFBqhK6etHOO8HKqqmONPNuZxvDU", correct: true },
+              { text: "注意來車", img: "https://lh3.googleusercontent.com/d/1YYWkI3E5or-w8Y4ESPQ-qgE8PR3-sqC_", correct: true },
+              { text: "洗衣服", img: "https://lh3.googleusercontent.com/d/1iwVpVArFzqQvkHdZ__feFb--BHSoZwZz", correct: false },
+              { text: "睡覺", img: "https://lh3.googleusercontent.com/d/1vh-PyBb4sRxUj_oqbGzF0FiVaOacRCaP", correct: false },
+              { text: "煮菜", img: "https://lh3.googleusercontent.com/d/13WqW5Si5wOnJZ9ulteQxmhaa65rR8vId", correct: false }
+            ]
+          }
+        ]
+      },
+      clothes: {
+        title: "穿著相關",
+        level1: [
+          { id: 'clothing_store', label: '服飾店', img: 'https://lh3.googleusercontent.com/d/1Wi1x_VEyWibgZgZEDenXDEE9YvxJu55T' },
+          { id: 'laundry_room', label: '洗衣間', img: 'https://lh3.googleusercontent.com/d/1xRlqU7WqtPSOK-IHw6shph54-WjofXr0' },
+          { id: 'fitting_room', label: '更衣室', img: 'https://lh3.googleusercontent.com/d/1F53EYio2cTdSMev6anaX4rYIHabNIlBw' }
+        ],
+        level2: [
+          {
+            question: "有人在試穿衣服，她在哪？",
+            img: "https://lh3.googleusercontent.com/d/1bUP58JvgtcAFuPe-qvCQ9wnjvAvQ5K--",
+            options: [
+              { text: "服飾店", correct: false },
+              { text: "洗衣間", correct: false },
+              { text: "更衣室", correct: true }
+            ]
+          },
+          {
+            question: "店員在賣衣服，他在哪？",
+            img: "https://lh3.googleusercontent.com/d/1ermAZUuyj2S89JExmW9PWXrExD6R-n4e",
+            options: [
+              { text: "服飾店", correct: true },
+              { text: "洗衣間", correct: false },
+              { text: "更衣室", correct: false }
+            ]
+          },
+          {
+            question: "阿公在洗衣服，他在哪？",
+            img: "https://lh3.googleusercontent.com/d/1AMHmoNMTFNp5iym2AscCy2FKbSDi0d_r",
+            options: [
+              { text: "服飾店", correct: false },
+              { text: "洗衣間", correct: true },
+              { text: "更衣室", correct: false }
+            ]
+          }
+        ],
+        level3: [
+          {
+            question: "在「服飾店」會做的事：（請選出 3 個選項）",
+            options: [
+              { text: "買衣服", img: "https://lh3.googleusercontent.com/d/1M_SHf1vQnmrHDzejdTmFmkbCLCUY6QJV", correct: true },
+              { text: "試穿", img: "https://lh3.googleusercontent.com/d/1rHwH7xCWmMaBHfSrszeJCcWLFfyIou_Q", correct: true },
+              { text: "付錢", img: "https://lh3.googleusercontent.com/d/14EpX0BhgzLVRwQ-PHlbkwAfR03IUBzJ2", correct: true },
+              { text: "煮飯", img: "https://lh3.googleusercontent.com/d/1zagya74F-3Y1-yFE9LAUg9J6JsEFRlqB", correct: false },
+              { text: "看醫生", img: "https://lh3.googleusercontent.com/d/1I6_pzkA2LrTfZMBv7W0-AORYog3B2Opu", correct: false },
+              { text: "買菜", img: "https://lh3.googleusercontent.com/d/1hZM18rP1YwaLj6qpDzqPGNqyYJ6GToyn", correct: false }
+            ]
+          },
+          {
+            question: "在「洗衣間」會做的事：（請選出 3 個選項）",
+            options: [
+              { text: "洗衣服", img: "https://lh3.googleusercontent.com/d/1eF0mqtnK4noWswI_wBefwtXZ1HY8bSog", correct: true },
+              { text: "晾衣服", img: "https://lh3.googleusercontent.com/d/1IbpAzY6rJGqPR_pY2CBIrS1ZMBiSuuhB", correct: true },
+              { text: "摺衣服", img: "https://lh3.googleusercontent.com/d/1IbpAzY6rJGqPR_pY2CBIrS1ZMBiSuuhB", correct: true },
+              { text: "運動", img: "https://lh3.googleusercontent.com/d/19GVlAQe8VuXjsyAUiFzgXDikyzd-Q4gg", correct: false },
+              { text: "看電影", img: "https://lh3.googleusercontent.com/d/1to_XmoJiNNwdJiUMKG-DQTdDdQ162-34", correct: false },
+              { text: "吃飯", img: "https://lh3.googleusercontent.com/d/17-Kmx--lmWnTyGOYk8J7thCHwkmPQR9t", correct: false }
+            ]
+          },
+          {
+            question: "在「更衣室」會做的事：（請選出 3 個選項）",
+            options: [
+              { text: "換衣服", img: "https://lh3.googleusercontent.com/d/1w8uRfrZS9OUk069H8vwyT5NYwmQNVGo4", correct: true },
+              { text: "試穿", img: "https://lh3.googleusercontent.com/d/1dNBz0XwqFafV6qqbksvnr2qXAvL88I7p", correct: true },
+              { text: "整理衣物", img: "https://lh3.googleusercontent.com/d/1FpV7jVpPLlcZa8udpXb0h7C2ceWkWP1g", correct: true },
+              { text: "煮菜", img: "https://lh3.googleusercontent.com/d/1z3CsGy3EXd5_fKQihb9MItrjmGMMvvhG", correct: false },
+              { text: "掛號", img: "https://lh3.googleusercontent.com/d/1cMK9zk7TqFG67k92ztF9tPSExZ3u2WMC", correct: false },
+              { text: "遛狗", img: "https://lh3.googleusercontent.com/d/1lW4CBUAwGGV5H-NNOYi3xRI7QaBjOdPm", correct: false }
+            ]
+          }
+        ]
+      }
+    };
+
+    /* 全域變數與遊戲邏輯 */
+    let currentThemeKey = 'dining';
+    let currentThemeData = null;
+    let scores = { l1: 0, l2: 0, l3: 0 };
+    let unlockedLevels = { l1: true, l2: false, l3: false };
+    let currentActiveLevel = 'l1';
+    let currentCompletedLevelForResult = 'l1';
+    let l1Pairs = {};
+    let l1SelectedImgId = null;
+    let l1ImagesData = [];
+    let l1TextsData = [];
+    let currentL2Question = null;
+    let l2UserAnswer = null;
+    let l3SelectedIndices = [];
+    let currentL3Scenario = null;
+    let isSubmitting = false;
+
+    /* 音效控制 */
+    let applauseAudio = null;
+    let audioCtx = null;
+    let applauseTimeoutTimer = null;
+
+    function unlockAudioContext() {
+      if (!audioCtx) {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtx) audioCtx = new AudioCtx();
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function playSynthesizedApplause(duration = 3.8) {
+      try {
+        unlockAudioContext();
+        if (!audioCtx) return;
+        const sampleRate = audioCtx.sampleRate;
+        const bufferSize = Math.floor(sampleRate * duration);
+        const buffer = audioCtx.createBuffer(1, bufferSize, sampleRate);
+        const data = buffer.getChannelData(0);
+        const totalClaps = Math.floor(duration * 90);
+        for (let i = 0; i < totalClaps; i++) {
+          const startTime = Math.random() * (duration - 0.15);
+          const startSample = Math.floor(startTime * sampleRate);
+          const clapLen = Math.floor((0.015 + Math.random() * 0.025) * sampleRate);
+          const amp = 0.12 + Math.random() * 0.28;
+          for (let j = 0; j < clapLen && (startSample + j) < bufferSize; j++) {
+            const decay = Math.exp(-j / (clapLen * 0.25));
+            data[startSample + j] += (Math.random() * 2 - 1) * decay * amp;
+          }
+        }
+        const source = audioCtx.createBufferSource();
+        source.buffer = buffer;
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'bandpass'; filter.frequency.value = 1200; filter.Q.value = 1.1;
+        const gainNode = audioCtx.createGain();
+        const now = audioCtx.currentTime;
+        gainNode.gain.setValueAtTime(0.01, now);
+        gainNode.gain.linearRampToValueAtTime(0.65, now + 0.25);
+        gainNode.gain.setValueAtTime(0.65, now + duration - 0.6);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration);
+        source.connect(filter); filter.connect(gainNode); gainNode.connect(audioCtx.destination);
+        source.start(now); source.stop(now + duration);
+      } catch (e) {
+        console.log("Web Audio 掌聲合成器錯誤:", e);
+      }
+    }
+
+    function triggerBreakdownClapAnimation() {
+      const breakdownBox = document.getElementById('summaryBreakdownBox');
+      if (breakdownBox) {
+        breakdownBox.classList.remove('active-anim');
+        void breakdownBox.offsetWidth;
+        breakdownBox.classList.add('active-anim');
+      }
+    }
+
+    function playPerfectApplauseSound(isManualClick = false) {
+      unlockAudioContext();
+      if (applauseTimeoutTimer) clearTimeout(applauseTimeoutTimer);
+      if (!applauseAudio) {
+        applauseAudio = new Audio('https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3');
+      }
+      applauseAudio.currentTime = 0;
+      const playPromise = applauseAudio.play();
+      if (playPromise !== undefined) {
+        playPromise.then(() => {
+          applauseTimeoutTimer = setTimeout(() => {
+            if (applauseAudio) { applauseAudio.pause(); applauseAudio.currentTime = 0; }
+          }, 3800);
+        }).catch(err => { playSynthesizedApplause(3.8); });
+      } else { playSynthesizedApplause(3.8); }
+
+      if (isManualClick) {
+        const isPerfect = (scores.l1 === 100 && scores.l2 === 100 && scores.l3 === 100);
+        if (isPerfect) {
+          triggerBreakdownClapAnimation();
+        }
+      }
+    }
+
+    function stopApplauseSound() {
+      if (applauseTimeoutTimer) clearTimeout(applauseTimeoutTimer);
+      if (applauseAudio) { applauseAudio.pause(); applauseAudio.currentTime = 0; }
+    }
+
+    function startGame() {
+      unlockAudioContext();
+      stopConfetti();
+      stopApplauseSound();
+
+      const selectVal = document.getElementById('themeSelect').value;
+      const themeKeys = ['dining', 'home', 'traffic', 'clothes'];
+      if (selectVal === 'random') {
+        currentThemeKey = themeKeys[Math.floor(Math.random() * themeKeys.length)];
+      } else {
+        currentThemeKey = selectVal;
+      }
+      currentThemeData = GAME_DATA[currentThemeKey];
+      scores = { l1: 0, l2: 0, l3: 0 };
+      unlockedLevels = { l1: true, l2: false, l3: false };
+      
+      initLevel1();
+      initLevel2();
+      initLevel3();
+      enterLevel('l1');
+    }
+
+    /* 更新頂部導覽列 */
+    function updateNavUI(stage) {
+      const navBar = document.getElementById('nav-bar');
+      if (!navBar) return;
+
+      if (stage === 'summary') {
+        navBar.innerHTML = `
+          <div class="nav-item active" style="max-width: 180px; margin: 0 auto; cursor: default; background-color: var(--primary-color); color: #ffffff; font-weight: bold;">成績結算</div>
+        `;
+      } else {
+        navBar.innerHTML = `
+          <div id="navL1" class="nav-item" onclick="navigateToLevel('l1')">第一關</div>
+          <div id="navL2" class="nav-item" onclick="navigateToLevel('l2')">第二關</div>
+          <div id="navL3" class="nav-item" onclick="navigateToLevel('l3')">第三關</div>
+        `;
+        const n1 = document.getElementById('navL1');
+        const n2 = document.getElementById('navL2');
+        const n3 = document.getElementById('navL3');
+
+        if (n1 && n2 && n3) {
+          n1.className = 'nav-item' + (currentActiveLevel === 'l1' ? ' active' : (unlockedLevels.l2 ? ' done' : ''));
+          n2.className = 'nav-item' + (!unlockedLevels.l2 ? ' locked' : (currentActiveLevel === 'l2' ? ' active' : (unlockedLevels.l3 ? ' done' : '')));
+          n3.className = 'nav-item' + (!unlockedLevels.l3 ? ' locked' : (currentActiveLevel === 'l3' ? ' active' : ''));
+        }
+      }
+    }
+
+    /* 切換關卡與返回限制 */
+    function navigateToLevel(levelKey) {
+      unlockAudioContext();
+      const currentNum = levelOrder[currentActiveLevel] || 1;
+      const targetNum = levelOrder[levelKey] || 1;
+
+      if (targetNum === currentNum) return;
+
+      if (targetNum < currentNum) {
+        showCustomModal('先完成當前關卡喔！', '您已經完成之前的關卡，請繼續往前挑戰喔！');
+        return;
+      }
+
+      if (!unlockedLevels[levelKey]) {
+        showCustomModal('一步一步來！', '請先完成上一關，再繼續挑戰喔！');
+        return;
+      }
+
+      enterLevel(levelKey);
+    }
+
+    function enterLevel(levelKey) {
+      currentActiveLevel = levelKey;
+      updateNavUI();
+      if (levelKey === 'l1') {
+        showScreen('screenLevel1');
+        setTimeout(drawL1Lines, 50);
+      } else if (levelKey === 'l2') {
+        showScreen('screenLevel2');
+      } else if (levelKey === 'l3') {
+        showScreen('screenLevel3');
+      }
+    }
+
+    function showScreen(screenId) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(screenId).classList.add('active');
+      const header = document.getElementById('main-header');
+      if (header) {
+        if (screenId === 'screenIntro') {
+          header.style.display = 'none';
+        } else {
+          header.style.display = 'block';
+        }
+      }
+    }
+
+    /* 第一關邏輯 */
+    function initLevel1() {
+      l1Pairs = {};
+      l1SelectedImgId = null;
+      l1ImagesData = shuffleArray(currentThemeData.level1);
+      l1TextsData = shuffleDifferentOrder(currentThemeData.level1, l1ImagesData);
+      const imgList = document.getElementById('l1ImageList');
+      const textList = document.getElementById('l1TextList');
+      imgList.innerHTML = '';
+      textList.innerHTML = '';
+      l1ImagesData.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'match-item';
+        div.dataset.id = item.id;
+        div.onclick = function() { handleL1ImgClick(item.id); };
+        imgList.appendChild(div);
+      });
+      l1TextsData.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'match-item text-item';
+        div.dataset.id = item.id;
+        div.innerText = item.label;
+        div.onclick = function() { handleL1TextClick(item.id); };
+        textList.appendChild(div);
+      });
+      renderL1UI();
+    }
+
+    function handleL1ImgClick(imgId) {
+      unlockAudioContext();
+      if (l1Pairs[imgId]) {
+        delete l1Pairs[imgId];
+        l1SelectedImgId = null;
+      } else {
+        l1SelectedImgId = (l1SelectedImgId === imgId) ? null : imgId;
+      }
+      renderL1UI();
+    }
+
+    function handleL1TextClick(textId) {
+      unlockAudioContext();
+      if (l1SelectedImgId) {
+        for (let img in l1Pairs) {
+          if (l1Pairs[img] === textId) delete l1Pairs[img];
+        }
+        l1Pairs[l1SelectedImgId] = textId;
+        l1SelectedImgId = null;
+        renderL1UI();
+      } else {
+        for (let img in l1Pairs) {
+          if (l1Pairs[img] === textId) {
+            delete l1Pairs[img];
+            break;
+          }
+        }
+        renderL1UI();
+      }
+    }
+
+    function renderL1UI() {
+      const items = currentThemeData.level1;
+      document.querySelectorAll('#l1ImageList .match-item').forEach(el => {
+        const id = el.dataset.id;
+        el.className = 'match-item';
+        el.innerHTML = '';
+        const itemObj = items.find(i => i.id === id);
+        el.appendChild(createImageElement(itemObj.img, itemObj.label));
+        if (id === l1SelectedImgId) el.classList.add('selected');
+      });
+      document.querySelectorAll('#l1TextList .match-item').forEach(el => {
+        const textId = el.dataset.id;
+        el.className = 'match-item text-item';
+        el.innerText = items.find(i => i.id === textId).label;
+      });
+      drawL1Lines();
+    }
+
+    function drawL1Lines() {
+      const svg = document.getElementById('l1SvgCanvas');
+      const container = document.getElementById('l1MatchingContainer');
+      if (!svg || !container) return;
+      const containerRect = container.getBoundingClientRect();
+      svg.style.width = containerRect.width + 'px';
+      svg.style.height = containerRect.height + 'px';
+      svg.setAttribute('viewBox', `0 0 ${containerRect.width} ${containerRect.height}`);
+      svg.innerHTML = '';
+      document.querySelectorAll('#l1ImageList .match-item, #l1TextList .match-item').forEach(el => {
+        if (!el.classList.contains('selected')) {
+          el.style.borderColor = '#E4E9DF';
+          el.style.backgroundColor = '#ffffff';
+        }
+      });
+      const pairedKeys = Object.keys(l1Pairs);
+      pairedKeys.forEach((imgId, idx) => {
+        const textId = l1Pairs[imgId];
+        const imgEl = container.querySelector(`#l1ImageList .match-item[data-id="${imgId}"]`);
+        const textEl = container.querySelector(`#l1TextList .match-item[data-id="${textId}"]`);
+        if (!imgEl || !textEl) return;
+        const imgRect = imgEl.getBoundingClientRect();
+        const textRect = textEl.getBoundingClientRect();
+        const x1 = imgRect.right - containerRect.left;
+        const y1 = imgRect.top + imgRect.height / 2 - containerRect.top;
+        const x2 = textRect.left - containerRect.left;
+        const y2 = textRect.top + textRect.height / 2 - containerRect.top;
+        const color = PAIR_COLORS[idx % PAIR_COLORS.length];
+        if (!imgEl.classList.contains('selected')) {
+          imgEl.style.borderColor = color; imgEl.style.backgroundColor = '#EAF0E7';
+        }
+        if (!textEl.classList.contains('selected')) {
+          textEl.style.borderColor = color; textEl.style.backgroundColor = '#EAF0E7';
+        }
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        const dx = Math.max(20, Math.abs(x2 - x1) * 0.4);
+        const d = `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`;
+        path.setAttribute('d', d); path.setAttribute('stroke', color);
+        path.setAttribute('stroke-width', '4'); path.setAttribute('fill', 'none');
+        path.setAttribute('stroke-linecap', 'round');
+        svg.appendChild(path);
+      });
+    }
+
+    window.addEventListener('resize', drawL1Lines);
+
+    function submitLevel1() {
+      unlockAudioContext();
+      if (isSubmitting) return;
+      const totalRequired = currentThemeData.level1.length;
+      const currentPairedCount = Object.keys(l1Pairs).length;
+      if (currentPairedCount < totalRequired) {
+        showCustomModal('再檢查一下喔！', '還有題目尚未完成連線配對，請再檢查一下喔！');
+        return;
+      }
+      isSubmitting = true;
+      let correctCount = 0;
+      for (let imgId in l1Pairs) {
+        if (l1Pairs[imgId] === imgId) correctCount++;
+      }
+      const wrongCount = totalRequired - correctCount;
+      scores.l1 = Math.round((correctCount / totalRequired) * 100);
+      unlockedLevels.l2 = true;
+      currentCompletedLevelForResult = 'l1';
+      showLevelResultPage('l1', scores.l1, correctCount, wrongCount);
+      isSubmitting = false;
+    }
+
+    /* 第二關邏輯 */
+    function initLevel2() {
+      l2UserAnswer = null;
+      const allL2 = currentThemeData.level2;
+      const selectedQ = allL2[Math.floor(Math.random() * allL2.length)];
+      currentL2Question = {
+        ...selectedQ,
+        options: shuffleArray(selectedQ.options)
+      };
+      document.getElementById('l2QuestionText').innerText = currentL2Question.question;
+      const imgContainer = document.getElementById('l2ImageContainer');
+      imgContainer.innerHTML = '';
+      if (currentL2Question.img) {
+        imgContainer.appendChild(createImageElement(currentL2Question.img, currentL2Question.question));
+      }
+      const grid = document.getElementById('l2OptionsGrid');
+      grid.innerHTML = '';
+      currentL2Question.options.forEach((opt, optIdx) => {
+        const card = document.createElement('div');
+        card.className = 'option-card';
+        card.innerHTML = '<p style="font-size:1.15rem; font-weight:800; color:var(--text-main); margin:6px 0;">' + opt.text + '</p>';
+        card.onclick = function() { selectL2Option(optIdx); };
+        grid.appendChild(card);
+      });
+    }
+
+    function selectL2Option(optIdx) {
+      unlockAudioContext();
+      l2UserAnswer = optIdx;
+      document.querySelectorAll('#l2OptionsGrid .option-card').forEach((card, idx) => {
+        if (idx === optIdx) card.classList.add('selected');
+        else card.classList.remove('selected');
+      });
+    }
+
+    function submitLevel2() {
+      unlockAudioContext();
+      if (isSubmitting) return;
+      if (l2UserAnswer === null) {
+        showCustomModal('再選一個答案喔！', '請先點選一個地點答案喔！');
+        return;
+      }
+      isSubmitting = true;
+      const isCorrect = currentL2Question.options[l2UserAnswer].correct;
+      const correctCount = isCorrect ? 1 : 0;
+      const wrongCount = isCorrect ? 0 : 1;
+      scores.l2 = isCorrect ? 100 : 0;
+      unlockedLevels.l3 = true;
+      currentCompletedLevelForResult = 'l2';
+      showLevelResultPage('l2', scores.l2, correctCount, wrongCount);
+      isSubmitting = false;
+    }
+
+    /* 第三關邏輯 */
+    function initLevel3() {
+      l3SelectedIndices = [];
+      const scenario = currentThemeData.level3[Math.floor(Math.random() * currentThemeData.level3.length)];
+      const targetOrder = ['掛號', '看醫生', '炒菜', '遛狗', '洗菜', '煮飯'];
+      let sortedOptions = [...scenario.options];
+      sortedOptions.sort((a, b) => {
+        let indexA = targetOrder.indexOf(a.text);
+        let indexB = targetOrder.indexOf(b.text);
+        if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+        return 0;
+      });
+
+      currentL3Scenario = { ...scenario, options: sortedOptions };
+      document.getElementById('l3QuestionText').innerText = currentL3Scenario.question;
+      const grid = document.getElementById('l3OptionsGrid');
+      grid.innerHTML = '';
+      currentL3Scenario.options.forEach((opt, idx) => {
+        const card = document.createElement('div');
+        card.className = 'option-card';
+        card.dataset.index = idx;
+        const imgEl = createImageElement(opt.img, opt.text);
+        const pEl = document.createElement('p');
+        pEl.innerText = opt.text;
+        card.appendChild(imgEl);
+        card.appendChild(pEl);
+        card.onclick = function() { toggleL3Option(card, idx); };
+        grid.appendChild(card);
+      });
+    }
+
+    function toggleL3Option(card, index) {
+      unlockAudioContext();
+      if (l3SelectedIndices.includes(index)) {
+        l3SelectedIndices = l3SelectedIndices.filter(i => i !== index);
+        card.classList.remove('selected');
+      } else {
+        l3SelectedIndices.push(index);
+        card.classList.add('selected');
+      }
+    }
+
+    function submitLevel3() {
+      unlockAudioContext();
+      if (isSubmitting) return;
+      if (l3SelectedIndices.length === 0) {
+        showCustomModal('再選一下答案喔！', '請點選 3 個合適的活動選項喔！');
+        return;
+      }
+      isSubmitting = true;
+      let correctCount = 0;
+      const options = currentL3Scenario.options;
+      l3SelectedIndices.forEach(idx => {
+        if (options[idx].correct) correctCount++;
+      });
+      const totalTarget = 3;
+      const wrongCount = totalTarget - correctCount;
+      scores.l3 = Math.round((correctCount / totalTarget) * 100);
+      currentCompletedLevelForResult = 'l3';
+      showLevelResultPage('l3', scores.l3, correctCount, wrongCount);
+      isSubmitting = false;
+    }
+
+    /* 渲染 3D 星星圖示 */
+    function renderStars(containerEl, starCount) {
+      if (!containerEl) return;
+      containerEl.innerHTML = '';
+      containerEl.classList.remove('active-anim');
+      void containerEl.offsetWidth;
+      for (let i = 1; i <= starCount; i++) {
+        const span = document.createElement('span');
+        span.className = 'star-icon';
+        span.innerText = '★';
+        containerEl.appendChild(span);
+      }
+      setTimeout(() => {
+        containerEl.classList.add('active-anim');
+      }, 20);
+    }
+
+    /* 獨立關卡完成結果頁面 */
+    function showLevelResultPage(levelKey, score, correctCount, wrongCount) {
+      updateNavUI();
+      showScreen('screenLevelResult');
+
+      const titleEl = document.getElementById('lResultTitle');
+      const starsEl = document.getElementById('lResultStars');
+      const scoreEl = document.getElementById('lResultScore');
+      const correctEl = document.getElementById('lResultCorrect');
+      const wrongEl = document.getElementById('lResultWrong');
+      const msgEl = document.getElementById('lResultMsg');
+      const nextBtn = document.getElementById('lResultNextBtn');
+
+      scoreEl.innerText = '本關得分：' + score + ' 分';
+      correctEl.innerText = correctCount;
+      wrongEl.innerText = wrongCount;
+
+      if (wrongCount === 0) {
+        msgEl.innerText = '答得很好！真棒！';
+      } else {
+        msgEl.innerText = '沒關係！一起看看正確答案，多練習就會越來越熟悉！';
+      }
+
+      let starCount = 1;
+      if (levelKey === 'l1') {
+        titleEl.innerText = '第一關完成！';
+        nextBtn.innerText = '前往第二關';
+        starCount = 1;
+      } else if (levelKey === 'l2') {
+        titleEl.innerText = '第二關完成！';
+        nextBtn.innerText = '前往第三關';
+        starCount = 2;
+      } else if (levelKey === 'l3') {
+        titleEl.innerText = '第三關完成！';
+        nextBtn.innerText = '完成遊戲，查看總成績';
+        starCount = 3;
+      }
+
+      renderStars(starsEl, starCount);
+    }
+
+    function onLevelResultNext() {
+      unlockAudioContext();
+      if (currentCompletedLevelForResult === 'l1') {
+        enterLevel('l2');
+      } else if (currentCompletedLevelForResult === 'l2') {
+        enterLevel('l3');
+      } else if (currentCompletedLevelForResult === 'l3') {
+        goToFinalResult();
+      }
+    }
+
+    /* 總成績畫面邏輯 */
+    function goToFinalResult() {
+      showScreen('screenResult');
+      updateNavUI('summary');
+
+      const isPerfect = (scores.l1 === 100 && scores.l2 === 100 && scores.l3 === 100);
+      const avgScore = Math.round((scores.l1 + scores.l2 + scores.l3) / 3);
+
+      const greetingEl = document.getElementById('resultGreeting');
+      const celebrationOverlay = document.getElementById('perfectCelebrationOverlay');
+      const finalStarsEl = document.getElementById('finalResultStars');
+      const scoreTextEl = document.getElementById('finalScoreText');
+      const feedbackEl = document.getElementById('resultFeedback');
+      const soundCtrlEl = document.getElementById('soundControlArea');
+      const breakdownBox = document.getElementById('summaryBreakdownBox');
+
+      document.getElementById('scoreL1').innerText = scores.l1 + ' 分';
+      document.getElementById('scoreL2').innerText = scores.l2 + ' 分';
+      document.getElementById('scoreL3').innerText = scores.l3 + ' 分';
+      scoreTextEl.innerText = '總平均成績：' + avgScore + ' 分';
+
+      renderStars(finalStarsEl, 3);
+      startConfetti();
+
+      soundCtrlEl.style.display = 'block';
+      playPerfectApplauseSound();
+
+      if (isPerfect) {
+        greetingEl.innerText = '太棒了！三關滿分！';
+        feedbackEl.innerText = '太厲害了！表現完全正確，給自己一個最棒的鼓勵！';
+
+        if (celebrationOverlay) {
+          celebrationOverlay.style.display = 'flex';
+          celebrationOverlay.classList.remove('active-anim');
+          void celebrationOverlay.offsetWidth;
+          celebrationOverlay.classList.add('active-anim');
+        }
+
+        triggerBreakdownClapAnimation();
+      } else {
+        greetingEl.innerText = '恭喜完成全部三關！';
+        feedbackEl.innerText = '今天辛苦了！完成三關練習，給自己一個鼓勵！';
+
+        if (celebrationOverlay) {
+          celebrationOverlay.style.display = 'none';
+          celebrationOverlay.classList.remove('active-anim');
+        }
+
+        if (breakdownBox) {
+          breakdownBox.classList.remove('active-anim');
+        }
+      }
+    }
+
+    function restartGame() {
+      stopConfetti();
+      stopApplauseSound();
+      const celebrationOverlay = document.getElementById('perfectCelebrationOverlay');
+      if (celebrationOverlay) {
+        celebrationOverlay.style.display = 'none';
+        celebrationOverlay.classList.remove('active-anim');
+      }
+      
+      currentActiveLevel = 'l1';
+      unlockedLevels = { l1: true, l2: false, l3: false };
+      updateNavUI();
+      showScreen('screenIntro');
+    }
+
+    /* 彩帶動畫：少量紙片持續飄落，不間斷 */
+    let confettiInterval = null;
+
+    function startConfetti() {
+      stopConfetti();
+
+      const canvas = document.getElementById('confetti-canvas');
+      if (!canvas) return;
+
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      const container = canvas.parentElement;
+      canvas.width = container?.clientWidth || window.innerWidth;
+      canvas.height = container?.clientHeight || window.innerHeight;
+
+      const count = 28;
+
+      const particles = Array.from({ length: count }, () => ({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        color: [
+          '#F94174',
+          '#FFB703',
+          '#36B9D8',
+          '#55B96B',
+          '#9B6AD6',
+          '#F47C35'
+        ][Math.floor(Math.random() * 6)],
+        width: Math.random() * 4 + 4,
+        height: Math.random() * 7 + 6,
+        speed: Math.random() * 1.2 + 0.7,
+        drift: (Math.random() - 0.5) * 0.8,
+        sway: Math.random() * 0.7 + 0.2,
+        phase: Math.random() * Math.PI * 2,
+        rotation: Math.random() * Math.PI * 2,
+        rotationSpeed: (Math.random() - 0.5) * 0.1
+      }));
+
+      confettiInterval = setInterval(() => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        particles.forEach(p => {
+          p.y += p.speed;
+          p.phase += 0.045;
+          p.x += p.drift + Math.sin(p.phase) * p.sway;
+          p.rotation += p.rotationSpeed;
+
+          if (p.y > canvas.height + p.height) {
+            p.y = -p.height;
+            p.x = Math.random() * canvas.width;
+          }
+
+          if (p.x < -15) p.x = canvas.width + 10;
+          if (p.x > canvas.width + 15) p.x = -10;
+
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rotation);
+          ctx.fillStyle = p.color;
+          ctx.fillRect(
+            -p.width / 2,
+            -p.height / 2,
+            p.width,
+            p.height
+          );
+          ctx.restore();
+        });
+      }, 25);
+    }
+
+    function stopConfetti() {
+      if (confettiInterval) {
+        clearInterval(confettiInterval);
+        confettiInterval = null;
+      }
+      const canvas = document.getElementById('confetti-canvas');
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+  </script>
+</body>
+</html>
