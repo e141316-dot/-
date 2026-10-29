@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <base target="_self">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>高齡駕照輔助平台</title>
@@ -125,6 +124,7 @@
       transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
       outline: none; 
       min-width: 220px;
+      touch-action: manipulation;
     }
 
     .start-btn:hover { 
@@ -182,7 +182,7 @@
 
     <div class="action-section">
       <!-- 前往第二層：主要關卡分類頁 -->
-      <a href="<?= baseUrl ?>?page=level_select" id="startBtn" class="start-btn" target="_self">
+      <a href="./LevelSelect.html" id="startBtn" class="start-btn">
         開始練習
       </a>
     </div>
