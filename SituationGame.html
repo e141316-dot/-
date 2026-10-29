@@ -822,7 +822,7 @@
     <div id="screenIntro" class="screen active">
       <div class="home-wrapper">
         <div class="intro-back-wrap">
-          <a href="<?= baseUrl ?>?page=level_select" target="_self" class="btn-sub-nav" style="flex: initial; padding: 6px 18px;">
+          <a href="LevelSelect.html" target="_self" class="btn-sub-nav" style="flex: initial; padding: 6px 18px;">
             ← 返回遊戲分類
           </a>
         </div>
@@ -1028,15 +1028,15 @@
     /* 關卡順序權重 */
     const levelOrder = { 'l1': 1, 'l2': 2, 'l3': 3 };
 
-    /* 導頁動作（避免框架破框跳轉） */
+    /* 導頁動作（改為標準 static .html 網頁路徑） */
     function goToOrientationCategory() {
-      window.location.href = "<?= baseUrl ?>?page=orientation";
+      window.location.href = "LevelSelect.html";
     }
     function goToGameCategories() {
-      window.location.href = "<?= baseUrl ?>?page=level_select";
+      window.location.href = "LevelSelect.html";
     }
     function goToHomePage() {
-      window.location.href = "<?= baseUrl ?>?page=home";
+      window.location.href = "index.html";
     }
 
     /* 隨機打亂 */
