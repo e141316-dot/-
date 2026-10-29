@@ -1,60 +1,302 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <base target="_self">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>主要關卡分類 - 高齡駕照輔助平台</title>
-</head>
-<body style="background-color: #FCFBF7; margin: 0; padding: 32px 20px 60px;">
+  <style>
+    /* ==========================================
+       1. 分類頁面全局樣式與奶油白 & 鼠尾草綠視覺主題
+       ========================================== */
+    body {
+      background-color: #FCFBF7;
+      margin: 0;
+      padding: 32px 20px 60px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      color: #35473C;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .category-container {
+      width: 100%;
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 10px 0 40px;
+    }
+    .category-header {
+      position: relative;
+      margin-bottom: 32px;
+      text-align: center;
+    }
+    .category-nav {
+      position: absolute;
+      left: 0;
+      top: 0;
+      display: flex;
+      gap: 10px;
+    }
 
-  <!-- 引用單一真實來源組件 -->
-  <?!= HtmlService.createHtmlOutputFromFile('LevelSelectComponent').getContent(); ?>
+    .category-back-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 18px;
+      background-color: #FFFFFF;
+      color: #35473C;
+      border: 1px solid #E4E9DF;
+      border-radius: 50px;
+      font-size: 15px;
+      font-weight: 500;
+      text-decoration: none;
+      box-shadow: 0 2px 8px rgba(79, 112, 88, 0.06);
+      transition: all 0.2s ease;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    .category-back-btn:hover {
+      background-color: #EAF0E7;
+      color: #4F7058;
+    }
+
+    .category-title {
+      font-size: 32px;
+      font-weight: 700;
+      color: #4F7058;
+      letter-spacing: 2px;
+      margin-bottom: 8px;
+    }
+    .category-subtitle {
+      font-size: 16px;
+      font-weight: 400;
+      color: #6E8075;
+      letter-spacing: 1px;
+    }
+
+    .category-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+      width: 100%;
+    }
+
+    .category-card {
+      background-color: #FFFFFF;
+      border: 1px solid #E4E9DF;
+      border-radius: 20px;
+      padding: 22px 24px;
+      box-shadow: 0 4px 16px rgba(79, 112, 88, 0.06);
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .category-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(79, 112, 88, 0.1);
+    }
+
+    /* 圓框完全包覆圖片不留白邊 */
+    .category-img-wrap {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      border: 2px solid #EAF0E7;
+      overflow: hidden;
+      flex-shrink: 0;
+      background-color: #EAF0E7;
+      padding: 0;
+    }
+    .category-img-wrap img { 
+      width: 100%;
+      height: 100%; 
+      object-fit: cover; 
+      display: block; 
+    }
+
+    .category-info {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+      flex-grow: 1;
+    }
+    .category-name {
+      font-size: 20px;
+      font-weight: 700;
+      color: #35473C;
+      margin: 0;
+    }
+    .category-tag {
+      background-color: #EAF0E7;
+      color: #4F7058;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 4px 12px;
+      border-radius: 20px;
+      display: inline-block;
+    }
+
+    .category-action-btn {
+      background-color: #4F7058;
+      color: #FFFFFF;
+      font-size: 15px;
+      font-weight: 700;
+      padding: 8px 22px;
+      border-radius: 20px;
+      text-decoration: none;
+      display: inline-block;
+      box-shadow: 0 2px 6px rgba(79, 112, 88, 0.2);
+      transition: background-color 0.2s ease, transform 0.1s ease;
+      margin-top: 2px;
+      border: none;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    .category-action-btn:hover {
+      background-color: #3f5b47;
+      transform: scale(1.02);
+    }
+    
+    .btn-disabled {
+      background-color: #C5CEC8;
+      cursor: not-allowed;
+      box-shadow: none;
+      color: #fff;
+    }
+    .btn-disabled:hover {
+      background-color: #C5CEC8;
+      transform: none;
+    }
+
+    @media (max-width: 868px) {
+      .category-header { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+      .category-nav { position: static; align-self: flex-start; }
+      .category-grid { gap: 18px; }
+      .category-card.center-card { width: 100%; grid-column: 1 / -1; }
+    }
+
+    @media (max-width: 640px) {
+      .category-title { font-size: 26px; }
+      .category-subtitle { font-size: 14px; }
+      .category-grid { grid-template-columns: 1fr; }
+      .category-card, .category-card.center-card { width: 100%; padding: 18px; gap: 16px; }
+      .category-img-wrap { width: 85px; height: 85px; }
+      .category-name { font-size: 18px; }
+      .category-action-btn { font-size: 14px; padding: 7px 18px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="category-container">
+    <header class="category-header">
+      <div class="category-nav">
+        <button type="button" class="category-back-btn" onclick="onSelectCategory('home')">← 返回首頁</button>
+      </div>
+      <h1 class="category-title">遊戲分類</h1>
+      <p class="category-subtitle">輕鬆玩遊戲，一起動動腦</p>
+    </header>
+
+    <main class="category-grid">
+      <!-- 1. 定向感｜看時間回答 -->
+      <div class="category-card">
+        <div class="category-img-wrap">
+          <img src="https://lh3.googleusercontent.com/d/1zMhOWDaCriFbfnQ-SlkygDHSUSbA5dgb" alt="定向感｜看時間回答">
+        </div>
+        <div class="category-info">
+          <h2 class="category-name">定向感｜看時間回答</h2>
+          <span class="category-tag">時間・辨識・判斷</span>
+          <button type="button" class="category-action-btn" onclick="onSelectCategory('time-game')">進入遊戲</button>
+        </div>
+      </div>
+
+      <!-- 2. 定向感｜節慶猜謎 -->
+      <div class="category-card">
+        <div class="category-img-wrap">
+          <img src="https://lh3.googleusercontent.com/d/1OuhAfsNE1EEbwvEbejEFNPtdnJhSwLnS" alt="定向感｜節慶猜謎">
+        </div>
+        <div class="category-info">
+          <h2 class="category-name">定向感｜節慶猜謎</h2>
+          <span class="category-tag">節日・習俗・記憶</span>
+          <button type="button" class="category-action-btn" onclick="onSelectCategory('festival-game')">進入遊戲</button>
+        </div>
+      </div>
+
+      <!-- 3. 定向感｜生活情境 -->
+      <div class="category-card">
+        <div class="category-img-wrap">
+          <img src="https://lh3.googleusercontent.com/d/1bgOkfy_JLHG7EUN65ZfUntrVPxaVhQdV" alt="定向感｜生活情境">
+        </div>
+        <div class="category-info">
+          <h2 class="category-name">定向感｜生活情境</h2>
+          <span class="category-tag">場所・人物・判斷</span>
+          <button type="button" class="category-action-btn" onclick="onSelectCategory('situation-game')">進入遊戲</button>
+        </div>
+      </div>
+
+      <!-- 4. 語言能力｜語意聯想 -->
+      <div class="category-card">
+        <div class="category-img-wrap">
+          <img src="https://lh3.googleusercontent.com/d/1l2AnR3tjZXQnPj0jnt1Q7toHU5EgdN5B" alt="語言能力｜語意聯想">
+        </div>
+        <div class="category-info">
+          <h2 class="category-name">語言能力｜語意聯想</h2>
+          <span class="category-tag">詞語・分類・聯想</span>
+          <button type="button" class="category-action-btn" onclick="onSelectCategory('semantic-game')">進入遊戲</button>
+        </div>
+      </div>
+
+      <!-- 5. 視覺建構｜畫畫看連連看 -->
+      <div class="category-card">
+        <div class="category-img-wrap">
+          <img src="https://lh3.googleusercontent.com/d/163A2GpJUPBBK1HiBtoXqkXa0J-fORi8t" alt="視覺建構｜畫畫看連連看">
+        </div>
+        <div class="category-info">
+          <h2 class="category-name">視覺建構｜畫畫看連連看</h2>
+          <span class="category-tag">觀察・圖形・空間</span>
+          <button type="button" class="category-action-btn" onclick="onSelectCategory('visual-game')">進入遊戲</button>
+        </div>
+      </div>
+
+      <!-- 6. 注意力｜翻卡牌配對 -->
+      <div class="category-card">
+        <div class="category-img-wrap">
+          <img src="https://lh3.googleusercontent.com/d/1Rk7I9qWXqJY28TL5y_Gzfh__X41sc_X9" alt="注意力｜翻卡牌配對">
+        </div>
+        <div class="category-info">
+          <h2 class="category-name">注意力｜翻卡牌配對</h2>
+          <span class="category-tag">專注・記憶・配對</span>
+          <button type="button" class="category-action-btn" onclick="onSelectCategory('attention-game')">進入遊戲</button>
+        </div>
+      </div>
+
+      <!-- 7. 高齡認知功能測驗練習 -->
+      <div class="category-card center-card">
+        <div class="category-img-wrap">
+          <img src="https://lh3.googleusercontent.com/d/1nLgOPM3mgmHYdnOTPeA10nB38BkIRzF5" alt="高齡認知功能測驗練習">
+        </div>
+        <div class="category-info">
+          <h2 class="category-name">高齡認知功能測驗練習</h2>
+          <span class="category-tag">定向・記憶・判斷</span>
+          <button type="button" class="category-action-btn btn-disabled" onclick="alert('目前尚無遊戲，敬請期待！')">敬請期待</button>
+        </div>
+      </div>
+    </main>
+  </div>
 
   <script>
-    window.onSelectCategory = function(categoryKey) {
-      var baseUrl = "<?= baseUrl ?>";
-      if (baseUrl) {
-        window.location.assign(baseUrl + "?page=" + categoryKey);
+    function onSelectCategory(target) {
+      if (target === 'home') {
+        window.location.href = 'index.html';
+      } else if (target === 'time-game') {
+        window.location.href = 'TimeGame.html';
+      } else if (target === 'festival-game') {
+        window.location.href = 'FestivalGame.html';
+      } else {
+        alert('該遊戲開發中，敬請期待！');
       }
-    };
+    }
   </script>
 </body>
 </html>
-<script>
-  function onSelectCategory(target) {
-    // 1. 取得當前網址，並精準保留 Google Apps Script 的 exec 基礎路徑
-    var currentUrl = window.top.location.href;
-    var baseUrl = currentUrl.split('?')[0].split('#')[0];
-
-    // 2. 顯示載入動畫，避免使用者以為卡住
-    document.body.innerHTML = `
-      <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:80vh; font-family:sans-serif;">
-        <div style="font-size:1.3rem; color:#4F7058; font-weight:bold; margin-bottom:12px;">載入遊戲中...</div>
-        <div style="color:#6E8075; font-size:0.95rem;">請稍候片刻</div>
-      </div>
-    `;
-
-    // 3. 判斷頁面路由並進行跳轉
-    if (target === 'time-game') {
-      window.top.location.href = baseUrl + '?page=time-game';
-    } else if (target === 'home') {
-      window.top.location.href = baseUrl + '?page=home';
-    } else {
-      alert('該遊戲開發中，敬請期待！');
-      // 若是跳出提示，則刷新恢復頁面
-      window.top.location.href = baseUrl + '?page=level_select';
-    }
-  }
-<script>
-  function onSelectCategory(target) {
-    var baseUrl = "<?= baseUrl ?>";
-    if (target === 'time-game') {
-      window.top.location.href = baseUrl + "?page=time-game";
-    } else if (target === 'home') {
-      window.top.location.href = baseUrl + "?page=home";
-    } else {
-      alert('該遊戲開發中，敬請期待！');
-    }
-  }
-</script>
