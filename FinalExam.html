@@ -9596,10 +9596,7 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
 .numeric-input-feedback[hidden]{display:none!important}
 #step-p1 #p1-answer-input{cursor:text}
 #step-p1 #p1-answer-input:focus-visible{outline:3px solid #26392D;outline-offset:3px}
-@media (pointer:coarse){
-  .number-pad-float{display:none!important}
-  .number-pad-trigger-help{display:none!important}
-}
+/* 浮動面板是否使用由裝置判斷函式決定；不再單靠 pointer:coarse 隱藏觸控筆電的浮動鍵盤。 */
 
 /* 第一題生肖：單一文字輸入框 */
 #step-p1 #p1-answer-input.zodiac-text-input{display:block!important;box-sizing:border-box;width:100%!important;max-width:none;flex:none;height:66px!important;min-height:66px;font-size:22px!important;background:#FFFFFF!important;border:2px solid var(--color-dark,#2F4F3A)!important;border-radius:12px;padding:0 16px;color:var(--color-dark,#2F4F3A)}
@@ -9669,11 +9666,9 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
     var ua = navigator.userAgent || '';
     var mobileOrTabletOS = /Android|iPhone|iPad|iPod/i.test(ua) ||
       (navigator.platform === 'MacIntel' && Number(navigator.maxTouchPoints || 0) > 1);
-    var primaryCoarse = false;
-    try { primaryCoarse = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches); } catch (e) {}
     var touchPoints = Number(navigator.maxTouchPoints || 0);
-    // 優先依主要指標判斷；另以 iOS／Android 裝置及多點觸控補足平板瀏覽器差異。
-    return primaryCoarse || (mobileOrTabletOS && touchPoints > 0);
+    // 僅手機／平板作業系統使用原生鍵盤；Windows 觸控筆電仍保留桌面浮動鍵盤。
+    return mobileOrTabletOS && touchPoints > 0;
   }
 
   function getQuestion() {
@@ -9684,21 +9679,20 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
   }
 
   function getNumericConfig() {
-    // English/Japanese/Korean answer modes accept words as well as digits;
-    // keep the native text keyboard instead of forcing the custom numeric keypad.
-    if (typeof EXAM_DISPLAY_LANG !== 'undefined' && EXAM_DISPLAY_LANG !== 'zh-TW') return null;
     var q = getQuestion();
     if (!q) return null;
+    // 四種介面語言都保留數字鍵盤；英／日／韓另允許使用者以實體鍵盤輸入文字答案。
+    var allowWords = typeof EXAM_DISPLAY_LANG !== 'undefined' && EXAM_DISPLAY_LANG !== 'zh-TW';
     if (q.type === 'q1') {
-      if (examState.p1.currentMode === 'roc') return { key: 'q1-roc', kind: 'year', maxDigits: 3, placeholder: '點此輸入年份數字', label: '民國年份' };
-      if (examState.p1.currentMode === 'western') return { key: 'q1-western', kind: 'year', maxDigits: 4, placeholder: '點此輸入年份數字', label: '西元年份' };
+      if (examState.p1.currentMode === 'roc') return { key: 'q1-roc', kind: 'year', maxDigits: 3, placeholder: '點此輸入年份數字', label: '民國年份', allowWords: allowWords };
+      if (examState.p1.currentMode === 'western') return { key: 'q1-western', kind: 'year', maxDigits: 4, placeholder: '點此輸入年份數字', label: '西元年份', allowWords: allowWords };
       return null; // 生肖維持一般文字輸入，不顯示數字鍵盤。
     }
     if (q.type === 'q2' && (examState.p1.currentMode === 'solar' || examState.p1.currentMode === 'lunar')) {
-      return { key: 'q2-' + examState.p1.currentMode, kind: 'month', maxDigits: 2, placeholder: '點此輸入月份數字', label: examState.p1.currentMode === 'lunar' ? '農曆月份' : '國曆月份' };
+      return { key: 'q2-' + examState.p1.currentMode, kind: 'month', maxDigits: 2, placeholder: '點此輸入月份數字', label: examState.p1.currentMode === 'lunar' ? '農曆月份' : '國曆月份', allowWords: allowWords };
     }
     if (q.type === 'q3' && (examState.p1.currentMode === 'solar' || examState.p1.currentMode === 'lunar')) {
-      return { key: 'q3-' + examState.p1.currentMode, kind: 'date', maxDigits: 2, placeholder: '請輸入日期數字', label: examState.p1.currentMode === 'lunar' ? '農曆日期數字' : '國曆日期數字' };
+      return { key: 'q3-' + examState.p1.currentMode, kind: 'date', maxDigits: 2, placeholder: '請輸入日期數字', label: examState.p1.currentMode === 'lunar' ? '農曆日期數字' : '國曆日期數字', allowWords: allowWords };
     }
     return null;
   }
@@ -9891,6 +9885,17 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
     if (!config) return;
     var oldValue = String(input.dataset.lastAcceptedValue || '');
     var raw = String(input.value || '');
+
+    // 英／日／韓介面：實體鍵盤可輸入完整文字（例如 March、17th、二千二十六年），不可被數字過濾器清空。
+    // 若使用者輸入的是數字，仍套用原本位數與月份範圍檢查；浮動鍵盤按鍵也走同一條路徑。
+    var containsLocalizedText = config.allowWords && /[A-Za-z぀-ヿ㐀-鿿가-힯]/.test(raw);
+    if (containsLocalizedText) {
+      input.dataset.lastAcceptedValue = raw;
+      setFeedback('');
+      syncAnswerState();
+      return;
+    }
+
     var digits = raw.replace(/[^0-9０-９]/g, '').replace(/[０-９]/g, function (ch) {
       return String(ch.charCodeAt(0) - 0xFF10);
     }).slice(0, config.maxDigits);
@@ -9948,6 +9953,10 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
   function configureCurrentInput() {
     var config = getNumericConfig();
     var nativeMode = isNativeKeypadDevice();
+    var q = getQuestion();
+    var lang = (typeof EXAM_DISPLAY_LANG !== 'undefined' ? EXAM_DISPLAY_LANG : 'zh-TW');
+    var allowWords = !!(config && config.allowWords);
+
     if (!config) {
       closePanel(false);
       removeTriggerHelp();
@@ -9956,8 +9965,8 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
       clearPanelPadNodes();
       if (feedback) feedback.hidden = true;
       input.removeAttribute('aria-describedby');
-      // 生肖是一般文字輸入；恢復原生中文輸入，不掛上數字鍵盤。
-      var q = getQuestion();
+
+      // 只有生肖與非數字題目不使用自訂數字鍵盤。
       if (q && q.type === 'q1' && examState.p1.currentMode === 'zodiac') {
         input.type = 'text';
         input.style.display = 'block';
@@ -9965,8 +9974,9 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
         input.removeAttribute('inputmode');
         input.removeAttribute('pattern');
         input.removeAttribute('maxlength');
-        input.placeholder = '請輸入生肖';
-        input.setAttribute('aria-label', '請輸入生肖');
+        input.placeholder = lang === 'en' ? 'Enter the zodiac animal' :
+          (lang === 'ja' ? '十二支を入力してください' : (lang === 'ko' ? '띠 동물을 입력하세요' : '請輸入生肖'));
+        input.setAttribute('aria-label', input.placeholder);
         showZodiacTitle();
         syncAnswerState();
       }
@@ -9976,20 +9986,47 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
     bindInputOnce();
     input.type = 'text';
     input.style.display = 'block';
-    input.readOnly = false;
+    input.readOnly = false; // 一定允許實體鍵盤輸入，不鎖定欄位。
     input.removeAttribute('min');
     input.removeAttribute('max');
     input.removeAttribute('step');
     input.autocomplete = 'off';
     input.autocapitalize = 'off';
     input.spellcheck = false;
-    input.maxLength = config.maxDigits;
-    input.setAttribute('pattern', '[0-9]*');
-    input.setAttribute('aria-label', config.label + '，請輸入數字');
     input.setAttribute('aria-haspopup', nativeMode ? 'false' : 'dialog');
     input.setAttribute('aria-expanded', 'false');
-    input.placeholder = config.placeholder;
     input.dataset.numericKind = config.kind;
+
+    if (allowWords) {
+      // 多語系欄位可輸入單字或數字；不設定 maxlength/pattern，避免 March、17th 等文字被截掉。
+      input.removeAttribute('maxlength');
+      input.removeAttribute('pattern');
+      input.setAttribute('lang', lang === 'en' ? 'en' : (lang === 'ja' ? 'ja' : 'ko'));
+      input.setAttribute('aria-label', config.label);
+      if (q.type === 'q1') {
+        input.placeholder = lang === 'en'
+          ? (examState.p1.currentMode === 'roc' ? 'e.g. 115 or one hundred fifteen' : 'e.g. 2026 or twenty twenty-six')
+          : lang === 'ja'
+            ? (examState.p1.currentMode === 'roc' ? '例：115 または百十五年' : '例：2026 または二千二十六年')
+            : (examState.p1.currentMode === 'roc' ? '예: 115 또는 백십오년' : '예: 2026 또는 이천이십육년');
+      } else if (q.type === 'q2') {
+        input.placeholder = lang === 'en' ? 'e.g. 3 or March' : (lang === 'ja' ? '例：3 または三月' : '예: 3 또는 삼월');
+      } else if (q.type === 'q3') {
+        var lunarDate = examState.p1.currentMode === 'lunar';
+        input.placeholder = lang === 'en'
+          ? (lunarDate ? 'e.g. 14 or 14th' : 'e.g. 17 or 17th')
+          : lang === 'ja'
+            ? (lunarDate ? '例：14 または十四日' : '例：17 または十七日')
+            : (lunarDate ? '예: 14 또는 십사일' : '예: 17 또는 십칠일');
+      }
+    } else {
+      // 繁體中文保留原本數字輸入限制與自訂鍵盤規則。
+      input.maxLength = config.maxDigits;
+      input.setAttribute('pattern', '[0-9]*');
+      input.setAttribute('aria-label', config.label + '，請輸入數字');
+      input.placeholder = config.placeholder;
+      input.setAttribute('lang', 'zh-Hant');
+    }
 
     var unit = control.querySelector('.input-unit-wrap');
     if (unit && unit.querySelector('.input-unit')) {
@@ -9999,17 +10036,18 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
       input.dataset.lastAcceptedValue = String(input.value || '');
     }
 
-    // 拿掉舊模式可能留下的重複操作文字，電腦版只顯示一行短提示。
+    // 把原本在欄位下方建立的按鍵節點收進浮動面板，絕不留在頁面文件流中。
     var helpNodes = getPadNodesFrom(control).filter(function (node) { return node.classList.contains('number-pad-help'); });
     helpNodes.forEach(function (node) { if (node.parentNode) node.parentNode.removeChild(node); });
     var livePadNodes = getPadNodesFrom(control);
     if (livePadNodes.length) {
-      cachedPadNodes = livePadNodes;
+      cachedPadNodes = livePadNodes.filter(function (node) { return !node.classList.contains('number-pad-help'); });
       cachedPadMode = config.key;
       livePadNodes.forEach(function (node) { if (node.parentNode) node.parentNode.removeChild(node); });
     } else if (cachedPadMode && cachedPadMode !== config.key) {
       cachedPadNodes = [];
       cachedPadMode = config.key;
+      clearPanelPadNodes();
     }
 
     var statusHelp = ensureFeedback();
@@ -10017,21 +10055,51 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
     if (nativeMode) {
       closePanel(false);
       removeTriggerHelp();
-      input.readOnly = false;
-      input.setAttribute('inputmode', 'numeric');
+      // 手機／平板使用系統鍵盤；英文、日文、韓文開文字鍵盤，中文開數字鍵盤。
+      input.setAttribute('inputmode', allowWords ? 'text' : 'numeric');
       input.setAttribute('enterkeyhint', 'done');
       input.setAttribute('aria-haspopup', 'false');
       input.setAttribute('aria-describedby', statusHelp.id);
-      // 手機／觸控平板不保留可見的網頁鍵盤節點，也不會自動聚焦，避免進頁即彈鍵盤。
       return;
     }
 
+    // 電腦版：inputmode 只影響虛擬鍵盤，不會攔截實體鍵盤或實體數字鍵盤。
     input.setAttribute('inputmode', 'none');
     input.removeAttribute('enterkeyhint');
     addDesktopHint();
     input.setAttribute('aria-describedby', triggerHelp.id + ' ' + statusHelp.id);
-    // 桌面版實體鍵盤仍可直接輸入；點欄位才顯示浮動數字鍵盤。
     if (cachedPadNodes.length) buildPanelContent();
+  }
+
+  var keypadReconcileTimer = null;
+  function scheduleKeypadReconcile() {
+    if (keypadReconcileTimer) window.clearTimeout(keypadReconcileTimer);
+    keypadReconcileTimer = window.setTimeout(function () {
+      keypadReconcileTimer = null;
+      if (!input || !input.isConnected) return;
+      var current = getQuestion();
+      if (current && current.type === 'q1' && examState.p1.currentMode === 'zodiac') {
+        restoreZodiacTextInput();
+        return;
+      }
+      configureCurrentInput();
+    }, 0);
+  }
+
+  // 若其他題目渲染器在同一個事件週期稍後才插入按鍵，仍會在下一個 tick 收進浮動面板。
+  if (window.MutationObserver && control) {
+    var keypadObserver = new MutationObserver(function (records) {
+      var hasNewPad = records.some(function (record) {
+        return Array.prototype.some.call(record.addedNodes || [], function (node) {
+          return node.nodeType === 1 && (
+            (node.matches && node.matches('.number-pad-grid, .number-pad-actions, .number-pad-feedback')) ||
+            (node.querySelector && node.querySelector('.number-pad-grid, .number-pad-actions, .number-pad-feedback'))
+          );
+        });
+      });
+      if (hasNewPad && getNumericConfig()) scheduleKeypadReconcile();
+    });
+    keypadObserver.observe(control, { childList: true, subtree: true });
   }
 
   function restoreZodiacTextInput() {
@@ -10077,6 +10145,7 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
       var result = originalSetQ1.apply(this, arguments);
       if (mode === 'zodiac') restoreZodiacTextInput();
       else { input.classList.remove('zodiac-text-input'); var lb = document.getElementById('p1-input-label'); if (lb) lb.classList.remove('zodiac-input-title'); configureCurrentInput(); }
+      scheduleKeypadReconcile();
       return result;
     };
   }
@@ -10087,6 +10156,7 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
       closePanel(false);
       var result = originalSetQ2.apply(this, arguments);
       configureCurrentInput();
+      scheduleKeypadReconcile();
       return result;
     };
   }
@@ -10097,6 +10167,7 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
       closePanel(false);
       var result = originalSetQ3.apply(this, arguments);
       configureCurrentInput();
+      scheduleKeypadReconcile();
       return result;
     };
   }
@@ -10114,6 +10185,7 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
         removeTriggerHelp();
         if (q && q.type !== 'q2') closePanel(false);
       }
+      scheduleKeypadReconcile();
       return result;
     };
   }
@@ -10122,7 +10194,9 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
   if (typeof originalShowStep === 'function') {
     window.showStep = function (id) {
       if (id !== 'step-p1') closePanel(false);
-      return originalShowStep.apply(this, arguments);
+      var result = originalShowStep.apply(this, arguments);
+      if (id === 'step-p1') scheduleKeypadReconcile();
+      return result;
     };
   }
 
@@ -10164,6 +10238,7 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
   lastNativePreference = isNativeKeypadDevice();
   if (getNumericConfig()) configureCurrentInput();
   else if (getQuestion() && getQuestion().type === 'q1' && examState.p1.currentMode === 'zodiac') restoreZodiacTextInput();
+  scheduleKeypadReconcile();
 })();
 
 
@@ -11166,6 +11241,8 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
       ? examState.p1.questions[examState.p1.currentIndex] : null;}catch(e){return null;}
   }
   function numericConfig(q){
+    // 英／日／韓介面允許輸入文字等價答案，不顯示中文模式專用數字鍵盤提示。
+    if(typeof EXAM_DISPLAY_LANG !== 'undefined' && EXAM_DISPLAY_LANG !== 'zh-TW') return null;
     q=q||currentQuestion();
     if(!q||!window.examState||!examState.p1)return null;
     var mode=examState.p1.currentMode;
