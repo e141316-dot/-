@@ -1780,7 +1780,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
 </style>
 
 <style id="integrated-result-details-styles">
-#step-result .result-mode-chip{display:table;margin:0 auto 16px;padding:7px 16px;border-radius:999px;background:#EAF0E7;color:#203A28;border:1.5px solid #4F7058;font-size:18px;font-weight:900;line-height:1.6;text-align:center}
+#step-result .result-mode-chip{display:table;margin:0 auto 16px;padding:0;border-radius:0;background:transparent;color:#203A28;border:0;font-size:18px;font-weight:900;line-height:1.6;text-align:center;box-shadow:none}
 #step-result .result-summary-card{min-width:0;box-sizing:border-box}
 #step-result .result-score-text{font-size:20px!important;line-height:1.7;font-weight:700;color:#26392D;overflow-wrap:anywhere}
 #step-result .result-detail-toggle{display:flex;align-items:center;justify-content:space-between;gap:14px;width:100%;min-height:60px;margin-top:16px;padding:10px 14px;border:2px solid #4F7058;border-radius:13px;background:#F4F7F2;color:#203A28;font-family:inherit;font-size:19px;font-weight:900;line-height:1.5;text-align:left;cursor:pointer;box-sizing:border-box}
@@ -2898,6 +2898,30 @@ body[data-step="step-p1"] #test-status-sub {
   console.info('[後臺橋接] 已載入，Worker：' + BACKEND_API_URL);
 })();
 </script>
+
+<style id="text-only-result-cleanup">
+/* 純文字模式的結算頁：不顯示居家／施測模式標籤，也不保留只供語音重聽使用的空白橫幅。 */
+body.text-only-mode #step-result #result-mode-label,
+body.text-only-mode #step-result #overall-banner,
+body.text-only-mode #step-result #result-repeat-audio-btn {
+  display: none !important;
+  visibility: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  min-height: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+}
+/* 純文字模式沒有固定語音控制列，結算頁底部不保留多餘預留高度。 */
+body.text-only-mode #step-result {
+  padding-bottom: 24px !important;
+}
+body.text-only-mode .mode-status-chip {
+  display: none !important;
+}
+</style>
+
 </head>
 <body>
   <div class="exam-wrapper">
@@ -7652,6 +7676,51 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       renderQ5ReviewPanel();
       persistExamResultSnapshot();
       if (!options.skipSave) saveExamResultToBackend();
+
+      // 純文字模式結算頁：直接在原始結算函式完成 DOM 更新後隱藏整個模式標籤與重聽橫幅。
+      // 不依賴外層同步函式是否被呼叫，也避免只隱藏內部文字而留下綠色空框。
+      var resultIsTextOnly = examState && examState.language === 'text';
+      if (document.body) {
+        document.body.classList.toggle('text-only-mode', !!resultIsTextOnly);
+      }
+      var resultModeLabel = document.getElementById('result-mode-label');
+      if (resultModeLabel) {
+        resultModeLabel.hidden = !!resultIsTextOnly;
+        if (resultIsTextOnly) {
+          resultModeLabel.setAttribute('aria-hidden', 'true');
+          resultModeLabel.style.setProperty('display', 'none', 'important');
+        } else {
+          resultModeLabel.removeAttribute('aria-hidden');
+          resultModeLabel.style.removeProperty('display');
+        }
+      }
+      var resultOverallBanner = document.getElementById('overall-banner');
+      if (resultOverallBanner) {
+        resultOverallBanner.hidden = !!resultIsTextOnly;
+        if (resultIsTextOnly) {
+          resultOverallBanner.setAttribute('aria-hidden', 'true');
+          resultOverallBanner.style.setProperty('display', 'none', 'important');
+        } else {
+          resultOverallBanner.removeAttribute('aria-hidden');
+          resultOverallBanner.style.removeProperty('display');
+        }
+      }
+      var resultReplayButton = document.getElementById('result-repeat-audio-btn');
+      if (resultReplayButton) {
+        resultReplayButton.hidden = !!resultIsTextOnly;
+        if (resultIsTextOnly) {
+          resultReplayButton.setAttribute('aria-hidden', 'true');
+          resultReplayButton.style.setProperty('display', 'none', 'important');
+        } else {
+          resultReplayButton.removeAttribute('aria-hidden');
+          resultReplayButton.style.removeProperty('display');
+        }
+      }
+      var resultPage = document.getElementById('step-result');
+      if (resultPage) {
+        if (resultIsTextOnly) resultPage.style.setProperty('padding-bottom', '24px', 'important');
+        else resultPage.style.removeProperty('padding-bottom');
+      }
     }
 
     function restorePendingReviewSnapshot() {
@@ -8353,11 +8422,35 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
   var oldRenderFinalReport=window.renderFinalReport;
   window.renderFinalReport=function(options){
     oldRenderFinalReport(options);
+    var textOnly = !!(examState && examState.language === 'text');
+    if (document.body) document.body.classList.toggle('text-only-mode', textOnly);
     var label=byId('result-mode-label');
-    if(label)label.textContent=examState.isHomePractice?'居家練習模式':'施測人員模式';
-    var repeat=byId('result-repeat-audio-btn');if(repeat)repeat.style.display=isVoiceMode()?'':'none';
+    if(label){
+      label.textContent=examState.isHomePractice?'居家練習模式':'施測人員模式';
+      label.hidden=textOnly;
+      if(textOnly){label.setAttribute('aria-hidden','true');label.style.setProperty('display','none','important');}
+      else{label.removeAttribute('aria-hidden');label.style.removeProperty('display');}
+    }
+    // 純文字模式隱藏整個外層結算橫幅，不只隱藏裡面的文字或按鈕。
+    var overallBanner=byId('overall-banner');
+    if(overallBanner){
+      overallBanner.hidden=textOnly;
+      if(textOnly){overallBanner.setAttribute('aria-hidden','true');overallBanner.style.setProperty('display','none','important');}
+      else{overallBanner.removeAttribute('aria-hidden');overallBanner.style.removeProperty('display');}
+    }
+    var repeat=byId('result-repeat-audio-btn');
+    if(repeat){
+      repeat.hidden=textOnly;
+      if(textOnly){repeat.setAttribute('aria-hidden','true');repeat.style.setProperty('display','none','important');}
+      else{repeat.removeAttribute('aria-hidden');repeat.style.removeProperty('display');}
+    }
+    var resultPage=byId('step-result');
+    if(resultPage){
+      if(textOnly)resultPage.style.setProperty('padding-bottom','24px','important');
+      else resultPage.style.removeProperty('padding-bottom');
+    }
     buildAccessibleResultDetails();
-    if(isVoiceMode())setTimeout(repeatResultIntroAudio,250);
+    if(!textOnly)setTimeout(repeatResultIntroAudio,250);
     else stopAllSpeech();
   };
 
