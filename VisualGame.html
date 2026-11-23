@@ -1353,7 +1353,7 @@
     .hidden { display: none !important; }
   </style>
 </head>
-<body data-base-url="<?!= baseUrl ?>">
+<body>
 
   <header id="header-nav" class="hidden">
     <div class="intro-back-wrap drawing-back-wrap">
@@ -1378,7 +1378,7 @@
     <!-- 0. 首頁/說明介面 (Intro View) -->
     <div id="intro-view">
       <div class="intro-back-wrap">
-        <button type="button" onclick="postNavigate('level_select')" class="btn-back-category">
+        <button type="button" onclick="goToGameCategories()" class="btn-back-category">
           <svg viewBox="0 0 24 24">
             <line x1="19" y1="12" x2="5" y2="12"></line>
             <polyline points="12 19 5 12 12 5"></polyline>
@@ -1993,39 +1993,21 @@
     }
   }
 
-  function getBaseUrl() {
-    var baseUrl = document.body.getAttribute('data-base-url');
-    if (!baseUrl || baseUrl.indexOf('http') !== 0) {
-      try {
-        baseUrl = window.top.location.href.split('?')[0].split('#')[0];
-      } catch(e) {
-        baseUrl = window.location.href.split('?')[0].split('#')[0];
-      }
-    }
-    return baseUrl;
+  // GitHub Pages 靜態頁面導向：以目前遊戲檔案所在資料夾為基準，
+  // 保留使用者目前選擇的語言與字體大小，並直接進行單次跳轉。
+  function navigateToStaticPage(fileName) {
+    var targetUrl = new URL(fileName, window.location.href);
+    targetUrl.searchParams.set('lang', currentLang || 'zh-TW');
+    targetUrl.searchParams.set('fontScale', currentFontScale || '100');
+    window.location.assign(targetUrl.toString());
   }
 
-  function postNavigate(pageName) {
-    var baseUrl = getBaseUrl();
-    var form = document.createElement('form');
-    form.method = 'GET';
-    form.action = baseUrl;
-    form.target = '_top';
-    
-    var pageInput = document.createElement('input');
-    pageInput.type = 'hidden'; pageInput.name = 'page'; pageInput.value = pageName;
-    form.appendChild(pageInput);
+  function goToGameCategories() {
+    navigateToStaticPage('LevelSelect.html');
+  }
 
-    var langInput = document.createElement('input');
-    langInput.type = 'hidden'; langInput.name = 'lang'; langInput.value = currentLang;
-    form.appendChild(langInput);
-
-    var fontInput = document.createElement('input');
-    fontInput.type = 'hidden'; fontInput.name = 'fontScale'; fontInput.value = currentFontScale;
-    form.appendChild(fontInput);
-
-    document.body.appendChild(form);
-    form.submit();
+  function goToHomePage() {
+    navigateToStaticPage('index.html');
   }
 
   (function () {
@@ -2850,11 +2832,11 @@
             '<button type="button" class="btn-submit" onclick="window.restartGame()">' + t('settlement.replay') + '</button>' +
           '</div>' +
           '<div class="settlement-nav-wrap">' +
-            '<button type="button" onclick="postNavigate(\'home\')" class="btn-settlement-nav">' +
+            '<button type="button" onclick="goToHomePage()" class="btn-settlement-nav">' +
               '<svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>' +
               '<span>' + t('nav.home') + '</span>' +
             '</button>' +
-            '<button type="button" onclick="postNavigate(\'level_select\')" class="btn-settlement-nav">' +
+            '<button type="button" onclick="goToGameCategories()" class="btn-settlement-nav">' +
               '<svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>' +
               '<span>' + t('nav.back_category') + '</span>' +
             '</button>' +
