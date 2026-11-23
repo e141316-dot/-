@@ -4330,6 +4330,234 @@ function getExamCardDisplayName(chineseName) {
         .toLowerCase();
     }
 
+    function normalizeAnswerDigits(value) {
+      return String(value == null ? '' : value).replace(/[０-９]/g, function(ch) {
+        return String(ch.charCodeAt(0) - 0xFF10);
+      });
+    }
+
+    function numberToEnglishCardinal(number) {
+      var n = Number(number);
+      if (!Number.isInteger(n) || n < 0 || n > 9999) return '';
+      var ones = ['zero','one','two','three','four','five','six','seven','eight','nine'];
+      var teens = ['ten','eleven','twelve','thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen'];
+      var tens = ['', '', 'twenty','thirty','forty','fifty','sixty','seventy','eighty','ninety'];
+      if (n < 10) return ones[n];
+      if (n < 20) return teens[n - 10];
+      if (n < 100) return tens[Math.floor(n / 10)] + (n % 10 ? ' ' + ones[n % 10] : '');
+      if (n < 1000) return ones[Math.floor(n / 100)] + ' hundred' + (n % 100 ? ' ' + numberToEnglishCardinal(n % 100) : '');
+      return numberToEnglishCardinal(Math.floor(n / 1000)) + ' thousand' + (n % 1000 ? ' ' + numberToEnglishCardinal(n % 1000) : '');
+    }
+
+    function numberToJapaneseKanji(number) {
+      var n = Number(number);
+      if (!Number.isInteger(n) || n < 0 || n > 9999) return '';
+      if (n === 0) return '零';
+      var digits = ['','一','二','三','四','五','六','七','八','九'];
+      var out = '';
+      var thousands = Math.floor(n / 1000); n %= 1000;
+      var hundreds = Math.floor(n / 100); n %= 100;
+      var tens = Math.floor(n / 10); var ones = n % 10;
+      if (thousands) out += (thousands === 1 ? '' : digits[thousands]) + '千';
+      if (hundreds) out += (hundreds === 1 ? '' : digits[hundreds]) + '百';
+      if (tens) out += (tens === 1 ? '' : digits[tens]) + '十';
+      if (ones) out += digits[ones];
+      return out;
+    }
+
+    function numberToJapaneseReading(number) {
+      var n = Number(number);
+      if (!Number.isInteger(n) || n < 0 || n > 9999) return '';
+      if (n === 0) return 'れい';
+      var one = ['','いち','に','さん','よん','ご','ろく','なな','はち','きゅう'];
+      var out = '';
+      var thousands = Math.floor(n / 1000); n %= 1000;
+      var hundreds = Math.floor(n / 100); n %= 100;
+      var tens = Math.floor(n / 10); var ones = n % 10;
+      if (thousands) {
+        var th = {3:'さんぜん',8:'はっせん'};
+        out += th[thousands] || (thousands === 1 ? 'せん' : one[thousands] + 'せん');
+      }
+      if (hundreds) {
+        var hu = {3:'さんびゃく',6:'ろっぴゃく',8:'はっぴゃく'};
+        out += hu[hundreds] || (hundreds === 1 ? 'ひゃく' : one[hundreds] + 'ひゃく');
+      }
+      if (tens) out += (tens === 1 ? 'じゅう' : one[tens] + 'じゅう');
+      if (ones) out += one[ones];
+      return out;
+    }
+
+    function numberToKoreanSino(number) {
+      var n = Number(number);
+      if (!Number.isInteger(n) || n < 0 || n > 9999) return '';
+      if (n === 0) return '영';
+      var digits = ['','일','이','삼','사','오','육','칠','팔','구'];
+      var out = '';
+      var thousands = Math.floor(n / 1000); n %= 1000;
+      var hundreds = Math.floor(n / 100); n %= 100;
+      var tens = Math.floor(n / 10); var ones = n % 10;
+      if (thousands) out += (thousands === 1 ? '' : digits[thousands]) + '천';
+      if (hundreds) out += (hundreds === 1 ? '' : digits[hundreds]) + '백';
+      if (tens) out += (tens === 1 ? '' : digits[tens]) + '십';
+      if (ones) out += digits[ones];
+      return out;
+    }
+
+    function getLocalizedYearAliases(number) {
+      var n = Number(number);
+      var aliases = [];
+      var en = numberToEnglishCardinal(n);
+      var jaKanji = numberToJapaneseKanji(n);
+      var jaReading = numberToJapaneseReading(n);
+      var ko = numberToKoreanSino(n);
+      if (en) {
+        aliases.push(en, en.replace(/ hundred /g, ' hundred and ').replace(/ thousand /g, ' thousand and '), 'year ' + en, 'the year ' + en);
+        if (n >= 2000 && n <= 2099) {
+          var yearTail = numberToEnglishCardinal(n - 2000);
+          aliases.push('twenty ' + yearTail, 'year twenty ' + yearTail);
+        }
+      }
+      if (jaKanji) {
+        var jaDigitSequence = String(n).split('').map(function(d) { return ['〇','一','二','三','四','五','六','七','八','九'][Number(d)]; }).join('');
+        aliases.push(jaKanji, jaKanji + '年', jaDigitSequence, jaDigitSequence + '年');
+      }
+      if (jaReading) aliases.push(jaReading, jaReading + 'ねん');
+      if (ko) aliases.push(ko, ko + '년');
+      aliases.push(String(n) + '年', String(n) + '년', String(n) + ' year', 'year ' + String(n));
+      return aliases;
+    }
+
+    function isLocalizedYearEquivalent(value, expectedYear) {
+      var normalized = normalizeAnswerText(normalizeAnswerDigits(value));
+      if (!normalized) return false;
+      if (/^\d+$/.test(normalized)) return Number(normalized) === Number(expectedYear);
+      return getLocalizedYearAliases(expectedYear).some(function(alias) {
+        return normalizeAnswerText(alias) === normalized;
+      });
+    }
+
+    var MONTH_LOCALIZED_ALIASES = {
+      1: ['January','Jan','一月','1月','いちがつ','イチガツ','일월'],
+      2: ['February','Feb','二月','2月','にがつ','ニガツ','이월'],
+      3: ['March','Mar','三月','3月','さんがつ','サンガツ','삼월'],
+      4: ['April','Apr','四月','4月','しがつ','シガツ','사월'],
+      5: ['May','五月','5月','ごがつ','ゴガツ','오월'],
+      6: ['June','Jun','六月','6月','ろくがつ','ロクガツ','유월','육월'],
+      7: ['July','Jul','七月','7月','しちがつ','シチガツ','칠월'],
+      8: ['August','Aug','八月','8月','はちがつ','ハチガツ','팔월'],
+      9: ['September','Sep','Sept','九月','9月','くがつ','クガツ','구월'],
+      10: ['October','Oct','十月','10月','じゅうがつ','ジュウガツ','시월','십월'],
+      11: ['November','Nov','十一月','11月','じゅういちがつ','ジュウイチガツ','십일월'],
+      12: ['December','Dec','十二月','12月','じゅうにがつ','ジュウニガツ','십이월']
+    };
+
+    function normalizeMonthAnswer(value) {
+      var raw = normalizeAnswerDigits(value);
+      var normalized = normalizeAnswerText(raw);
+      if (!normalized) return null;
+      var numericText = normalized.replace(/^(the)?monthof/, '').replace(/months?$/, '').replace(/[月월]$/, '');
+      if (/^\d{1,2}$/.test(numericText)) {
+        var numeric = Number(numericText);
+        return Number.isInteger(numeric) && numeric >= 1 && numeric <= 12 ? numeric : null;
+      }
+      var keys = Object.keys(MONTH_LOCALIZED_ALIASES);
+      for (var i = 0; i < keys.length; i++) {
+        var month = Number(keys[i]);
+        var aliases = MONTH_LOCALIZED_ALIASES[month];
+        if (aliases.some(function(alias) {
+          var a = normalizeAnswerText(alias);
+          return normalized === a || numericText === a.replace(/[月월]$/, '');
+        })) return month;
+      }
+      return null;
+    }
+
+    var ENGLISH_CARDINAL_1_31 = [
+      '', 'one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve','thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen','twenty','twenty one','twenty two','twenty three','twenty four','twenty five','twenty six','twenty seven','twenty eight','twenty nine','thirty','thirty one'
+    ];
+    var ENGLISH_ORDINAL_1_31 = [
+      '', 'first','second','third','fourth','fifth','sixth','seventh','eighth','ninth','tenth','eleventh','twelfth','thirteenth','fourteenth','fifteenth','sixteenth','seventeenth','eighteenth','nineteenth','twentieth','twenty first','twenty second','twenty third','twenty fourth','twenty fifth','twenty sixth','twenty seventh','twenty eighth','twenty ninth','thirtieth','thirty first'
+    ];
+    var JAPANESE_DAY_READINGS = {
+      1:['ついたち','ツイタチ'],2:['ふつか','フツカ'],3:['みっか','ミッカ'],4:['よっか','ヨッカ'],5:['いつか','イツカ'],
+      6:['むいか','ムイカ'],7:['なのか','ナノカ'],8:['ようか','ヨウカ'],9:['ここのか','ココノカ'],10:['とおか','トオカ'],
+      11:['じゅういちにち','ジュウイチニチ'],12:['じゅうににち','ジュウニニチ'],13:['じゅうさんにち','ジュウサンニチ'],
+      14:['じゅうよっか','ジュウヨッカ'],15:['じゅうごにち','ジュウゴニチ'],16:['じゅうろくにち','ジュウロクニチ'],
+      17:['じゅうしちにち','ジュウシチニチ'],18:['じゅうはちにち','ジュウハチニチ'],19:['じゅうくにち','ジュウクニチ'],
+      20:['はつか','ハツカ'],21:['にじゅういちにち','ニジュウイチニチ'],22:['にじゅうににち','ニジュウニニチ'],
+      23:['にじゅうさんにち','ニジュウサンニチ'],24:['にじゅうよっか','ニジュウヨッカ'],25:['にじゅうごにち','ニジュウゴニチ'],
+      26:['にじゅうろくにち','ニジュウロクニチ'],27:['にじゅうしちにち','ニジュウシチニチ'],28:['にじゅうはちにち','ニジュウハチニチ'],
+      29:['にじゅうくにち','ニジュウクニチ'],30:['さんじゅうにち','サンジュウニチ'],31:['さんじゅういちにち','サンジュウイチニチ']
+    };
+
+    function parseJapaneseInteger(value) {
+      var text = String(value || '');
+      if (!text) return null;
+      var digitMap = {'零':0,'〇':0,'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9};
+      if (Array.from(text).every(function(ch) { return Object.prototype.hasOwnProperty.call(digitMap, ch); })) {
+        return Number(Array.from(text).map(function(ch) { return digitMap[ch]; }).join(''));
+      }
+      var total = 0, current = 0;
+      Array.from(text).forEach(function(ch) {
+        if (Object.prototype.hasOwnProperty.call(digitMap, ch)) current = digitMap[ch];
+        else if (ch === '十' || ch === '百' || ch === '千') {
+          var unit = ch === '十' ? 10 : ch === '百' ? 100 : 1000;
+          total += (current || 1) * unit;
+          current = 0;
+        } else { total = NaN; }
+      });
+      return Number.isFinite(total) ? total + current : null;
+    }
+
+    function parseKoreanSinoInteger(value) {
+      var text = String(value || '');
+      if (!text) return null;
+      var digitMap = {'영':0,'공':0,'일':1,'이':2,'삼':3,'사':4,'오':5,'육':6,'륙':6,'칠':7,'팔':8,'구':9};
+      var unitMap = {'십':10,'백':100,'천':1000};
+      var total = 0, current = 0;
+      for (var i = 0; i < text.length; i++) {
+        var ch = text.charAt(i);
+        if (Object.prototype.hasOwnProperty.call(digitMap, ch)) current = digitMap[ch];
+        else if (Object.prototype.hasOwnProperty.call(unitMap, ch)) {
+          total += (current || 1) * unitMap[ch];
+          current = 0;
+        } else return null;
+      }
+      return total + current;
+    }
+
+    function normalizeLocalizedDateAnswer(value) {
+      var normalized = normalizeAnswerText(normalizeAnswerDigits(value));
+      if (!normalized) return null;
+      var cleaned = normalized.replace(/^the/, '');
+      var numericMatch = cleaned.match(/^(\d{1,2})(?:st|nd|rd|th)?(?:day|日|일)?$/);
+      if (numericMatch) {
+        var numeric = Number(numericMatch[1]);
+        return Number.isInteger(numeric) && numeric >= 1 && numeric <= 31 ? numeric : null;
+      }
+      for (var day = 1; day <= 31; day++) {
+        var enCardinal = normalizeAnswerText(ENGLISH_CARDINAL_1_31[day]);
+        var enOrdinal = normalizeAnswerText(ENGLISH_ORDINAL_1_31[day]);
+        if (cleaned === enCardinal || cleaned === enOrdinal || cleaned === enCardinal + 'day' || cleaned === enOrdinal + 'day') return day;
+        var jpKanji = normalizeAnswerText(numberToJapaneseKanji(day) + '日');
+        if (cleaned === jpKanji) return day;
+        var jpReading = JAPANESE_DAY_READINGS[day] || [];
+        if (jpReading.some(function(alias) { return cleaned === normalizeAnswerText(alias); })) return day;
+        var ko = normalizeAnswerText(numberToKoreanSino(day) + '일');
+        if (cleaned === ko) return day;
+      }
+      if (cleaned.endsWith('日')) {
+        var jpNumber = parseJapaneseInteger(cleaned.slice(0, -1));
+        if (Number.isInteger(jpNumber) && jpNumber >= 1 && jpNumber <= 31) return jpNumber;
+      }
+      if (cleaned.endsWith('일')) {
+        var koNumber = parseKoreanSinoInteger(cleaned.slice(0, -1));
+        if (Number.isInteger(koNumber) && koNumber >= 1 && koNumber <= 31) return koNumber;
+      }
+      return null;
+    }
+
+
     var ZODIAC_ANSWER_ALIASES = {
       '鼠': ['鼠','老鼠','屬鼠','属鼠','數'],
       '牛': ['牛','老牛','屬牛','属牛'],
@@ -6103,15 +6331,26 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
         label.innerText = '請輸入今年出生小孩的生肖：';
         renderChoiceGrid([], [], '');
       } else {
-        input.type = 'number'; input.inputMode = 'numeric'; input.step = '1';
+        var allowLocalizedYearWords = EXAM_DISPLAY_LANG !== 'zh-TW';
+        input.type = allowLocalizedYearWords ? 'text' : 'number';
+        input.inputMode = allowLocalizedYearWords ? 'text' : 'numeric';
+        input.step = '1';
         input.min = '1'; input.max = mode === 'roc' ? '300' : '3000';
         input.removeAttribute('maxlength'); input.removeAttribute('pattern');
-        input.autocomplete = 'off';
+        input.autocomplete = 'off'; input.autocapitalize = 'off'; input.spellcheck = false;
+        if (allowLocalizedYearWords) input.setAttribute('lang', EXAM_DISPLAY_LANG === 'en' ? 'en' : EXAM_DISPLAY_LANG === 'ja' ? 'ja' : 'ko');
         label.innerText = mode === 'roc' ? '請輸入民國年份：' : '請輸入西元年份：';
-        control.innerHTML = mode === 'roc' ? '<div class="input-unit-wrap"><span class="input-unit">民國</span></div>' : '<div class="input-unit-wrap"><span class="input-unit">西元</span></div>';
-        control.querySelector('.input-unit-wrap').appendChild(input);
-        control.querySelector('.input-unit-wrap').insertAdjacentHTML('beforeend', '<span class="input-unit">年</span>');
-        input.placeholder = mode === 'roc' ? '例如：115' : '例如：2026';
+        control.innerHTML = '<div class="input-unit-wrap"></div>';
+        var yearWrap = control.querySelector('.input-unit-wrap');
+        if (!allowLocalizedYearWords) {
+          yearWrap.innerHTML = mode === 'roc' ? '<span class="input-unit">民國</span>' : '<span class="input-unit">西元</span>';
+        }
+        yearWrap.appendChild(input);
+        if (!allowLocalizedYearWords) yearWrap.insertAdjacentHTML('beforeend', '<span class="input-unit">年</span>');
+        if (EXAM_DISPLAY_LANG === 'en') input.placeholder = mode === 'roc' ? 'e.g. 115 or one hundred fifteen' : 'e.g. 2026 or twenty twenty-six';
+        else if (EXAM_DISPLAY_LANG === 'ja') input.placeholder = mode === 'roc' ? '例：115 または百十五年' : '例：2026 または二千二十六年';
+        else if (EXAM_DISPLAY_LANG === 'ko') input.placeholder = mode === 'roc' ? '예: 115 또는 백십오년' : '예: 2026 또는 이천이십육년';
+        else input.placeholder = mode === 'roc' ? '例如：115' : '例如：2026';
         renderChoiceGrid([], [], '');
       }
       var q1 = examState.p1.questions[examState.p1.currentIndex];
@@ -6138,14 +6377,21 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       var note = document.getElementById('p1-lunar-month-note');
       group.style.display = 'block';
       input.value = '';
-      input.type = 'text'; input.inputMode = 'numeric'; input.pattern = '[0-9]*'; input.maxLength = 2;
+      var allowLocalizedMonthWords = EXAM_DISPLAY_LANG !== 'zh-TW';
+      input.type = 'text'; input.inputMode = allowLocalizedMonthWords ? 'text' : 'numeric';
+      if (allowLocalizedMonthWords) { input.removeAttribute('pattern'); input.maxLength = 30; }
+      else { input.pattern = '[0-9]*'; input.maxLength = 2; }
       input.removeAttribute('min'); input.removeAttribute('max'); input.removeAttribute('step');
-      input.autocomplete = 'off';
-      input.placeholder = '例如：11';
+      input.autocomplete = 'off'; input.autocapitalize = 'off'; input.spellcheck = false;
+      if (allowLocalizedMonthWords) input.setAttribute('lang', EXAM_DISPLAY_LANG === 'en' ? 'en' : EXAM_DISPLAY_LANG === 'ja' ? 'ja' : 'ko');
+      if (EXAM_DISPLAY_LANG === 'en') input.placeholder = 'e.g. 3 or March';
+      else if (EXAM_DISPLAY_LANG === 'ja') input.placeholder = '例：3 または三月';
+      else if (EXAM_DISPLAY_LANG === 'ko') input.placeholder = '예: 3 또는 삼월';
+      else input.placeholder = '例如：11';
       control.innerHTML = '<div class="input-unit-wrap"></div>';
       var unitWrap = control.querySelector('.input-unit-wrap');
       unitWrap.appendChild(input);
-      unitWrap.insertAdjacentHTML('beforeend', '<span class="input-unit">月</span>');
+      if (!allowLocalizedMonthWords) unitWrap.insertAdjacentHTML('beforeend', '<span class="input-unit">月</span>');
       label.innerText = mode === 'solar' ? '請輸入國曆月份：' : '請輸入農曆月份：';
       if (note) note.style.display = mode === 'lunar' ? 'block' : 'none';
       if (q) {
@@ -6181,16 +6427,25 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       control.innerHTML = '<div class="input-unit-wrap"></div>';
       var unitWrap = control.querySelector('.input-unit-wrap');
       unitWrap.appendChild(input);
+      var allowLocalizedDateWords = EXAM_DISPLAY_LANG !== 'zh-TW';
+      input.inputMode = allowLocalizedDateWords ? 'text' : 'numeric';
+      if (allowLocalizedDateWords) input.setAttribute('lang', EXAM_DISPLAY_LANG === 'en' ? 'en' : EXAM_DISPLAY_LANG === 'ja' ? 'ja' : 'ko');
+      if (allowLocalizedDateWords) { input.removeAttribute('pattern'); input.maxLength = 40; }
+      else { input.pattern = '[0-9]*'; input.maxLength = 2; }
       if (mode === 'solar') {
-        input.inputMode = 'numeric'; input.pattern = '[0-9]*'; input.maxLength = 2;
-        input.placeholder = '例如：17';
+        if (EXAM_DISPLAY_LANG === 'en') input.placeholder = 'e.g. 17 or 17th';
+        else if (EXAM_DISPLAY_LANG === 'ja') input.placeholder = '例：17 または十七日';
+        else if (EXAM_DISPLAY_LANG === 'ko') input.placeholder = '예: 17 또는 십칠일';
+        else input.placeholder = '例如：17';
         label.innerText = '請輸入國曆日期：';
-        unitWrap.insertAdjacentHTML('beforeend', '<span class="input-unit">號</span>');
+        if (!allowLocalizedDateWords) unitWrap.insertAdjacentHTML('beforeend', '<span class="input-unit">號</span>');
       } else {
-        input.inputMode = 'numeric'; input.pattern = '[0-9]*'; input.maxLength = 2;
-        input.placeholder = '例如：14';
+        if (EXAM_DISPLAY_LANG === 'en') input.placeholder = 'e.g. 14 or 14th';
+        else if (EXAM_DISPLAY_LANG === 'ja') input.placeholder = '例：14 または十四日';
+        else if (EXAM_DISPLAY_LANG === 'ko') input.placeholder = '예: 14 또는 십사일';
+        else input.placeholder = '例如：14';
         label.innerText = '請輸入農曆日期數字：';
-        unitWrap.insertAdjacentHTML('beforeend', '<span class="input-unit">日</span>');
+        if (!allowLocalizedDateWords) unitWrap.insertAdjacentHTML('beforeend', '<span class="input-unit">日</span>');
       }
       if (monthNote) monthNote.style.display = 'none';
       if (q) {
@@ -6330,14 +6585,9 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
 
       var monthInput = null;
       if (q.type === 'q2') {
-        var monthText = String(ans).trim();
-        if (!/^\d+$/.test(monthText)) {
-          showCustomAlert('請輸入 1 至 12 的月份數字。');
-          return;
-        }
-        monthInput = Number(monthText);
+        monthInput = normalizeMonthAnswer(ans);
         if (!Number.isInteger(monthInput) || monthInput < 1 || monthInput > 12) {
-          showCustomAlert('請輸入 1 至 12 的月份數字。');
+          showCustomAlert(translateExamDisplayText('請輸入有效月份，例如：3、March、三月或3월。'));
           return;
         }
         if (examState.p1.currentMode === 'lunar' && (q.lunarMonth == null || q.lunarIsLeapMonth == null)) {
@@ -6357,23 +6607,18 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
 
       var q3NormalizedDay = null;
       if (q.type === 'q3') {
+        q3NormalizedDay = normalizeLocalizedDateAnswer(ans);
+        if (!Number.isInteger(q3NormalizedDay) || q3NormalizedDay < 1 || q3NormalizedDay > 31) {
+          showCustomAlert(translateExamDisplayText('請輸入有效日期，例如：17、17th、十七日或십칠일。'));
+          return;
+        }
         if (examState.p1.currentMode === 'solar') {
-          if (!/^\d+$/.test(String(ans))) {
-            showCustomAlert('請輸入有效的國曆日期，例如：17。');
-            return;
-          }
-          q3NormalizedDay = Number(ans);
-          if (!Number.isInteger(q3NormalizedDay) || q3NormalizedDay < 1 || q3NormalizedDay > q.solarDaysInMonth) {
+          if (q3NormalizedDay > q.solarDaysInMonth) {
             showCustomAlert('請輸入本月有效的國曆日期。');
             return;
           }
         } else {
-          if (!/^\d+$/.test(String(ans))) {
-            showCustomAlert('請輸入 1 至 30 的農曆日期數字，例如：14。');
-            return;
-          }
-          q3NormalizedDay = Number(ans);
-          if (!Number.isInteger(q3NormalizedDay) || q3NormalizedDay < 1 || q3NormalizedDay > 30) {
+          if (q3NormalizedDay > 30) {
             showCustomAlert('請輸入 1 至 30 的農曆日期數字。');
             return;
           }
@@ -6393,7 +6638,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
         passed = normalizeZodiacAnswer(ans) === normalizeZodiacAnswer(q.zodiac);
       } else if (q.type === 'q1') {
         var yearExpected = examState.p1.currentMode === 'roc' ? q.rocYear : q.gregorianYear;
-        passed = String(parseInt(ans,10)) === String(yearExpected);
+        passed = isLocalizedYearEquivalent(ans, yearExpected);
       } else if (q.type === 'q2') {
         var monthExpected = examState.p1.currentMode === 'lunar' ? q.lunarMonth : q.solarMonth;
         passed = monthExpected != null && monthInput === Number(monthExpected);
@@ -7233,13 +7478,34 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
 
     function getItemSynonyms(item) {
       var map={
-        '機車':['機車','摩托車','打檔車','電動機車'], '腳踏車':['腳踏車','自行車','單車','鐵馬'],
-        '自行車':['自行車','腳踏車','單車','鐵馬'], '傘':['傘','雨傘','雨遮'], '雨傘':['雨傘','傘','雨遮'],
-        '芭樂':['芭樂','番石榴','拔仔'], '碗':['碗','碗公'], '杯子':['杯子','水杯'], '水杯':['水杯','杯子'],
-        '蘋果':['蘋果'], '紅綠燈':['紅綠燈','交通號誌'], '禁止停車':['禁止停車','禁止停車標誌'],
-        '筆':['筆','原子筆','鉛筆'], '救護車':['救護車','救護車輛']
+        '紅綠燈':['traffic signal','stoplight','signal light','交通信号','信号','교통 신호'],
+        '機車':['motorbike','motor scooter','バイク','スクーター','스쿠터'],
+        '菜刀':['chef knife','cooking knife','包丁','식칼'],
+        '芭樂':['guava fruit','グァバ','구아바 과일'],
+        '傘':['parasol','rain umbrella','かさ','우산'], '雨傘':['parasol','rain umbrella','かさ','우산'],
+        '禁止停車':['no-parking sign','no parking sign','駐車禁止標識','주차 금지 표지'],
+        '救護車':['emergency ambulance','救急車両','응급차'],
+        '碗':['rice bowl','おわん','그릇'],
+        '蘋果':['apple fruit','りんご','사과'],
+        '筆':['ballpoint pen','ball pen','ボールペン','볼펜'],
+        '高速公路':['expressway','freeway','autobahn','高速道路','고속도로'],
+        '行人穿越道':['crosswalk','zebra crossing','横断歩道','횡단보도'],
+        '計程車':['cab','taxicab','タクシー','택시'],
+        '杯子':['mug','drinking cup','カップ','머그컵'], '水杯':['mug','drinking cup','カップ','물컵'],
+        '筷子':['chopstick','はし',' 젓가락'],
+        '南瓜':['squash','かぼちゃ','단호박'],
+        '西瓜':['water melon','すいか','수박'],
+        '牙刷':['tooth brush','歯ぶらし','칫솔'],
+        '單行道':['one way','one-way sign','一方通行標識','일방 통행'],
+        '腳踏車':['bike','push bike','自転車','자전거'],
+        '自行車':['bike','push bike','自転車','자전거'],
+        '剪刀':['pair of scissors','はさみ','가위'],
+        '消防車':['fire truck','fireengine','消防車両','소방차'],
+        '香蕉':['plantain','バナナ','바나나'],
+        '電話':['phone','telephone set','電話機','전화기'],
+        '叉子':['dinner fork','フォーク','포크']
       };
-      var values=(item.exactMatch||[]).slice(); (map[item.sourceName || item.name]||[]).forEach(function(v){if(!values.includes(v))values.push(v);});
+      var values=(item.exactMatch||[]).slice(); (map[item.sourceName || item.name]||[]).forEach(function(v){if(v && !values.includes(v))values.push(v);});
       if(item.displayName && !values.includes(item.displayName)) values.push(item.displayName);
       if(item.sourceName) values.push(item.sourceName); if(item.name) values.push(item.name); return values;
     }
@@ -9365,6 +9631,9 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
   }
 
   function getNumericConfig() {
+    // English/Japanese/Korean answer modes accept words as well as digits;
+    // keep the native text keyboard instead of forcing the custom numeric keypad.
+    if (typeof EXAM_DISPLAY_LANG !== 'undefined' && EXAM_DISPLAY_LANG !== 'zh-TW') return null;
     var q = getQuestion();
     if (!q) return null;
     if (q.type === 'q1') {
@@ -10038,7 +10307,10 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
         label.style.display = selected ? 'block' : 'none';
       }
       if (input && selected) {
-        input.placeholder = t('請輸入日期');
+        if (EXAM_DISPLAY_LANG === 'en') input.placeholder = 'Enter date (e.g. 17 or 17th)';
+        else if (EXAM_DISPLAY_LANG === 'ja') input.placeholder = '日付を入力（例：17 または十七日）';
+        else if (EXAM_DISPLAY_LANG === 'ko') input.placeholder = '날짜 입력 (예: 17 또는 십칠일)';
+        else input.placeholder = t('請輸入日期');
         input.setAttribute('aria-label', label ? label.textContent : t('請輸入日期'));
       }
       var q3LunarNote = byId('p1-lunar-month-note');
@@ -10058,7 +10330,7 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
         input.placeholder = t('例如：星期一');
         input.setAttribute('aria-label', t('您的答案'));
         input.type = 'text'; input.readOnly = false;
-        input.setAttribute('inputmode', 'text'); input.setAttribute('lang', 'zh-Hant');
+        input.setAttribute('inputmode', 'text'); input.setAttribute('lang', EXAM_DISPLAY_LANG === 'en' ? 'en' : EXAM_DISPLAY_LANG === 'ja' ? 'ja' : EXAM_DISPLAY_LANG === 'ko' ? 'ko' : 'zh-Hant');
         input.removeAttribute('maxlength'); input.removeAttribute('pattern');
       }
       return;
@@ -10520,6 +10792,8 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
     "時間、空間認知": ["Time and Spatial Orientation", "時間・空間の見当識", "시간·공간 지남력"],
     "徒手繪畫時鐘": ["Clock Drawing", "時計描画", "시계 그리기"],
     "再聽一次試聽": ["Replay preview", "試聴をもう一度聞く", "미리 듣기 다시 재생"],
+    "請輸入有效月份，例如：3、March、三月或3월。": ["Enter a valid month, for example 3, March, 三月, or 3월.", "有効な月を入力してください（例：3、March、三月、3월）。", "올바른 월을 입력하세요(예: 3, March, 三月, 3월)."],
+    "請輸入有效日期，例如：17、17th、十七日或십칠일。": ["Enter a valid date, for example 17, 17th, 十七日, or 십칠일.", "有効な日付を入力してください（例：17、17th、十七日、십칠일）。", "올바른 날짜를 입력하세요(예: 17, 17th, 十七日, 십칠일)."],
     "再聽一次說明": ["Play the instructions again", "説明をもう一度聞く", "안내를 다시 듣기"],
     "例如：14": ["Example: 14", "例：14", "예: 14"],
     "請輸入月份": ["Enter the month", "月を入力してください", "월을 입력하세요"],
@@ -10909,7 +11183,7 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
     input.setAttribute('aria-describedby','p1-number-pad-instruction p1-number-pad-error');
   }
   function isValidEntry(q,value){
-    if(!value||!/^\\d+$/.test(value))return false;
+    if(!value||!/^\d+$/.test(value))return false;
     if(q.type==='q1')return true;
     if(q.type==='q2')return Number(value)>=1&&Number(value)<=12;
     if(q.type==='q3'){
