@@ -11073,6 +11073,21 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
     gap: 2px 6px !important;
   }
 }
+
+
+/* 多語系修正：選取狀態原先寫死在 CSS 偽元素中，無法被文字翻譯函式處理。 */
+html:lang(en) #step-p1 .type-btn.active::after,
+html:lang(en) .choice-btn.active::after {
+  content: "✓ Selected" !important;
+}
+html:lang(ja) #step-p1 .type-btn.active::after,
+html:lang(ja) .choice-btn.active::after {
+  content: "✓ 選択済み" !important;
+}
+html:lang(ko) #step-p1 .type-btn.active::after,
+html:lang(ko) .choice-btn.active::after {
+  content: "✓ 선택됨" !important;
+}
 </style>
 
 
