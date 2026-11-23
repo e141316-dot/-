@@ -332,9 +332,9 @@
     </div>
 
     <div class="action-section">
-      <button type="button" id="startBtn" class="start-btn" onclick="handleStartClick(event)" data-i18n="home.startBtn">
+      <a href="./LevelSelect.html" target="_self" id="startBtn" class="start-btn" onclick="handleStartClick(event)" data-i18n="home.startBtn">
         開始練習
-      </button>
+      </a>
     </div>
 
     <div class="illustration-box">
@@ -556,8 +556,22 @@
     });
 
     function handleStartClick(e) {
-      if (e) e.preventDefault();
-      navigateTo('level_select');
+      // 使用一般超連結作為導頁主體；此函式只負責附帶偏好設定。
+      // 即使 JavaScript 未執行，href="./LevelSelect.html" 仍可直接開啟分類頁。
+      if (!e || !e.currentTarget) return true;
+
+      var targetUrl = new URL('./LevelSelect.html', document.baseURI);
+      var currentLang = (window.appDisplay && window.appDisplay.lang) ||
+        localStorage.getItem('app_lang') || 'zh-TW';
+      var currentFontScale = (window.appDisplay && window.appDisplay.fontScale) ||
+        localStorage.getItem('app_font_scale') || '100';
+
+      targetUrl.searchParams.set('lang', currentLang);
+      targetUrl.searchParams.set('fontScale', currentFontScale);
+      e.currentTarget.href = targetUrl.toString();
+
+      // 不呼叫 preventDefault，讓瀏覽器執行 a 標籤原生導頁。
+      return true;
     }
 
     document.addEventListener('DOMContentLoaded', function() {
