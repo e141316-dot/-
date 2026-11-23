@@ -1,8 +1,3 @@
-
-
-
-
-
 <!DOCTYPE html>
 <head>
   <base target="_top">
@@ -2826,6 +2821,9 @@ body[data-step="step-p1"] #test-status-sub {
 }
 </style>
 
+
+<!-- GitHub Pages 對接 Apps Script 後臺：必須在本文所有 google.script.run 呼叫之前載入。 -->
+<script src="./backend-bridge.js?v=20261123-2"></script>
 </head>
 <body>
   <div class="exam-wrapper">
@@ -10910,4 +10908,3 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
 <script src="./speech-input.js"></script>
 </body>
 </html>
-
