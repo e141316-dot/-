@@ -4,26 +4,33 @@
   <base target="_self">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>生活情境遊戲 - 認知訓練 App</title>
+  <title>生活情境遊戲 - 高齡駕照輔助平台</title>
   <style>
     /* ==========================================
-       1. 全局視覺主題 (奶油白、鼠尾草綠風格)
+       1. 全局視覺主題 (比照「節慶猜謎遊戲」與平台設計規格)
        ========================================== */
     :root {
-      --primary-color: #4F7058;     /* 主要按鈕：深鼠尾草綠 */
-      --primary-dark: #35473C;      /* 主要文字/深綠灰 */
-      --primary-light: #EAF0E7;     /* 次要區塊：淡綠色 */
-      --accent-color: #6E8075;      /* 次要文字：柔和灰綠 */
+      --primary-color: #4F7058;     /* 主要按鈕/重點：深鼠尾草綠 */
+      --primary-dark: #2B3D30;      /* 主要標題/文字：深綠灰 */
+      --primary-light: #EAF0E7;     /* 次要區塊背景：淡綠色 */
+      --accent-color: #6E8075;      /* 次要提示文字：柔和灰綠 */
       --bg-color: #FCFBF7;          /* 頁面背景：奶油白 */
       --card-bg: #FCFBF7;           /* 卡片背景：奶油白 */
-      --text-main: #35473C;         /* 主要文字：深綠灰 */
-      --text-muted: #6E8075;        /* 次要文字：柔和灰綠 */
-      --border-color: #E4E9DF;      /* 邊框：淡灰綠 */
-      --border-radius: 16px;        /* 卡片圓角 */
-      --shadow: 0 4px 12px rgba(53, 71, 60, 0.08);
+      --text-main: #2B3D30;         /* 主要內文 */
+      --text-muted: #6E8075;        /* 次要文字 */
+      --border-color: #D6DEC8;      /* 卡片與容器邊框：淡綠灰 */
+      --border-radius: 16px;        /* 標準卡片圓角 */
+      --shadow: none;
       --star-gold: #ffb800;         /* 金黃色星星 */
-      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Microsoft JhengHei", sans-serif;
+      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+      --font-scale: 1;
+      --base-font-size: 18px;
     }
+
+    body.font-scale-90 { --font-scale: 0.9; }
+    body.font-scale-100 { --font-scale: 1.0; }
+    body.font-scale-115 { --font-scale: 1.15; }
+    body.font-scale-130 { --font-scale: 1.3; }
 
     * {
       box-sizing: border-box;
@@ -42,54 +49,57 @@
       min-height: 100vh;
       padding-bottom: 16px;
       overflow-x: hidden;
+      font-size: calc(var(--base-font-size) * var(--font-scale));
+      line-height: 1.5;
     }
 
-    /* 頂部導覽列 */
+    /* 頂部導覽列 (與節慶猜謎遊戲規格一致) */
     header {
       width: 100%;
       background-color: var(--bg-color);
       color: var(--primary-dark);
-      padding: 8px 16px 6px 16px;
+      padding: 14px 16px 4px 16px;
       text-align: center;
     }
     header h1 {
-      font-size: clamp(24px, 5vw, 32px);
-      font-weight: 800;
-      color: var(--primary-dark);
-      margin-bottom: 6px;
-      line-height: 1.25;
-      text-align: center;
-    }
+  font-size: calc(32px * var(--font-scale));
+  font-weight: 900;
+  color: var(--primary-dark);
+  margin-bottom: 14px; /* 原 4px → 改為 14px，拉開大標題與按鈕間距 */
+  line-height: 1.25;
+  text-align: center;
+}
 
     /* 關卡區域外層導覽列 */
-    .nav-bar {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 10px;
-      width: 92%;
-      max-width: 720px;
-      margin: 0 auto;
-    }
+ .nav-bar {
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  gap: 12px; /* 原 8px → 改為 12px，按鈕之間更有呼吸感 */
+  width: 92%;
+  max-width: 800px;
+  margin: 0 auto;
+}
 
-    .nav-item {
-      flex: 1 1 0px;
-      height: 44px;
-      background-color: var(--primary-light);
-      color: var(--primary-dark);
-      padding: 0 4px;
-      border-radius: 30px;
-      border: 1.5px solid var(--border-color);
-      font-size: clamp(0.95rem, 3.4vw, 1.15rem);
-      font-weight: bold;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      text-align: center;
-      white-space: nowrap;
-    }
+.nav-item {
+  flex: 1 1 0px;
+  min-height: 70px; /* 原 56px → 改為 70px，解決容器太窄太擠問題 */
+  height: auto;
+  background-color: var(--primary-light);
+  color: #2B3D30; /* 確保未選中的深綠文字對比度充足、清晰不模糊 */
+  padding: 8px 10px; /* 增加上下左右內距 */
+  border-radius: 18px;
+  border: 1.5px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px; /* 新增間距：自動撐開第一行與第二行 */
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+  box-sizing: border-box;
+}
     .nav-item.active {
       background-color: var(--primary-color);
       color: #ffffff;
@@ -104,55 +114,66 @@
       cursor: not-allowed;
     }
 
+    .nav-line1 {
+      font-size: calc(15px * var(--font-scale));
+      font-weight: 800;
+      line-height: 1.2;
+    }
+    .nav-line2 {
+      font-size: calc(13.5px * var(--font-scale));
+      font-weight: 700;
+      line-height: 1.25;
+      margin-top: 2px;
+      word-break: break-word;
+    }
+
     /* 主要內容容器 */
     main.game-container {
       width: 92%;
-      max-width: 720px;
+      max-width: 800px;
       background: var(--bg-color);
       border-radius: 0;
       border: none;
       box-shadow: none;
       margin-top: 4px;
-      padding: clamp(6px, 2vw, 10px) clamp(16px, 3.5vw, 24px) clamp(12px, 3vw, 18px) clamp(16px, 3.5vw, 24px);
+      padding: clamp(8px, 2.5vw, 16px);
       position: relative;
-    }
-
-    /* 各關卡標題 */
-    .section-title {
-      text-align: center;
-      color: var(--primary-dark);
-      font-size: clamp(1.3rem, 4vw, 1.65rem);
-      margin-bottom: 12px;
-      font-weight: 800;
     }
 
     /* 題目說明提示區 */
     .question-box {
       background-color: var(--primary-light);
       border-left: 6px solid var(--primary-color);
-      padding: 10px 14px;
-      border-radius: 12px;
+      padding: 14px 18px;
+      border-radius: 14px;
       margin-bottom: 14px;
       text-align: center;
     }
     .question-text {
-      font-size: clamp(1.1rem, 3.6vw, 1.35rem);
-      font-weight: bold;
+      font-weight: 800;
       color: var(--primary-dark);
       line-height: 1.4;
+      letter-spacing: 0.3px;
     }
-    .hint-text {
-      font-size: 0.95rem;
-      color: var(--text-muted);
-      margin-top: 4px;
-      font-weight: 600;
+    .q-title-line {
+      font-size: calc(24px * var(--font-scale));
+      font-weight: 800;
+      color: var(--primary-dark);
+      line-height: 1.3;
+      margin-bottom: 4px;
+    }
+    .q-sub-line {
+      font-size: calc(18px * var(--font-scale));
+      font-weight: 800;
+      color: var(--primary-dark);
+      line-height: 1.35;
     }
 
     .screen { display: none; }
     .screen.active { display: block; }
 
     /* ==========================================
-       2. 首頁與主題選擇器樣式
+       2. 首頁排版與標題間距 (參照節慶猜謎遊戲)
        ========================================== */
     .home-wrapper {
       display: flex;
@@ -165,36 +186,61 @@
       justify-content: flex-start;
       margin-bottom: 2px;
     }
+    .btn-top-back {
+      height: 46px;
+      border: 2px solid var(--primary-color);
+      background-color: #ffffff;
+      color: var(--primary-color);
+      font-size: calc(15px * var(--font-scale));
+      font-weight: 800;
+      border-radius: 25px;
+      padding: 0 20px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+    .btn-top-back:hover {
+      background-color: var(--primary-light);
+      transform: translateY(-1px);
+    }
+
     .home-header {
       text-align: center;
       margin-bottom: 4px;
     }
     .home-main-title {
-      font-size: clamp(1.4rem, 4.5vw, 1.8rem);
-      color: var(--primary-dark);
-      font-weight: 800;
+      font-size: calc(36px * var(--font-scale));
+      color: #2E4032;
+      font-weight: 900;
+      line-height: 1.25;
+      margin-top: 0;
       margin-bottom: 4px;
     }
     .home-subtitle {
-      font-size: clamp(0.95rem, 3.2vw, 1.1rem);
+      font-size: calc(21px * var(--font-scale));
       color: var(--text-muted);
-      font-weight: 600;
+      font-weight: 700;
+      line-height: 1.5;
     }
+
+    /* 說明卡片統一規範 */
     .home-card {
       background-color: var(--primary-light);
-      border: 2px solid var(--border-color);
+      border: 1.5px solid var(--border-color);
       border-radius: 16px;
-      padding: 12px 14px;
+      padding: 14px 16px;
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 16px;
     }
     .home-icon-box {
-      width: 68px;
-      height: 68px;
-      min-width: 68px;
+      width: 64px;
+      height: 64px;
+      min-width: 64px;
       background: #ffffff;
-      border: 2px solid var(--border-color);
+      border: 1.5px solid var(--border-color);
       border-radius: 14px;
       display: flex;
       align-items: center;
@@ -209,48 +255,33 @@
       display: flex;
       flex-direction: column;
       align-items: flex-start;
-      gap: 3px;
+      gap: 4px;
     }
     .home-badge {
       background-color: var(--primary-color);
       color: #ffffff;
-      font-size: 0.85rem;
-      font-weight: bold;
+      font-size: calc(14px * var(--font-scale));
+      font-weight: 800;
       padding: 3px 12px;
       border-radius: 12px;
       display: inline-block;
     }
     .home-card-title {
-      font-size: clamp(1.1rem, 3.6vw, 1.25rem);
+      font-size: calc(20px * var(--font-scale));
       color: var(--primary-dark);
       font-weight: 800;
-    }
-    .home-card-desc {
-      font-size: clamp(0.9rem, 3vw, 1.02rem);
-      color: var(--text-main);
       line-height: 1.35;
-      font-weight: 500;
-    }
-    .home-reminder-box {
-      background-color: #FAF6ED;
-      border: 2px dashed #D6C7A1;
-      border-radius: 12px;
-      padding: 12px 16px;
-      text-align: center;
-      font-size: clamp(0.95rem, 3.2vw, 1.08rem);
-      color: #524636;
-      font-weight: bold;
-      margin-top: 2px;
-      line-height: 1.5;
+      word-break: break-word;
     }
 
+    /* 分類選擇區塊外觀 */
     .home-theme-box {
       width: 100%;
       text-align: center;
-      margin-top: 2px;
+      margin-top: 4px;
     }
     .home-theme-box label {
-      font-size: clamp(1rem, 3.4vw, 1.15rem);
+      font-size: calc(18px * var(--font-scale));
       font-weight: 800;
       color: var(--primary-dark);
       display: block;
@@ -258,65 +289,68 @@
     }
     .home-theme-box select {
       width: 100%;
-      font-size: 1.1rem;
-      padding: 10px 14px;
-      border-radius: 12px;
+      height: 54px;
+      font-size: calc(18px * var(--font-scale));
+      padding: 0 14px;
+      border-radius: 14px;
       border: 2px solid var(--primary-color);
       background: #ffffff;
       color: var(--primary-dark);
-      font-weight: 800;
+      font-weight: 700;
       cursor: pointer;
       outline: none;
       text-align-last: center;
     }
 
+    /* 開始遊戲按鈕 */
     .btn-start-game {
       width: 100%;
       max-width: 420px;
-      height: 52px;
+      min-height: 54px;
+      padding: 12px 24px;
       background-color: var(--primary-color);
       color: #ffffff;
-      font-size: clamp(1.2rem, 4vw, 1.35rem);
+      font-size: calc(20px * var(--font-scale));
       font-weight: 800;
       border: none;
       border-radius: 30px;
       cursor: pointer;
-      box-shadow: 0 4px 12px rgba(79, 112, 88, 0.3);
+      box-shadow: 0 4px 14px rgba(79, 112, 88, 0.28);
       transition: all 0.2s ease;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
-      margin: 8px auto 0 auto;
+      margin: 14px auto 0 auto;
     }
     .btn-start-game:hover {
       background-color: var(--primary-dark);
       transform: translateY(-2px);
     }
 
-    /* 通用按鈕 */
+    /* 主要作答按鈕 */
     .btn {
       background-color: var(--primary-color);
       color: white;
       border: none;
       padding: 12px 24px;
-      font-size: 1.15rem;
-      font-weight: bold;
+      font-size: calc(20px * var(--font-scale));
+      font-weight: 800;
       border-radius: 30px;
       cursor: pointer;
-      min-height: 48px;
+      min-height: 52px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
       transition: background-color 0.2s, transform 0.1s;
-      box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 12px rgba(79, 112, 88, 0.25);
     }
     .btn:hover { background-color: var(--primary-dark); }
     .btn:active { transform: scale(0.98); }
     .btn-submit {
       width: 100%;
-      max-width: 380px;
+      max-width: 420px;
       margin: 14px auto 0 auto;
       display: flex;
     }
@@ -333,27 +367,53 @@
       display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
       position: relative; z-index: 1;
     }
-    .column-title {
-      text-align: center; font-size: 1.1rem; font-weight: 800;
-      color: var(--primary-dark); margin-bottom: 8px;
+.column-title {
+      text-align: center;
+      font-size: calc(19px * var(--font-scale));
+      font-weight: 800;
+      color: var(--primary-dark);
+      margin-bottom: 12px;
     }
     .match-item {
-      background: #ffffff; border: 2.5px solid var(--border-color); border-radius: 12px;
-      padding: 2px; margin-bottom: 10px; cursor: pointer; text-align: center;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      height: 88px; width: 100%; position: relative; box-sizing: border-box;
+      background: #ffffff;
+      border: 2.5px solid var(--border-color);
+      border-radius: 14px;
+      padding: 2px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 115px;
+      width: 100%;
+      position: relative;
+      box-sizing: border-box;
       transition: all 0.2s ease;
     }
     .match-item .img-wrapper {
-      width: 100%; height: 100%; display: flex; justify-content: center;
-      align-items: center; overflow: hidden; border-radius: 8px;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      border-radius: 8px;
     }
     .match-item img {
-      width: 100%; height: 100%; object-fit: cover; object-position: center;
-      border-radius: 8px; display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      border-radius: 8px;
+      display: block;
     }
     .match-item.text-item {
-      font-size: 1.15rem; font-weight: 800; color: var(--text-main); padding: 4px;
+      font-size: calc(20px * var(--font-scale));
+      font-weight: 800;
+      color: var(--text-main);
+      padding: 6px;
     }
     .match-item.selected {
       border-color: var(--primary-color) !important;
@@ -364,24 +424,24 @@
     /* ==========================================
        4. 第二與三關：單張圖片與選項網格
        ========================================== */
-    .single-img-container { text-align: center; margin-bottom: 12px; }
+    .single-img-container { text-align: center; margin-bottom: 14px; }
     .single-img-container img {
-      max-width: 100%; max-height: 180px; border-radius: 12px;
-      object-fit: contain; box-shadow: 0 3px 10px rgba(0,0,0,0.06);
-      border: 2px solid var(--border-color);
+      max-width: 100%; max-height: 230px; border-radius: 14px;
+      object-fit: contain; box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      border: 2.5px solid var(--border-color);
     }
 
     .options-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-      gap: 10px;
+      gap: 12px;
       margin-top: 10px;
     }
 
     #l3OptionsGrid {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 10px;
+      gap: 12px;
       margin-top: 10px;
     }
     @media (max-width: 480px) {
@@ -389,9 +449,9 @@
     }
 
     .option-card {
-      border: 3px solid var(--border-color);
-      border-radius: var(--border-radius);
-      padding: 8px;
+      border: 2.5px solid var(--border-color);
+      border-radius: 16px;
+      padding: 10px;
       text-align: center;
       cursor: pointer;
       background: #ffffff;
@@ -408,20 +468,54 @@
       box-shadow: 0 0 0 2px var(--primary-color);
     }
 
-    #l3OptionsGrid .option-card { height: 125px; padding: 6px; }
-    #l3OptionsGrid .option-card .img-wrapper {
-      width: 100%; height: 72px; display: flex; justify-content: center;
-      align-items: center; overflow: hidden; border-radius: 8px; margin-bottom: 4px;
-      background: #f9f9f9;
-    }
-    #l3OptionsGrid .option-card img { width: 100%; height: 100%; object-fit: contain; }
-    #l3OptionsGrid .option-card p {
-      font-size: 1.05rem; font-weight: 800; color: var(--text-main);
-      margin: 0; text-align: center; white-space: nowrap;
-    }
+   /* 1. 調整卡片基本高度與內距 */
+#l3OptionsGrid .option-card {
+  min-height: 160px;         /* 原 135px → 加高以容納更大圖片 */
+  padding: 12px;             /* 增加內距，讓整體更厚實 */
+  border-radius: 18px;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* 2. 加大圖片容器高度，並移除灰底 */
+#l3OptionsGrid .option-card .img-wrapper {
+  width: 100%;
+  height: 105px;             /* 原 72px → 加大圖片顯示區域 */
+  border-radius: 10px;
+  margin-bottom: 8px;
+  background: transparent;   /* 移除灰底，視覺更乾淨 */
+  overflow: hidden;
+}
+
+/* 3. 圖片改為 Cover 滿版呈現（去除左右空隙） */
+#l3OptionsGrid .option-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;         /* 原 contain 改為 cover，讓照片完整填滿 */
+  object-position: center;
+  border-radius: 10px;
+}
+
+/* 4. 放大選項文字，提升高齡閱讀性 */
+#l3OptionsGrid .option-card p {
+  font-size: calc(20px * var(--font-scale)); /* 原 18px → 加大至 20px */
+  font-weight: 800;
+  color: var(--primary-dark);
+  margin: 2px 0 0 0;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* 5. 加大「完成作答」按鈕與下方卡片的間距 */
+#btn-submit-l3 {
+  margin-top: 24px;          /* 加大網格與下方按鈕的距離，避免擠在一起 */
+}
 
     /* ==========================================
-       5. 獨立結算與總成績畫面樣式
+       5. 成績結算頁面規格 (參照節慶猜謎遊戲按鈕與標題)
        ========================================== */
     .settlement-card {
       position: relative;
@@ -438,13 +532,36 @@
     .settlement-card > *:not(#confetti-canvas) {
       position: relative; z-index: 2;
     }
-    .settlement-title {
-      color: var(--primary-color);
-      font-size: clamp(1.2rem, 3.8vw, 1.5rem);
-      font-weight: 800;
-      margin-bottom: 4px;
-      line-height: 1.25;
-    }
+
+/* 結算標題下方加留白 */
+.settlement-title {
+  color: var(--primary-dark);
+  font-size: calc(28px * var(--font-scale));
+  font-weight: 900;
+  margin-bottom: 8px;          /* 原 4px → 加大至 8px */
+  line-height: 1.3;
+}
+
+/* 星星區域上下留白 */
+.settlement-stars {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;                   /* 原 12px → 加大星與星之間距 */
+  margin: 8px 0 12px 0;        /* 調整上下留白，避免壓擠 */
+}
+
+/* 得分標籤 */
+.settlement-score-pill {
+  background-color: #EBF1EA;
+  color: var(--primary-dark);
+  padding: 8px 26px;
+  border-radius: 30px;
+  display: inline-block;
+  font-size: calc(18px * var(--font-scale));
+  font-weight: 800;
+  margin: 4px 0 10px 0;
+}
 
     /* 總成績滿分專屬 3D 慶祝區域 */
     .celebration-container {
@@ -525,91 +642,109 @@
       100% { opacity: 1; transform: scale(1) rotate(0deg); }
     }
 
-    .settlement-stars {
+.settlement-stars {
       display: flex;
       justify-content: center;
       align-items: center;
       gap: 12px;
-      margin: 4px 0 6px 0;
+      margin: 6px 0 10px 0;
     }
-    .star-icon {
-      display: inline-flex;
+.settlement-stars {
+      display: flex;
       justify-content: center;
       align-items: center;
-      font-size: clamp(2.3rem, 6.5vw, 2.8rem);
-      color: #ffb800;
-      line-height: 1;
-      user-select: none;
-      position: relative;
-      filter: drop-shadow(0 6px 12px rgba(0,0,0,0.18)) drop-shadow(0 0 16px #ffb800) drop-shadow(0 0 24px #ffe082);
-      opacity: 0;
-      transform: scale(0);
-      transition: all 0.3s ease;
-      transform-style: preserve-3d;
+      gap: 12px;
+      margin: 8px 0 12px 0;
+      min-height: 50px; /* 撐開星星空間 */
+    }
+    .settlement-svg-star {
+      width: clamp(42px, 8vw, 50px);
+      height: clamp(42px, 8vw, 50px);
+      filter: drop-shadow(0 2px 10px rgba(245, 158, 11, 0.65));
+      animation: starDropIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.25) forwards;
+    }
+    .settlement-svg-star.star-1 { animation-delay: 0.1s; }
+    .settlement-svg-star.star-2 { animation-delay: 0.25s; }
+    .settlement-svg-star.star-3 { animation-delay: 0.4s; }
+
+    @keyframes starDropIn {
+      0% { opacity: 0; transform: translateY(-25px) scale(0.3); }
+      70% { opacity: 1; transform: translateY(3px) scale(1.15); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
     }
 
-    .settlement-stars.active-anim .star-icon {
-      animation: starBottomPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.25) forwards;
-    }
-    .settlement-stars.active-anim .star-icon:nth-child(1) { animation-delay: 0.5s; }
-    .settlement-stars.active-anim .star-icon:nth-child(2) { animation-delay: 0.75s; }
-    .settlement-stars.active-anim .star-icon:nth-child(3) { animation-delay: 1.0s; }
 
-    @keyframes starBottomPop {
-      0% { opacity: 0; transform: scale(0) translateY(10px); }
-      70% { opacity: 1; transform: scale(1.25) translateY(-3px); }
-      100% { opacity: 1; transform: scale(1) translateY(0); }
-    }
-
+    /* 得分圓角標籤 */
     .settlement-score-pill {
-      background-color: var(--primary-light);
-      border: 1.5px solid #C5D4C3;
+      background-color: #EBF1EA;
       color: var(--primary-dark);
-      padding: 4px 18px;
+      padding: 8px 26px;
       border-radius: 30px;
       display: inline-block;
-      font-size: clamp(0.98rem, 3.2vw, 1.12rem);
-      font-weight: bold;
+      font-size: calc(18px * var(--font-scale));
+      font-weight: 800;
       margin: 2px 0 8px 0;
     }
 
-    .settlement-result-box {
-      border: 1.5px solid var(--border-color);
-      border-radius: 14px;
-      padding: 10px;
-      margin-bottom: 10px;
-      background: #ffffff;
+    /* 鼓勵文字區域 */
+ .settlement-encouragement {
+  background: transparent;
+  padding: 6px 12px;
+  color: var(--primary-dark);
+  font-size: calc(19px * var(--font-scale)); /* 略微縮小至 19px，讓長句子更順暢 */
+  font-weight: 800;
+  line-height: 1.5;
+  margin: 10px auto 16px auto;
+  max-width: 580px;            /* 原 480px → 放寬至 580px，防止「悉！」單字孤行 */
+  width: 100%;
+  text-align: center;
+  word-break: keep-all;        /* 避免標點符號或詞語被硬截斷 */
+}
+
+.settlement-table-card {
+  max-width: 420px;
+  width: 100%;
+  margin: 14px auto 24px auto; /* 下方 margin 改為 24px，與「完成遊戲」按鈕保持舒適距離 */
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+    .settlement-table-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 20px;
+      border-radius: 12px;
+      font-size: calc(18px * var(--font-scale));
+      font-weight: 800;
     }
-    .settlement-result-title {
-      color: var(--text-main); font-weight: bold;
-      font-size: clamp(0.95rem, 3vw, 1.05rem); margin-bottom: 6px;
+    .settlement-table-row.row-correct {
+      background-color: #E2EFE0;
+      color: #2A5235;
     }
-    .settlement-tags-group {
-      display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;
+    .settlement-table-row.row-wrong {
+      background-color: #EBECEB;
+      color: #4A4D4A;
     }
-    .tag-correct {
-      background: #EAF0E7; border: 1.5px solid #B7C9B5; color: #35473C;
-      padding: 5px 14px; border-radius: 12px; font-weight: bold;
-      font-size: clamp(0.9rem, 2.8vw, 1rem);
-    }
-    .tag-wrong {
-      background: #FDF2F0; border: 1.5px solid #E2A7A0; color: #9C3327;
-      padding: 5px 14px; border-radius: 12px; font-weight: bold;
-      font-size: clamp(0.9rem, 2.8vw, 1rem);
-    }
-    .settlement-encouragement {
-      background: var(--primary-light); border: 1.5px solid var(--border-color); border-radius: 12px;
-      padding: 8px 12px; color: var(--primary-dark); font-size: clamp(0.9rem, 3vw, 1rem);
-      font-weight: bold; line-height: 1.4; margin-top: 6px;
+    .settlement-table-row.row-wrong-perfect {
+      background-color: #E2EFE0;
+      color: #2A5235;
     }
 
+    .settlement-val-num {
+      font-size: calc(20px * var(--font-scale));
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+
+    /* 單關下一關按鈕規格 */
     .btn-settlement-next {
       width: 100%;
-      max-width: 480px;
-      height: 46px;
+      max-width: 420px;
+      min-height: 54px;
       background-color: var(--primary-color);
       color: #ffffff;
-      font-size: clamp(1.1rem, 3.6vw, 1.25rem);
+      font-size: calc(20px * var(--font-scale));
       font-weight: 800;
       border: none;
       border-radius: 30px;
@@ -626,74 +761,28 @@
       transform: translateY(-2px);
     }
 
-    .settlement-nav-group {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 10px;
-      margin-top: 8px;
+    /* 總成績分數明細框 */
+    .summary-breakdown-wrapper {
       width: 100%;
-      max-width: 520px;
-      margin-left: auto;
-      margin-right: auto;
-      flex-wrap: wrap;
+      max-width: 620px;
+      margin: 14px auto 10px auto;
     }
-    .btn-sub-nav {
-      flex: 1 1 130px;
-      min-width: 110px;
-      height: 40px;
-      background-color: #ffffff;
-      border: 2px solid var(--primary-color);
-      color: var(--primary-dark);
-      font-size: clamp(0.92rem, 2.8vw, 1.02rem);
-      font-weight: 800;
-      border-radius: 25px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      text-decoration: none;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.04);
-      white-space: nowrap;
-    }
-    .btn-sub-nav:hover {
-      background-color: var(--primary-light);
-      border-color: var(--primary-dark);
-      transform: translateY(-1px);
-    }
-    .btn-sub-nav:active {
-      transform: scale(0.98);
-    }
-
-    @media (max-width: 520px) {
-      .settlement-nav-group {
-        gap: 8px;
-      }
-      .btn-sub-nav {
-        flex: 1 1 45%;
-        font-size: 0.9rem;
-        height: 38px;
-      }
-    }
-
     .summary-breakdown-box {
       position: relative;
       background-color: var(--primary-light);
-      border-radius: 12px;
-      padding: 8px 14px;
-      margin-bottom: 8px;
+      border-radius: 14px;
+      padding: 12px 24px;
       text-align: left;
       overflow: visible;
       perspective: 1000px;
     }
     .summary-breakdown-row {
       display: flex; justify-content: space-between; align-items: center;
-      font-size: clamp(0.92rem, 3vw, 1.05rem); font-weight: bold; color: var(--text-main);
-      padding: 5px 0; border-bottom: 1px dashed var(--border-color);
+      font-size: calc(17px * var(--font-scale)); font-weight: 800; color: var(--text-main);
+      padding: 10px 0; border-bottom: 1.5px dashed var(--border-color);
     }
     .summary-breakdown-row:last-child { border-bottom: none; }
-    .summary-breakdown-score { color: var(--primary-color); font-weight: 800; }
+    .summary-breakdown-score { color: var(--primary-color); font-weight: 800; font-size: calc(18px * var(--font-scale)); }
 
     .clapping-hand-breakdown {
       position: absolute;
@@ -725,36 +814,76 @@
 
     .btn-sound {
       background: #ffffff; border: 2px solid var(--primary-color);
-      color: var(--primary-dark); font-size: 0.92rem; font-weight: 800;
-      padding: 4px 14px; border-radius: 20px; cursor: pointer; margin: 4px 0;
+      color: var(--primary-dark); font-size: calc(16px * var(--font-scale)); font-weight: 800;
+      padding: 6px 18px; border-radius: 20px; cursor: pointer; margin: 4px 0 10px 0;
       display: inline-flex; align-items: center; gap: 6px;
     }
 
     /* ==========================================
-       6. 溫馨提示彈窗 (Custom Modal)
+       6. 總成績頁面按鈕群組 (參照節慶猜謎遊戲二排獨立結構)
        ========================================== */
+    .summary-actions-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      max-width: 480px;
+      margin: 16px auto 0;
+    }
+
+    .summary-actions-group .btn-settlement-next {
+      width: 100%;
+      max-width: 100%;
+      margin: 0;
+    }
+
+    .secondary-btn-row {
+      display: flex;
+      flex-direction: row;
+      gap: 12px;
+      width: 100%;
+      justify-content: center;
+      flex-wrap: nowrap;
+    }
+
+    .btn-secondary {
+      flex: 1 1 0;
+      height: 48px;
+      padding: 8px 16px;
+      font-size: calc(17px * var(--font-scale));
+      font-weight: 800;
+      border-radius: 25px;
+      background-color: #ffffff;
+      border: 2px solid var(--primary-color);
+      color: var(--primary-dark);
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+    .btn-secondary:hover {
+      background-color: var(--primary-light);
+      transform: translateY(-1px);
+    }
+
+    /* 溫馨提示彈窗 (Custom Modal) */
     .modal-overlay {
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background-color: rgba(53, 71, 60, 0.45);
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      z-index: 1000;
-      padding: 20px 12px;
-      box-sizing: border-box;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background-color: rgba(43, 61, 48, 0.45);
+      display: flex; justify-content: center; align-items: flex-start;
+      z-index: 1000; padding: 20px 12px; box-sizing: border-box;
       animation: fadeIn 0.2s ease-out;
     }
 
     @media (max-width: 768px) {
       .modal-overlay {
         padding-top: calc(env(safe-area-inset-top, 0px) + 12px);
-        padding-left: 12px;
-        padding-right: 12px;
-        padding-bottom: 12px;
+        padding-left: 12px; padding-right: 12px; padding-bottom: 12px;
       }
     }
 
@@ -765,11 +894,9 @@
       border: 3px solid var(--primary-color);
       border-radius: 20px;
       padding: 22px 18px;
-      max-width: 400px;
-      width: 100%;
+      max-width: 400px; width: 100%;
       max-height: calc(100vh - 40px);
-      overflow-y: auto;
-      text-align: center;
+      overflow-y: auto; text-align: center;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
       animation: popUp 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       box-sizing: border-box;
@@ -782,17 +909,17 @@
     }
 
     @keyframes popUp { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-    .modal-title { color: var(--primary-dark); font-size: clamp(1.25rem, 3.8vw, 1.5rem); font-weight: 800; margin-bottom: 10px; }
-    .modal-content { color: var(--text-main); font-size: clamp(1rem, 3.4vw, 1.15rem); line-height: 1.55; margin-bottom: 20px; font-weight: 500; }
+    .modal-title { color: var(--primary-dark); font-size: calc(22px * var(--font-scale)); font-weight: 800; margin-bottom: 10px; }
+    .modal-content { color: var(--text-main); font-size: calc(18px * var(--font-scale)); line-height: 1.55; margin-bottom: 20px; font-weight: 700; }
     .btn-modal-close {
       background-color: var(--primary-color); color: #ffffff; border: none; padding: 10px 32px;
-      font-size: clamp(1rem, 3.4vw, 1.15rem); font-weight: bold; border-radius: 30px;
+      font-size: calc(18px * var(--font-scale)); font-weight: 800; border-radius: 30px;
       cursor: pointer; box-shadow: 0 4px 10px rgba(79, 112, 88, 0.25);
     }
 
     .img-fallback {
       display: flex; align-items: center; justify-content: center;
-      background: var(--primary-light); color: var(--primary-color); font-size: 1rem;
+      background: var(--primary-light); color: var(--primary-color); font-size: calc(15px * var(--font-scale));
       font-weight: 800; border: 1.5px dashed var(--border-color); border-radius: 8px;
       padding: 4px; width: 100%; height: 100%; text-align: center;
     }
@@ -802,15 +929,13 @@
     }
   </style>
 </head>
-<body>
+<body data-base-url="<?!= baseUrl ?>">
 
   <!-- 頂部導覽列 -->
   <header id="main-header" style="display: none;">
-    <h1>生活情境遊戲</h1>
+    <h1 id="header-title">生活情境遊戲</h1>
     <div id="nav-bar" class="nav-bar">
-      <div id="navL1" class="nav-item active" onclick="navigateToLevel('l1')">第一關</div>
-      <div id="navL2" class="nav-item locked" onclick="navigateToLevel('l2')">第二關</div>
-      <div id="navL3" class="nav-item locked" onclick="navigateToLevel('l3')">第三關</div>
+      <!-- 動態載入雙行 nav-item -->
     </div>
   </header>
 
@@ -822,15 +947,16 @@
     <div id="screenIntro" class="screen active">
       <div class="home-wrapper">
         <div class="intro-back-wrap">
-          <a href="LevelSelect.html" target="_self" class="btn-sub-nav" style="flex: initial; padding: 6px 18px;">
+          <button type="button" onclick="goToGameCategories()" class="btn-top-back" id="btn-back-cat-intro">
             ← 返回遊戲分類
-          </a>
+          </button>
         </div>
         <div class="home-header">
-          <h2 class="home-main-title">生活情境遊戲</h2>
-          <div class="home-subtitle">透過生活圖片，動動腦、想一想！</div>
+          <h2 class="home-main-title" id="home-main-title">生活情境遊戲</h2>
+          <div class="home-subtitle" id="home-subtitle">透過生活圖片，動動腦、想一想！</div>
         </div>
 
+<!-- 第一關說明卡片 -->
         <div class="home-card">
           <div class="home-icon-box">
             <svg viewBox="0 0 100 100" fill="none">
@@ -840,12 +966,12 @@
             </svg>
           </div>
           <div class="home-card-content">
-            <span class="home-badge">第一關</span>
-            <div class="home-card-title">看圖片，配對地點</div>
-            <div class="home-card-desc">觀察場所圖片，點選對應名稱連線。</div>
+            <span class="home-badge" id="badge-l1">第一關</span>
+            <div class="home-card-title" id="title-l1">連連看｜看圖片，配對地點</div>
           </div>
         </div>
 
+        <!-- 第二關說明卡片 -->
         <div class="home-card">
           <div class="home-icon-box">
             <svg viewBox="0 0 100 100" fill="none">
@@ -854,12 +980,12 @@
             </svg>
           </div>
           <div class="home-card-content">
-            <span class="home-badge">第二關</span>
-            <div class="home-card-title">看人物，想想他在哪裡</div>
-            <div class="home-card-desc">觀察人物行為情境，選出所在地點。</div>
+            <span class="home-badge" id="badge-l2">第二關</span>
+            <div class="home-card-title" id="title-l2">猜猜看｜看照片裡的人，猜他現在在哪裡</div>
           </div>
         </div>
 
+        <!-- 第三關說明卡片 -->
         <div class="home-card">
           <div class="home-icon-box">
             <svg viewBox="0 0 100 100" fill="none">
@@ -868,25 +994,20 @@
             </svg>
           </div>
           <div class="home-card-content">
-            <span class="home-badge">第三關</span>
-            <div class="home-card-title">看看情境，選出正確做法</div>
-            <div class="home-card-desc">判斷日常場合，選出 3 個合適活動。</div>
+            <span class="home-badge" id="badge-l3">第三關</span>
+            <div class="home-card-title" id="title-l3">想一想｜看看情境選出正確作法</div>
           </div>
         </div>
 
-        <div class="home-reminder-box">
-          💡 遊戲小提醒：仔細看圖片，依自己的步調輕鬆選擇即可！
-        </div>
-
         <div class="home-theme-box">
-          <label for="themeSelect">今天想玩哪一類？</label>
+          <label for="themeSelect" id="lbl-theme-select">今天想玩哪一類？</label>
           <select id="themeSelect">
-            <option value="random">🎲 隨機抽取主題</option>
-            <option value="dining" selected>🍎 飲食相關</option>
-            <option value="home">🏠 居家生活</option>
-            <option value="traffic">🚗 交通與外出</option>
-            <option value="clothes">👕 穿著相關</option>
-          </select>
+  <option value="dining" selected>🍎 飲食相關</option>
+  <option value="home">🏠 居家生活</option>
+  <option value="traffic">🚗 交通與外出</option>
+  <option value="clothes">👕 穿著相關</option>
+  <option value="random">🎲 隨機抽取主題</option>
+</select>
         </div>
 
         <button class="btn-start-game" id="startBtn" onclick="startGame()">開始遊戲 ❯</button>
@@ -895,80 +1016,78 @@
 
     <!-- 第一關：看圖片，配對地點 -->
     <div id="screenLevel1" class="screen">
-      <h2 class="section-title">看圖片，配對地點</h2>
       <div class="question-box">
-        <div class="question-text">請將圖片與對應的地點名稱連線</div>
-        <div class="hint-text">點擊左邊「地點圖片」，再點擊右邊「地點名稱」進行配對。</div>
+        <div class="question-text" id="l1-q-text">
+          <div class="q-title-line" id="l1-q-title">看圖選名字！</div>
+          <div class="q-sub-line" id="l1-q-sub">先點選左邊圖片，再選右邊名字</div>
+        </div>
       </div>
       <div class="matching-wrapper" id="l1MatchingWrapper">
         <svg class="l1-svg-canvas" id="l1SvgCanvas"></svg>
         <div class="matching-container" id="l1MatchingContainer">
           <div>
-            <div class="column-title">地點圖片</div>
+            <div class="column-title" id="l1-col-img">地點圖片</div>
             <div id="l1ImageList"></div>
           </div>
           <div>
-            <div class="column-title">地點名稱</div>
+            <div class="column-title" id="l1-col-text">地點名稱</div>
             <div id="l1TextList"></div>
           </div>
         </div>
       </div>
-      <button class="btn btn-submit" onclick="submitLevel1()">完成作答</button>
+      <button class="btn btn-submit" id="btn-submit-l1" onclick="submitLevel1()">完成作答</button>
     </div>
 
-    <!-- 第二關：看人物，想想他在哪裡 -->
+    <!-- 第二關：看照片裡的人，猜他現在在哪裡 -->
     <div id="screenLevel2" class="screen">
-      <h2 class="section-title">看人物，想想他在哪裡</h2>
       <div class="question-box">
-        <div class="question-text" id="l2QuestionText">請看圖片，選擇最適合的答案：</div>
-        <div class="hint-text">請觀察圖片與人物行為，點選下方最符合的地點。</div>
+        <div class="question-text" id="l2QuestionText">題目載入中...</div>
       </div>
       <div class="single-img-container" id="l2ImageContainer"></div>
       <div class="options-grid" id="l2OptionsGrid"></div>
-      <button class="btn btn-submit" onclick="submitLevel2()">完成作答</button>
+      <button class="btn btn-submit" id="btn-submit-l2" onclick="submitLevel2()">完成作答</button>
     </div>
 
-    <!-- 第三關：看看情境，選出正確做法 -->
+    <!-- 第三關：看看情境選出正確作法 -->
     <div id="screenLevel3" class="screen">
-      <h2 class="section-title">看看情境，選出正確做法</h2>
       <div class="question-box">
-        <div class="question-text" id="l3QuestionText">哪些事情是在這裡做的？</div>
-        <div class="hint-text">請從下方圖片選項中，點選 3 個合適的活動。</div>
+        <div class="question-text" id="l3QuestionText">題目載入中...</div>
       </div>
       <div id="l3OptionsGrid"></div>
-      <button class="btn btn-submit" onclick="submitLevel3()">完成作答</button>
+      <button class="btn btn-submit" id="btn-submit-l3" onclick="submitLevel3()">完成作答</button>
     </div>
 
-    <!-- 獨立關卡完成結果頁面 -->
+    <!-- 獨立關卡成績結算頁面 -->
     <div id="screenLevelResult" class="screen">
       <div class="settlement-card">
         <h2 id="lResultTitle" class="settlement-title">第一關完成！</h2>
         <div class="settlement-stars" id="lResultStars"></div>
         <div class="settlement-score-pill" id="lResultScore">本關得分：100 分</div>
+        <div class="settlement-encouragement" id="lResultMsg">太棒了！您已完成本關挑戰！</div>
 
-        <div class="settlement-result-box">
-          <div class="settlement-result-title">本關答題結果</div>
-          <div class="settlement-tags-group">
-            <span class="tag-correct">答對：<strong id="lResultCorrect">0</strong> 題</span>
-            <span class="tag-wrong">未答對：<strong id="lResultWrong">0</strong> 題</span>
+        <div class="settlement-table-card">
+          <div class="settlement-table-row row-correct">
+            <span id="lbl-tag-correct">答對題數</span>
+            <span class="settlement-val-num"><strong id="lResultCorrect">0</strong> <span id="lbl-unit-q1">題</span></span>
+          </div>
+          <div class="settlement-table-row row-wrong" id="row-wrong-wrapper">
+            <span id="lbl-tag-wrong">答錯題數</span>
+            <span class="settlement-val-num"><strong id="lResultWrong">0</strong> <span id="lbl-unit-q2">題</span></span>
           </div>
         </div>
-
-        <div class="settlement-encouragement" id="lResultMsg">答得很好！真棒！</div>
       </div>
       <button class="btn-settlement-next" id="lResultNextBtn" onclick="onLevelResultNext()">前往第二關</button>
     </div>
 
-    <!-- 總成績畫面 -->
+    <!-- 總成績畫面 (完全參照節慶猜謎遊戲按鈕排列規格) -->
     <div id="screenResult" class="screen">
       <div class="settlement-card">
         <h2 id="resultGreeting" class="settlement-title">恭喜完成全部三關！</h2>
         
-        <!-- 總成績滿分專屬 3D 慶祝區域 -->
         <div id="perfectCelebrationOverlay" class="celebration-container" style="display: none;">
           <svg class="sparkle-svg-side left" viewBox="0 0 100 100" style="overflow: visible;">
-            <path d="M 50 10 Q 50 50 10 50 Q 50 50 50 90 Q 50 50 90 50 Q 50 50 50 10 Z" fill="#FFB703"/>
-            <path d="M 50 20 Q 50 50 20 50 Q 50 50 50 80 Q 50 50 80 50 Q 50 50 50 20 Z" fill="#FFE082"/>
+            <path d="M 50 10 Q 50 50 10 50 Q 50 50 50 90 Q 50 50 50 10 Z" fill="#FFB703"/>
+            <path d="M 50 20 Q 50 50 20 50 Q 50 50 50 80 Q 50 50 50 20 Z" fill="#FFE082"/>
             <path d="M 82 62 Q 82 72 72 72 Q 82 72 82 82 Q 82 72 92 72 Q 82 72 82 62 Z" fill="#FFE382"/>
           </svg>
 
@@ -977,69 +1096,853 @@
           </div>
 
           <svg class="sparkle-svg-side right" viewBox="0 0 100 100" style="overflow: visible;">
-            <path d="M 50 10 Q 50 50 10 50 Q 50 50 50 90 Q 50 50 90 50 Q 50 50 50 10 Z" fill="#FFB703"/>
-            <path d="M 50 20 Q 50 50 20 50 Q 50 50 50 80 Q 50 50 80 50 Q 50 50 50 20 Z" fill="#FFE082"/>
+            <path d="M 50 10 Q 50 50 10 50 Q 50 50 50 90 Q 50 50 50 10 Z" fill="#FFB703"/>
+            <path d="M 50 20 Q 50 50 20 50 Q 50 50 50 80 Q 50 50 50 20 Z" fill="#FFE082"/>
             <path d="M 82 62 Q 82 72 72 72 Q 82 72 82 82 Q 82 72 92 72 Q 82 72 82 62 Z" fill="#FFE382"/>
           </svg>
         </div>
 
-        <!-- 關卡完成進度 3D 星星 -->
         <div class="settlement-stars" id="finalResultStars"></div>
-
         <div class="settlement-score-pill" id="finalScoreText">總平均成績：100 分</div>
+        <div class="settlement-encouragement" id="resultFeedback">今天辛苦了！完成三關練習，給自己一個鼓勵！</div>
 
-        <!-- 成績細項區域 -->
-        <div class="summary-breakdown-box" id="summaryBreakdownBox">
-          <div class="clapping-hand-breakdown">👏</div>
-          <div class="summary-breakdown-row">
-            <span>第一關 (看圖配對)：</span><span class="summary-breakdown-score" id="scoreL1">0 分</span>
-          </div>
-          <div class="summary-breakdown-row">
-            <span>第二關 (人物聯想)：</span><span class="summary-breakdown-score" id="scoreL2">0 分</span>
-          </div>
-          <div class="summary-breakdown-row">
-            <span>第三關 (情境判斷)：</span><span class="summary-breakdown-score" id="scoreL3">0 分</span>
+        <div class="summary-breakdown-wrapper">
+          <div class="summary-breakdown-box" id="summaryBreakdownBox">
+            <div class="clapping-hand-breakdown">👏</div>
+            <div class="summary-breakdown-row">
+              <span id="final-l1-label">第一關（連連看）</span><span class="summary-breakdown-score" id="scoreL1">0 分</span>
+            </div>
+            <div class="summary-breakdown-row">
+              <span id="final-l2-label">第二關（猜猜看）</span><span class="summary-breakdown-score" id="scoreL2">0 分</span>
+            </div>
+            <div class="summary-breakdown-row">
+              <span id="final-l3-label">第三關（想一想）</span><span class="summary-breakdown-score" id="scoreL3">0 分</span>
+            </div>
           </div>
         </div>
 
         <div id="soundControlArea" style="display: none;">
-          <button class="btn-sound" onclick="playPerfectApplauseSound(true)">👏 重新播放掌聲</button>
+          <button class="btn-sound" id="btn-replay-clap" onclick="playPerfectApplauseSound(true)">👏 重新播放掌聲</button>
         </div>
-
-        <div class="settlement-encouragement" id="resultFeedback">今天辛苦了！完成三關練習，給自己一個鼓勵！</div>
       </div>
 
-      <button class="btn-settlement-next" onclick="restartGame()">再玩一次</button>
-
-      <!-- 三個返回按鈕 -->
-      <div class="settlement-nav-group">
-        <button class="btn-sub-nav" onclick="goToOrientationCategory()">回到定向感分類</button>
-        <button class="btn-sub-nav" onclick="goToGameCategories()">回到遊戲分類</button>
-        <button class="btn-sub-nav" onclick="goToHomePage()">回首頁</button>
+      <!-- 第一排再玩一次 + 第二排（回到遊戲分類 & 回首頁）按鈕組 -->
+      <div class="summary-actions-group">
+        <button class="btn-settlement-next" id="btn-play-again" onclick="restartGame()">再玩一次</button>
+        <div class="secondary-btn-row">
+          <button class="btn-secondary" id="btn-back-cat-summary" onclick="goToGameCategories()">回到遊戲分類</button>
+          <button class="btn-secondary" id="btn-nav-home" onclick="goToHomePage()">回首頁</button>
+        </div>
       </div>
     </div>
 
   </main>
 
   <script>
-    /* 配對線條顏色：鼠尾草綠與灰綠深淺色系 */
-    const PAIR_COLORS = ['#4F7058', '#6E8075', '#35473C', '#587B62', '#7A9181', '#3B5843'];
+    /* ==========================================
+   繪製金銀銅牌與活力章 SVG 圖示
+   ========================================== */
+function getBadgeData(score) {
+  var unit = t('settle.score_unit'); // 自動抓取 ' 分' 或 ' pts'
 
-    /* 關卡順序權重 */
+  if (score >= 90) {
+    return {
+      svg: `<svg viewBox="0 0 36 36" width="32" height="32" style="vertical-align:middle; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.15));"><circle cx="18" cy="18" r="16" fill="url(#goldGrad)" stroke="#B78103" stroke-width="1.5"/><path d="M18 7l2.5 5.5 6 .5-4.5 4 1.5 6-5.5-3-5.5 3 1.5-6-4.5-4 6-.5z" fill="#FFF" opacity="0.95"/><defs><linearGradient id="goldGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FFE066"/><stop offset="100%" stop-color="#FFB703"/></linearGradient></defs></svg>`,
+      scoreText: score + unit,
+      comment: t('badge.gold_msg'),
+      cssClass: 'badge-gold'
+    };
+  } else if (score >= 60) {
+    return {
+      svg: `<svg viewBox="0 0 36 36" width="32" height="32" style="vertical-align:middle; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.15));"><circle cx="18" cy="18" r="16" fill="url(#silverGrad)" stroke="#607D8B" stroke-width="1.5"/><path d="M18 7l2.5 5.5 6 .5-4.5 4 1.5 6-5.5-3-5.5 3 1.5-6-4.5-4 6-.5z" fill="#FFF" opacity="0.95"/><defs><linearGradient id="silverGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FFFFFF"/><stop offset="100%" stop-color="#B0BEC5"/></linearGradient></defs></svg>`,
+      scoreText: score + unit,
+      comment: t('badge.silver_msg'),
+      cssClass: 'badge-silver'
+    };
+  } else if (score >= 1) {
+    return {
+      svg: `<svg viewBox="0 0 36 36" width="32" height="32" style="vertical-align:middle; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.15));"><circle cx="18" cy="18" r="16" fill="url(#bronzeGrad)" stroke="#5D4037" stroke-width="1.5"/><path d="M18 7l2.5 5.5 6 .5-4.5 4 1.5 6-5.5-3-5.5 3 1.5-6-4.5-4 6-.5z" fill="#FFF" opacity="0.95"/><defs><linearGradient id="bronzeGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#E0A96D"/><stop offset="100%" stop-color="#A0522D"/></linearGradient></defs></svg>`,
+      scoreText: score + unit,
+      comment: t('badge.bronze_msg'),
+      cssClass: 'badge-bronze'
+    };
+  } else {
+    // 0 分或未完成
+    return {
+      svg: `<svg viewBox="0 0 36 36" width="32" height="32" style="vertical-align:middle; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.15));"><circle cx="18" cy="18" r="16" fill="url(#encGrad)" stroke="#4F7058" stroke-width="1.5"/><path d="M18 25s-7-4.5-7-9a4 4 0 0 1 7-2.5A4 4 0 0 1 25 16c0 4.5-7 9-7 9z" fill="#FFF"/><defs><linearGradient id="encGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#A3E0B5"/><stop offset="100%" stop-color="#4F7058"/></linearGradient></defs></svg>`,
+      scoreText: t('badge.pending'), // 多語言「待挑戰 / Try Again」
+      comment: t('badge.encourage_msg'),
+      cssClass: 'badge-encourage'
+    };
+  }
+}
+    /* 多語言 (i18n) 字典配置 */
+    var i18nDict = {
+      'zh-TW': {
+        'game.title': '生活情境遊戲',
+        'common.image_unavailable': '圖片無法顯示',
+        'nav.l1_line1': '第一關',
+        'nav.l1_line2': '看圖配對',
+        'nav.l2_line1': '第二關',
+        'nav.l2_line2': '猜猜地點',
+        'nav.l3_line1': '第三關',
+        'nav.l3_line2': '正確作法',
+        'nav.summary': '成績結算',
+        'nav.back_cat': '← 返回遊戲分類',
+        'nav.back_cat_btn': '回到遊戲分類',
+        'nav.home': '回首頁',
+        'home.subtitle': '透過生活圖片，動動腦、想一想！',
+        'home.badge_l1': '第一關',
+        'home.badge_l2': '第二關',
+        'home.badge_l3': '第三關',
+        'home.l1_title': '連連看｜看圖片，配對地點',
+        'home.l2_title': '猜猜看｜看照片裡的人，猜他現在在哪裡',
+        'home.l3_title': '想一想｜看看情境選出正確作法',
+        'home.theme_label': '今天想玩哪一類？',
+        'home.theme_random': '🎲 隨機抽取主題',
+        'home.theme_dining': '🍎 飲食相關',
+        'home.theme_home': '🏠 居家生活',
+        'home.theme_traffic': '🚗 交通與外出',
+        'home.theme_clothes': '👕 穿著相關',
+        'home.start': '開始遊戲 ❯',
+
+        'l1.q_title': '看圖選名字！',
+        'l1.q_sub': '先點選左邊圖片，再選右邊名字',
+        'l1.col_img': '地點圖片',
+        'l1.col_text': '地點名稱',
+        'btn.submit': '完成作答',
+
+        'settle.l1_done': '第一關完成！',
+        'settle.l2_done': '第二關完成！',
+        'settle.l3_done': '第三關完成！',
+        'settle.score_pill': '本關得分：',
+        'settle.score_unit': ' 分',
+        'settle.correct_cnt': '答對題數',
+        'settle.wrong_cnt': '答錯題數',
+        'settle.unit_q': '題',
+        'settle.msg_perfect': '太棒了！您已完成本關挑戰！',
+        'settle.msg_wrong': '沒關係！多練習幾次，大腦會越來越靈光喔！',
+        'btn.to_l2': '前往第二關',
+        'btn.to_l3': '前往第三關',
+        'btn.to_summary': '查看總成績 ❯',
+
+        'final.perfect_title': '太棒了！三關滿分！',
+        'final.normal_title': '恭喜完成全部三關！',
+        'final.avg_label': '總平均成績：',
+        'final.l1_row': '第一關（連連看）',
+        'final.l2_row': '第二關（猜猜看）',
+        'final.l3_row': '第三關（想一想）',
+        'final.replay_clap': '👏 重新播放掌聲',
+        'final.msg_perfect': '太厲害了！表現完全正確，給自己一個最棒的鼓勵！',
+        'final.msg_normal': '今天辛苦了！完成三關練習，給自己一個鼓勵！',
+        'btn.play_again': '再玩一次',
+
+        'modal.know': '我知道了',
+        'modal.cur_title': '先完成當前關卡喔！',
+        'modal.cur_msg': '您已經完成之前的關卡，請繼續往前挑戰喔！',
+        'modal.step_title': '一步一步來！',
+        'modal.step_msg': '請先完成上一關，再繼續挑戰喔！',
+        'modal.l1_check_title': '再檢查一下喔！',
+        'modal.l1_check_msg': '還有題目尚未完成連線配對，請再檢查一下喔！',
+        'modal.l2_check_title': '再選一個答案喔！',
+        'modal.l2_check_msg': '請先點選一個地點答案喔！',
+        'modal.l3_check_title': '再選一下答案喔！',
+        'modal.l3_check_msg': '請點選 3 個合適的活動選項喔！',
+        'modal.l3_limit_title': '已達選擇上限！',
+        'modal.l3_limit_msg': '最多只能選擇 3 個選項。若要更換，請先取消一個已選項目。',
+
+        'place.restaurant': '餐廳',
+        'place.kitchen': '家中廚房',
+        'place.market': '市場',
+        'place.bedroom': '臥室',
+        'place.bathroom': '浴室',
+        'place.bus_stop': '公車站',
+        'place.train_station': '火車站',
+        'place.road': '馬路',
+        'place.clothing_store': '服飾店',
+        'place.laundry_room': '洗衣間',
+        'place.fitting_room': '更衣室',
+
+        'q.d_l2_1': '爸爸圍著圍裙炒菜，他在哪？',
+        'q.d_l2_2': '阿嬤拿著菜籃買菜，她在哪？',
+        'q.d_l2_3': '服務生幫客人點餐，他在哪？',
+        'q.h_l2_1': '阿嬤躺在床上睡覺，她在哪？',
+        'q.h_l2_2': '爸爸站在瓦斯爐前炒菜，他在哪？',
+        'q.h_l2_3': '小孩在用蓮蓬頭沖澡，他在哪？',
+        'q.t_l2_1': '阿公在路邊等公車，他在哪？',
+        'q.t_l2_2': '站務員在幫旅客查票，他在哪？',
+        'q.t_l2_3': '婦人走在斑馬線上，她在哪？',
+        'q.c_l2_1': '有人在試穿衣服，她在哪？',
+        'q.c_l2_2': '店員在賣衣服，他在哪？',
+        'q.c_l2_3': '阿公在洗衣服，他在哪？',
+
+        'q.d_l3_1': '在餐廳會做甚麼事？請選出三個！',
+        'q.d_l3_2': '在市場會做甚麼事？請選出三個！',
+        'q.d_l3_3': '在廚房會做甚麼事？請選出三個！',
+        'q.h_l3_1': '在廚房會做甚麼事？請選出三個！',
+        'q.h_l3_2': '在臥室會做甚麼事？請選出三個！',
+        'q.h_l3_3': '在浴室會做甚麼事？請選出三個！',
+        'q.t_l3_1': '在公車站會做甚麼事？請選出三個！',
+        'q.t_l3_2': '在火車站會做甚麼事？請選出三個！',
+        'q.t_l3_3': '在馬路會做甚麼事？請選出三個！',
+        'q.c_l3_1': '在服飾店會做甚麼事？請選出三個！',
+        'q.c_l3_2': '在洗衣間會做甚麼事？請選出三個！',
+        'q.c_l3_3': '在更衣室會做甚麼事？請選出三個！',
+
+        'act.order_food': '點餐',
+        'act.eat': '吃飯',
+        'act.pay': '付錢',
+        'act.grow_veg': '種菜',
+        'act.wash_clothes': '洗衣服',
+        'act.see_doctor': '看醫生',
+        'act.buy_veg': '買菜',
+        'act.pick_fruit': '挑選水果',
+        'act.cook': '煮飯',
+        'act.sleep': '睡覺',
+        'act.exercise': '運動',
+        'act.stir_fry': '炒菜',
+        'act.wash_veg': '洗菜',
+        'act.register': '掛號',
+        'act.walk_dog': '遛狗',
+        'act.wash_dishes': '洗碗',
+        'act.take_bath': '洗澡',
+        'act.rest': '坐著休息',
+        'act.make_bed': '整理床鋪',
+        'act.brush_teeth': '刷牙',
+        'act.wash_face': '洗臉',
+        'act.watch_tv': '看電視',
+        'act.wait_bus': '等車',
+        'act.queue': '排隊',
+        'act.board_bus': '上車',
+        'act.buy_ticket': '買票',
+        'act.crosswalk': '走斑馬線',
+        'act.traffic_light': '看紅綠燈',
+        'act.watch_cars': '注意來車',
+        'act.buy_clothes': '買衣服',
+        'act.try_on': '試穿',
+        'act.dry_clothes': '晾衣服',
+        'act.fold_clothes': '摺衣服',
+        'act.watch_movie': '看電影',
+        'act.change_clothes': '換衣服',
+        'act.tidy_clothes': '整理衣物',
+        'badge.pending': '待挑戰',
+        'badge.gold_msg': '完美通關！頭腦超靈光！',
+        'badge.silver_msg': '挑戰成功！反應非常快！',
+        'badge.bronze_msg': '順利完成！越玩越厲害！',
+        'badge.encourage_msg': '用心練習！給自己拍拍手！'
+      },
+      'en': {
+        'game.title': 'Life Scenario Game',
+        'common.image_unavailable': 'Image unavailable',
+        'nav.l1_line1': 'Level 1',
+        'nav.l1_line2': 'Match Location',
+        'nav.l2_line1': 'Level 2',
+        'nav.l2_line2': 'Guess Location',
+        'nav.l3_line1': 'Level 3',
+        'nav.l3_line2': 'Choose Activity',
+        'nav.summary': 'Final Score',
+        'nav.back_cat': '← Back to Game Categories',
+        'nav.back_cat_btn': 'Back to Game Categories',
+        'nav.home': 'Back to Home',
+        'home.subtitle': 'Look at everyday pictures and exercise your mind!',
+        'home.badge_l1': 'Level 1 ',
+        'home.badge_l2': 'Level 2 ',
+        'home.badge_l3': 'Level 3 ',
+        'home.l1_title': 'Matching｜Match Pictures to Locations',
+        'home.l2_title': 'Guessing｜Guess Where Person Is',
+        'home.l3_title': 'Thinking｜Choose Correct Activities',
+        'home.theme_label': 'Which theme would you like to play today?',
+        'home.theme_random': '🎲 Random Theme',
+        'home.theme_dining': '🍎 Dining & Food',
+        'home.theme_home': '🏠 Home Life',
+        'home.theme_traffic': '🚗 Traffic & Outings',
+        'home.theme_clothes': '👕 Clothing & Dressing',
+        'home.start': 'Start Game ❯',
+
+        'l1.q_title': 'Match Picture to Name!',
+        'l1.q_sub': 'Tap picture on left, then select name on right',
+        'l1.col_img': 'Location Picture',
+        'l1.col_text': 'Location Name',
+        'btn.submit': 'Submit Answer',
+
+        'settle.l1_done': 'Level 1 Completed!',
+        'settle.l2_done': 'Level 2 Completed!',
+        'settle.l3_done': 'Level 3 Completed!',
+        'settle.score_pill': 'Level Score: ',
+        'settle.score_unit': ' pts',
+        'settle.correct_cnt': 'Correct Count',
+        'settle.wrong_cnt': 'Incorrect Count',
+        'settle.unit_q': '',
+        'settle.msg_perfect': 'Awesome! Level challenge completed!',
+        'settle.msg_wrong': 'No problem! Check the correct answers and keep practicing!',
+        'btn.to_l2': 'Proceed to Level 2',
+        'btn.to_l3': 'Proceed to Level 3',
+        'btn.to_summary': 'Finish Game & View Final Score',
+
+        'final.perfect_title': 'Awesome! Perfect Score in All Levels!',
+        'final.normal_title': 'Congratulations on Completing All 3 Levels!',
+        'final.avg_label': 'Total Average Score: ',
+        'final.l1_row': 'Level 1 (Matching)',
+        'final.l2_row': 'Level 2 (Guessing)',
+        'final.l3_row': 'Level 3 (Thinking)',
+        'final.replay_clap': '👏 Replay Applause',
+        'final.msg_perfect': 'Amazing! All answers correct, give yourself a big round of applause!',
+        'final.msg_normal': 'Great effort today! Practice completed, give yourself a round of applause!',
+        'btn.play_again': 'Play Again',
+
+        'modal.know': 'Got it',
+        'modal.cur_title': 'Complete current level first!',
+        'modal.cur_msg': 'You have completed previous levels, please keep moving forward!',
+        'modal.step_title': 'One step at a time!',
+        'modal.step_msg': 'Please complete the previous level before continuing!',
+        'modal.l1_check_title': 'Check your answers!',
+        'modal.l1_check_msg': 'There are still un-matched items. Please check again!',
+        'modal.l2_check_title': 'Select an answer!',
+        'modal.l2_check_msg': 'Please tap to select a location option!',
+        'modal.l3_check_title': 'Select your choices!',
+        'modal.l3_check_msg': 'Please select 3 suitable activities!',
+        'modal.l3_limit_title': 'Selection limit reached!',
+        'modal.l3_limit_msg': 'You can select up to 3 options. To change your choices, deselect one first.',
+
+        'place.restaurant': 'Restaurant',
+        'place.kitchen': 'Kitchen',
+        'place.market': 'Market',
+        'place.bedroom': 'Bedroom',
+        'place.bathroom': 'Bathroom',
+        'place.bus_stop': 'Bus Stop',
+        'place.train_station': 'Train Station',
+        'place.road': 'Road',
+        'place.clothing_store': 'Clothing Store',
+        'place.laundry_room': 'Laundry Room',
+        'place.fitting_room': 'Fitting Room',
+
+        'q.d_l2_1': 'Dad is wearing an apron cooking. Where is he?',
+        'q.d_l2_2': 'Grandma is holding a basket buying vegetables. Where is she?',
+        'q.d_l2_3': 'The waiter is taking an order. Where is he?',
+        'q.h_l2_1': 'Grandma is sleeping in bed. Where is she?',
+        'q.h_l2_2': 'Dad is cooking in front of the stove. Where is he?',
+        'q.h_l2_3': 'The child is taking a shower with a showerhead. Where is he?',
+        'q.t_l2_1': 'Grandpa is waiting for the bus by the street. Where is he?',
+        'q.t_l2_2': 'The station master is checking tickets. Where is he?',
+        'q.t_l2_3': 'A woman is walking on the crosswalk. Where is she?',
+        'q.c_l2_1': 'Someone is trying on clothes. Where is she?',
+        'q.c_l2_2': 'The clerk is selling clothes. Where is he?',
+        'q.c_l2_3': 'Grandpa is washing clothes. Where is he?',
+
+        'q.d_l3_1': 'What do people do in a Restaurant? Select three!',
+        'q.d_l3_2': 'What do people do in a Market? Select three!',
+        'q.d_l3_3': 'What do people do in a Kitchen? Select three!',
+        'q.h_l3_1': 'What do people do in a Kitchen? Select three!',
+        'q.h_l3_2': 'What do people do in a Bedroom? Select three!',
+        'q.h_l3_3': 'What do people do in a Bathroom? Select three!',
+        'q.t_l3_1': 'What do people do at a Bus Stop? Select three!',
+        'q.t_l3_2': 'What do people do at a Train Station? Select three!',
+        'q.t_l3_3': 'What do people do on the Road? Select three!',
+        'q.c_l3_1': 'What do people do in a Clothing Store? Select three!',
+        'q.c_l3_2': 'What do people do in a Laundry Room? Select three!',
+        'q.c_l3_3': 'What do people do in a Fitting Room? Select three!',
+
+        'act.order_food': 'Order Food',
+        'act.eat': 'Eat Meal',
+        'act.pay': 'Pay Bill',
+        'act.grow_veg': 'Grow Veggies',
+        'act.wash_clothes': 'Wash Clothes',
+        'act.see_doctor': 'See Doctor',
+        'act.buy_veg': 'Buy Veggies',
+        'act.pick_fruit': 'Pick Fruit',
+        'act.cook': 'Cook Rice',
+        'act.sleep': 'Sleep',
+        'act.exercise': 'Exercise',
+        'act.stir_fry': 'Stir-fry',
+        'act.wash_veg': 'Wash Veggies',
+        'act.register': 'Register',
+        'act.walk_dog': 'Walk Dog',
+        'act.wash_dishes': 'Wash Dishes',
+        'act.take_bath': 'Take Shower',
+        'act.rest': 'Sit & Rest',
+        'act.make_bed': 'Make Bed',
+        'act.brush_teeth': 'Brush Teeth',
+        'act.wash_face': 'Wash Face',
+        'act.watch_tv': 'Watch TV',
+        'act.wait_bus': 'Wait for Bus',
+        'act.queue': 'Queue Up',
+        'act.board_bus': 'Board Bus',
+        'act.buy_ticket': 'Buy Ticket',
+        'act.crosswalk': 'Crosswalk',
+        'act.traffic_light': 'Traffic Light',
+        'act.watch_cars': 'Watch Traffic',
+        'act.buy_clothes': 'Buy Clothes',
+        'act.try_on': 'Try On',
+        'act.dry_clothes': 'Hang Clothes',
+        'act.fold_clothes': 'Fold Clothes',
+        'act.watch_movie': 'Watch Movie',
+        'act.change_clothes': 'Change Clothes',
+        'act.tidy_clothes': 'Tidy Clothes',      // ✅ 補上逗號
+        'badge.pending': 'Try Again',
+        'badge.gold_msg': 'Perfect! Sharp as a tack!',
+        'badge.silver_msg': 'Success! Quick thinking!',
+        'badge.bronze_msg': 'Completed! Practice makes perfect!',
+        'badge.encourage_msg': 'Great Effort! Give yourself a hand!'
+      },                                          // ✅ 補上逗號
+     'ja': {
+      'game.title': '生活シチュエーションゲーム',
+      'common.image_unavailable': '画像を表示できません',
+      'nav.l1_line1': 'ステージ 1',
+      'nav.l1_line2': '絵合わせ（場所）',
+      'nav.l2_line1': 'ステージ 2',
+      'nav.l2_line2': '場所当てクイズ',
+      'nav.l3_line1': 'ステージ 3',
+      'nav.l3_line2': '正しい行動を選ぶ',
+      'nav.summary': '成績発表',
+      'nav.back_cat': '← カテゴリ選択に戻る',
+      'nav.back_cat_btn': 'カテゴリ選択に戻る',
+      'nav.home': 'ホームへ戻る',
+      'home.subtitle': '日常の写真を見て、頭の体操をしましょう！',
+      'home.badge_l1': 'ステージ1',
+      'home.badge_l2': 'ステージ2',
+      'home.badge_l3': 'ステージ3',
+      'home.l1_title': '絵合わせ｜写真と場所の名前を合わせましょう',
+      'home.l2_title': '場所当て｜写真の人がどこにいるか当てましょう',
+      'home.l3_title': '行動選択｜場面に合った行動を選びましょう',
+      'home.theme_label': 'テーマを選んでください',
+      'home.theme_random': '🎲 ランダム',
+      'home.theme_dining': '🍎 食事・料理',
+      'home.theme_home': '🏠 日常生活',
+      'home.theme_traffic': '🚗 交通・外出',
+      'home.theme_clothes': '👕 衣類・着替え',
+      'home.start': 'ゲームスタート ❯',
+
+      'l1.q_title': '写真と名前を選ぼう！',
+      'l1.q_sub': '左の写真を選んでから、右の名前を選んでね',
+      'l1.col_img': '場所の写真',
+      'l1.col_text': '場所の名前',
+      'btn.submit': '回答する',
+
+      'settle.l1_done': 'ステージ 1 クリア！',
+      'settle.l2_done': 'ステージ 2 クリア！',
+      'settle.l3_done': 'ステージ 3 クリア！',
+      'settle.score_pill': 'このステージの得点：',
+      'settle.score_unit': ' 点',
+      'settle.correct_cnt': '正解数',
+      'settle.wrong_cnt': '不正解数',
+      'settle.unit_q': '問',
+      'settle.msg_perfect': '素晴らしい！クリアおめでとうございます！',
+      'settle.msg_wrong': '大丈夫！練習を重ねれば頭がすっきりしますよ！',
+      'btn.to_l2': 'ステージ 2 へ進む',
+      'btn.to_l3': 'ステージ 3 へ進む',
+      'btn.to_summary': '総合成績を見る ❯',
+
+      'final.perfect_title': '素晴らしい！全ステージ満点！',
+      'final.normal_title': '全 3 ステージクリアおめでとう！',
+      'final.avg_label': '平均スコア：',
+      'final.l1_row': 'ステージ1（絵合わせ）',
+      'final.l2_row': 'ステージ2（場所当て）',
+      'final.l3_row': 'ステージ3（行動選択）',
+      'final.replay_clap': '👏 拍手をもう一度聞く',
+      'final.msg_perfect': 'パーフェクト！素晴らしい集中力です！自分をたくさん褒めてあげましょう！',
+      'final.msg_normal': 'お疲れ様でした！3つの練習をやり遂げましたね！',
+      'btn.play_again': 'もう一度遊ぶ',
+
+      'modal.know': 'わかりました',
+      'modal.cur_title': '現在のステージを先にクリアしてね！',
+      'modal.cur_msg': '前のステージは完了しています。そのまま進んでください！',
+      'modal.step_title': '順番に進めましょう！',
+      'modal.step_msg': '前のステージをクリアしてから挑戦してね！',
+      'modal.l1_check_title': 'もう一度確認してね！',
+      'modal.l1_check_msg': '線でつながれていない項目があります。確認してね！',
+      'modal.l2_check_title': '答えを選んでね！',
+      'modal.l2_check_msg': '場所の答えを1つ選んでください！',
+      'modal.l3_check_title': '答えを選んでね！',
+      'modal.l3_check_msg': 'ぴったりな行動を3つ選んでください！',
+      'modal.l3_limit_title': '選択上限に達しました！',
+      'modal.l3_limit_msg': '選択できるのは最大3つです。変更する場合は、選択済みの項目を1つ解除してください。',
+
+      'badge.pending': '再挑戦',
+      'badge.gold_msg': 'パーフェクト！頭の回転がすばらしい！',
+      'badge.silver_msg': 'チャレンジ成功！とても素早い反応ですね！',
+      'badge.bronze_msg': 'クリア達成！やるほど上手になります！',
+      'badge.encourage_msg': 'よくがんばりました！自分に拍手を送りましょう！',
+
+      'place.restaurant': 'レストラン',
+      'place.kitchen': '台所・キッチン',
+      'place.market': '市場・スーパー',
+      'place.bedroom': '寝室',
+      'place.bathroom': '浴室・お風呂',
+      'place.bus_stop': 'バス停',
+      'place.train_station': '駅',
+      'place.road': '道路',
+      'place.clothing_store': '服屋',
+      'place.laundry_room': 'ランドリー',
+      'place.fitting_room': '試着室',
+
+      'q.d_l2_1': 'エプロンを着たお父さんが料理をしています。どこにいますか？',
+      'q.d_l2_2': 'おばあちゃんが買い物かごを持って野菜を買っています。どこにいますか？',
+      'q.d_l2_3': 'ウェイターがお客さんの注文を取っています。どこにいますか？',
+      'q.h_l2_1': 'おばあちゃんがベッドで寝ています。どこにいますか？',
+      'q.h_l2_2': 'お父さんがコンロの前で料理をしています。どこにいますか？',
+      'q.h_l2_3': '子供がシャワーを浴びています。どこにいますか？',
+      'q.t_l2_1': 'おじいちゃんが道端でバスを待っています。どこにいますか？',
+      'q.t_l2_2': '駅員さんが乗車券を確認しています。どこにいますか？',
+      'q.t_l2_3': '女性が横断歩道を渡っています。どこにいますか？',
+      'q.c_l2_1': '服を試着している人がいます。どこにいますか？',
+      'q.c_l2_2': '店員さんが服を売っています。どこにいますか？',
+      'q.c_l2_3': 'おじいちゃんが洗濯をしています。どこにいますか？',
+
+      'q.d_l3_1': 'レストランですることは何ですか？3つ選んでください！',
+      'q.d_l3_2': '市場ですることは何ですか？3つ選んでください！',
+      'q.d_l3_3': '台所ですることは何ですか？3つ選んでください！',
+      'q.h_l3_1': '台所ですることは何ですか？3つ選んでください！',
+      'q.h_l3_2': '寝室ですることは何ですか？3つ選んでください！',
+      'q.h_l3_3': '浴室ですることは何ですか？3つ選んでください！',
+      'q.t_l3_1': 'バス停ですることは何ですか？3つ選んでください！',
+      'q.t_l3_2': '駅ですることは何ですか？3つ選んでください！',
+      'q.t_l3_3': '道路ですることは何ですか？3つ選んでください！',
+      'q.c_l3_1': '服屋ですることは何ですか？3つ選んでください！',
+      'q.c_l3_2': 'ランドリーですることは何ですか？3つ選んでください！',
+      'q.c_l3_3': '試着室ですることは何ですか？3つ選んでください！',
+
+      'act.order_food': '注文する',
+      'act.eat': 'ご飯を食べる',
+      'act.pay': '会計をする',
+      'act.buy_veg': '野菜を買う',
+      'act.pick_fruit': '果物を選ぶ',
+      'act.cook': '料理をする',
+      'act.stir_fry': '炒め物をする',
+      'act.wash_veg': '野菜を洗う',
+      'act.sleep': '寝る',
+      'act.rest': '休む',
+      'act.make_bed': '布団を整える',
+      'act.take_bath': 'お風呂に入る',
+      'act.brush_teeth': '歯を磨く',
+      'act.wash_face': '顔を洗う',
+      'act.wait_bus': 'バスを待つ',
+      'act.queue': '並ぶ',
+      'act.board_bus': 'バスに乗る',
+      'act.buy_ticket': '切符を買う',
+      'act.crosswalk': '横断歩道を渡る',
+      'act.traffic_light': '信号を見る',
+      'act.watch_cars': '車に気をつける',
+      'act.buy_clothes': '服を買う',
+      'act.try_on': '試着する',
+      'act.wash_clothes': '洗濯する',
+      'act.dry_clothes': '服を干す',
+      'act.fold_clothes': '服を畳む',
+      'act.change_clothes': '着替える',
+      'act.tidy_clothes': '服を片付ける',
+      'act.grow_veg': '野菜を育てる',
+      'act.see_doctor': '診察を受ける',
+      'act.exercise': '運動する',
+      'act.register': '受付をする',
+      'act.walk_dog': '犬の散歩をする',
+      'act.wash_dishes': '食器を洗う',
+      'act.watch_tv': 'テレビを見る',
+      'act.watch_movie': '映画を見る',
+    },
+    'ko': {
+      'game.title': '생활 상황 게임',
+      'common.image_unavailable': '이미지를 표시할 수 없습니다',
+      'nav.l1_line1': '1단계',
+      'nav.l1_line2': '장소 연결하기',
+      'nav.l2_line1': '2단계',
+      'nav.l2_line2': '장소 맞히기',
+      'nav.l3_line1': '3단계',
+      'nav.l3_line2': '올바른 행동 고르기',
+      'nav.summary': '결과 확인',
+      'nav.back_cat': '← 게임 카테고리로 돌아가기',
+      'nav.back_cat_btn': '게임 카테고리로 돌아가기',
+      'nav.home': '처음으로',
+      'home.subtitle': '일상 사진을 보며 두뇌를 활성화해 보세요!',
+      'home.badge_l1': '1단계',
+      'home.badge_l2': '2단계',
+      'home.badge_l3': '3단계',
+      'home.l1_title': '선 잇기사｜진을 보고 장소 이름을 연결하세요',
+      'home.l2_title': '맞히기｜사진 속 사람이 어디에 있는지 맞혀보세요',
+      'home.l3_title': '생각하기｜상황에 맞는 올바른 행동을 골라보세요',
+      'home.theme_label': '오늘 어떤 주제를 플레이할까요?',
+      'home.theme_random': '🎲 랜덤 선택',
+      'home.theme_dining': '🍎 식사 및 음식',
+      'home.theme_home': '🏠 가정 생활',
+      'home.theme_traffic': '🚗 교통 및 외출',
+      'home.theme_clothes': '👕 의복 및 옷차림',
+      'home.start': '게임 시작 ❯',
+
+      'l1.q_title': '사진과 이름을 짝지어 보세요!',
+      'l1.q_sub': '왼쪽 사진을 먼저 누르고 오른쪽 이름을 선택하세요',
+      'l1.col_img': '장소 사진',
+      'l1.col_text': '장소 이름',
+      'btn.submit': '제출하기',
+
+      'settle.l1_done': '1단계 완료!',
+      'settle.l2_done': '2단계 완료!',
+      'settle.l3_done': '3단계 완료!',
+      'settle.score_pill': '이번 단계 점수: ',
+      'settle.score_unit': ' 점',
+      'settle.correct_cnt': '맞힌 개수',
+      'settle.wrong_cnt': '틀린 개수',
+      'settle.unit_q': '개',
+      'settle.msg_perfect': '훌륭합니다! 이번 단계를 완벽히 통과하셨습니다!',
+      'settle.msg_wrong': '괜찮아요! 자주 연습하면 뇌가 훨씬 건강해집니다!',
+      'btn.to_l2': '2단계로 이동',
+      'btn.to_l3': '3단계로 이동',
+      'btn.to_summary': '최종 결과 보기 ❯',
+
+      'final.perfect_title': '축하합니다! 전 단계 만점!',
+      'final.normal_title': '모든 3단계를 완료하셨습니다!',
+      'final.avg_label': '총 평균 점수: ',
+      'final.l1_row': '1단계 (선 잇기)',
+      'final.l2_row': '2단계 (맞히기)',
+      'final.l3_row': '3단계 (생각하기)',
+      'final.replay_clap': '👏 박수 소리 다시 듣기',
+      'final.msg_perfect': '정말 대단하세요! 완벽하게 맞히셨습니다. 자신에게 큰 박수를 보내주세요!',
+      'final.msg_normal': '오늘 수고하셨습니다! 3단계 연습을 무사히 마치셨네요!',
+      'btn.play_again': '다시 하기',
+
+      'modal.know': '확인',
+      'modal.cur_title': '현재 단계를 먼저 완료해 주세요!',
+      'modal.cur_msg': '이전 단계를 이미 완료하셨습니다. 계속 도전해 보세요!',
+      'modal.step_title': '차근차근 진행해 주세요!',
+      'modal.step_msg': '이전 단계를 완료한 후 계속 진행해 주세요!',
+      'modal.l1_check_title': '다시 한번 확인해 주세요!',
+      'modal.l1_check_msg': '아직 연결되지 않은 항목이 있습니다. 확인해 주세요!',
+      'modal.l2_check_title': '정답을 선택해 주세요!',
+      'modal.l2_check_msg': '장소 정답을 하나 선택해 주세요!',
+      'modal.l3_check_title': '정답을 선택해 주세요!',
+      'modal.l3_check_msg': '알맞은 행동 3가지를 선택해 주세요!',
+      'modal.l3_limit_title': '선택 한도에 도달했습니다!',
+      'modal.l3_limit_msg': '최대 3개까지 선택할 수 있습니다. 변경하려면 선택한 항목 중 하나를 먼저 해제해 주세요.',
+
+      'badge.pending': '재도전',
+      'badge.gold_msg': '완벽한 통과! 두뇌가 아주 비상해요!',
+      'badge.silver_msg': '도전 성공! 반응 속도가 정말 빨라요!',
+      'badge.bronze_msg': '무사히 완료! 할수록 더 잘해져요!',
+      'badge.encourage_msg': '열심히 연습했어요! 자신에게 박수를 보내주세요!',
+
+      'place.restaurant': '식당',
+      'place.kitchen': '주방',
+      'place.market': '시장',
+      'place.bedroom': '침실',
+      'place.bathroom': '욕실',
+      'place.bus_stop': '버스 정류장',
+      'place.train_station': '기차역',
+      'place.road': '도로',
+      'place.clothing_store': '옷가게',
+      'place.laundry_room': '세탁실',
+      'place.fitting_room': '탈의실',
+
+      'q.d_l2_1': '아빠가 앞치마를 두르고 요리를 하고 계십니다. 어디에 계실까요?',
+      'q.d_l2_2': '할머니가 장바구니를 들고 야채를 사고 계십니다. 어디에 계실까요?',
+      'q.d_l2_3': '종업원이 손님의 주문을 받고 있습니다. 어디에 있을까요?',
+      'q.h_l2_1': '할머니가 침대에서 주무시고 계십니다. 어디에 계실까요?',
+      'q.h_l2_2': '아빠가 가스레인지 앞에서 요리를 하고 계십니다. 어디에 계실까요?',
+      'q.h_l2_3': '아이 샤워기로 샤워를 하고 있습니다. 어디에 있을까요?',
+      'q.t_l2_1': '할아버지가 길가에서 버스를 기다리고 계십니다. 어디에 계실까요?',
+      'q.t_l2_2': '역무원이 승객의 표를 확인하고 있습니다. 어디에 있을까요?',
+      'q.t_l2_3': '여성이 횡단보도를 건너고 있습니다. 어디에 있을까요?',
+      'q.c_l2_1': '누군가 옷을 입어보고 있습니다. 어디에 있을까요?',
+      'q.c_l2_2': '점원이 옷을 팔고 있습니다. 어디에 있을까요?',
+      'q.c_l2_3': '할아버지가 빨래를 하고 계십니다. 어디에 계실까요?',
+
+      'q.d_l3_1': '식당에서는 어떤 일을 할까요? 3가지를 골라보세요!',
+      'q.d_l3_2': '시장에서 어떤 일을 할까요? 3가지를 골라보세요!',
+      'q.d_l3_3': '주방에서는 어떤 일을 할까요? 3가지를 골라보세요!',
+      'q.h_l3_1': '주방에서는 어떤 일을 할까요? 3가지를 골라보세요!',
+      'q.h_l3_2': '침실에서는 어떤 일을 할까요? 3가지를 골라보세요!',
+      'q.h_l3_3': '욕실에서는 어떤 일을 할까요? 3가지를 골라보세요!',
+      'q.t_l3_1': '버스 정류장에서는 어떤 일을 할까요? 3가지를 골라보세요!',
+      'q.t_l3_2': '기차역에서는 어떤 일을 할까요? 3가지를 골라보세요!',
+      'q.t_l3_3': '도로에서는 어떤 일을 할까요? 3가지를 골라보세요!',
+      'q.c_l3_1': '옷가게에서는 어떤 일을 할까요? 3가지를 골라보세요!',
+      'q.c_l3_2': '세탁실에서는 어떤 일을 할까요? 3가지를 골라보세요!',
+      'q.c_l3_3': '탈의실에서는 어떤 일을 할까요? 3가지를 골라보세요!',
+
+      'act.order_food': '음식 주문하기',
+      'act.eat': '식사하기',
+      'act.pay': '계산하기',
+      'act.buy_veg': '야채 사기',
+      'act.pick_fruit': '과일 고르기',
+      'act.cook': '요리하기',
+      'act.stir_fry': '음식 볶기',
+      'act.wash_veg': '야채 씻기',
+      'act.sleep': '잠자기',
+      'act.rest': '휴식하기',
+      'act.make_bed': '침구 정리하기',
+      'act.take_bath': '샤워하기',
+      'act.brush_teeth': '양치하기',
+      'act.wash_face': '세수하기',
+      'act.wait_bus': '버스 기다리기',
+      'act.queue': '줄 서기',
+      'act.board_bus': '버스 타기',
+      'act.buy_ticket': '표 사기',
+      'act.crosswalk': '횡단보도 건너기',
+      'act.traffic_light': '신호등 보기',
+      'act.watch_cars': '차 조심하기',
+      'act.buy_clothes': '옷 사기',
+      'act.try_on': '입어보기',
+      'act.wash_clothes': '빨래하기',
+      'act.dry_clothes': '옷 말리기',
+      'act.fold_clothes': '옷 개기',
+      'act.change_clothes': '옷 갈아입기',
+      'act.tidy_clothes': '옷 정리하기',
+      'act.grow_veg': '채소 키우기',
+      'act.see_doctor': '진료 받기',
+      'act.exercise': '운동하기',
+      'act.register': '접수하기',
+      'act.walk_dog': '강아지 산책시키기',
+      'act.wash_dishes': '설거지하기',
+      'act.watch_tv': 'TV 보기',
+      'act.watch_movie': '영화 보기',
+    }
+    };
+
+    var currentLang = 'zh-TW';
+    var currentFontScale = '100';
+
+    // 將主平台傳入的語言代碼統一成此遊戲使用的字典代碼。
+    // 例如 en-US / en_US / English 都會正規化為 en。
+    function normalizeLanguageCode(rawLang) {
+      var code = String(rawLang || '').trim().replace(/_/g, '-').toLowerCase();
+      if (code === 'english' || code === 'en' || code.indexOf('en-') === 0) return 'en';
+      if (code === 'japanese' || code === 'ja' || code.indexOf('ja-') === 0) return 'ja';
+      if (code === 'korean' || code === 'ko' || code.indexOf('ko-') === 0) return 'ko';
+      if (code === 'zh' || code === 'zh-tw' || code === 'zh-hant' || code.indexOf('zh-hant-') === 0 || code === 'traditional chinese') return 'zh-TW';
+      return 'zh-TW';
+    }
+
+    function initDisplaySettings() {
+      var urlParams = new URLSearchParams(window.location.search);
+      var requestedLang = urlParams.get('lang');
+      var requestedFontScale = urlParams.get('fontScale');
+
+      try {
+        if (!requestedLang) requestedLang = localStorage.getItem('app_lang');
+        if (!requestedFontScale) requestedFontScale = localStorage.getItem('app_font_scale');
+      } catch (storageError) {
+        // 部分嵌入環境可能限制 localStorage；仍可使用網址參數及預設值。
+      }
+
+      currentLang = normalizeLanguageCode(requestedLang || 'zh-TW');
+      currentFontScale = String(requestedFontScale || '100');
+      if (['90', '100', '115', '130'].indexOf(currentFontScale) === -1) currentFontScale = '100';
+
+      try {
+        localStorage.setItem('app_lang', currentLang);
+        localStorage.setItem('app_font_scale', currentFontScale);
+      } catch (storageError) {
+        // 不影響語言與字體設定套用。
+      }
+
+      document.documentElement.lang = currentLang;
+      document.body.classList.remove('font-scale-90', 'font-scale-100', 'font-scale-115', 'font-scale-130');
+      document.body.classList.add('font-scale-' + currentFontScale);
+
+      applyStaticI18n();
+    }
+
+    function t(key) {
+      var dict = i18nDict[currentLang] || i18nDict['zh-TW'];
+      if (Object.prototype.hasOwnProperty.call(dict, key)) return dict[key];
+
+      // 非中文模式的翻譯若遇到缺漏，改以英文補位，避免英文頁面混入中文。
+      var fallbackDict = (currentLang === 'zh-TW') ? i18nDict['zh-TW'] : i18nDict.en;
+      if (fallbackDict && Object.prototype.hasOwnProperty.call(fallbackDict, key)) return fallbackDict[key];
+      return key;
+    }
+
+    function applyStaticI18n() {
+      const elH1 = document.getElementById('header-title'); if (elH1) elH1.textContent = t('game.title');
+      const elBackIntro = document.getElementById('btn-back-cat-intro'); if (elBackIntro) elBackIntro.textContent = t('nav.back_cat');
+      
+      const elMainTitle = document.getElementById('home-main-title'); if (elMainTitle) elMainTitle.textContent = t('game.title');
+      const elSubTitle = document.getElementById('home-subtitle'); if (elSubTitle) elSubTitle.textContent = t('home.subtitle');
+
+      const b1 = document.getElementById('badge-l1'); if (b1) b1.textContent = t('home.badge_l1');
+      const t1 = document.getElementById('title-l1'); if (t1) t1.textContent = t('home.l1_title');
+
+      const b2 = document.getElementById('badge-l2'); if (b2) b2.textContent = t('home.badge_l2');
+      const t2 = document.getElementById('title-l2'); if (t2) t2.textContent = t('home.l2_title');
+
+      const b3 = document.getElementById('badge-l3'); if (b3) b3.textContent = t('home.badge_l3');
+      const t3 = document.getElementById('title-l3'); if (t3) t3.textContent = t('home.l3_title');
+
+      const lblTheme = document.getElementById('lbl-theme-select'); if (lblTheme) lblTheme.textContent = t('home.theme_label');
+      const btnStart = document.getElementById('startBtn'); if (btnStart) btnStart.textContent = t('home.start');
+
+      const themeSelect = document.getElementById('themeSelect');
+      if (themeSelect) {
+        const previousTheme = themeSelect.value || 'dining';
+        themeSelect.innerHTML =
+          '<option value="random">' + t('home.theme_random') + '</option>' +
+          '<option value="dining">' + t('home.theme_dining') + '</option>' +
+          '<option value="home">' + t('home.theme_home') + '</option>' +
+          '<option value="traffic">' + t('home.theme_traffic') + '</option>' +
+          '<option value="clothes">' + t('home.theme_clothes') + '</option>';
+        themeSelect.value = ['random', 'dining', 'home', 'traffic', 'clothes'].indexOf(previousTheme) >= 0 ? previousTheme : 'dining';
+      }
+
+      const l1QTitle = document.getElementById('l1-q-title'); if (l1QTitle) l1QTitle.textContent = t('l1.q_title');
+      const l1QSub = document.getElementById('l1-q-sub'); if (l1QSub) l1QSub.textContent = t('l1.q_sub');
+      const l1ColImg = document.getElementById('l1-col-img'); if (l1ColImg) l1ColImg.textContent = t('l1.col_img');
+      const l1ColText = document.getElementById('l1-col-text'); if (l1ColText) l1ColText.textContent = t('l1.col_text');
+      const btnSubL1 = document.getElementById('btn-submit-l1'); if (btnSubL1) btnSubL1.textContent = t('btn.submit');
+
+      const btnSubL2 = document.getElementById('btn-submit-l2'); if (btnSubL2) btnSubL2.textContent = t('btn.submit');
+      const btnSubL3 = document.getElementById('btn-submit-l3'); if (btnSubL3) btnSubL3.textContent = t('btn.submit');
+
+      const lblCorrect = document.getElementById('lbl-tag-correct'); if (lblCorrect) lblCorrect.textContent = t('settle.correct_cnt');
+      const lblWrong = document.getElementById('lbl-tag-wrong'); if (lblWrong) lblWrong.textContent = t('settle.wrong_cnt');
+      const unitQ1 = document.getElementById('lbl-unit-q1'); if (unitQ1) unitQ1.textContent = t('settle.unit_q');
+      const unitQ2 = document.getElementById('lbl-unit-q2'); if (unitQ2) unitQ2.textContent = t('settle.unit_q');
+
+      const fl1 = document.getElementById('final-l1-label'); if (fl1) fl1.textContent = t('final.l1_row');
+      const fl2 = document.getElementById('final-l2-label'); if (fl2) fl2.textContent = t('final.l2_row');
+      const fl3 = document.getElementById('final-l3-label'); if (fl3) fl3.textContent = t('final.l3_row');
+
+      const btnReplayClap = document.getElementById('btn-replay-clap'); if (btnReplayClap) btnReplayClap.textContent = t('final.replay_clap');
+      const btnPlayAgain = document.getElementById('btn-play-again'); if (btnPlayAgain) btnPlayAgain.textContent = t('btn.play_again');
+      const btnBackCatSum = document.getElementById('btn-back-cat-summary'); if (btnBackCatSum) btnBackCatSum.textContent = t('nav.back_cat_btn');
+      const btnNavHome = document.getElementById('btn-nav-home'); if (btnNavHome) btnNavHome.textContent = t('nav.home');
+    }
+
+    function getBaseUrl() {
+      var baseUrl = document.body.getAttribute('data-base-url');
+      if (!baseUrl || baseUrl.indexOf('http') !== 0) {
+        try {
+          baseUrl = window.top.location.href.split('?')[0].split('#')[0];
+        } catch(e) {
+          baseUrl = window.location.href.split('?')[0].split('#')[0];
+        }
+      }
+      return baseUrl;
+    }
+
+    function postNavigate(pageName) {
+      var baseUrl = getBaseUrl();
+      var form = document.createElement('form');
+      form.method = 'GET';
+      form.action = baseUrl;
+      form.target = '_top';
+      
+      var pageInput = document.createElement('input');
+      pageInput.type = 'hidden'; pageInput.name = 'page'; pageInput.value = pageName;
+      form.appendChild(pageInput);
+
+      var langInput = document.createElement('input');
+      langInput.type = 'hidden'; langInput.name = 'lang'; langInput.value = currentLang;
+      form.appendChild(langInput);
+
+      var fontInput = document.createElement('input');
+      fontInput.type = 'hidden'; fontInput.name = 'fontScale'; fontInput.value = currentFontScale;
+      form.appendChild(fontInput);
+
+      document.body.appendChild(form);
+      form.submit();
+    }
+
+    function goToGameCategories() { postNavigate('level_select'); }
+    function goToHomePage() { postNavigate('home'); }
+
     const levelOrder = { 'l1': 1, 'l2': 2, 'l3': 3 };
 
-    /* 導頁動作（改為標準 static .html 網頁路徑） */
-    function goToOrientationCategory() {
-      window.location.href = "LevelSelect.html";
-    }
-    function goToGameCategories() {
-      window.location.href = "LevelSelect.html";
-    }
-    function goToHomePage() {
-      window.location.href = "index.html";
-    }
-
-    /* 隨機打亂 */
     function shuffleArray(arr) {
       const array = [...arr];
       for (let i = array.length - 1; i > 0; i--) {
@@ -1062,20 +1965,18 @@
       return shuffled;
     }
 
-    /* 提取 Drive ID */
     function parseDriveId(url) {
       if (!url) return '';
       const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
       return match ? match[1] : '';
     }
 
-    /* 圖片備援載入 */
     function createImageElement(url, altText) {
       const wrapper = document.createElement('div');
       wrapper.className = 'img-wrapper';
       const driveId = parseDriveId(url);
       if (!driveId && !url) {
-        wrapper.innerHTML = '<div class="img-fallback">' + (altText || '圖片') + '</div>';
+        wrapper.innerHTML = '<div class="img-fallback">' + (altText || t('common.image_unavailable')) + '</div>';
         return wrapper;
       }
       const img = document.createElement('img');
@@ -1087,20 +1988,19 @@
         img.src = primaryUrl;
         img.onerror = function() {
           if (this.src === primaryUrl) this.src = secondaryUrl;
-          else if (this.src === secondaryUrl) this.src = tertiaryUrl;
-          else wrapper.innerHTML = '<div class="img-fallback">' + (altText || '圖片') + '</div>';
+          else if (this.src === secondaryUrl) this.src = secondaryUrl;
+          else wrapper.innerHTML = '<div class="img-fallback">' + (altText || t('common.image_unavailable')) + '</div>';
         };
       } else {
         img.src = url;
         img.onerror = function() {
-          wrapper.innerHTML = '<div class="img-fallback">' + (altText || '圖片') + '</div>';
+          wrapper.innerHTML = '<div class="img-fallback">' + (altText || t('common.image_unavailable')) + '</div>';
         };
       }
       wrapper.appendChild(img);
       return wrapper;
     }
 
-    /* 溫馨提示彈窗 (Modal) */
     function showCustomModal(title, content) {
       let existingOverlay = document.getElementById('custom-modal-overlay');
       if (existingOverlay) existingOverlay.remove();
@@ -1108,313 +2008,310 @@
       const overlay = document.createElement('div');
       overlay.id = 'custom-modal-overlay';
       overlay.className = 'modal-overlay';
-      overlay.innerHTML = `
-        <div class="modal-card">
-          <div class="modal-title">${title}</div>
-          <div class="modal-content">${content}</div>
-          <button class="btn-modal-close" onclick="closeCustomModal()">我知道了</button>
-        </div>
-      `;
+      overlay.innerHTML = 
+        '<div class="modal-card">' +
+          '<div class="modal-title">' + title + '</div>' +
+          '<div class="modal-content">' + content + '</div>' +
+          '<button class="btn-modal-close" onclick="closeCustomModal()">' + t('modal.know') + '</button>' +
+        '</div>';
       document.body.appendChild(overlay);
     }
     function closeCustomModal() {
       const overlay = document.getElementById('custom-modal-overlay');
       if (overlay) overlay.remove();
     }
-
-    /* 完整關卡題庫資料 */
+/* 關卡題庫資料 */
     const GAME_DATA = {
       dining: {
-        title: "飲食相關",
+        titleKey: "home.theme_dining",
         level1: [
-          { id: 'restaurant', label: '餐廳', img: 'https://lh3.googleusercontent.com/d/1NmJ7jUs6HbAFSuNvWD4OxDj9a5R-FQpy' },
-          { id: 'kitchen', label: '家中廚房', img: 'https://lh3.googleusercontent.com/d/1ukB6lm2d6p9ZVY71_VH46pa4wMBGneVD' },
-          { id: 'market', label: '市場', img: 'https://lh3.googleusercontent.com/d/1pHf7ukDQXxlekP4btV5fXRtLjhhDfToh' }
+          { id: 'restaurant', labelKey: 'place.restaurant', img: 'https://lh3.googleusercontent.com/d/1NmJ7jUs6HbAFSuNvWD4OxDj9a5R-FQpy' },
+          { id: 'kitchen', labelKey: 'place.kitchen', img: 'https://lh3.googleusercontent.com/d/1ukB6lm2d6p9ZVY71_VH46pa4wMBGneVD' },
+          { id: 'market', labelKey: 'place.market', img: 'https://lh3.googleusercontent.com/d/1pHf7ukDQXxlekP4btV5fXRtLjhhDfToh' }
         ],
         level2: [
           {
-            question: "爸爸圍著圍裙炒菜，他在哪？",
+            questionKey: "q.d_l2_1",
             img: "https://lh3.googleusercontent.com/d/1oqS4TnwLHvsU4wJThfnlmXD-RGZWGYCu",
             options: [
-              { text: "餐廳", correct: false },
-              { text: "家中廚房", correct: true },
-              { text: "市場", correct: false }
+              { textKey: "place.restaurant", correct: false },
+              { textKey: "place.kitchen", correct: true },
+              { textKey: "place.market", correct: false }
             ]
           },
           {
-            question: "阿嬤拿著菜籃買菜，她在哪？",
+            questionKey: "q.d_l2_2",
             img: "https://lh3.googleusercontent.com/d/1B5X7mBHqiiJoxpGM2wbLzZa2tf-ueklX",
             options: [
-              { text: "餐廳", correct: false },
-              { text: "家中廚房", correct: false },
-              { text: "市場", correct: true }
+              { textKey: "place.restaurant", correct: false },
+              { textKey: "place.kitchen", correct: false },
+              { textKey: "place.market", correct: true }
             ]
           },
           {
-            question: "服務生幫客人點餐，他在哪？",
+            questionKey: "q.d_l2_3",
             img: "https://lh3.googleusercontent.com/d/1f3qIBepAYFWr8x_TVfwcX0pdbtGX9T_3",
             options: [
-              { text: "餐廳", correct: true },
-              { text: "家中廚房", correct: false },
-              { text: "市場", correct: false }
+              { textKey: "place.restaurant", correct: true },
+              { textKey: "place.kitchen", correct: false },
+              { textKey: "place.market", correct: false }
             ]
           }
         ],
         level3: [
           {
-            question: "在「餐廳」會做的事：（請選出 3 個選項）",
+            questionKey: "q.d_l3_1",
             options: [
-              { text: "點餐", img: "https://lh3.googleusercontent.com/d/1yXc1numOwOMXU4CZoJRgZhOuyBl9_8Pe", correct: true },
-              { text: "吃飯", img: "https://lh3.googleusercontent.com/d/19vgj8EoKRaIp5Yh_nWwl3UXjgt4Pnisz", correct: true },
-              { text: "付錢", img: "https://lh3.googleusercontent.com/d/1yXc1numOwOMXU4CZoJRgZhOuyBl9_8Pe", correct: true },
-              { text: "種菜", img: "https://lh3.googleusercontent.com/d/1l5z0aaH96zEbDQL6DJOl5_LpwPl-dFCA", correct: false },
-              { text: "洗衣服", img: "https://lh3.googleusercontent.com/d/1I9TQhMmhIzoUdu2nxBUVgfNoZTrg8iqm", correct: false },
-              { text: "看醫生", img: "https://lh3.googleusercontent.com/d/1-tKYSOIdmiCNhuqSXGouN257NIzJkbwy", correct: false }
+              { textKey: "act.order_food", img: "https://lh3.googleusercontent.com/d/1jkRsfT2IKmg4gv24atNKwyHAdLZMe7Oj", correct: true },
+              { textKey: "act.eat", img: "https://lh3.googleusercontent.com/d/1u3YPOCJuZUBIG2AwS0LJackhF26SCFOg", correct: true },
+              { textKey: "act.pay", img: "https://lh3.googleusercontent.com/d/1svdF9ZlLWC6QK3ocJGrGMoz9tpqqtAkV", correct: true },
+              { textKey: "act.grow_veg", img: "https://lh3.googleusercontent.com/d/1C-vprsif4CXl1mq8m9HG11bXcSwVedtP", correct: false },
+              { textKey: "act.wash_clothes", img: "https://lh3.googleusercontent.com/d/169CcvVxK9z55QfNsfWTG5A6YxXdKdVmK", correct: false },
+              { textKey: "act.see_doctor", img: "https://lh3.googleusercontent.com/d/1HfjjMxdV4NeziUoJAH92jBGPvZ3pvtJD", correct: false }
             ]
           },
           {
-            question: "在「市場」會做的事：（請選出 3 個選項）",
+            questionKey: "q.d_l3_2",
             options: [
-              { text: "買菜", img: "https://lh3.googleusercontent.com/d/1NNnP4cPk6NqZkw1VD9Bf6d0xOvaZf05E", correct: true },
-              { text: "挑選水果", img: "https://lh3.googleusercontent.com/d/1hyhnRqOWVyqFNNyJl4tJsKgZjahKn8iG", correct: true },
-              { text: "付錢", img: "https://lh3.googleusercontent.com/d/1-4f3st2KywUBi3m8IUAOaMNGSqT77NH2", correct: true },
-              { text: "煮飯", img: "https://lh3.googleusercontent.com/d/1PRHa06yyg-Y0xOD2RJb3PNfamfr51-Cc", correct: false },
-              { text: "睡覺", img: "https://lh3.googleusercontent.com/d/1ZMIM9Gj4YqyPWDkwFb2YQcj97I0Kx-1m", correct: false },
-              { text: "運動", img: "https://lh3.googleusercontent.com/d/14Y1iuJ3W7HkIXrVT6QaWuvwKOPtcmPaI", correct: false }
+              { textKey: "act.buy_veg", img: "https://lh3.googleusercontent.com/d/18Y3McDzM9xrAxP10bTpYuCpR-IcOutib", correct: true },
+              { textKey: "act.pick_fruit", img: "https://lh3.googleusercontent.com/d/1yN6B9E_vrvo0sobcNKG_DlJi2ZNG0Tcw", correct: true },
+              { textKey: "act.pay", img: "https://lh3.googleusercontent.com/d/1svdF9ZlLWC6QK3ocJGrGMoz9tpqqtAkV", correct: true },
+              { textKey: "act.cook", img: "https://lh3.googleusercontent.com/d/1PJUt5bsrNHSlfwNUL2c6ztbYUa5o3HJI", correct: false },
+              { textKey: "act.sleep", img: "https://lh3.googleusercontent.com/d/1SXKnGdxWcqS-KQsg4SbcbUakDtuZ4zeS", correct: false },
+              { textKey: "act.exercise", img: "https://lh3.googleusercontent.com/d/1baIoa0HY93Zjjk-F9vUVTDAm9lHItUXr", correct: false }
             ]
           },
           {
-            question: "在「家中廚房」會做的事：（請選出 3 個選項）",
+            questionKey: "q.d_l3_3",
             options: [
-              { text: "煮飯", img: "https://lh3.googleusercontent.com/d/1uz7H-Dr_qGtcWlUwgaLAwqkFp2dywXsC", correct: true },
-              { text: "炒菜", img: "https://lh3.googleusercontent.com/d/1yqxtEJte6hH8C17vQQy0Hhd4pkjH956K", correct: true },
-              { text: "洗菜", img: "https://lh3.googleusercontent.com/d/1LLqvFb4UQQJDSj5UV_v6jQnX8MS22fjE", correct: true },
-              { text: "掛號", img: "https://lh3.googleusercontent.com/d/1WaroqGNlqxMlYnmCElXU73i1IA2fonTq", correct: false },
-              { text: "遛狗", img: "https://lh3.googleusercontent.com/d/1lE-DtPgihbHsw9cMKxcrKsPwdqpQ1g8i", correct: false },
-              { text: "看醫生", img: "https://lh3.googleusercontent.com/d/1HjpgyVLDclTEFJz7mbtn_8sRbbyz6Von", correct: false }
+              { textKey: "act.cook", img: "https://lh3.googleusercontent.com/d/1PJUt5bsrNHSlfwNUL2c6ztbYUa5o3HJI", correct: true },
+              { textKey: "act.stir_fry", img: "https://lh3.googleusercontent.com/d/1DaGW7VIhmF-_-mx3958KzANEFiAwafAJ", correct: true },
+              { textKey: "act.wash_dishes", img: "https://lh3.googleusercontent.com/d/1uOO-oMLWuloIk9o3nb7iQHqK0SlrW00l", correct: true },
+              { textKey: "act.register", img: "https://lh3.googleusercontent.com/d/1PGHOiNH03y76pr_juFmBHfc96o_nY4BQ", correct: false },
+              { textKey: "act.walk_dog", img: "https://lh3.googleusercontent.com/d/1gkqPdCF1D8Ept3fvTCZFkK6uT5S6Rxhn", correct: false },
+              { textKey: "act.see_doctor", img: "https://lh3.googleusercontent.com/d/1HfjjMxdV4NeziUoJAH92jBGPvZ3pvtJD", correct: false }
             ]
           }
         ]
       },
       home: {
-        title: "居家生活",
+        titleKey: "home.theme_home",
         level1: [
-          { id: 'kitchen', label: '廚房', img: 'https://lh3.googleusercontent.com/d/1ukB6lm2d6p9ZVY71_VH46pa4wMBGneVD' },
-          { id: 'bedroom', label: '臥室', img: 'https://lh3.googleusercontent.com/d/1t2C2bC3W6JG5Qt-1BrA2dtJVxet4IH_7' },
-          { id: 'bathroom', label: '浴室', img: 'https://lh3.googleusercontent.com/d/1zhR0B29eopSHS3TOabU0bi72I6VidPN5' }
+          { id: 'kitchen', labelKey: 'place.kitchen', img: 'https://lh3.googleusercontent.com/d/1ukB6lm2d6p9ZVY71_VH46pa4wMBGneVD' },
+          { id: 'bedroom', labelKey: 'place.bedroom', img: 'https://lh3.googleusercontent.com/d/1t2C2bC3W6JG5Qt-1BrA2dtJVxet4IH_7' },
+          { id: 'bathroom', labelKey: 'place.bathroom', img: 'https://lh3.googleusercontent.com/d/1zhR0B29eopSHS3TOabU0bi72I6VidPN5' }
         ],
         level2: [
           {
-            question: "阿嬤躺在床上睡覺，她在哪？",
+            questionKey: "q.h_l2_1",
             img: "https://lh3.googleusercontent.com/d/1QZrSgW-yg-pCkAecrMHAib2g_fnxDX8T",
             options: [
-              { text: "廚房", correct: false },
-              { text: "臥室", correct: true },
-              { text: "浴室", correct: false }
+              { textKey: "place.kitchen", correct: false },
+              { textKey: "place.bedroom", correct: true },
+              { textKey: "place.bathroom", correct: false }
             ]
           },
           {
-            question: "爸爸站在瓦斯爐前炒菜，他在哪？",
+            questionKey: "q.h_l2_2",
             img: "https://lh3.googleusercontent.com/d/1EkaCQKlpNXiXCNRsltMIg_Zz9cFDH65j",
             options: [
-              { text: "廚房", correct: true },
-              { text: "臥室", correct: false },
-              { text: "浴室", correct: false }
+              { textKey: "place.kitchen", correct: true },
+              { textKey: "place.bedroom", correct: false },
+              { textKey: "place.bathroom", correct: false }
             ]
           },
           {
-            question: "小孩在用蓮蓬頭沖澡，他在哪？",
+            questionKey: "q.h_l2_3",
             img: "https://lh3.googleusercontent.com/d/1oPDY5gY_CVWqdh6y3bihQEOeSicT1yJV",
             options: [
-              { text: "廚房", correct: false },
-              { text: "臥室", correct: false },
-              { text: "浴室", correct: true }
+              { textKey: "place.kitchen", correct: false },
+              { textKey: "place.bedroom", correct: false },
+              { textKey: "place.bathroom", correct: true }
             ]
           }
         ],
         level3: [
           {
-            question: "在「廚房」會做的事：（請選出 3 個選項）",
+            questionKey: "q.h_l3_1",
             options: [
-              { text: "洗菜", img: "https://lh3.googleusercontent.com/d/1OHO6bbkGPv_-BNzW7pO1qZiH6-n7W0zn", correct: true },
-              { text: "洗碗", img: "https://lh3.googleusercontent.com/d/1_F2G_XQq6vsOmaKr8cX65-YPD9phB9Kw", correct: true },
-              { text: "炒菜", img: "https://lh3.googleusercontent.com/d/1twUhiESWamgzJgYQvdDA1Le4YnEyaXSY", correct: true },
-              { text: "睡覺", img: "https://lh3.googleusercontent.com/d/1hCcxpg6u70o0FNjSeiOvfCJA7kze7oiQ", correct: false },
-              { text: "洗澡", img: "https://lh3.googleusercontent.com/d/1_6tdBQpSKXOR0Fg-oiZLX7Ksy53XUuaG", correct: false },
-              { text: "掛號", img: "https://lh3.googleusercontent.com/d/1IJOmQi9dy9IB_zVWivKBw2idqOL2OVZs", correct: false }
+              { textKey: "act.cook", img: "https://lh3.googleusercontent.com/d/1PJUt5bsrNHSlfwNUL2c6ztbYUa5o3HJI", correct: true },
+              { textKey: "act.wash_dishes", img: "https://lh3.googleusercontent.com/d/1uOO-oMLWuloIk9o3nb7iQHqK0SlrW00l", correct: true },
+              { textKey: "act.stir_fry", img: "https://lh3.googleusercontent.com/d/1DaGW7VIhmF-_-mx3958KzANEFiAwafAJ", correct: true },
+              { textKey: "act.grow_veg", img: "https://lh3.googleusercontent.com/d/1C-vprsif4CXl1mq8m9HG11bXcSwVedtP", correct: false },
+              { textKey: "act.take_bath", img: "https://lh3.googleusercontent.com/d/1xd_Wkad6lWN5C-inuBYG6WaHCET1wdsH", correct: false },
+              { textKey: "act.register", img: "https://lh3.googleusercontent.com/d/1PGHOiNH03y76pr_juFmBHfc96o_nY4BQ", correct: false }
             ]
           },
           {
-            question: "在「臥室」會做的事：（請選出 3 個選項）",
+            questionKey: "q.h_l3_2",
             options: [
-              { text: "睡覺", img: "https://lh3.googleusercontent.com/d/1V1iZ-ma78P8UKK5QxNQWyMZ0TcoWLt1D", correct: true },
-              { text: "坐著休息", img: "https://lh3.googleusercontent.com/d/12npKOHBjDWMp7gAu9P1Rkl1-NYjtZu5W", correct: true },
-              { text: "整理床鋪", img: "https://lh3.googleusercontent.com/d/1euUWjftz2rp1-akZqeV2iX4lfbNJR8E7", correct: true },
-              { text: "買菜", img: "https://lh3.googleusercontent.com/d/1ooRqy1Vyriz-10tfORNUPJWPyC3N0Zpa", correct: false },
-              { text: "運動", img: "https://lh3.googleusercontent.com/d/1bvu5MBOBqlonQ0hNukVedJQ7auDhtNyJ", correct: false },
-              { text: "看醫生", img: "https://lh3.googleusercontent.com/d/1WqLny8CY2cfTMW-Z9tNlnun3xcgCGZ28", correct: false }
+              { textKey: "act.sleep", img: "https://lh3.googleusercontent.com/d/1SXKnGdxWcqS-KQsg4SbcbUakDtuZ4zeS", correct: true },
+              { textKey: "act.rest", img: "https://lh3.googleusercontent.com/d/1c_EpLQo00VZB74hBPhevKXwgcWzUp_wh", correct: true },
+              { textKey: "act.make_bed", img: "https://lh3.googleusercontent.com/d/1GJV-WLFR8McEjoMPYB3_UuodrIZ2zGjO", correct: true },
+              { textKey: "act.buy_veg", img: "https://lh3.googleusercontent.com/d/18Y3McDzM9xrAxP10bTpYuCpR-IcOutib", correct: false },
+              { textKey: "act.exercise", img: "https://lh3.googleusercontent.com/d/1baIoa0HY93Zjjk-F9vUVTDAm9lHItUXr", correct: false },
+              { textKey: "act.see_doctor", img: "https://lh3.googleusercontent.com/d/1HfjjMxdV4NeziUoJAH92jBGPvZ3pvtJD", correct: false }
             ]
           },
           {
-            question: "在「浴室」會做的事：（請選出 3 個選項）",
+            questionKey: "q.h_l3_3",
             options: [
-              { text: "洗澡", img: "https://lh3.googleusercontent.com/d/1_rtV_uBkKjgoGz-3fCyfzHIv3JdFbGld", correct: true },
-              { text: "刷牙", img: "https://lh3.googleusercontent.com/d/1q3FApaweY8aI2RPSxebf151r5dwca5QY", correct: true },
-              { text: "洗臉", img: "https://lh3.googleusercontent.com/d/1Jj0M03i2Pky2LYNMqFY-iPHgnXmNeF7T", correct: true },
-              { text: "煮飯", img: "https://lh3.googleusercontent.com/d/13O-AiajrpCN2BN61GyuSkEQIhEWSppa8", correct: false },
-              { text: "遛狗", img: "https://lh3.googleusercontent.com/d/1EGM6uygvYL6llsCEnUQxGN6ybUxz1Kca", correct: false },
-              { text: "看電視", img: "https://lh3.googleusercontent.com/d/1KMdlz7MQirxdliDjREVZp06LrvjdQyYm", correct: false }
+              { textKey: "act.take_bath", img: "https://lh3.googleusercontent.com/d/1xd_Wkad6lWN5C-inuBYG6WaHCET1wdsH", correct: true },
+              { textKey: "act.brush_teeth", img: "https://lh3.googleusercontent.com/d/1dbiaKWRRBX88Xp3_WM5jXnSUn1xpHz50", correct: true },
+              { textKey: "act.wash_face", img: "https://lh3.googleusercontent.com/d/19TvxAr7wkUKGx8-aY8k_i0BMOIzJ3UT8", correct: true },
+              { textKey: "act.cook", img: "https://lh3.googleusercontent.com/d/1PJUt5bsrNHSlfwNUL2c6ztbYUa5o3HJI", correct: false },
+              { textKey: "act.walk_dog", img: "https://lh3.googleusercontent.com/d/1gkqPdCF1D8Ept3fvTCZFkK6uT5S6Rxhn", correct: false },
+              { textKey: "act.watch_tv", img: "https://lh3.googleusercontent.com/d/1KMdlz7MQirxdliDjREVZp06LrvjdQyYm", correct: false }
             ]
           }
         ]
       },
       traffic: {
-        title: "交通與外出",
+        titleKey: "home.theme_traffic",
         level1: [
-          { id: 'bus_stop', label: '公車站', img: 'https://lh3.googleusercontent.com/d/19rfMdvjgRzPi6uUm4mYdE-AKbHdw5gqn' },
-          { id: 'train_station', label: '火車站', img: 'https://lh3.googleusercontent.com/d/17xj1t_oOo1sT7-SLqq8fafTVHWKJxa1Z' },
-          { id: 'road', label: '馬路', img: 'https://lh3.googleusercontent.com/d/1rfX40zihVhy3T2WvXkFaBnxqqw128ZF7' }
+          { id: 'bus_stop', labelKey: 'place.bus_stop', img: 'https://lh3.googleusercontent.com/d/19rfMdvjgRzPi6uUm4mYdE-AKbHdw5gqn' },
+          { id: 'train_station', labelKey: 'place.train_station', img: 'https://lh3.googleusercontent.com/d/17xj1t_oOo1sT7-SLqq8fafTVHWKJxa1Z' },
+          { id: 'road', labelKey: 'place.road', img: 'https://lh3.googleusercontent.com/d/1rfX40zihVhy3T2WvXkFaBnxqqw128ZF7' }
         ],
         level2: [
           {
-            question: "阿公在路邊等公車，他在哪？",
+            questionKey: "q.t_l2_1",
             img: "https://lh3.googleusercontent.com/d/1eyCqtCwaPzdshCGv2-2OxhVcEH8A_o-c",
             options: [
-              { text: "公車站", correct: true },
-              { text: "火車站", correct: false },
-              { text: "馬路", correct: false }
+              { textKey: "place.bus_stop", correct: true },
+              { textKey: "place.train_station", correct: false },
+              { textKey: "place.road", correct: false }
             ]
           },
           {
-            question: "站務員在幫旅客查票，他在哪？",
+            questionKey: "q.t_l2_2",
             img: "https://lh3.googleusercontent.com/d/1fJ7qkaw1FsJ6XNDRBsBdpp90k_ogv0A1",
             options: [
-              { text: "公車站", correct: false },
-              { text: "火車站", correct: true },
-              { text: "馬路", correct: false }
+              { textKey: "place.bus_stop", correct: false },
+              { textKey: "place.train_station", correct: true },
+              { textKey: "place.road", correct: false }
             ]
           },
           {
-            question: "婦人走在斑馬線上，她在哪？",
+            questionKey: "q.t_l2_3",
             img: "https://lh3.googleusercontent.com/d/1gawPBhJSf_WIOA27DU28fT8o_y_cVkVf",
             options: [
-              { text: "公車站", correct: false },
-              { text: "火車站", correct: false },
-              { text: "馬路", correct: true }
+              { textKey: "place.bus_stop", correct: false },
+              { textKey: "place.train_station", correct: false },
+              { textKey: "place.road", correct: true }
             ]
           }
         ],
         level3: [
           {
-            question: "在「公車站」會做的事：（請選出 3 個選項）",
+            questionKey: "q.t_l3_1",
             options: [
-              { text: "等車", img: "https://lh3.googleusercontent.com/d/1fyejZH5IgGn5z1AO86RKBOmPiVSnLz-3", correct: true },
-              { text: "排隊", img: "https://lh3.googleusercontent.com/d/1nubyts4B6-Ke3QUivKYXI31kmYyCuFIN", correct: true },
-              { text: "上車", img: "https://lh3.googleusercontent.com/d/14ay9Lv8SmJTM7mzUJTtMU-euhXS_Re44", correct: true },
-              { text: "炒菜", img: "https://lh3.googleusercontent.com/d/1JScELdSh1Y_-2BIYeokwkZ4lubBEye5z", correct: false },
-              { text: "洗澡", img: "https://lh3.googleusercontent.com/d/11sUz1s3-uG0Qi0RXa8qh_8mRFh7M_sUz", correct: false },
-              { text: "睡覺", img: "https://lh3.googleusercontent.com/d/1nubyts4B6-Ke3QUivKYXI31kmYyCuFIN", correct: false }
+              { textKey: "act.wait_bus", img: "https://lh3.googleusercontent.com/d/1NOIuDn5r2-ir9XGIHgc2TIHneo7daKVH", correct: true },
+              { textKey: "act.queue", img: "https://lh3.googleusercontent.com/d/1U8oproUaPPnKaMEw_w4zisp4NPHXOuyW", correct: true },
+              { textKey: "act.board_bus", img: "https://lh3.googleusercontent.com/d/1r14Vk7D22FN6h8YHISfaOFN1io2TR1to", correct: true },
+              { textKey: "act.stir_fry", img: "https://lh3.googleusercontent.com/d/1DaGW7VIhmF-_-mx3958KzANEFiAwafAJ", correct: false },
+              { textKey: "act.take_bath", img: "https://lh3.googleusercontent.com/d/1xd_Wkad6lWN5C-inuBYG6WaHCET1wdsH", correct: false },
+              { textKey: "act.sleep", img: "https://lh3.googleusercontent.com/d/1SXKnGdxWcqS-KQsg4SbcbUakDtuZ4zeS", correct: false }
             ]
           },
           {
-            question: "在「火車站」會做的事：（請選出 3 個選項）",
+            questionKey: "q.t_l3_2",
             options: [
-              { text: "買票", img: "https://lh3.googleusercontent.com/d/1HtRUnF98VA2QrREE728wQp_9b6nf-doI", correct: true },
-              { text: "等車", img: "https://lh3.googleusercontent.com/d/1EbjRAHKajJOgqGBdn4XMK_JQfBOCzerh", correct: true },
-              { text: "上車", img: "https://lh3.googleusercontent.com/d/1V1CEUAC5yDr1jXWB1cFQmTZAwGNLdS-1", correct: true },
-              { text: "洗衣服", img: "https://lh3.googleusercontent.com/d/1OxrKvrxI9WfKeiAIEXRGivSQqmRT647R", correct: false },
-              { text: "看醫生", img: "https://lh3.googleusercontent.com/d/1cW9rUvTt54CXSXnoYHCB_WwV7naWbqHn", correct: false },
-              { text: "煮菜", img: "https://lh3.googleusercontent.com/d/1sRhhQGC2ze2oGnv23QDP7NYi9ZwlqQ9n", correct: false }
+              { textKey: "act.buy_ticket", img: "https://lh3.googleusercontent.com/d/1B-ZF_QGX5uJzJE7TWJbn2nOW3ToGqMyz", correct: true },
+              { textKey: "act.wait_bus", img: "https://lh3.googleusercontent.com/d/1NOIuDn5r2-ir9XGIHgc2TIHneo7daKVH", correct: true },
+              { textKey: "act.board_bus", img: "https://lh3.googleusercontent.com/d/1r14Vk7D22FN6h8YHISfaOFN1io2TR1to", correct: true },
+              { textKey: "act.wash_clothes", img: "https://lh3.googleusercontent.com/d/1OxrKvrxI9WfKeiAIEXRGivSQqmRT647R", correct: false },
+              { textKey: "act.see_doctor", img: "https://lh3.googleusercontent.com/d/1HfjjMxdV4NeziUoJAH92jBGPvZ3pvtJD", correct: false },
+              { textKey: "act.cook", img: "https://lh3.googleusercontent.com/d/1PJUt5bsrNHSlfwNUL2c6ztbYUa5o3HJI", correct: false }
             ]
           },
           {
-            question: "在「馬路」會做的事：（請選出 3 個選項）",
+            questionKey: "q.t_l3_3",
             options: [
-              { text: "走斑馬線", img: "https://lh3.googleusercontent.com/d/1SOTC0dul-9jIUNI8QaPjQfEYEvDD4Bkx", correct: true },
-              { text: "看紅綠燈", img: "https://lh3.googleusercontent.com/d/1c8-sZFBqhK6etHOO8HKqqmONPNuZxvDU", correct: true },
-              { text: "注意來車", img: "https://lh3.googleusercontent.com/d/1YYWkI3E5or-w8Y4ESPQ-qgE8PR3-sqC_", correct: true },
-              { text: "洗衣服", img: "https://lh3.googleusercontent.com/d/1iwVpVArFzqQvkHdZ__feFb--BHSoZwZz", correct: false },
-              { text: "睡覺", img: "https://lh3.googleusercontent.com/d/1vh-PyBb4sRxUj_oqbGzF0FiVaOacRCaP", correct: false },
-              { text: "煮菜", img: "https://lh3.googleusercontent.com/d/13WqW5Si5wOnJZ9ulteQxmhaa65rR8vId", correct: false }
+              { textKey: "act.crosswalk", img: "https://lh3.googleusercontent.com/d/1enzxb4BHkoMTywJ6GyWSr53e-vY7jYr8", correct: true },
+              { textKey: "act.traffic_light", img: "https://lh3.googleusercontent.com/d/1G7iH5llfr2O5yoUay2twl0pNUJrkfwlV", correct: true },
+              { textKey: "act.watch_cars", img: "https://lh3.googleusercontent.com/d/1fCyg570GQJe3frs4jkuUfe5fSG0LApP6", correct: true },
+              { textKey: "act.wash_clothes", img: "https://lh3.googleusercontent.com/d/1iwVpVArFzqQvkHdZ__feFb--BHSoZwZz", correct: false },
+              { textKey: "act.sleep", img: "https://lh3.googleusercontent.com/d/1SXKnGdxWcqS-KQsg4SbcbUakDtuZ4zeS", correct: false },
+              { textKey: "act.cook", img: "https://lh3.googleusercontent.com/d/1PJUt5bsrNHSlfwNUL2c6ztbYUa5o3HJI", correct: false }
             ]
           }
         ]
       },
       clothes: {
-        title: "穿著相關",
+        titleKey: "home.theme_clothes",
         level1: [
-          { id: 'clothing_store', label: '服飾店', img: 'https://lh3.googleusercontent.com/d/1Wi1x_VEyWibgZgZEDenXDEE9YvxJu55T' },
-          { id: 'laundry_room', label: '洗衣間', img: 'https://lh3.googleusercontent.com/d/1xRlqU7WqtPSOK-IHw6shph54-WjofXr0' },
-          { id: 'fitting_room', label: '更衣室', img: 'https://lh3.googleusercontent.com/d/1F53EYio2cTdSMev6anaX4rYIHabNIlBw' }
+          { id: 'clothing_store', labelKey: 'place.clothing_store', img: 'https://lh3.googleusercontent.com/d/1Wi1x_VEyWibgZgZEDenXDEE9YvxJu55T' },
+          { id: 'laundry_room', labelKey: 'place.laundry_room', img: 'https://lh3.googleusercontent.com/d/1xRlqU7WqtPSOK-IHw6shph54-WjofXr0' },
+          { id: 'fitting_room', labelKey: 'place.fitting_room', img: 'https://lh3.googleusercontent.com/d/1F53EYio2cTdSMev6anaX4rYIHabNIlBw' }
         ],
         level2: [
           {
-            question: "有人在試穿衣服，她在哪？",
+            questionKey: "q.c_l2_1",
             img: "https://lh3.googleusercontent.com/d/1bUP58JvgtcAFuPe-qvCQ9wnjvAvQ5K--",
             options: [
-              { text: "服飾店", correct: false },
-              { text: "洗衣間", correct: false },
-              { text: "更衣室", correct: true }
+              { textKey: "place.clothing_store", correct: false },
+              { textKey: "place.laundry_room", correct: false },
+              { textKey: "place.fitting_room", correct: true }
             ]
           },
           {
-            question: "店員在賣衣服，他在哪？",
+            questionKey: "q.c_l2_2",
             img: "https://lh3.googleusercontent.com/d/1ermAZUuyj2S89JExmW9PWXrExD6R-n4e",
             options: [
-              { text: "服飾店", correct: true },
-              { text: "洗衣間", correct: false },
-              { text: "更衣室", correct: false }
+              { textKey: "place.clothing_store", correct: true },
+              { textKey: "place.laundry_room", correct: false },
+              { textKey: "place.fitting_room", correct: false }
             ]
           },
           {
-            question: "阿公在洗衣服，他在哪？",
+            questionKey: "q.c_l2_3",
             img: "https://lh3.googleusercontent.com/d/1AMHmoNMTFNp5iym2AscCy2FKbSDi0d_r",
             options: [
-              { text: "服飾店", correct: false },
-              { text: "洗衣間", correct: true },
-              { text: "更衣室", correct: false }
+              { textKey: "place.clothing_store", correct: false },
+              { textKey: "place.laundry_room", correct: true },
+              { textKey: "place.fitting_room", correct: false }
             ]
           }
         ],
         level3: [
           {
-            question: "在「服飾店」會做的事：（請選出 3 個選項）",
+            questionKey: "q.c_l3_1",
             options: [
-              { text: "買衣服", img: "https://lh3.googleusercontent.com/d/1M_SHf1vQnmrHDzejdTmFmkbCLCUY6QJV", correct: true },
-              { text: "試穿", img: "https://lh3.googleusercontent.com/d/1rHwH7xCWmMaBHfSrszeJCcWLFfyIou_Q", correct: true },
-              { text: "付錢", img: "https://lh3.googleusercontent.com/d/14EpX0BhgzLVRwQ-PHlbkwAfR03IUBzJ2", correct: true },
-              { text: "煮飯", img: "https://lh3.googleusercontent.com/d/1zagya74F-3Y1-yFE9LAUg9J6JsEFRlqB", correct: false },
-              { text: "看醫生", img: "https://lh3.googleusercontent.com/d/1I6_pzkA2LrTfZMBv7W0-AORYog3B2Opu", correct: false },
-              { text: "買菜", img: "https://lh3.googleusercontent.com/d/1hZM18rP1YwaLj6qpDzqPGNqyYJ6GToyn", correct: false }
+              { textKey: "act.buy_clothes", img: "https://lh3.googleusercontent.com/d/1HGHxq1nMQdimh-dRUUnR7HxNwRLfyvDE", correct: true },
+              { textKey: "act.try_on", img: "https://lh3.googleusercontent.com/d/1Hza9WoEDsO8gNmWAUHFEJXQlTI3XEZod", correct: true },
+              { textKey: "act.pay", img: "https://lh3.googleusercontent.com/d/1svdF9ZlLWC6QK3ocJGrGMoz9tpqqtAkV", correct: true },
+              { textKey: "act.cook", img: "https://lh3.googleusercontent.com/d/1PJUt5bsrNHSlfwNUL2c6ztbYUa5o3HJI", correct: false },
+              { textKey: "act.see_doctor", img: "https://lh3.googleusercontent.com/d/1HfjjMxdV4NeziUoJAH92jBGPvZ3pvtJD", correct: false },
+              { textKey: "act.buy_veg", img: "https://lh3.googleusercontent.com/d/18Y3McDzM9xrAxP10bTpYuCpR-IcOutib", correct: false }
             ]
           },
           {
-            question: "在「洗衣間」會做的事：（請選出 3 個選項）",
+            questionKey: "q.c_l3_2",
             options: [
-              { text: "洗衣服", img: "https://lh3.googleusercontent.com/d/1eF0mqtnK4noWswI_wBefwtXZ1HY8bSog", correct: true },
-              { text: "晾衣服", img: "https://lh3.googleusercontent.com/d/1IbpAzY6rJGqPR_pY2CBIrS1ZMBiSuuhB", correct: true },
-              { text: "摺衣服", img: "https://lh3.googleusercontent.com/d/1IbpAzY6rJGqPR_pY2CBIrS1ZMBiSuuhB", correct: true },
-              { text: "運動", img: "https://lh3.googleusercontent.com/d/19GVlAQe8VuXjsyAUiFzgXDikyzd-Q4gg", correct: false },
-              { text: "看電影", img: "https://lh3.googleusercontent.com/d/1to_XmoJiNNwdJiUMKG-DQTdDdQ162-34", correct: false },
-              { text: "吃飯", img: "https://lh3.googleusercontent.com/d/17-Kmx--lmWnTyGOYk8J7thCHwkmPQR9t", correct: false }
+              { textKey: "act.wash_clothes", img: "https://lh3.googleusercontent.com/d/1eF0mqtnK4noWswI_wBefwtXZ1HY8bSog", correct: true },
+              { textKey: "act.dry_clothes", img: "https://lh3.googleusercontent.com/d/1OzThb3UcjXPf9ffDh-fWzoJCXSw8Tp2C", correct: true },
+              { textKey: "act.fold_clothes", img: "https://lh3.googleusercontent.com/d/1e0ayLHUdd-ySFk9gwodKLTsDUiooUNqS", correct: true },
+              { textKey: "act.exercise", img: "https://lh3.googleusercontent.com/d/1baIoa0HY93Zjjk-F9vUVTDAm9lHItUXr", correct: false },
+              { textKey: "act.watch_movie", img: "https://lh3.googleusercontent.com/d/1WFIfJ-20WygpYbRAplk6g6tcExet3Oyd", correct: false },
+              { textKey: "act.eat", img: "https://lh3.googleusercontent.com/d/1u3YPOCJuZUBIG2AwS0LJackhF26SCFOg", correct: false }
             ]
           },
           {
-            question: "在「更衣室」會做的事：（請選出 3 個選項）",
+            questionKey: "q.c_l3_3",
             options: [
-              { text: "換衣服", img: "https://lh3.googleusercontent.com/d/1w8uRfrZS9OUk069H8vwyT5NYwmQNVGo4", correct: true },
-              { text: "試穿", img: "https://lh3.googleusercontent.com/d/1dNBz0XwqFafV6qqbksvnr2qXAvL88I7p", correct: true },
-              { text: "整理衣物", img: "https://lh3.googleusercontent.com/d/1FpV7jVpPLlcZa8udpXb0h7C2ceWkWP1g", correct: true },
-              { text: "煮菜", img: "https://lh3.googleusercontent.com/d/1z3CsGy3EXd5_fKQihb9MItrjmGMMvvhG", correct: false },
-              { text: "掛號", img: "https://lh3.googleusercontent.com/d/1cMK9zk7TqFG67k92ztF9tPSExZ3u2WMC", correct: false },
-              { text: "遛狗", img: "https://lh3.googleusercontent.com/d/1lW4CBUAwGGV5H-NNOYi3xRI7QaBjOdPm", correct: false }
+              { textKey: "act.change_clothes", img: "https://lh3.googleusercontent.com/d/1uKuXfaUNPcezVy8-Ocj3O014YJmPtT7-", correct: true },
+              { textKey: "act.try_on", img: "https://lh3.googleusercontent.com/d/1Hza9WoEDsO8gNmWAUHFEJXQlTI3XEZod", correct: true },
+              { textKey: "act.tidy_clothes", img: "https://lh3.googleusercontent.com/d/1x97ixC34mkMqbIW4G5WM3htZQ8qSmY4C", correct: true },
+              { textKey: "act.cook", img: "https://lh3.googleusercontent.com/d/1PJUt5bsrNHSlfwNUL2c6ztbYUa5o3HJI", correct: false },
+              { textKey: "act.register", img: "https://lh3.googleusercontent.com/d/1PGHOiNH03y76pr_juFmBHfc96o_nY4BQ", correct: false },
+              { textKey: "act.walk_dog", img: "https://lh3.googleusercontent.com/d/1gkqPdCF1D8Ept3fvTCZFkK6uT5S6Rxhn", correct: false }
             ]
           }
         ]
       }
     };
 
-    /* 全域變數與遊戲邏輯 */
     let currentThemeKey = 'dining';
     let currentThemeData = null;
     let scores = { l1: 0, l2: 0, l3: 0 };
@@ -1431,10 +2328,11 @@
     let currentL3Scenario = null;
     let isSubmitting = false;
 
-    /* 音效控制 */
     let applauseAudio = null;
     let audioCtx = null;
     let applauseTimeoutTimer = null;
+    let confettiInterval = null; // 👈 移至頂部宣告
+
 
     function unlockAudioContext() {
       if (!audioCtx) {
@@ -1446,7 +2344,8 @@
       }
     }
 
-    function playSynthesizedApplause(duration = 3.8) {
+    function playSynthesizedApplause(duration) {
+      if (!duration) duration = 3.8;
       try {
         unlockAudioContext();
         if (!audioCtx) return;
@@ -1491,7 +2390,7 @@
       }
     }
 
-    function playPerfectApplauseSound(isManualClick = false) {
+    function playPerfectApplauseSound(isManualClick) {
       unlockAudioContext();
       if (applauseTimeoutTimer) clearTimeout(applauseTimeoutTimer);
       if (!applauseAudio) {
@@ -1500,11 +2399,11 @@
       applauseAudio.currentTime = 0;
       const playPromise = applauseAudio.play();
       if (playPromise !== undefined) {
-        playPromise.then(() => {
-          applauseTimeoutTimer = setTimeout(() => {
+        playPromise.then(function() {
+          applauseTimeoutTimer = setTimeout(function() {
             if (applauseAudio) { applauseAudio.pause(); applauseAudio.currentTime = 0; }
           }, 3800);
-        }).catch(err => { playSynthesizedApplause(3.8); });
+        }).catch(function(err) { playSynthesizedApplause(3.8); });
       } else { playSynthesizedApplause(3.8); }
 
       if (isManualClick) {
@@ -1542,21 +2441,30 @@
       enterLevel('l1');
     }
 
-    /* 更新頂部導覽列 */
-    function updateNavUI(stage) {
+function updateNavUI(stage) {
       const navBar = document.getElementById('nav-bar');
       if (!navBar) return;
 
       if (stage === 'summary') {
-        navBar.innerHTML = `
-          <div class="nav-item active" style="max-width: 180px; margin: 0 auto; cursor: default; background-color: var(--primary-color); color: #ffffff; font-weight: bold;">成績結算</div>
-        `;
+        navBar.innerHTML = 
+          '<div class="nav-item active" style="max-width: 140px; min-height: 44px; height: 44px; padding: 0 16px; margin: 0 auto; cursor: default; background-color: var(--primary-color); color: #ffffff; font-weight: 800; border-radius: 25px; font-size: calc(18px * var(--font-scale)); display: flex; align-items: center; justify-content: center;">' +
+            t('nav.summary') +
+          '</div>';
       } else {
-        navBar.innerHTML = `
-          <div id="navL1" class="nav-item" onclick="navigateToLevel('l1')">第一關</div>
-          <div id="navL2" class="nav-item" onclick="navigateToLevel('l2')">第二關</div>
-          <div id="navL3" class="nav-item" onclick="navigateToLevel('l3')">第三關</div>
-        `;
+        navBar.innerHTML = 
+          '<div id="navL1" class="nav-item" onclick="navigateToLevel(\'l1\')">' +
+            '<span class="nav-line1">' + t('nav.l1_line1') + '</span>' +
+            '<span class="nav-line2">' + t('nav.l1_line2') + '</span>' +
+          '</div>' +
+          '<div id="navL2" class="nav-item" onclick="navigateToLevel(\'l2\')">' +
+            '<span class="nav-line1">' + t('nav.l2_line1') + '</span>' +
+            '<span class="nav-line2">' + t('nav.l2_line2') + '</span>' +
+          '</div>' +
+          '<div id="navL3" class="nav-item" onclick="navigateToLevel(\'l3\')">' +
+            '<span class="nav-line1">' + t('nav.l3_line1') + '</span>' +
+            '<span class="nav-line2">' + t('nav.l3_line2') + '</span>' +
+          '</div>';
+        
         const n1 = document.getElementById('navL1');
         const n2 = document.getElementById('navL2');
         const n3 = document.getElementById('navL3');
@@ -1569,7 +2477,6 @@
       }
     }
 
-    /* 切換關卡與返回限制 */
     function navigateToLevel(levelKey) {
       unlockAudioContext();
       const currentNum = levelOrder[currentActiveLevel] || 1;
@@ -1578,12 +2485,12 @@
       if (targetNum === currentNum) return;
 
       if (targetNum < currentNum) {
-        showCustomModal('先完成當前關卡喔！', '您已經完成之前的關卡，請繼續往前挑戰喔！');
+        showCustomModal(t('modal.cur_title'), t('modal.cur_msg'));
         return;
       }
 
       if (!unlockedLevels[levelKey]) {
-        showCustomModal('一步一步來！', '請先完成上一關，再繼續挑戰喔！');
+        showCustomModal(t('modal.step_title'), t('modal.step_msg'));
         return;
       }
 
@@ -1604,7 +2511,7 @@
     }
 
     function showScreen(screenId) {
-      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
       document.getElementById(screenId).classList.add('active');
       const header = document.getElementById('main-header');
       if (header) {
@@ -1616,7 +2523,6 @@
       }
     }
 
-    /* 第一關邏輯 */
     function initLevel1() {
       l1Pairs = {};
       l1SelectedImgId = null;
@@ -1626,18 +2532,18 @@
       const textList = document.getElementById('l1TextList');
       imgList.innerHTML = '';
       textList.innerHTML = '';
-      l1ImagesData.forEach(item => {
+      l1ImagesData.forEach(function(item) {
         const div = document.createElement('div');
         div.className = 'match-item';
         div.dataset.id = item.id;
         div.onclick = function() { handleL1ImgClick(item.id); };
         imgList.appendChild(div);
       });
-      l1TextsData.forEach(item => {
+      l1TextsData.forEach(function(item) {
         const div = document.createElement('div');
         div.className = 'match-item text-item';
         div.dataset.id = item.id;
-        div.innerText = item.label;
+        div.innerText = t(item.labelKey);
         div.onclick = function() { handleL1TextClick(item.id); };
         textList.appendChild(div);
       });
@@ -1677,18 +2583,20 @@
 
     function renderL1UI() {
       const items = currentThemeData.level1;
-      document.querySelectorAll('#l1ImageList .match-item').forEach(el => {
+      document.querySelectorAll('#l1ImageList .match-item').forEach(function(el) {
         const id = el.dataset.id;
         el.className = 'match-item';
         el.innerHTML = '';
-        const itemObj = items.find(i => i.id === id);
-        el.appendChild(createImageElement(itemObj.img, itemObj.label));
+        const itemObj = items.find(function(i) { return i.id === id; });
+        const labelText = t(itemObj.labelKey);
+        el.appendChild(createImageElement(itemObj.img, labelText));
         if (id === l1SelectedImgId) el.classList.add('selected');
       });
-      document.querySelectorAll('#l1TextList .match-item').forEach(el => {
+      document.querySelectorAll('#l1TextList .match-item').forEach(function(el) {
         const textId = el.dataset.id;
         el.className = 'match-item text-item';
-        el.innerText = items.find(i => i.id === textId).label;
+        const itemObj = items.find(function(i) { return i.id === textId; });
+        el.innerText = t(itemObj.labelKey);
       });
       drawL1Lines();
     }
@@ -1700,19 +2608,19 @@
       const containerRect = container.getBoundingClientRect();
       svg.style.width = containerRect.width + 'px';
       svg.style.height = containerRect.height + 'px';
-      svg.setAttribute('viewBox', `0 0 ${containerRect.width} ${containerRect.height}`);
+      svg.setAttribute('viewBox', '0 0 ' + containerRect.width + ' ' + containerRect.height);
       svg.innerHTML = '';
-      document.querySelectorAll('#l1ImageList .match-item, #l1TextList .match-item').forEach(el => {
+      document.querySelectorAll('#l1ImageList .match-item, #l1TextList .match-item').forEach(function(el) {
         if (!el.classList.contains('selected')) {
-          el.style.borderColor = '#E4E9DF';
+          el.style.borderColor = '#D6DEC8';
           el.style.backgroundColor = '#ffffff';
         }
       });
       const pairedKeys = Object.keys(l1Pairs);
-      pairedKeys.forEach((imgId, idx) => {
+      pairedKeys.forEach(function(imgId, idx) {
         const textId = l1Pairs[imgId];
-        const imgEl = container.querySelector(`#l1ImageList .match-item[data-id="${imgId}"]`);
-        const textEl = container.querySelector(`#l1TextList .match-item[data-id="${textId}"]`);
+        const imgEl = container.querySelector('#l1ImageList .match-item[data-id="' + imgId + '"]');
+        const textEl = container.querySelector('#l1TextList .match-item[data-id="' + textId + '"]');
         if (!imgEl || !textEl) return;
         const imgRect = imgEl.getBoundingClientRect();
         const textRect = textEl.getBoundingClientRect();
@@ -1720,7 +2628,8 @@
         const y1 = imgRect.top + imgRect.height / 2 - containerRect.top;
         const x2 = textRect.left - containerRect.left;
         const y2 = textRect.top + textRect.height / 2 - containerRect.top;
-        const color = PAIR_COLORS[idx % PAIR_COLORS.length];
+        
+        const color = '#4F7058';
         if (!imgEl.classList.contains('selected')) {
           imgEl.style.borderColor = color; imgEl.style.backgroundColor = '#EAF0E7';
         }
@@ -1728,10 +2637,10 @@
           textEl.style.borderColor = color; textEl.style.backgroundColor = '#EAF0E7';
         }
         const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        const dx = Math.max(20, Math.abs(x2 - x1) * 0.4);
-        const d = `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`;
+        const dx = Math.max(30, Math.abs(x2 - x1) * 0.45);
+        const d = 'M ' + x1 + ' ' + y1 + ' C ' + (x1 + dx) + ' ' + y1 + ', ' + (x2 - dx) + ' ' + y2 + ', ' + x2 + ' ' + y2;
         path.setAttribute('d', d); path.setAttribute('stroke', color);
-        path.setAttribute('stroke-width', '4'); path.setAttribute('fill', 'none');
+        path.setAttribute('stroke-width', '2.5'); path.setAttribute('fill', 'none');
         path.setAttribute('stroke-linecap', 'round');
         svg.appendChild(path);
       });
@@ -1745,7 +2654,7 @@
       const totalRequired = currentThemeData.level1.length;
       const currentPairedCount = Object.keys(l1Pairs).length;
       if (currentPairedCount < totalRequired) {
-        showCustomModal('再檢查一下喔！', '還有題目尚未完成連線配對，請再檢查一下喔！');
+        showCustomModal(t('modal.l1_check_title'), t('modal.l1_check_msg'));
         return;
       }
       isSubmitting = true;
@@ -1761,27 +2670,28 @@
       isSubmitting = false;
     }
 
-    /* 第二關邏輯 */
     function initLevel2() {
       l2UserAnswer = null;
       const allL2 = currentThemeData.level2;
       const selectedQ = allL2[Math.floor(Math.random() * allL2.length)];
       currentL2Question = {
-        ...selectedQ,
+        questionKey: selectedQ.questionKey,
+        img: selectedQ.img,
         options: shuffleArray(selectedQ.options)
       };
-      document.getElementById('l2QuestionText').innerText = currentL2Question.question;
+      const questionText = t(currentL2Question.questionKey);
+      document.getElementById('l2QuestionText').innerText = questionText;
       const imgContainer = document.getElementById('l2ImageContainer');
       imgContainer.innerHTML = '';
       if (currentL2Question.img) {
-        imgContainer.appendChild(createImageElement(currentL2Question.img, currentL2Question.question));
+        imgContainer.appendChild(createImageElement(currentL2Question.img, questionText));
       }
       const grid = document.getElementById('l2OptionsGrid');
       grid.innerHTML = '';
-      currentL2Question.options.forEach((opt, optIdx) => {
+      currentL2Question.options.forEach(function(opt, optIdx) {
         const card = document.createElement('div');
         card.className = 'option-card';
-        card.innerHTML = '<p style="font-size:1.15rem; font-weight:800; color:var(--text-main); margin:6px 0;">' + opt.text + '</p>';
+        card.innerHTML = '<p style="font-size:calc(18px * var(--font-scale)); font-weight:800; color:var(--text-main); margin:6px 0;">' + t(opt.textKey) + '</p>';
         card.onclick = function() { selectL2Option(optIdx); };
         grid.appendChild(card);
       });
@@ -1790,7 +2700,7 @@
     function selectL2Option(optIdx) {
       unlockAudioContext();
       l2UserAnswer = optIdx;
-      document.querySelectorAll('#l2OptionsGrid .option-card').forEach((card, idx) => {
+      document.querySelectorAll('#l2OptionsGrid .option-card').forEach(function(card, idx) {
         if (idx === optIdx) card.classList.add('selected');
         else card.classList.remove('selected');
       });
@@ -1800,7 +2710,7 @@
       unlockAudioContext();
       if (isSubmitting) return;
       if (l2UserAnswer === null) {
-        showCustomModal('再選一個答案喔！', '請先點選一個地點答案喔！');
+        showCustomModal(t('modal.l2_check_title'), t('modal.l2_check_msg'));
         return;
       }
       isSubmitting = true;
@@ -1814,30 +2724,25 @@
       isSubmitting = false;
     }
 
-    /* 第三關邏輯 */
-    function initLevel3() {
+function initLevel3() {
       l3SelectedIndices = [];
       const scenario = currentThemeData.level3[Math.floor(Math.random() * currentThemeData.level3.length)];
-      const targetOrder = ['掛號', '看醫生', '炒菜', '遛狗', '洗菜', '煮飯'];
-      let sortedOptions = [...scenario.options];
-      sortedOptions.sort((a, b) => {
-        let indexA = targetOrder.indexOf(a.text);
-        let indexB = targetOrder.indexOf(b.text);
-        if (indexA !== -1 && indexB !== -1) return indexA - indexB;
-        return 0;
-      });
+      
+      // 隨機打亂 6 個選項的排列順序
+      const randomizedOptions = shuffleArray(scenario.options);
 
-      currentL3Scenario = { ...scenario, options: sortedOptions };
-      document.getElementById('l3QuestionText').innerText = currentL3Scenario.question;
+      currentL3Scenario = { questionKey: scenario.questionKey, options: randomizedOptions };
+      document.getElementById('l3QuestionText').innerText = t(currentL3Scenario.questionKey);
       const grid = document.getElementById('l3OptionsGrid');
       grid.innerHTML = '';
-      currentL3Scenario.options.forEach((opt, idx) => {
+      currentL3Scenario.options.forEach(function(opt, idx) {
         const card = document.createElement('div');
         card.className = 'option-card';
         card.dataset.index = idx;
-        const imgEl = createImageElement(opt.img, opt.text);
+        const optText = t(opt.textKey);
+        const imgEl = createImageElement(opt.img, optText);
         const pEl = document.createElement('p');
-        pEl.innerText = opt.text;
+        pEl.innerText = optText;
         card.appendChild(imgEl);
         card.appendChild(pEl);
         card.onclick = function() { toggleL3Option(card, idx); };
@@ -1845,28 +2750,43 @@
       });
     }
 
+/* ==========================================
+       第三關選項點選邏輯（限制最多只能選 3 個）
+       ========================================== */
     function toggleL3Option(card, index) {
       unlockAudioContext();
       if (l3SelectedIndices.includes(index)) {
-        l3SelectedIndices = l3SelectedIndices.filter(i => i !== index);
+        // 已選過則取消選擇
+        l3SelectedIndices = l3SelectedIndices.filter(function(i) { return i !== index; });
         card.classList.remove('selected');
       } else {
+        // 若已經選滿 3 個，跳出「上限提醒」並阻止繼續點選
+        if (l3SelectedIndices.length >= 3) {
+          showCustomModal(t('modal.l3_limit_title'), t('modal.l3_limit_msg'));
+          return;
+        }
         l3SelectedIndices.push(index);
         card.classList.add('selected');
       }
     }
 
+    /* ==========================================
+       第三關提交驗證（未選滿 3 個時提醒）
+       ========================================== */
     function submitLevel3() {
       unlockAudioContext();
       if (isSubmitting) return;
-      if (l3SelectedIndices.length === 0) {
-        showCustomModal('再選一下答案喔！', '請點選 3 個合適的活動選項喔！');
+
+      // 檢查是否選滿 3 個（少於 3 個時擋下）
+      if (l3SelectedIndices.length < 3) {
+        showCustomModal(t('modal.l3_check_title'), t('modal.l3_check_msg')); // 提示：請點選 3 個合適的活動選項喔！
         return;
       }
+
       isSubmitting = true;
       let correctCount = 0;
       const options = currentL3Scenario.options;
-      l3SelectedIndices.forEach(idx => {
+      l3SelectedIndices.forEach(function(idx) {
         if (options[idx].correct) correctCount++;
       });
       const totalTarget = 3;
@@ -1876,64 +2796,77 @@
       showLevelResultPage('l3', scores.l3, correctCount, wrongCount);
       isSubmitting = false;
     }
+    /* ==========================================
+   動態向量 SVG 星星渲染函數
+   ========================================== */
+function renderStars(containerEl, score) {
+  if (!containerEl) return;
+  // 依分數決定星數：100分 3 金星 / 60~99分 2 金星 1 灰星 / 60分以下 1 金星 2 灰星
+  var goldStarsCount = (score === 100) ? 3 : ((score >= 60) ? 2 : 1);
+  var randId = Math.floor(Math.random() * 10000);
+  var starsHtml = '';
+  for (var s = 0; s < 3; s++) {
+    var isGold = (s < goldStarsCount);
+    var cStart = isGold ? "#FFC107" : "#E0E0E0";
+    var cEnd = isGold ? "#FF8F00" : "#BDBDBD";
+    var gradId = 'starGrad_' + randId + '_' + s;
+    
+    starsHtml += 
+      '<svg class="settlement-svg-star star-' + (s + 1) + '" viewBox="0 0 24 24">' +
+        '<defs>' +
+          '<linearGradient id="' + gradId + '" x1="0%" y1="0%" x2="0%" y2="100%">' +
+            '<stop offset="0%" stop-color="' + cStart + '"/>' +
+            '<stop offset="100%" stop-color="' + cEnd + '"/>' +
+          '</linearGradient>' +
+        '</defs>' +
+        '<path fill="url(#' + gradId + ')" d="M12 2l2.9 6.26 6.86.83-5.1 4.75 1.4 6.74L12 17.27l-6.06 3.31 1.4-6.74-5.1-4.75 6.86-.83L12 2z"/>' +
+      '</svg>';
+  }
+  containerEl.innerHTML = starsHtml;
+}
 
-    /* 渲染 3D 星星圖示 */
-    function renderStars(containerEl, starCount) {
-      if (!containerEl) return;
-      containerEl.innerHTML = '';
-      containerEl.classList.remove('active-anim');
-      void containerEl.offsetWidth;
-      for (let i = 1; i <= starCount; i++) {
-        const span = document.createElement('span');
-        span.className = 'star-icon';
-        span.innerText = '★';
-        containerEl.appendChild(span);
-      }
-      setTimeout(() => {
-        containerEl.classList.add('active-anim');
-      }, 20);
-    }
+function showLevelResultPage(levelKey, score, correctCount, wrongCount) {
+  updateNavUI();
+  showScreen('screenLevelResult');
 
-    /* 獨立關卡完成結果頁面 */
-    function showLevelResultPage(levelKey, score, correctCount, wrongCount) {
-      updateNavUI();
-      showScreen('screenLevelResult');
+  const titleEl = document.getElementById('lResultTitle');
+  const starsEl = document.getElementById('lResultStars');
+  const scoreEl = document.getElementById('lResultScore');
+  const correctEl = document.getElementById('lResultCorrect');
+  const wrongEl = document.getElementById('lResultWrong');
+  const msgEl = document.getElementById('lResultMsg');
+  const nextBtn = document.getElementById('lResultNextBtn');
+  const rowWrongWrapper = document.getElementById('row-wrong-wrapper');
 
-      const titleEl = document.getElementById('lResultTitle');
-      const starsEl = document.getElementById('lResultStars');
-      const scoreEl = document.getElementById('lResultScore');
-      const correctEl = document.getElementById('lResultCorrect');
-      const wrongEl = document.getElementById('lResultWrong');
-      const msgEl = document.getElementById('lResultMsg');
-      const nextBtn = document.getElementById('lResultNextBtn');
+  // 取得對應繪製獎牌與評語
+  const badgeData = getBadgeData(score);
 
-      scoreEl.innerText = '本關得分：' + score + ' 分';
-      correctEl.innerText = correctCount;
-      wrongEl.innerText = wrongCount;
+  scoreEl.innerHTML = badgeData.svg + ' ' + t('settle.score_pill') + badgeData.scoreText;
+  correctEl.innerText = correctCount;
+  wrongEl.innerText = wrongCount;
+  msgEl.innerText = badgeData.comment;
 
-      if (wrongCount === 0) {
-        msgEl.innerText = '答得很好！真棒！';
-      } else {
-        msgEl.innerText = '沒關係！一起看看正確答案，多練習就會越來越熟悉！';
-      }
+  if (wrongCount === 0) {
+    if (rowWrongWrapper) rowWrongWrapper.className = 'settlement-table-row row-wrong-perfect';
+  } else {
+    if (rowWrongWrapper) rowWrongWrapper.className = 'settlement-table-row row-wrong';
+  }
 
-      let starCount = 1;
-      if (levelKey === 'l1') {
-        titleEl.innerText = '第一關完成！';
-        nextBtn.innerText = '前往第二關';
-        starCount = 1;
-      } else if (levelKey === 'l2') {
-        titleEl.innerText = '第二關完成！';
-        nextBtn.innerText = '前往第三關';
-        starCount = 2;
-      } else if (levelKey === 'l3') {
-        titleEl.innerText = '第三關完成！';
-        nextBtn.innerText = '完成遊戲，查看總成績';
-        starCount = 3;
-      }
+  if (levelKey === 'l1') {
+    titleEl.innerText = t('settle.l1_done');
+    nextBtn.innerText = t('btn.to_l2');
+  } else if (levelKey === 'l2') {
+    titleEl.innerText = t('settle.l2_done');
+    nextBtn.innerText = t('btn.to_l3');
+  } else if (levelKey === 'l3') {
+    titleEl.innerText = t('settle.l3_done');
+    nextBtn.innerText = t('btn.to_summary');
+  }
 
-      renderStars(starsEl, starCount);
-    }
+  // 🌟 依據該關實際得分動態呈現 3 顆星星（金黃與灰色組合）
+  renderStars(starsEl, score);
+}
+
 
     function onLevelResultNext() {
       unlockAudioContext();
@@ -1946,60 +2879,65 @@
       }
     }
 
-    /* 總成績畫面邏輯 */
-    function goToFinalResult() {
-      showScreen('screenResult');
-      updateNavUI('summary');
+  function goToFinalResult() {
+  showScreen('screenResult');
+  updateNavUI('summary');
 
-      const isPerfect = (scores.l1 === 100 && scores.l2 === 100 && scores.l3 === 100);
-      const avgScore = Math.round((scores.l1 + scores.l2 + scores.l3) / 3);
+  const isPerfect = (scores.l1 === 100 && scores.l2 === 100 && scores.l3 === 100);
+  const avgScore = Math.round((scores.l1 + scores.l2 + scores.l3) / 3);
 
-      const greetingEl = document.getElementById('resultGreeting');
-      const celebrationOverlay = document.getElementById('perfectCelebrationOverlay');
-      const finalStarsEl = document.getElementById('finalResultStars');
-      const scoreTextEl = document.getElementById('finalScoreText');
-      const feedbackEl = document.getElementById('resultFeedback');
-      const soundCtrlEl = document.getElementById('soundControlArea');
-      const breakdownBox = document.getElementById('summaryBreakdownBox');
+  const greetingEl = document.getElementById('resultGreeting');
+  const celebrationOverlay = document.getElementById('perfectCelebrationOverlay');
+  const finalStarsEl = document.getElementById('finalResultStars');
+  const scoreTextEl = document.getElementById('finalScoreText');
+  const feedbackEl = document.getElementById('resultFeedback');
+  const soundCtrlEl = document.getElementById('soundControlArea');
+  const breakdownBox = document.getElementById('summaryBreakdownBox');
 
-      document.getElementById('scoreL1').innerText = scores.l1 + ' 分';
-      document.getElementById('scoreL2').innerText = scores.l2 + ' 分';
-      document.getElementById('scoreL3').innerText = scores.l3 + ' 分';
-      scoreTextEl.innerText = '總平均成績：' + avgScore + ' 分';
+  // 依關卡分數取得對應手繪 SVG 獎牌與評語資訊
+  const badgeL1 = getBadgeData(scores.l1);
+  const badgeL2 = getBadgeData(scores.l2);
+  const badgeL3 = getBadgeData(scores.l3);
 
-      renderStars(finalStarsEl, 3);
-      startConfetti();
+  document.getElementById('scoreL1').innerHTML = `${badgeL1.svg} <span style="vertical-align:middle; margin-left:4px;">${badgeL1.scoreText}</span>`;
+  document.getElementById('scoreL2').innerHTML = `${badgeL2.svg} <span style="vertical-align:middle; margin-left:4px;">${badgeL2.scoreText}</span>`;
+  document.getElementById('scoreL3').innerHTML = `${badgeL3.svg} <span style="vertical-align:middle; margin-left:4px;">${badgeL3.scoreText}</span>`;
 
-      soundCtrlEl.style.display = 'block';
-      playPerfectApplauseSound();
+  scoreTextEl.innerText = t('final.avg_label') + avgScore + t('settle.score_unit');
 
-      if (isPerfect) {
-        greetingEl.innerText = '太棒了！三關滿分！';
-        feedbackEl.innerText = '太厲害了！表現完全正確，給自己一個最棒的鼓勵！';
+  // 🌟 依據總平均分數動態呈現 3 顆星星
+  renderStars(finalStarsEl, avgScore);
+  startConfetti();
 
-        if (celebrationOverlay) {
-          celebrationOverlay.style.display = 'flex';
-          celebrationOverlay.classList.remove('active-anim');
-          void celebrationOverlay.offsetWidth;
-          celebrationOverlay.classList.add('active-anim');
-        }
+  soundCtrlEl.style.display = 'block';
+  playPerfectApplauseSound();
 
-        triggerBreakdownClapAnimation();
-      } else {
-        greetingEl.innerText = '恭喜完成全部三關！';
-        feedbackEl.innerText = '今天辛苦了！完成三關練習，給自己一個鼓勵！';
+  if (isPerfect) {
+    greetingEl.innerText = t('final.perfect_title');
+    feedbackEl.innerText = t('final.msg_perfect');
 
-        if (celebrationOverlay) {
-          celebrationOverlay.style.display = 'none';
-          celebrationOverlay.classList.remove('active-anim');
-        }
-
-        if (breakdownBox) {
-          breakdownBox.classList.remove('active-anim');
-        }
-      }
+    if (celebrationOverlay) {
+      celebrationOverlay.style.display = 'flex';
+      celebrationOverlay.classList.remove('active-anim');
+      void celebrationOverlay.offsetWidth;
+      celebrationOverlay.classList.add('active-anim');
     }
 
+    triggerBreakdownClapAnimation();
+  } else {
+    greetingEl.innerText = t('final.normal_title');
+    feedbackEl.innerText = t('final.msg_normal');
+
+    if (celebrationOverlay) {
+      celebrationOverlay.style.display = 'none';
+      celebrationOverlay.classList.remove('active-anim');
+    }
+
+    if (breakdownBox) {
+      breakdownBox.classList.remove('active-anim');
+    }
+  }
+}
     function restartGame() {
       stopConfetti();
       stopApplauseSound();
@@ -2015,8 +2953,6 @@
       showScreen('screenIntro');
     }
 
-    /* 彩帶動畫：少量紙片持續飄落，不間斷 */
-    let confettiInterval = null;
 
     function startConfetti() {
       stopConfetti();
@@ -2028,36 +2964,38 @@
       if (!ctx) return;
 
       const container = canvas.parentElement;
-      canvas.width = container?.clientWidth || window.innerWidth;
-      canvas.height = container?.clientHeight || window.innerHeight;
+      canvas.width = (container ? container.clientWidth : window.innerWidth);
+      canvas.height = (container ? container.clientHeight : window.innerHeight);
 
       const count = 28;
 
-      const particles = Array.from({ length: count }, () => ({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        color: [
-          '#F94174',
-          '#FFB703',
-          '#36B9D8',
-          '#55B96B',
-          '#9B6AD6',
-          '#F47C35'
-        ][Math.floor(Math.random() * 6)],
-        width: Math.random() * 4 + 4,
-        height: Math.random() * 7 + 6,
-        speed: Math.random() * 1.2 + 0.7,
-        drift: (Math.random() - 0.5) * 0.8,
-        sway: Math.random() * 0.7 + 0.2,
-        phase: Math.random() * Math.PI * 2,
-        rotation: Math.random() * Math.PI * 2,
-        rotationSpeed: (Math.random() - 0.5) * 0.1
-      }));
+      const particles = Array.from({ length: count }, function() {
+        return {
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          color: [
+            '#F94174',
+            '#FFB703',
+            '#36B9D8',
+            '#55B96B',
+            '#9B6AD6',
+            '#F47C35'
+          ][Math.floor(Math.random() * 6)],
+          width: Math.random() * 4 + 4,
+          height: Math.random() * 7 + 6,
+          speed: Math.random() * 1.2 + 0.7,
+          drift: (Math.random() - 0.5) * 0.8,
+          sway: Math.random() * 0.7 + 0.2,
+          phase: Math.random() * Math.PI * 2,
+          rotation: Math.random() * Math.PI * 2,
+          rotationSpeed: (Math.random() - 0.5) * 0.1
+        };
+      });
 
-      confettiInterval = setInterval(() => {
+      confettiInterval = setInterval(function() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        particles.forEach(p => {
+        particles.forEach(function(p) {
           p.y += p.speed;
           p.phase += 0.045;
           p.x += p.drift + Math.sin(p.phase) * p.sway;
@@ -2097,6 +3035,9 @@
         ctx.clearRect(0, 0, canvas.width, canvas.height);
       }
     }
+
+    // 頁面載入時讀取主平台的語言與字體大小設定，並立即更新所有靜態文字。
+    initDisplaySettings();
   </script>
 </body>
 </html>
