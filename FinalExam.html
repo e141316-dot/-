@@ -2823,7 +2823,81 @@ body[data-step="step-p1"] #test-status-sub {
 
 
 <!-- GitHub Pages 對接 Apps Script 後臺：必須在本文所有 google.script.run 呼叫之前載入。 -->
-<script src="./backend-bridge.js?v=20261123-2"></script>
+<script>
+/*
+ * GitHub Pages -> Cloudflare Worker -> Google Apps Script
+ * Inline bridge: placed before all FinalExam scripts so google.script.run exists
+ * even when this page is hosted on GitHub Pages rather than Apps Script HTML Service.
+ */
+(function () {
+  'use strict';
+
+  var BACKEND_API_URL = 'https://senior-cognitive-backend.e141316.workers.dev';
+
+  function createRunner(successHandler, failureHandler, userObject) {
+    var runnerCore = {
+      withSuccessHandler: function (handler) {
+        return createRunner(typeof handler === 'function' ? handler : null, failureHandler, userObject);
+      },
+      withFailureHandler: function (handler) {
+        return createRunner(successHandler, typeof handler === 'function' ? handler : null, userObject);
+      },
+      withUserObject: function (object) {
+        return createRunner(successHandler, failureHandler, object);
+      }
+    };
+
+    return new Proxy(runnerCore, {
+      get: function (target, property) {
+        if (property === 'then') return undefined;
+        if (Object.prototype.hasOwnProperty.call(target, property)) return target[property];
+        if (typeof property !== 'string' || property.charAt(0) === '_') return undefined;
+
+        return function () {
+          var args = Array.prototype.slice.call(arguments);
+          fetch(BACKEND_API_URL, {
+            method: 'POST',
+            mode: 'cors',
+            credentials: 'omit',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: property, args: args })
+          })
+            .then(function (response) {
+              return response.text().then(function (rawText) {
+                var data;
+                try {
+                  data = JSON.parse(rawText);
+                } catch (parseError) {
+                  throw new Error('後臺回應不是有效 JSON（HTTP ' + response.status + '）。');
+                }
+                if (!response.ok || (data && data.__transportError)) {
+                  throw new Error(String(data && data.message || ('後臺連線失敗（HTTP ' + response.status + '）。')));
+                }
+                return data;
+              });
+            })
+            .then(function (result) {
+              if (successHandler) successHandler(result, userObject);
+            })
+            .catch(function (error) {
+              if (failureHandler) failureHandler(error, userObject);
+              else console.error('[後臺橋接] ' + property + ' 呼叫失敗：', error);
+            });
+
+          return runnerCore;
+        };
+      }
+    });
+  }
+
+  // Preserve any existing google namespace, then provide the Apps Script-compatible runner.
+  window.google = window.google || {};
+  window.google.script = window.google.script || {};
+  window.google.script.run = createRunner(null, null, null);
+  window.__BACKEND_BRIDGE_READY__ = true;
+  console.info('[後臺橋接] 已載入，Worker：' + BACKEND_API_URL);
+})();
+</script>
 </head>
 <body>
   <div class="exam-wrapper">
@@ -10557,354 +10631,4 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
   line-height:1.5!important;
   text-align:left!important;
 }
-/* 錯誤訊息僅在按下確認但缺少必要數字時才插入；不使用固定提醒框。 */
-#step-p1 .p1-number-pad-error{
-  display:block;
-  margin:6px 0 0!important;
-  padding:0!important;
-  border:0!important;
-  background:transparent!important;
-  color:#8A4D27!important;
-  font-size:18px!important;
-  font-weight:800!important;
-  line-height:1.5!important;
-  text-align:left!important;
-  overflow-wrap:anywhere;
-}
-#step-p1 .p1-number-pad-error[hidden]{display:none!important}
-</style>
-<script id="unified-numeric-keypad-guidance-and-validation">
-(function(){
-  'use strict';
-  var byId=function(id){return document.getElementById(id);};
-  var input=byId('p1-answer-input');
-  var control=byId('p1-answer-control');
-  if(!input||!control)return;
-
-  var PROMPT='點擊輸入框即可使用數字鍵盤。';
-  var instruction=null;
-  var errorNode=null;
-  var lastQuestionKey='';
-  var lastObservedValue=String(input.value||'');
-  var t=function(value){
-    return typeof window.translateExamDisplayText==='function'
-      ? window.translateExamDisplayText(value) : value;
-  };
-
-  if(typeof window.EXAM_TEXT_TRANSLATIONS!=='undefined'){
-    Object.assign(window.EXAM_TEXT_TRANSLATIONS,{
-      '點擊輸入框即可使用數字鍵盤。':[
-        'Tap the input field to use the numeric keypad.',
-        '入力欄をタップして数字キーパッドを使用してください。',
-        '입력란을 눌러 숫자 키패드를 사용하세요.'
-      ],
-      '請先輸入年份，再確認本題。':[
-        'Enter the year before confirming this question.',
-        'この問題を確定する前に、年を入力してください。',
-        '이 문항을 확인하기 전에 연도를 입력하세요.'
-      ],
-      '請先輸入月份，再確認本題。':[
-        'Enter the month before confirming this question.',
-        'この問題を確定する前に、月を入力してください。',
-        '이 문항을 확인하기 전에 월을 입력하세요.'
-      ],
-      '請先輸入日期，再確認本題。':[
-        'Enter the date before confirming this question.',
-        'この問題を確定する前に、日付を入力してください。',
-        '이 문항을 확인하기 전에 날짜를 입력하세요.'
-      ],
-      '請先選擇國曆或農曆。':[
-        'Please select the Gregorian or lunar calendar first.',
-        '先に新暦または旧暦を選択してください。',
-        '먼저 양력 또는 음력을 선택하세요.'
-      ],
-      '請先選擇民國年、西元年或生肖。':[
-        'Please select Minguo year, Gregorian year, or zodiac first.',
-        '民国年、西暦年、または生肖を先に選択してください。',
-        '민국 연도, 서기 연도 또는 띠를 먼저 선택하세요.'
-      ],
-      '請輸入 1 到 12 的月份數字。':[
-        'Enter a month number from 1 to 12.',
-        '月は1から12までの数字で入力してください。',
-        '월은 1부터 12까지 숫자로 입력하세요.'
-      ]
-    });
-  }
-
-  function currentQuestion(){
-    try{return window.examState&&examState.p1&&examState.p1.questions
-      ? examState.p1.questions[examState.p1.currentIndex] : null;}catch(e){return null;}
-  }
-  function numericConfig(q){
-    q=q||currentQuestion();
-    if(!q||!window.examState||!examState.p1)return null;
-    var mode=examState.p1.currentMode;
-    if(q.type==='q1'&&(mode==='roc'||mode==='western'))return {kind:'year',key:'q1-'+mode};
-    if(q.type==='q2'&&(mode==='solar'||mode==='lunar'))return {kind:'month',key:'q2-'+mode};
-    if(q.type==='q3'&&(mode==='solar'||mode==='lunar'))return {kind:'date',key:'q3-'+mode};
-    return null;
-  }
-  function ensureNodes(){
-    if(!instruction||!instruction.isConnected){
-      instruction=document.createElement('p');
-      instruction.id='p1-number-pad-instruction';
-      instruction.className='p1-number-pad-instruction';
-      instruction.setAttribute('role','note');
-    }
-    if(!errorNode||!errorNode.isConnected){
-      errorNode=document.createElement('p');
-      errorNode.id='p1-number-pad-error';
-      errorNode.className='p1-number-pad-error';
-      errorNode.setAttribute('role','alert');
-      errorNode.setAttribute('aria-live','assertive');
-      errorNode.hidden=true;
-    }
-  }
-  function removeLegacyHints(){
-    Array.prototype.forEach.call(control.querySelectorAll(
-      '.number-pad-help,.p1-date-keypad-hint,#p1-date-keypad-hint,.lunar-month-note'
-    ),function(node){node.remove();});
-    var oldTrigger=byId('p1-number-pad-trigger-help');
-    if(oldTrigger)oldTrigger.remove();
-    var oldSubmitHint=byId('p1-submit-hint');
-    if(oldSubmitHint)oldSubmitHint.remove();
-    var staticLunarNote=byId('p1-lunar-month-note');
-    if(staticLunarNote)staticLunarNote.remove();
-  }
-  function placeAfterAnchor(node,anchor){
-    if(!node||!anchor||!anchor.parentNode)return;
-    if(anchor.nextSibling!==node)anchor.parentNode.insertBefore(node,anchor.nextSibling);
-  }
-  function clearInlineError(){
-    if(errorNode){errorNode.textContent='';errorNode.hidden=true;}
-    input.removeAttribute('aria-invalid');
-  }
-  function clearError(){
-    clearInlineError();
-    var monthFeedback=byId('p1-month-number-pad-feedback');
-    if(monthFeedback){monthFeedback.textContent='';monthFeedback.hidden=true;}
-    var numericFeedback=byId('p1-numeric-input-feedback');
-    if(numericFeedback){numericFeedback.textContent='';numericFeedback.hidden=true;}
-  }
-  function showError(message){
-    ensureNodes();
-    removeLegacyHints();
-    instruction.textContent=t(PROMPT);
-    // 保留原本依年份／月份／日期設定的輸入框 placeholder。
-    var anchor=input.closest?input.closest('.input-unit-wrap'):null;
-    if(!anchor||!control.contains(anchor))anchor=input;
-    placeAfterAnchor(instruction,anchor);
-    if(instruction.nextSibling!==errorNode)instruction.parentNode.insertBefore(errorNode,instruction.nextSibling);
-    var numericFeedback=byId('p1-numeric-input-feedback');
-    if(numericFeedback){numericFeedback.textContent='';numericFeedback.hidden=true;}
-    var monthFeedback=byId('p1-month-number-pad-feedback');
-    if(monthFeedback){monthFeedback.textContent='';monthFeedback.hidden=true;}
-    errorNode.textContent=t(message);
-    errorNode.hidden=false;
-    lastObservedValue=String(input.value||'');
-    input.setAttribute('aria-invalid','true');
-    input.setAttribute('aria-describedby','p1-number-pad-instruction p1-number-pad-error');
-  }
-  function isValidEntry(q,value){
-    if(!value||!/^\\d+$/.test(value))return false;
-    if(q.type==='q1')return true;
-    if(q.type==='q2')return Number(value)>=1&&Number(value)<=12;
-    if(q.type==='q3'){
-      var max=examState.p1.currentMode==='lunar'
-        ? (Number(q.lunarMonthLength)||30)
-        : (Number(q.solarDaysInMonth)||31);
-      return Number(value)>=1&&Number(value)<=max;
-    }
-    return false;
-  }
-  function syncGuidance(resetError){
-    var q=currentQuestion();
-    var cfg=numericConfig(q);
-    var key=cfg?cfg.key:'';
-    if(key!==lastQuestionKey){clearError();lastQuestionKey=key;}
-    removeLegacyHints();
-    if(!cfg){
-      if(instruction&&instruction.isConnected)instruction.remove();
-      if(errorNode&&errorNode.isConnected)errorNode.remove();
-      input.removeAttribute('aria-invalid');
-      return;
-    }
-    ensureNodes();
-    instruction.textContent=t(PROMPT);
-    // 保留原本依年份／月份／日期設定的輸入框 placeholder。
-    var anchor=input.closest?input.closest('.input-unit-wrap'):null;
-    if(!anchor||!control.contains(anchor))anchor=input;
-    placeAfterAnchor(instruction,anchor);
-    if(instruction.nextSibling!==errorNode)instruction.parentNode.insertBefore(errorNode,instruction.nextSibling);
-    if(resetError)clearError();
-    lastObservedValue=String(input.value||'');
-    var described=['p1-number-pad-instruction'];
-    if(!errorNode.hidden)described.push('p1-number-pad-error');
-    var status=byId('p1-numeric-input-feedback');
-    if(status&&!status.hidden)described.push(status.id);
-    input.setAttribute('aria-describedby',described.join(' '));
-  }
-
-  // 只在輸入／按鍵內容有變動時清除先前的空值提醒；清空後不自行顯示錯誤，等再次確認才提示。
-  function onValueChanged(){
-    var q=currentQuestion();
-    var cfg=numericConfig(q);
-    var value=String(input.value||'').trim();
-    if(value!==lastObservedValue){
-      // 欄位一有實際變動就清除先前的送出錯誤；清空後等下次按確認才再次提示。
-      clearInlineError();
-      lastObservedValue=value;
-    }
-    if(cfg&&isValidEntry(q,value)){
-      var numericFeedback=byId('p1-numeric-input-feedback');
-      if(numericFeedback){numericFeedback.textContent='';numericFeedback.hidden=true;}
-      var monthFeedback=byId('p1-month-number-pad-feedback');
-      if(monthFeedback){monthFeedback.textContent='';monthFeedback.hidden=true;}
-    }
-    syncGuidance(false);
-  }
-  if(input.dataset.unifiedNumericGuidanceBound!=='1'){
-    input.dataset.unifiedNumericGuidanceBound='1';
-    input.addEventListener('input',onValueChanged);
-    input.addEventListener('change',onValueChanged);
-  }
-
-  var priorUpdate=window.updateP1SubmitButton;
-  if(typeof priorUpdate==='function'){
-    window.updateP1SubmitButton=function(){
-      var result=priorUpdate.apply(this,arguments);
-      onValueChanged();
-      return result;
-    };
-  }
-  ['setP1Q1Mode','setP1Q2Mode','setP1Q3Mode','renderP1Question'].forEach(function(name){
-    var prior=window[name];
-    if(typeof prior==='function'){
-      window[name]=function(){
-        var result=prior.apply(this,arguments);
-        syncGuidance(true);
-        return result;
-      };
-    }
-  });
-
-  var priorSubmit=window.submitP1StandardQuestion;
-  if(typeof priorSubmit==='function'){
-    window.submitP1StandardQuestion=function(){
-      var q=currentQuestion();
-      var cfg=numericConfig(q);
-      var value=String(input.value||'').trim();
-      if(q&&q.type==='q1'&&!['roc','western','zodiac'].includes(examState.p1.currentMode)){
-        if(typeof window.showCustomAlert==='function')window.showCustomAlert(t('請先選擇民國年、西元年或生肖。'));
-        return;
-      }
-      if(q&&['q2','q3'].includes(q.type)&&!['solar','lunar'].includes(examState.p1.currentMode)){
-        if(typeof window.showCustomAlert==='function')window.showCustomAlert(t('請先選擇國曆或農曆。'));
-        return;
-      }
-      if(cfg&&!value){
-        var message=cfg.kind==='year'?'請先輸入年份，再確認本題。':
-          cfg.kind==='month'?'請先輸入月份，再確認本題。':'請先輸入日期，再確認本題。';
-        showError(message);
-        return;
-      }
-      if(cfg&&cfg.kind==='month'&&(!/^[1-9][0-9]?$/.test(value)||Number(value)<1||Number(value)>12)){
-        showError('請輸入 1 到 12 的月份數字。');
-        return;
-      }
-      clearError();
-      syncGuidance(false);
-      return priorSubmit.apply(this,arguments);
-    };
-  }
-
-  // 確認本題、切換題目、改變作答模式後重新同步；不改答案資料或評分流程。
-  syncGuidance(true);
-})();
-</script>
-
-
-<style id="platform-stage-title-hierarchy-final">
-/* 全平台標題層級統一：平台名稱略低於關卡識別；只調整標題字級、間距與關卡框。 */
-.header-area > .platform-title {
-  display: block;
-  width: 100%;
-  box-sizing: border-box;
-  margin: 12px 0 16px !important;
-  color: var(--color-dark, #2D3B2D) !important;
-  font-size: calc(31px * var(--font-scale, 1)) !important;
-  font-weight: 900 !important;
-  line-height: 1.3 !important;
-  letter-spacing: 0 !important;
-  text-align: center !important;
-  white-space: normal !important;
-  word-break: normal !important;
-  overflow-wrap: normal !important;
-}
-
-#single-progress-banner.single-progress-banner {
-  display: flex !important;
-  flex-direction: row !important;
-  flex-wrap: wrap !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 2px 8px !important;
-  width: 100% !important;
-  min-width: 0 !important;
-  min-height: 66px !important;
-  height: auto !important;
-  box-sizing: border-box !important;
-  margin: 0 0 18px !important;
-  padding: 8px 14px !important;
-  border: 1.5px solid var(--color-green, #4F7058) !important;
-  border-radius: 14px !important;
-  background: #FFFFFF !important;
-  color: var(--color-dark, #2D3B2D) !important;
-  font-size: calc(24px * var(--font-scale, 1)) !important;
-  font-weight: 900 !important;
-  line-height: 1.35 !important;
-  text-align: center !important;
-  white-space: normal !important;
-  overflow-wrap: anywhere;
-}
-
-#single-progress-banner.single-progress-banner[hidden] {
-  display: none !important;
-}
-
-#single-progress-banner .progress-banner-progress,
-#single-progress-banner .progress-banner-stage,
-#single-progress-banner .progress-banner-sep {
-  display: inline-block !important;
-  flex: 0 1 auto !important;
-  min-width: 0 !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  color: inherit !important;
-  font-size: inherit !important;
-  font-weight: 900 !important;
-  line-height: inherit !important;
-  text-align: center !important;
-  white-space: normal !important;
-  overflow-wrap: anywhere !important;
-}
-
-/* 手機維持閱讀字級與置中；只有必要時自然換行，不壓縮或裁切關卡名稱。 */
-@media (max-width: 520px) {
-  .header-area > .platform-title {
-    font-size: calc(30px * var(--font-scale, 1)) !important;
-    margin-bottom: 16px !important;
-  }
-  #single-progress-banner.single-progress-banner {
-    font-size: calc(23px * var(--font-scale, 1)) !important;
-    min-height: 66px !important;
-    padding: 8px 10px !important;
-    gap: 2px 6px !important;
-  }
-}
-</style>
-
-
-<script src="./speech-input.js"></script>
-</body>
-</html>
+/* 錯誤訊息僅在按下確
