@@ -30,9 +30,13 @@
       margin-bottom: 16px;
       text-align: center;
     }
-    .category-nav { position: absolute; left: 0; top: 0; display: flex; gap: 10px; }
+    .category-nav { position: absolute; left: 0; top: 0; display: flex; gap: 10px; z-index: 30; }
 
     .category-back-btn {
+      position: relative;
+      z-index: 31;
+      pointer-events: auto;
+      touch-action: manipulation;
       display: inline-flex; align-items: center; justify-content: center;
       padding: 8px 18px; background-color: #FFFFFF;
       color: #35473C; border: 1px solid #E4E9DF;
@@ -269,7 +273,7 @@
 <div class="category-container">
   <header class="category-header">
     <div class="category-nav">
-      <a href="./index.html" class="category-back-btn" data-i18n="nav.backHome">← 返回首頁</a>
+      <a href="https://e141316-dot.github.io/-/index.html" target="_self" rel="noopener" class="category-back-btn" data-i18n="nav.backHome" aria-label="返回平台首頁">← 返回首頁</a>
     </div>
     <h1 class="category-title" data-i18n="cat.title">遊戲分類</h1>
     <p class="category-subtitle" data-i18n="cat.subtitle">依照自己的興趣，選擇想練習的遊戲。</p>
