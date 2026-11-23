@@ -2441,7 +2441,7 @@ html[lang="ja"] * {
 
 </style>
 </head>
-<body data-base-url="<?!= baseUrl ?>">
+<body>
 
 <div id="app-container">
   <!-- 1. 第一層：選擇等級 -->
@@ -3499,42 +3499,25 @@ html[lang="ja"] * {
     const elGameBackTier = document.getElementById('btn-game-back-tier'); if (elGameBackTier) elGameBackTier.textContent = t('nav.back_tier');
   }
 
-  function getBaseUrl() {
-    var baseUrl = document.body.getAttribute('data-base-url');
-    if (!baseUrl || baseUrl.indexOf('http') !== 0) {
-      try {
-        baseUrl = window.top.location.href.split('?')[0].split('#')[0];
-      } catch(e) {
-        baseUrl = window.location.href.split('?')[0].split('#')[0];
-      }
-    }
-    return baseUrl;
+  // GitHub Pages 靜態頁面導覽：直接前往遊戲分類頁，不再提交 Apps Script 的 page 參數。
+  function navigateToStaticPage(pageName) {
+    var pageFiles = {
+      'level_select': './LevelSelect.html',
+      'home': './index.html'
+    };
+    var targetFile = pageFiles[pageName] || pageName;
+    var targetUrl = new URL(targetFile, window.location.href);
+
+    // 保留目前語言與字體大小設定，讓返回遊戲分類後仍維持相同偏好。
+    targetUrl.searchParams.set('lang', currentLang || 'zh-TW');
+    targetUrl.searchParams.set('fontScale', currentFontScale || '100');
+
+    window.location.assign(targetUrl.toString());
   }
 
-  function postNavigate(pageName) {
-    var baseUrl = getBaseUrl();
-    var form = document.createElement('form');
-    form.method = 'GET';
-    form.action = baseUrl;
-    form.target = '_top';
-    
-    var pageInput = document.createElement('input');
-    pageInput.type = 'hidden'; pageInput.name = 'page'; pageInput.value = pageName;
-    form.appendChild(pageInput);
-
-    var langInput = document.createElement('input');
-    langInput.type = 'hidden'; langInput.name = 'lang'; langInput.value = currentLang;
-    form.appendChild(langInput);
-
-    var fontInput = document.createElement('input');
-    fontInput.type = 'hidden'; fontInput.name = 'fontScale'; fontInput.value = currentFontScale;
-    form.appendChild(fontInput);
-
-    document.body.appendChild(form);
-    form.submit();
+  function goToGameCategories() {
+    navigateToStaticPage('level_select');
   }
-
-  function goToGameCategories() { postNavigate('level_select'); }
 
   // 題目生成函式仍會使用此翻譯鍵；保留常數，但遊戲畫面不再顯示灰字副標。
   const UNIFIED_PROMPT_KEY = "prompt.unified";
