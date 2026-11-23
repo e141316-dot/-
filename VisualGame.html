@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
+  <base target="_self">
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>視覺建構｜畫畫看連連看 - 認知訓練 App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>畫畫看連連看 - 認知訓練 App</title>
   <style>
     /* ==========================================
-       1. 全域樣式與配色變數
+       1. 全域樣式與奶油白柔和綠色系主題
        ========================================== */
     :root {
       --bg-page: #FCFBF7;         /* 頁面整體背景 */
@@ -14,14 +15,21 @@
       --text-main: #35473C;       /* 一般內文說明文字 */
       --bg-subtle: #EAF0E7;       /* 說明區塊、得分膠囊背景 */
       --border-radius: 16px;
-      --font-family: system-ui, "Microsoft JhengHei", "PingFang TC", Arial, sans-serif;
+      --font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-scale: 1;
+      --base-font-size: 16px;
     }
+
+    body.font-scale-90 { --font-scale: 0.9; }
+    body.font-scale-100 { --font-scale: 1.0; }
+    body.font-scale-115 { --font-scale: 1.15; }
+    body.font-scale-130 { --font-scale: 1.3; }
 
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: var(--font-family) !important;
+      font-family: var(--font-family);
       -webkit-tap-highlight-color: transparent;
     }
 
@@ -42,6 +50,8 @@
       padding-bottom: 24px;
       overflow-x: hidden;
       overflow-y: auto;
+      font-size: calc(var(--base-font-size) * var(--font-scale));
+      line-height: 1.5;
     }
 
     header, main, .settlement-card, .modal-overlay {
@@ -61,7 +71,7 @@
     }
 
     header h1 {
-      font-size: clamp(22px, 5.5vw, 32px);
+      font-size: calc(26px * var(--font-scale));
       font-weight: 700;
       color: var(--primary-sage);
       margin-bottom: 24px;
@@ -71,43 +81,128 @@
       word-break: break-word;
     }
 
+    /* 繪圖頁版頭固定採「返回鍵 → 遊戲標題 → 關卡導覽」順序。
+       以 flex order 明確指定，避免實際遊戲頁仍將返回鍵排在關卡導覽下方。 */
+    header#header-nav:not(.hidden) {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    header#header-nav > .drawing-back-wrap {
+      order: 0;
+      align-self: stretch;
+      width: 92%;
+      max-width: 800px;
+      margin: 0 auto 8px;
+      padding-top: 0;
+    }
+
+    header#header-nav > #lbl-app-header-title {
+      order: 1;
+    }
+
+    header#header-nav > #nav-bar {
+      order: 2;
+    }
+
     .nav-bar {
       display: flex;
       justify-content: center;
-      align-items: center;
-      gap: 14px;
+      align-items: stretch;
+      gap: 12px;
       width: 92%;
       max-width: 800px;
       margin: 0 auto;
     }
 
-    .nav-item {
-      flex: 1 1 0px;
-      height: 48px;
-      background-color: var(--bg-subtle);
-      color: var(--primary-sage);
-      padding: 0 4px;
-      border-radius: 30px;
-      font-size: clamp(0.9rem, 3.2vw, 1.15rem);
-      font-weight: bold;
+    /* 最終總結算時，隱藏四個關卡按鈕，只顯示中央「總成績」膠囊。 */
+    .nav-bar.total-summary-nav { justify-content: center; }
+    .nav-bar.total-summary-nav > .nav-item { display: none; }
+    .nav-bar .total-nav-item {
       display: flex;
+      flex: 0 0 auto;
+      width: min(220px, 52vw);
+      min-height: 56px;
+      box-sizing: border-box;
       align-items: center;
       justify-content: center;
+      background-color: var(--primary-sage, #4F7058);
+      color: #FFFFFF;
+      border-radius: 28px;
+      font-size: calc(16px * var(--font-scale));
+      font-weight: bold;
+      padding: 6px 18px;
+    }
+
+    /* 依照「看時間回答遊戲」的導覽樣式：上方關卡、下方任務名稱。 */
+    .nav-item {
+      flex: 1 1 0px;
+      min-width: 0;
+      min-height: 72px;
+      background-color: #ECEFEA;
+      color: #AEB7B0;
+      padding: 8px 5px;
+      border-radius: 30px;
+      font-size: calc(16px * var(--font-scale));
+      font-weight: bold;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
       text-align: center;
-      white-space: nowrap;
+      white-space: normal;
+      line-height: 1.25;
       border: none;
     }
 
-    .nav-item.active {
-      background-color: #FFFFFF;
-      color: var(--primary-sage);
-      border: 2px solid var(--primary-sage);
+    .nav-stage-label {
+      display: block;
+      font-size: calc(16px * var(--font-scale));
+      font-weight: 800;
+      line-height: 1.25;
     }
 
-    .nav-item.completed {
-      border: 2px solid var(--primary-sage);
+    .nav-stage-desc {
+      display: block;
+      font-size: calc(14px * var(--font-scale));
+      font-weight: 700;
+      line-height: 1.25;
+      opacity: 0.9;
+    }
+
+    .nav-item.active {
+      background-color: var(--primary-sage);
+      color: #FFFFFF;
+      border: none;
+      box-shadow: 0 5px 12px rgba(53, 71, 60, 0.18);
+    }
+
+    .nav-item.completed:not(.active) {
+      background-color: #DCE6D8;
+      color: var(--primary-sage);
+      border: 1px solid #C7D5C6;
+      box-shadow: none;
+    }
+
+    @media (max-width: 480px) {
+      .nav-bar {
+        width: 100%;
+        gap: 6px;
+      }
+      .nav-item {
+        min-height: 66px;
+        padding: 7px 2px;
+      }
+      .nav-stage-label {
+        font-size: calc(13px * var(--font-scale));
+      }
+      .nav-stage-desc {
+        font-size: calc(11px * var(--font-scale));
+      }
     }
 
     main {
@@ -140,8 +235,8 @@
       background-color: var(--bg-subtle);
       border: none;
       color: var(--primary-sage);
-      font-size: 17px;
-      font-weight: 500;
+      font-size: calc(16px * var(--font-scale));
+      font-weight: 700;
       text-decoration: none;
       min-height: 44px;
       padding: 0 18px;
@@ -168,7 +263,7 @@
 
     .intro-header-title {
       color: var(--primary-sage);
-      font-size: clamp(22px, 5.5vw, 32px);
+      font-size: calc(28px * var(--font-scale));
       font-weight: 700;
       text-align: center;
       margin-bottom: 16px;
@@ -182,30 +277,46 @@
       padding: 12px 16px;
       text-align: center;
       color: var(--text-main);
-      font-size: 18px;
-      font-weight: 400;
+      font-size: calc(17px * var(--font-scale));
+      font-weight: 600;
       margin-bottom: 24px;
       line-height: 1.5;
     }
 
+    /* 四關說明合併為單一白色大框，列與列之間以淡灰綠虛線分隔。 */
     .intro-list {
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 0;
       margin-bottom: 24px;
+      background: #FFFFFF;
+      border: 1.5px solid #E4E9DF;
+      border-radius: 16px;
+      overflow: hidden;
     }
 
     .intro-card {
-      background: var(--bg-page);
-      border-radius: 16px;
-      border: 1.5px solid #EAF0E7;
-      padding: 16px 20px;
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      padding: 18px 20px;
       display: flex;
       flex-direction: row;
       align-items: center;
       gap: 16px;
       box-shadow: none;
       height: auto;
+    }
+
+    .intro-card:not(:last-child) {
+      border-bottom: 1.5px dashed #E4E9DF;
+    }
+
+    @media (max-width: 480px) {
+      .intro-card {
+        padding: 16px 14px;
+        gap: 12px;
+      }
     }
 
     .intro-svg-box {
@@ -235,14 +346,14 @@
     }
 
     .intro-card-title {
-      font-size: 21px;
+      font-size: calc(20px * var(--font-scale));
       font-weight: 700;
       color: var(--primary-sage);
       margin-bottom: 6px;
     }
 
     .intro-card-desc {
-      font-size: 18px;
+      font-size: calc(16px * var(--font-scale));
       font-weight: 400;
       line-height: 1.5;
       color: var(--text-main);
@@ -263,7 +374,7 @@
       min-height: 52px;
       background-color: var(--primary-sage);
       color: #ffffff;
-      font-size: 20px;
+      font-size: calc(19px * var(--font-scale));
       font-weight: 700;
       border: none;
       border-radius: 30px;
@@ -278,37 +389,176 @@
       background-color: #35473C;
     }
 
+    /* 首頁高度最佳化：平板與一般螢幕高度較矮時，減少裝飾性留白，
+       優先讓四關說明與「開始遊戲」按鈕完整出現在同一個畫面。 */
+    @media screen and (min-width: 481px) and (max-height: 900px) {
+      main {
+        margin-top: 12px;
+      }
+
+      .intro-back-wrap {
+        margin-bottom: 8px;
+        padding-top: 0;
+      }
+
+      .intro-header-title {
+        font-size: calc(26px * var(--font-scale));
+        margin-bottom: 10px;
+      }
+
+      .intro-notice {
+        padding: 9px 14px;
+        margin-bottom: 14px;
+        line-height: 1.4;
+      }
+
+      .intro-list {
+        margin-bottom: 12px;
+      }
+
+      .intro-card {
+        padding: 12px 18px;
+        gap: 14px;
+      }
+
+      .intro-svg-box {
+        width: 76px;
+        height: 76px;
+        min-width: 76px;
+        min-height: 76px;
+      }
+
+      .intro-svg-box svg {
+        width: 52px;
+        height: 52px;
+      }
+
+      .intro-card-title {
+        font-size: calc(19px * var(--font-scale));
+        margin-bottom: 3px;
+      }
+
+      .intro-card-desc {
+        font-size: calc(16px * var(--font-scale));
+        line-height: 1.35;
+      }
+
+      .intro-btn-wrap {
+        margin-top: 4px;
+      }
+
+      .intro-start-btn {
+        min-height: 50px;
+      }
+
+      body {
+        padding-bottom: 10px;
+      }
+    }
+
+    /* 較矮的手機視窗：進一步收緊列高，但保留長輩易讀的文字尺寸。 */
+    @media screen and (max-width: 480px) and (max-height: 760px) {
+      main {
+        margin-top: 8px;
+      }
+
+      .intro-back-wrap {
+        margin-bottom: 6px;
+        padding-top: 0;
+      }
+
+      .btn-back-category {
+        min-height: 40px;
+        padding: 0 14px;
+        font-size: calc(15px * var(--font-scale));
+      }
+
+      .intro-header-title {
+        font-size: calc(24px * var(--font-scale));
+        margin-bottom: 8px;
+      }
+
+      .intro-notice {
+        padding: 7px 12px;
+        font-size: calc(16px * var(--font-scale));
+        line-height: 1.35;
+        margin-bottom: 10px;
+      }
+
+      .intro-list {
+        margin-bottom: 10px;
+      }
+
+      .intro-card {
+        padding: 10px 12px;
+        gap: 10px;
+      }
+
+      .intro-svg-box {
+        width: 64px;
+        height: 64px;
+        min-width: 64px;
+        min-height: 64px;
+      }
+
+      .intro-svg-box svg {
+        width: 46px;
+        height: 46px;
+      }
+
+      .intro-card-title {
+        font-size: calc(18px * var(--font-scale));
+        margin-bottom: 2px;
+      }
+
+      .intro-card-desc {
+        font-size: calc(16px * var(--font-scale));
+        line-height: 1.3;
+      }
+
+      .intro-btn-wrap {
+        margin-top: 4px;
+      }
+
+      .intro-start-btn {
+        min-height: 48px;
+        font-size: calc(18px * var(--font-scale));
+      }
+
+      body {
+        padding-bottom: 8px;
+      }
+    }
+
     .question-box {
-      background-color: var(--bg-subtle);
+      width: 100%;
+      background-color: #FFFFFF;
       border-radius: 16px;
       border: none;
-      padding: 22px 20px;
+      padding: 14px 18px;
       margin-bottom: 24px;
       text-align: center;
     }
 
     .stage-box-title {
-      font-size: 23px;
-      font-weight: 700;
-      color: var(--primary-sage);
-      text-align: center;
-      margin-bottom: 10px;
-      line-height: 1.3;
+      /* 保留 DOM 供原有關卡程式更新，但題目區不再顯示「第一關｜畫圓圈」等標題。 */
+      display: none !important;
     }
 
     .question-text {
-      font-size: 21px;
-      font-weight: 400;
+      white-space: pre-line;
+      font-size: calc(20px * var(--font-scale));
+      font-weight: 700;
       color: var(--text-main);
       text-align: center;
-      line-height: 1.5;
+      line-height: 1.45;
     }
 
     .target-time-badge {
       display: inline-block;
       background-color: var(--primary-sage);
       color: #ffffff;
-      font-size: 20px;
+      font-size: calc(18px * var(--font-scale));
       font-weight: bold;
       padding: 6px 18px;
       border-radius: 20px;
@@ -319,12 +569,16 @@
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
-      gap: 14px;
+      gap: 12px;
       margin-bottom: 26px;
     }
 
     .btn-tool {
-      font-size: 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: calc(16px * var(--font-scale));
       font-weight: bold;
       border: 1.5px solid var(--primary-sage);
       border-radius: 25px;
@@ -335,12 +589,33 @@
       cursor: pointer;
     }
 
+    /* 工具按鈕使用自行繪製的 SVG 線條圖示，不使用 Emoji 或文字符號。 */
+    .btn-tool .tool-icon {
+      display: block;
+      width: 20px;
+      height: 20px;
+      flex: 0 0 20px;
+      color: currentColor;
+      pointer-events: none;
+    }
+
+    .btn-tool .tool-label {
+      display: inline-block;
+      white-space: nowrap;
+    }
+
     .btn-tool.selected {
       background: var(--primary-sage);
       color: #ffffff;
     }
 
     .canvas-wrap {
+      position: relative;
+      isolation: isolate;
+      touch-action: none !important;
+      overscroll-behavior: contain !important;
+      -webkit-user-select: none !important;
+      user-select: none !important;
       width: 520px;
       height: 520px;
       aspect-ratio: 1 / 1;
@@ -351,36 +626,25 @@
       overflow: hidden;
       background: #ffffff;
       touch-action: none !important;
+      -ms-touch-action: none !important;
       overscroll-behavior: none !important;
       -webkit-user-select: none !important;
-      -moz-user-select: none !important;
-      -ms-user-select: none !important;
       user-select: none !important;
       -webkit-touch-callout: none !important;
-      -webkit-tap-highlight-color: transparent !important;
     }
 
     canvas {
+      position: relative;
+      z-index: 1;
+      pointer-events: auto;
       width: 100% !important;
       height: 100% !important;
       display: block;
       touch-action: none !important;
       overscroll-behavior: none !important;
       -webkit-user-select: none !important;
-      -moz-user-select: none !important;
-      -ms-user-select: none !important;
       user-select: none !important;
       -webkit-touch-callout: none !important;
-      -webkit-tap-highlight-color: transparent !important;
-    }
-
-    .status-text {
-      text-align: center;
-      font-size: 1rem;
-      font-weight: bold;
-      color: var(--text-main);
-      margin-top: 12px;
-      min-height: 24px;
     }
 
     .action-bar {
@@ -396,7 +660,7 @@
       height: 52px;
       background-color: var(--primary-sage);
       color: #ffffff;
-      font-size: 20px;
+      font-size: calc(19px * var(--font-scale));
       font-weight: 800;
       border: none;
       border-radius: 30px;
@@ -412,7 +676,7 @@
       background-color: var(--bg-subtle);
       color: var(--text-main);
       border-radius: 12px;
-      font-size: 17px;
+      font-size: calc(15px * var(--font-scale));
       font-weight: 500;
       text-align: center;
       line-height: 1.5;
@@ -429,6 +693,7 @@
       text-align: center;
       overflow: hidden;
     }
+
     .settlement-card > *:not(.confetti-container):not(.clapping-popup-overlay) {
       position: relative;
       z-index: 2;
@@ -436,7 +701,7 @@
 
     .settlement-title {
       color: var(--primary-sage);
-      font-size: clamp(1.3rem, 4.2vw, 1.75rem);
+      font-size: calc(24px * var(--font-scale));
       font-weight: 800;
       margin: 0 auto 12px auto;
       text-align: center;
@@ -455,26 +720,29 @@
     }
 
     .trophy-icon {
-      font-size: clamp(2.8rem, 8vw, 3.8rem);
+      font-size: 3.5rem;
       line-height: 1;
       display: inline-block;
       filter: drop-shadow(0 4px 10px rgba(255, 193, 7, 0.5));
       animation: trophyGlow 2.5s ease-in-out infinite alternate;
     }
+
     @keyframes trophyGlow {
       0% { transform: scale(1); }
       100% { transform: scale(1.06); }
     }
 
     .four-point-star-svg {
-      width: clamp(28px, 6vw, 38px);
-      height: clamp(28px, 6vw, 38px);
+      width: 32px;
+      height: 32px;
       display: inline-block;
       animation: starPulse 2.2s ease-in-out infinite alternate;
     }
+
     .four-point-star-svg.star-right {
       animation-delay: 0.8s;
     }
+
     @keyframes starPulse {
       0% { transform: scale(0.92) rotate(-6deg); opacity: 0.82; }
       100% { transform: scale(1.12) rotate(6deg); opacity: 1; }
@@ -488,6 +756,95 @@
       margin: 10px 0 16px 0;
     }
 
+    /* 總成績星星：依總平均顯示金星與灰星，門檻比照語意聯想。 */
+    .total-settlement-stars {
+      gap: 12px;
+      margin: 6px 0 10px 0;
+    }
+    .total-settlement-star {
+      display: inline-block;
+      opacity: 0;
+      transform: translateY(-28px) scale(0.6);
+      animation: totalSettlementStarDrop 0.65s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+    }
+    .total-settlement-star .total-star-svg {
+      width: clamp(40px, 9.5vw, 50px);
+      height: clamp(40px, 9.5vw, 50px);
+      display: block;
+    }
+    .total-settlement-star.gold .total-star-svg {
+      filter: drop-shadow(0 3px 6px rgba(245, 158, 11, 0.45));
+    }
+    .total-settlement-star.grey .total-star-svg {
+      filter: none;
+    }
+    .total-settlement-star.star-1 { animation-delay: 0.1s; }
+    .total-settlement-star.star-2 { animation-delay: 0.25s; }
+    .total-settlement-star.star-3 { animation-delay: 0.4s; }
+    @keyframes totalSettlementStarDrop {
+      0% { opacity: 0; transform: translateY(-50px) scale(0.6); }
+      70% { opacity: 1; transform: translateY(5px) scale(1.12); }
+      85% { transform: translateY(-2px) scale(0.98); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* 總成績獎牌與平均分數置中排列。 */
+    .total-settlement-score-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    /* 總成績滿分獎盃，使用語意聯想相同的 SVG 獎盃與兩側星光。 */
+    .total-perfect-graphic-group {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin: 2px 0;
+      position: relative;
+    }
+    .total-perfect-side-decor {
+      position: relative;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .total-perfect-decor-stars {
+      position: absolute;
+      width: 36px;
+      height: 36px;
+      opacity: 0;
+      transform: scale(0);
+      animation: totalPerfectDecorFadeIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.2s forwards;
+      filter: drop-shadow(0 2px 4px rgba(255, 179, 0, 0.4));
+    }
+    .total-perfect-trophy-svg {
+      width: clamp(58px, 16vw, 76px);
+      height: clamp(58px, 16vw, 76px);
+      filter: drop-shadow(0 4px 10px rgba(255, 179, 0, 0.45));
+      animation: totalPerfectTrophyPopIn 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards,
+                 totalPerfectTrophyFloat 3s ease-in-out 0.7s infinite alternate;
+    }
+    @keyframes totalPerfectDecorFadeIn {
+      0% { opacity: 0; transform: scale(0) rotate(-20deg); }
+      70% { opacity: 1; transform: scale(1.2) rotate(10deg); }
+      100% { opacity: 1; transform: scale(1) rotate(0deg); }
+    }
+    @keyframes totalPerfectTrophyPopIn {
+      0% { transform: translateY(-30px) scale(0.2); opacity: 0; }
+      60% { transform: translateY(4px) scale(1.15); opacity: 1; }
+      80% { transform: translateY(-2px) scale(0.95); }
+      100% { transform: translateY(0) scale(1); opacity: 1; }
+    }
+    @keyframes totalPerfectTrophyFloat {
+      0% { transform: translateY(0) rotate(0deg); }
+      100% { transform: translateY(-5px) rotate(3deg); }
+    }
+
     .star-wrapper {
       position: relative;
       display: inline-flex;
@@ -496,8 +853,8 @@
     }
 
     .five-point-star-icon {
-      width: clamp(38px, 8vw, 48px);
-      height: clamp(38px, 8vw, 48px);
+      width: 42px;
+      height: 42px;
       fill: #FFB300;
       display: inline-block;
       opacity: 0;
@@ -512,27 +869,14 @@
     .star-wrapper.star-3 .five-point-star-icon { animation-delay: 0.55s, 1.1s; }
 
     @keyframes starPopIn {
-      0% {
-        opacity: 0;
-        transform: scale(0) rotate(-25deg);
-      }
-      70% {
-        opacity: 1;
-        transform: scale(1.25) rotate(8deg);
-      }
-      100% {
-        opacity: 1;
-        transform: scale(0deg);
-      }
+      0% { opacity: 0; transform: scale(0) rotate(-25deg); }
+      70% { opacity: 1; transform: scale(1.25) rotate(8deg); }
+      100% { opacity: 1; transform: scale(1); }
     }
 
     @keyframes starGlowPulse {
-      0%, 100% {
-        filter: drop-shadow(0 2px 6px rgba(255, 179, 0, 0.5));
-      }
-      50% {
-        filter: drop-shadow(0 0 12px rgba(255, 215, 0, 0.95)) drop-shadow(0 0 20px rgba(255, 193, 7, 0.7));
-      }
+      0%, 100% { filter: drop-shadow(0 2px 6px rgba(255, 179, 0, 0.5)); }
+      50% { filter: drop-shadow(0 0 12px rgba(255, 215, 0, 0.95)) drop-shadow(0 0 20px rgba(255, 193, 7, 0.7)); }
     }
 
     .sparkle-icon {
@@ -543,19 +887,8 @@
       animation: sparkleFlash 1.6s ease-in-out forwards;
     }
 
-    .sparkle-top {
-      top: -8px;
-      right: -8px;
-      width: 16px;
-      height: 16px;
-    }
-
-    .sparkle-bottom {
-      bottom: -6px;
-      left: -6px;
-      width: 12px;
-      height: 12px;
-    }
+    .sparkle-top { top: -8px; right: -8px; width: 16px; height: 16px; }
+    .sparkle-bottom { bottom: -6px; left: -6px; width: 12px; height: 12px; }
 
     .star-wrapper.star-1 .sparkle-top { animation-delay: 0.5s; }
     .star-wrapper.star-1 .sparkle-bottom { animation-delay: 0.65s; }
@@ -565,39 +898,10 @@
     .star-wrapper.star-3 .sparkle-bottom { animation-delay: 1.05s; }
 
     @keyframes sparkleFlash {
-      0% {
-        opacity: 0;
-        transform: scale(0) rotate(0deg);
-      }
-      40% {
-        opacity: 1;
-        transform: scale(1.4) rotate(45deg);
-      }
-      70% {
-        opacity: 0.85;
-        transform: scale(1) rotate(90deg);
-      }
-      100% {
-        opacity: 0;
-        transform: scale(0) rotate(135deg);
-      }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      .five-point-star-icon {
-        animation: none !important;
-        opacity: 1 !important;
-        transform: none !important;
-        filter: drop-shadow(0 2px 6px rgba(255, 179, 0, 0.5));
-      }
-      .sparkle-icon {
-        display: none !important;
-      }
-      .trophy-icon, .four-point-star-svg, .confetti-piece, .clapping-popup-overlay {
-        animation: none !important;
-        opacity: 1 !important;
-        transform: none !important;
-      }
+      0% { opacity: 0; transform: scale(0) rotate(0deg); }
+      40% { opacity: 1; transform: scale(1.4) rotate(45deg); }
+      70% { opacity: 0.85; transform: scale(1) rotate(90deg); }
+      100% { opacity: 0; transform: scale(0) rotate(135deg); }
     }
 
     .settlement-score-pill {
@@ -607,23 +911,20 @@
       padding: 8px 24px;
       border-radius: 30px;
       display: inline-block;
-      font-size: clamp(1.05rem, 3.5vw, 1.25rem);
+      font-size: calc(18px * var(--font-scale));
       font-weight: bold;
       margin: 4px 0 0 0;
     }
 
     .settlement-encouragement-text {
       color: var(--primary-sage);
-      font-size: 19px;
+      font-size: calc(18px * var(--font-scale));
       font-weight: 700;
       line-height: 1.5;
       text-align: center;
       margin-top: 14px;
       margin-bottom: 18px;
-      background: none !important;
-      border: none !important;
       padding: 0 !important;
-      box-shadow: none !important;
     }
 
     .stage-detail-card {
@@ -636,7 +937,7 @@
     }
 
     .stage-detail-p {
-      font-size: 1.05rem;
+      font-size: calc(16px * var(--font-scale));
       line-height: 1.55;
       margin-top: 0;
       color: var(--text-main);
@@ -653,22 +954,30 @@
       margin-bottom: 16px;
       text-align: left;
     }
+
     .summary-breakdown-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: clamp(0.98rem, 3.2vw, 1.12rem);
+      font-size: calc(16px * var(--font-scale));
       font-weight: bold;
       color: var(--text-main);
       padding: 8px 0;
       border-bottom: 1px dashed #c8d6c9;
     }
+
     .summary-breakdown-row:last-child {
       border-bottom: none;
     }
+
     .summary-breakdown-score {
       color: var(--primary-sage);
       font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 4px;
+      white-space: nowrap;
     }
 
     .btn-clap-sound {
@@ -677,7 +986,7 @@
       color: var(--primary-sage);
       padding: 8px 22px;
       border-radius: 25px;
-      font-size: clamp(0.95rem, 3vw, 1.05rem);
+      font-size: calc(15px * var(--font-scale));
       font-weight: bold;
       cursor: pointer;
       margin: 8px 0 14px 0;
@@ -705,7 +1014,7 @@
       color: var(--primary-sage);
       border: none;
       border-radius: 30px;
-      font-size: 17px;
+      font-size: calc(16px * var(--font-scale));
       font-weight: 700;
       text-decoration: none;
       display: inline-flex;
@@ -747,11 +1056,12 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      font-size: clamp(4rem, 15vw, 6rem);
+      font-size: 5rem;
       z-index: 10;
       pointer-events: none;
       animation: clapPopFade 1.8s ease-out forwards;
     }
+
     @keyframes clapPopFade {
       0% { transform: translate(-50%, -50%) scale(0.3); opacity: 0; }
       30% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
@@ -769,12 +1079,14 @@
       overflow: hidden;
       z-index: 1;
     }
+
     .confetti-piece {
       position: absolute;
       top: -20px;
       opacity: 0;
       animation: confettiFall 2.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
     }
+
     @keyframes confettiFall {
       0% { transform: translateY(0) rotate(0deg) scaleX(1); opacity: 0.95; }
       75% { opacity: 0.85; }
@@ -794,6 +1106,7 @@
       padding-top: 20px;
       z-index: 9999;
     }
+
     .modal-card {
       position: fixed;
       top: 20px;
@@ -808,107 +1121,274 @@
       width: calc(100% - 32px);
       text-align: center;
     }
+
     .modal-title {
       color: var(--primary-sage);
-      font-size: clamp(1.25rem, 3.8vw, 1.5rem);
+      font-size: calc(20px * var(--font-scale));
       font-weight: 800;
       margin-bottom: 8px;
     }
+
     .modal-content {
       color: var(--text-main);
-      font-size: clamp(1rem, 3.4vw, 1.15rem);
+      font-size: calc(16px * var(--font-scale));
       line-height: 1.5;
       margin-bottom: 18px;
     }
+
     .btn-modal-close {
       background-color: var(--primary-sage);
       color: #ffffff;
       border: none;
       padding: 10px 32px;
-      font-size: clamp(1rem, 3.4vw, 1.15rem);
+      font-size: calc(16px * var(--font-scale));
       font-weight: bold;
       border-radius: 30px;
       cursor: pointer;
     }
+
     .btn-modal-cancel {
       background-color: #ffffff;
       color: var(--text-main);
       border: 1.5px solid #b0bec5;
       padding: 10px 24px;
-      font-size: clamp(0.95rem, 3.2vw, 1.1rem);
+      font-size: calc(15px * var(--font-scale));
       font-weight: bold;
       border-radius: 30px;
       cursor: pointer;
     }
+
     .btn-modal-confirm {
       background-color: #d32f2f;
       color: #ffffff;
       border: none;
       padding: 10px 24px;
-      font-size: clamp(0.95rem, 3.2vw, 1.1rem);
+      font-size: calc(15px * var(--font-scale));
       font-weight: bold;
       border-radius: 30px;
       cursor: pointer;
     }
+
     .btn-modal-submit-primary {
       background-color: var(--primary-sage);
       color: #ffffff;
       border: none;
       padding: 10px 24px;
-      font-size: clamp(0.95rem, 3.2vw, 1.1rem);
+      font-size: calc(15px * var(--font-scale));
       font-weight: bold;
       border-radius: 30px;
       cursor: pointer;
     }
 
     @media (max-width: 600px) {
-      .intro-notice { font-size: 17px; padding: 10px 14px; }
-      .stage-box-title { font-size: 21px; }
-      .question-text { font-size: 19px; }
-      .question-box { padding: 18px 16px; }
-      .settlement-encouragement-text {
-        font-size: 17px;
-        margin-top: 12px;
-        margin-bottom: 16px;
-      }
-      .five-point-star-icon { width: 36px; height: 36px; }
       .canvas-wrap {
-        width: min(360px, calc(100vw - 48px));
-        height: min(360px, calc(100vw - 48px));
+        width: min(90vw, 520px);
+        height: min(90vw, 520px);
+      }
+    }
+
+
+    /* 單關結算頁：版面沿用既有語意聯想遊戲，內容保留本遊戲的評分理由與建議。 */
+    #stage-settlement-view .settlement-card {
+      position: relative;
+      background: transparent;
+      border: none;
+      border-radius: 0;
+      padding: 0;
+      margin: 0 auto 6px auto;
+      text-align: center;
+      box-shadow: none;
+      overflow: visible;
+    }
+
+    #stage-settlement-view .settlement-title {
+      color: var(--primary-sage);
+      font-size: calc(26px * var(--font-scale));
+      font-weight: 800;
+      margin: 0 auto 8px auto;
+      line-height: 1.25;
+    }
+
+    #stage-settlement-view .stage-score-stars {
+      gap: 12px;
+      font-size: 3.5rem;
+      margin: 10px 0;
+    }
+
+    #stage-settlement-view .stage-rating-star {
+      display: inline-block;
+      opacity: 0;
+      animation: stageStarDropIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+
+    #stage-settlement-view .stage-rating-star.gold {
+      background: linear-gradient(180deg, #FFC107 0%, #FF8F00 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 12px rgba(255, 193, 7, 0.75));
+    }
+
+    #stage-settlement-view .stage-rating-star.grey {
+      background: linear-gradient(180deg, #E0E0E0 0%, #BDBDBD 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: none;
+    }
+
+    @keyframes stageStarDropIn {
+      0% { opacity: 0; transform: translateY(-28px) scale(0.3) rotate(-12deg); }
+      70% { opacity: 1; transform: translateY(3px) scale(1.15) rotate(4deg); }
+      100% { opacity: 1; transform: translateY(0) scale(1) rotate(0deg); }
+    }
+
+    #stage-settlement-view .settlement-score-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background-color: #EBF1EA;
+      color: var(--text-main);
+      padding: 8px 22px;
+      border-radius: 30px;
+      font-size: calc(18px * var(--font-scale));
+      font-weight: 800;
+      margin: 4px auto 8px auto;
+    }
+
+    #stage-settlement-view .sublevel-encouragement {
+      color: var(--text-main);
+      background: transparent;
+      border: none;
+      padding: 8px 12px;
+      font-size: calc(19px * var(--font-scale));
+      font-weight: 800;
+      line-height: 1.5;
+      margin: 8px auto 14px auto;
+      max-width: 620px;
+      text-align: center;
+    }
+
+    #stage-settlement-view .stage-result-details {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
+      max-width: 520px;
+      margin: 0 auto 18px auto;
+    }
+
+    #stage-settlement-view .stage-result-detail-card {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 5px;
+      padding: 14px 22px;
+      border-radius: 14px;
+      font-size: calc(16px * var(--font-scale));
+      line-height: 1.55;
+      font-weight: 600;
+      text-align: left;
+      overflow-wrap: anywhere;
+    }
+
+    #stage-settlement-view .stage-result-detail-card strong {
+      font-weight: 800;
+      color: inherit;
+    }
+
+    #stage-settlement-view .stage-result-detail-card.reason {
+      background-color: #E2F0D9;
+      color: #2D5A27;
+    }
+
+    #stage-settlement-view .stage-result-detail-card.advice {
+      background-color: #EAECEB;
+      color: #35473C;
+    }
+
+    #stage-settlement-view .stage-summary-actions-group {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+      max-width: 520px;
+      margin: 14px auto 0 auto;
+    }
+
+    #stage-settlement-view .stage-summary-full-btn {
+      width: 100%;
+      min-height: 52px;
+      background-color: var(--primary-sage);
+      color: #FFFFFF;
+      border: 2px solid var(--primary-sage);
+      padding: 12px 16px;
+      font-size: calc(17px * var(--font-scale));
+      font-weight: 800;
+      border-radius: 28px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(79, 112, 88, 0.2);
+      transition: all 0.2s ease;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #stage-settlement-view .stage-summary-full-btn:active {
+      background-color: #35473C;
+      border-color: #35473C;
+      transform: translateY(1px);
+    }
+
+    @media (max-width: 480px) {
+      #stage-settlement-view .stage-result-details,
+      #stage-settlement-view .stage-summary-actions-group {
+        max-width: 100%;
+      }
+      #stage-settlement-view .stage-result-detail-card {
+        padding: 12px 16px;
       }
     }
 
     .hidden { display: none !important; }
   </style>
 </head>
-<body>
+<body data-base-url="<?!= baseUrl ?>">
+
   <header id="header-nav" class="hidden">
-    <h1>視覺建構｜畫畫看連連看</h1>
+    <div class="intro-back-wrap drawing-back-wrap">
+      <button type="button" id="drawing-back-btn" class="btn-back-category">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        <span id="lbl-btn-back-intro">返回遊戲說明</span>
+      </button>
+    </div>
+    <h1 id="lbl-app-header-title">畫畫看連連看</h1>
     <div id="nav-bar" class="nav-bar">
-      <div id="nav-0" class="nav-item active">第一關</div>
-      <div id="nav-1" class="nav-item">第二關</div>
-      <div id="nav-2" class="nav-item">第三關</div>
-      <div id="nav-3" class="nav-item">第四關</div>
+      <div id="nav-0" class="nav-item active"><span class="nav-stage-label" id="nav-label-0">第一關</span><span class="nav-stage-desc" id="nav-desc-0">畫圓圈</span></div>
+      <div id="nav-1" class="nav-item"><span class="nav-stage-label" id="nav-label-1">第二關</span><span class="nav-stage-desc" id="nav-desc-1">寫數字</span></div>
+      <div id="nav-2" class="nav-item"><span class="nav-stage-label" id="nav-label-2">第三關</span><span class="nav-stage-desc" id="nav-desc-2">畫指針</span></div>
+      <div id="nav-3" class="nav-item"><span class="nav-stage-label" id="nav-label-3">第四關</span><span class="nav-stage-desc" id="nav-desc-3">綜合評分</span></div>
     </div>
   </header>
 
   <main id="app">
     <!-- 0. 首頁/說明介面 (Intro View) -->
     <div id="intro-view">
-      <!-- 返回遊戲分類按鈕 -->
       <div class="intro-back-wrap">
-        <button type="button" onclick="goToLevelSelect()" class="btn-back-category">
+        <button type="button" onclick="postNavigate('level_select')" class="btn-back-category">
           <svg viewBox="0 0 24 24">
             <line x1="19" y1="12" x2="5" y2="12"></line>
             <polyline points="12 19 5 12 12 5"></polyline>
           </svg>
-          <span>返回遊戲分類</span>
+          <span id="lbl-btn-back-cat">返回遊戲分類</span>
         </button>
       </div>
 
-      <h1 class="intro-header-title">視覺建構｜畫畫看連連看</h1>
-      
-      <div class="intro-notice">不用著急，按照自己的步調完成就好。</div>
+      <h1 class="intro-header-title" id="lbl-intro-main-title">畫畫看連連看</h1>
+      <div class="intro-notice" id="lbl-intro-notice">不用著急，按照自己的步調完成就好。</div>
 
       <div class="intro-list">
         <div class="intro-card">
@@ -918,20 +1398,26 @@
             </svg>
           </div>
           <div class="intro-card-text">
-            <div class="intro-card-title">第一關｜畫圓圈</div>
-            <div class="intro-card-desc">在畫布上畫出一個完整的圓圈。</div>
+            <div class="intro-card-title" id="lbl-card-1-title">第一關｜畫圓圈</div>
+            <div class="intro-card-desc" id="lbl-card-1-desc">在畫布上畫出一個完整的圓圈。</div>
           </div>
         </div>
 
         <div class="intro-card">
           <div class="intro-svg-box">
-            <svg viewBox="0 0 100 100">
+            <svg viewBox="0 0 100 100" aria-hidden="true">
               <circle cx="50" cy="50" r="36" stroke="#4F7058" stroke-width="3" fill="none"/>
+              <g fill="#4F7058" font-size="10" font-weight="800" text-anchor="middle" dominant-baseline="central">
+                <text x="50" y="22">12</text>
+                <text x="78" y="50">3</text>
+                <text x="50" y="78">6</text>
+                <text x="22" y="50">9</text>
+              </g>
             </svg>
           </div>
           <div class="intro-card-text">
-            <div class="intro-card-title">第二關｜寫數字</div>
-            <div class="intro-card-desc">在時鐘圓形外框內寫出 1 到 12 的數字。</div>
+            <div class="intro-card-title" id="lbl-card-2-title">第二關｜寫數字</div>
+            <div class="intro-card-desc" id="lbl-card-2-desc">在時鐘圓形外框內寫出 1 到 12 的數字。</div>
           </div>
         </div>
 
@@ -945,8 +1431,8 @@
             </svg>
           </div>
           <div class="intro-card-text">
-            <div class="intro-card-title">第三關｜畫指針</div>
-            <div class="intro-card-desc">看著目標時間，從中心點畫出長針和短針。</div>
+            <div class="intro-card-title" id="lbl-card-3-title">第三關｜畫指針</div>
+            <div class="intro-card-desc" id="lbl-card-3-desc">看著目標時間，從中心點畫出長針和短針。</div>
           </div>
         </div>
 
@@ -972,8 +1458,8 @@
             </svg>
           </div>
           <div class="intro-card-text">
-            <div class="intro-card-title">第四關｜綜合評分</div>
-            <div class="intro-card-desc">在空白畫布上完成圓圈、數字和指針。</div>
+            <div class="intro-card-title" id="lbl-card-4-title">第四關｜綜合評分</div>
+            <div class="intro-card-desc" id="lbl-card-4-desc">在畫布上完成圓圈、數字和指針。</div>
           </div>
         </div>
       </div>
@@ -992,20 +1478,42 @@
       </div>
 
       <div class="tools" id="draw-tools">
-        <button type="button" id="pen" class="btn-tool selected">畫筆</button>
-        <button type="button" id="eraser" class="btn-tool">橡皮擦</button>
-        <button type="button" id="undo" class="btn-tool">取消上一筆</button>
-        <button type="button" id="clear" class="btn-tool">清除重畫</button>
+        <button type="button" id="pen" class="btn-tool selected" aria-label="畫筆">
+          <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+            <path d="M4 20l4.1-1 10.2-10.2a2.1 2.1 0 0 0-3-3L5.1 16 4 20Z" />
+            <path d="m13.9 7.1 3 3M4 20l4.1-1" />
+          </svg>
+          <span class="tool-label">畫筆</span>
+        </button>
+        <button type="button" id="eraser" class="btn-tool" aria-label="橡皮擦">
+          <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+            <path d="m7.2 4.8 12 12-4.1 4.1H9.2l-5-5a2 2 0 0 1 0-2.8l3-8.3Z" />
+            <path d="m9.2 20.9 6-6M18.1 20.9h2.4" />
+          </svg>
+          <span class="tool-label">橡皮擦</span>
+        </button>
+        <button type="button" id="undo" class="btn-tool" aria-label="取消上一筆">
+          <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+            <path d="M9 7 4.5 11.5 9 16" />
+            <path d="M5 11.5h8a6 6 0 1 1-5.4 8.6" />
+          </svg>
+          <span class="tool-label">取消上一筆</span>
+        </button>
+        <button type="button" id="clear" class="btn-tool" aria-label="清除重畫">
+          <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+            <path d="M4.5 7h15M9 7V4.5h6V7M7 7l.8 13h8.4L17 7" />
+            <path d="M10 10.5v6M14 10.5v6" />
+          </svg>
+          <span class="tool-label">清除重畫</span>
+        </button>
       </div>
 
       <div class="canvas-wrap" id="canvas-wrap">
         <canvas id="canvas" width="600" height="600" aria-label="時鐘繪圖區"></canvas>
       </div>
 
-      <p class="status-text" id="status" role="status" aria-live="polite">請完成本關，再按「完成作答」查看本關分數。</p>
-
       <div class="action-bar" id="action-bar">
-        <button type="button" id="next" class="btn-submit">完成作答</button>
+        <button type="button" id="next" class="btn-submit">畫好了</button>
       </div>
     </div>
 
@@ -1017,921 +1525,1898 @@
 
     <!-- 4. 免責聲明 -->
     <div class="disclaimer-box hidden" id="disclaimer-box">
-      「評分僅供練習參考。此練習工具不提供醫療診斷。」
+      評分僅供練習參考，此練習工具不提供醫療診斷。
     </div>
   </main>
 
 <script>
-(function () {
-  document.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+  /* ==========================================
+     多語言 (i18n) 字典配置模組
+     ========================================== */
+  var i18nDict = {
+    'zh-TW': {
+      'game.title': '畫畫看連連看',
+      'nav.back_category': '返回遊戲分類',
+      'nav.back_intro': '返回遊戲說明',
+      'nav.home': '回首頁',
+      'intro.notice': '不用著急，按照自己的步調完成就好。',
+      
+      'stage.1.title': '第一關｜畫圓圈',
+      'stage.1.desc': '在畫布上畫出一個完整的圓圈。',
+      'stage.1.inst': '請畫出一個完整的圓圈',
+      
+      'stage.2.title': '第二關｜寫數字',
+      'stage.2.desc': '在時鐘圓形外框內寫出 1 到 12 的數字。',
+      'stage.2.inst': '請在時鐘圓形外框內寫上 1 到 12 的數字，並盡量按照時鐘位置排列。',
+      
+      'stage.3.title': '第三關｜畫指針',
+      'stage.3.desc': '看著目標時間，按住中間圓點往外拉，畫出紅色短針和藍色長針。',
+      'stage.3.inst': '按住中間圓點往外拉，畫出紅色短針（時）和藍色長針（分）。',
+      
+      'stage.4.title': '第四關｜綜合評分',
+      'stage.4.desc': '在畫布上完成圓圈、數字和指針。',
+      'stage.4.inst': '請在畫布上畫出圓圈和 1 到 12 的數字，<br />再按住中間圓點往外拉，畫出紅色短針（時）和藍色長針（分）。',
 
-  /* 修改導頁機制，適用於 GitHub Pages 獨立託管 */
-  function goToLevelSelect() {
-    window.location.href = "LevelSelect.html";
-  }
-  window.goToLevelSelect = goToLevelSelect;
+      'btn.start': '開始遊戲',
+      'tool.pen': '畫筆',
+      'tool.eraser': '橡皮擦',
+      'tool.undo': '取消上一筆',
+      'tool.clear': '清除重畫',
+      'btn.submit': '畫好了',
+      'btn.scoring': '評分進行中...',
+      'settlement.reason_fallback': '本關已完成評估。',
+      'target.time': '目標時間：',
 
-  function goToHome() {
-    window.location.href = "index.html";
-  }
-  window.goToHome = goToHome;
+      'modal.know': '我知道了',
+      'modal.cancel': '取消',
+      'modal.confirm_clear': '確定清除',
+      'modal.check_again': '再檢查一下',
+      'modal.submit_confirm': '確定提交',
+      
+      'modal.restart_title': '確定要清除重畫嗎？',
+      'modal.restart_desc': '清除後，目前的畫布會全部變回空白喔！',
+      'modal.submit_title': '準備好要交卷了嗎？',
+      'modal.submit_desc': '請先確認你的作答。提交後就會進行評分，無法直接修改答案。',
+      'modal.no_hand_title': '指針還沒設定喔！',
+      'modal.no_hand_desc': '請先按住中間圓點往外拉，畫出紅色短針（時）和藍色長針（分），再查看結果。',
+      'modal.empty_draw_title': '我們先畫一畫喔！',
+      'modal.empty_draw_desc': '請先在畫布上完成作答，再查看結果。',
+      'modal.step_wait_title': '一步一步來！',
+      'modal.step_wait_desc': '請先完成上一關，再繼續挑戰喔！',
+      'modal.step_current_title': '先完成當前關卡喔！',
+      'modal.step_current_desc': '您已經完成之前的關卡，請繼續往前挑戰喔！',
 
-  const $ = id => document.getElementById(id);
-  const canvas = $('canvas');
-  const ctx = canvas.getContext('2d');
-  
-  const userCanvas = document.createElement('canvas');
-  userCanvas.width = 600;
-  userCanvas.height = 600;
-  const userCtx = userCanvas.getContext('2d');
+      'settlement.stage_score': '本關得分：',
+      'settlement.total_score': '總平均成績：',
+      'settlement.total_title': '總成績',
+      'settlement.reason': '評分理由：',
+      'settlement.advice': '練習建議：',
+      'settlement.next_stage': '前往第{stage}關',
+      'settlement.view_total': '完成遊戲，查看總成績',
+      'settlement.replay': '再玩一次',
+      'settlement.btn_clap': '🎉 重新播放鼓掌聲',
+      'disclaimer': '評分僅供練習參考，此練習工具不提供醫療診斷。',
 
-  const titles = ['畫圓圈', '寫數字', '畫指針', '綜合評分'];
-  const instructions = [
-    '請在下方畫布中，畫出一個完整的圓圈。',
-    '請在時鐘圓形外框內寫上 1 到 12 的數字，並盡量按照時鐘位置排列。',
-    '請從中央點往外拖曳畫出指針。',
-    '請在空白畫布上手繪圓圈、1 到 12 的數字，並從中央點往外拖曳畫出目標時間。'
-  ];
+      'nav.sublevel.1': '第一關',
+      'nav.sublevel.2': '第二關',
+      'nav.sublevel.3': '第三關',
+      'nav.sublevel.4': '第四關',
+      'nav.stage_desc.1': '畫圓圈',
+      'nav.stage_desc.2': '寫數字',
+      'nav.stage_desc.3': '畫指針',
+      'nav.stage_desc.4': '綜合評分',
 
-  const categories = [
-    { key: 'c1', label: '圓形貼合度', title: '第一階段完成！' },
-    { key: 'c2', label: '數字手寫', title: '第二階段完成！' },
-    { key: 'c3', label: '指針角度', title: '第三階段完成！' },
-    { key: 'c4', label: '綜合表現', title: '第四階段完成！' }
-  ];
+      'cat.title.1': '第一關完成！',
+      'cat.title.2': '第二關完成！',
+      'cat.title.3': '第三關完成！',
+      'cat.title.4': '第四關完成！',
 
-  let stage = 0;
-  let tool = 'pen';
-  let drawing = false;
-  let current = null;
-  
-  let actionHistory = [[], [], [], []];
-  let results = [null, null, null, null];
-  let finished = false;
-  let targetTime = makeRandomTime();
+      'num.one': '一', 'num.two': '二', 'num.three': '三', 'num.four': '四',
 
-  let isDraggingHand = false;
-  let previewHand = null;
+      'summary.perfect': '太棒了！四關皆滿分！',
+      'summary.excellent': '畫畫看連連看，表現優異！',
+      'summary.good': '太棒了！完成所有挑戰！',
+      'enc.p1.high': '圓形完整，線條平順！',
+      'enc.p1.med': '輪廓完整，表現很不錯！',
+      'enc.p1.low': '完成挑戰，再接再厲！',
+      'enc.p2.high': '數字齊全，位置剛剛好！',
+      'enc.p2.med': '數字都有寫出來，很棒喔！',
+      'enc.p2.low': '慢慢寫沒關係，多試幾次就會順！',
+      'enc.p3.high': '時間非常準確，長短分明！',
+      'enc.p3.med': '方向大致正確，就差一點點！',
+      'enc.p3.low': '指針有點小迷路，再確認一下時間！',
+      'enc.p4.high': '太厲害了，完成了一座標準時鐘！',
+      'enc.p4.med': '整體結構完整，完成度很高！',
+      'enc.p4.low': '獨立完成整座時鐘很棒，繼續加油！',
+      'enc.total.perfect': '四個項目皆滿分，太棒了！',
+      'enc.total.high': '每天動動手畫時鐘，頭腦越來越靈活！',
+      'enc.total.mid': '挑戰成功！持續練習會越來越熟練！',
+      'enc.total.normal': '每天動動手畫時鐘，頭腦越來越靈活喔！'
+    },
+    'en': {
+      'game.title': 'Draw & Connect',
+      'nav.back_category': 'Back to Game Categories',
+      'nav.back_intro': 'Back to Instructions',
+      'nav.home': 'Home',
+      'intro.notice': 'Take your time and complete each step at your own pace.',
+      
+      'stage.1.title': 'Stage 1 | Draw a Circle',
+      'stage.1.desc': 'Draw a complete circle on the canvas.',
+      'stage.1.inst': 'Please draw a complete circle on the canvas below.',
+      
+      'stage.2.title': 'Stage 2 | Write Numbers',
+      'stage.2.desc': 'Write numbers 1 to 12 inside the clock outline.',
+      'stage.2.inst': 'Please write numbers 1 to 12 inside the clock circle in proper order.',
+      
+      'stage.3.title': 'Stage 3 | Draw Hands',
+      'stage.3.desc': 'Look at the target time, then press and hold the center dot and pull outward to draw the red short hand and blue long hand.',
+      'stage.3.inst': 'Press and hold the center dot, then pull outward to draw the red short hand (hour) and blue long hand (minute).',
+      
+      'stage.4.title': 'Stage 4 | Comprehensive Clock',
+      'stage.4.desc': 'Draw the circle, numbers, and hands on the canvas.',
+      'stage.4.inst': 'Draw a circle and numbers 1 to 12 on the canvas.\nThen press and hold the center dot and pull outward to draw the red short hand (hour) and blue long hand (minute).',
 
-  const FOUR_POINT_STAR_SVG = `
-    <svg class="four-point-star-svg" viewBox="0 0 24 24" fill="none">
-      <path d="M12 0 C12 7 17 12 24 12 C17 12 12 17 12 24 C12 17 7 12 0 12 C7 12 12 7 12 0 Z" fill="#FFD700"/>
-    </svg>
-  `;
+      'btn.start': 'Start Game',
+      'tool.pen': 'Pen',
+      'tool.eraser': 'Eraser',
+      'tool.undo': 'Undo',
+      'tool.clear': 'Clear All',
+      'btn.submit': 'Done drawing',
+      'btn.scoring': 'Scoring...',
+      'settlement.reason_fallback': 'This stage has been evaluated.',
+      'target.time': 'Target Time: ',
 
-  function renderFivePointStars(count) {
-    let html = '<div class="settlement-stars">';
-    for (let i = 1; i <= count; i++) {
-      html += `
-        <div class="star-wrapper star-${i}">
-          <svg class="five-point-star-icon" viewBox="0 0 24 24">
-            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-          </svg>
-          <svg class="sparkle-icon sparkle-top" viewBox="0 0 24 24">
-            <path d="M12 0 C12 7 17 12 24 12 C17 12 12 17 12 24 C12 17 7 12 0 12 C7 12 12 7 12 0 Z" fill="#FFD700"/>
-          </svg>
-          <svg class="sparkle-icon sparkle-bottom" viewBox="0 0 24 24">
-            <path d="M12 0 C12 7 17 12 24 12 C17 12 12 17 12 24 C12 17 7 12 0 12 C7 12 12 7 12 0 Z" fill="#FFF59D"/>
-          </svg>
-        </div>
-      `;
+      'modal.know': 'Got it',
+      'modal.cancel': 'Cancel',
+      'modal.confirm_clear': 'Clear All',
+      'modal.check_again': 'Check Again',
+      'modal.submit_confirm': 'Confirm Submit',
+      
+      'modal.restart_title': 'Clear and redraw?',
+      'modal.restart_desc': 'Clearing will make the entire canvas blank!',
+      'modal.submit_title': 'Ready to submit?',
+      'modal.submit_desc': 'Please review your drawing. Score will be calculated once submitted.',
+      'modal.no_hand_title': 'Clock hands missing!',
+      'modal.no_hand_desc': 'Please press and hold the center dot, then pull outward to draw the red short hand (hour) and blue long hand (minute) before viewing the result.',
+      'modal.empty_draw_title': 'Please draw first!',
+      'modal.empty_draw_desc': 'Please complete your drawing on the canvas before submitting.',
+      'modal.step_wait_title': 'Step by Step!',
+      'modal.step_wait_desc': 'Please complete the previous stage first!',
+      'modal.step_current_title': 'Complete current stage first!',
+      'modal.step_current_desc': 'You have finished previous stages. Keep going forward!',
+
+      'settlement.stage_score': 'Stage Score: ',
+      'settlement.total_score': 'Average Score: ',
+      'settlement.total_title': 'Total Results',
+      'settlement.reason': 'Evaluation Reason: ',
+      'settlement.advice': 'Practice Advice: ',
+      'settlement.next_stage': 'Proceed to Stage {stage}',
+      'settlement.view_total': 'View Total Results',
+      'settlement.replay': 'Play Again',
+      'settlement.btn_clap': '🎉 Replay Applause',
+      'disclaimer': 'Scoring is for practice reference only and does not constitute medical diagnosis.',
+
+      'nav.sublevel.1': 'Stage 1',
+      'nav.sublevel.2': 'Stage 2',
+      'nav.sublevel.3': 'Stage 3',
+      'nav.sublevel.4': 'Stage 4',
+      'nav.stage_desc.1': 'Draw a Circle',
+      'nav.stage_desc.2': 'Write Numbers',
+      'nav.stage_desc.3': 'Draw Clock Hands',
+      'nav.stage_desc.4': 'Complete Clock',
+
+      'cat.title.1': 'Stage 1 Cleared!',
+      'cat.title.2': 'Stage 2 Cleared!',
+      'cat.title.3': 'Stage 3 Cleared!',
+      'cat.title.4': 'Stage 4 Cleared!',
+
+      'num.one': '2', 'num.two': '3', 'num.three': '4', 'num.four': '4',
+
+      'summary.perfect': 'Awesome! Perfect score in all four stages!',
+      'summary.excellent': 'Visual Construction | Excellent Performance!',
+      'summary.good': 'Awesome! All Challenges Completed!',
+      'enc.p1.high': 'A complete circle with smooth lines!',
+      'enc.p1.med': 'The outline is complete—great work!',
+      'enc.p1.low': 'You completed the challenge. Keep going!',
+      'enc.p2.high': 'All the numbers are in the right places!',
+      'enc.p2.med': 'You wrote the numbers—nice work!',
+      'enc.p2.low': 'Take your time. Practice makes it easier!',
+      'enc.p3.high': 'The time is accurate, with clear hand lengths!',
+      'enc.p3.med': 'The directions are almost right—just a little more!',
+      'enc.p3.low': 'The hands are a little lost. Let\'s check the time!',
+      'enc.p4.high': 'Amazing! You completed a full clock!',
+      'enc.p4.med': 'The clock is well structured and nearly complete!',
+      'enc.p4.low': 'Great job completing the clock on your own. Keep going!',
+      'enc.total.perfect': 'Perfect scores in all four stages!',
+      'enc.total.high': 'Excellent work. Keep it up!',
+      'enc.total.mid': 'Challenge complete! Keep practicing and you will become more confident!',
+      'enc.total.normal': 'All stages completed. Well done!'
+    },
+    'ja': {
+      'game.title': '描いてつなげよう',
+      'nav.back_category': 'ゲーム分類へ戻る',
+      'nav.back_intro': 'ゲーム説明に戻る',
+      'nav.home': 'ホーム',
+      'intro.notice': '焦らず自分のペースで進めていきましょう。',
+      
+      'stage.1.title': '第1段階｜円を描く',
+      'stage.1.desc': 'キャンバスにきれいな円を描いてください。',
+      'stage.1.inst': '下のキャンバスに1つの完整な円を描いてください。',
+      
+      'stage.2.title': '第2段階｜数字を書く',
+      'stage.2.desc': '時計の外枠内に1から12の数字を書きます。',
+      'stage.2.inst': '時計の円枠内に1から12までの数字を正しい位置に書きます。',
+      
+      'stage.3.title': '第3段階｜時計の針を描く',
+      'stage.3.desc': '目標時間を見ながら、中央の点を押したまま外側へ引いて赤い短針と青い長針を描きます。',
+      'stage.3.inst': '中央の点を押したまま外側へ引き、赤い短針（時針）と青い長針（分針）を描いてください。',
+      
+      'stage.4.title': '第4段階｜時計の総合課題',
+      'stage.4.desc': 'キャンバスに円、数字、針をすべて描きます。',
+      'stage.4.inst': 'キャンバスに円と1〜12の数字を描いてください。\n次に、中央の点を押したまま外側へ引いて赤い短針（時針）と青い長針（分針）を描いてください。',
+
+      'btn.start': 'ゲーム開始',
+      'tool.pen': 'ペン',
+      'tool.eraser': '消しゴム',
+      'tool.undo': '1元に戻す',
+      'tool.clear': '全消去',
+      'btn.submit': '描けました',
+      'btn.scoring': '採点中...',
+      'settlement.reason_fallback': 'このステージの評価が完了しました。',
+      'target.time': '目標時間：',
+
+      'modal.know': 'わかりました',
+      'modal.cancel': 'キャンセル',
+      'modal.confirm_clear': '去消',
+      'modal.check_again': '確認する',
+      'modal.submit_confirm': '送信する',
+      
+      'modal.restart_title': '消去して描き直しますか？',
+      'modal.restart_desc': '消去すると、キャンバス全体が空白になります。',
+      'modal.submit_title': '提出しますか？',
+      'modal.submit_desc': '描畫を確認してください。提出後にAI採点を行います。',
+      'modal.no_hand_title': '針が描かれていません！',
+      'modal.no_hand_desc': '中央の点を押したまま外側へ引き、赤い短針（時針）と青い長針（分針）を描いてから結果を確認してください。',
+      'modal.empty_draw_title': '描畫してください！',
+      'modal.empty_draw_desc': 'キャンバスに作答を完了してから提出してください。',
+      'modal.step_wait_title': '順番に進めましょう！',
+      'modal.step_wait_desc': '前のステージを完了してから進んでください！',
+      'modal.step_current_title': '現在のステージを完了しましょう！',
+      'modal.step_current_desc': '前のステージは完了しています。進んで挑戦しましょう！',
+
+      'settlement.stage_score': 'このステージの得点：',
+      'settlement.total_score': '平均得点：',
+      'settlement.total_title': '総合結果',
+      'settlement.reason': '採点理由：',
+      'settlement.advice': '練習アドバイス：',
+      'settlement.next_stage': '第{stage}ステージへ',
+      'settlement.view_total': '総合結果を見る',
+      'settlement.replay': 'もう一度遊ぶ',
+      'settlement.btn_clap': '🎉 拍手を再再生',
+      'disclaimer': '採点は練習用リファレンスです。医療診断を提供するものではありません。',
+
+      'nav.sublevel.1': '第1段階',
+      'nav.sublevel.2': '第2段階',
+      'nav.sublevel.3': '第3段階',
+      'nav.sublevel.4': '第4段階',
+      'nav.stage_desc.1': '円を描く',
+      'nav.stage_desc.2': '数字を書く',
+      'nav.stage_desc.3': '時計の針を描く',
+      'nav.stage_desc.4': '総合描画',
+
+      'cat.title.1': '第1ステージクリア！',
+      'cat.title.2': '第2ステージクリア！',
+      'cat.title.3': '第3ステージクリア！',
+      'cat.title.4': '第4ステージクリア！',
+
+      'num.one': '2', 'num.two': '3', 'num.three': '4', 'num.four': '4',
+
+      'summary.perfect': '素晴らしい！4つのステージすべて満点です！',
+      'summary.excellent': '視覚構成｜素晴らしいパフォーマンスです！',
+      'summary.good': '素晴らしい！全チャレンジクリア！',
+      'enc.p1.high': '円がきれいに描けていて、線もなめらかです！',
+      'enc.p1.med': '輪郭がしっかり描けています。よくできました！',
+      'enc.p1.low': '挑戦できましたね。もう一度やってみましょう！',
+      'enc.p2.high': '数字がそろい、位置もちょうどいいです！',
+      'enc.p2.med': '数字を書けましたね。とてもいいですよ！',
+      'enc.p2.low': 'ゆっくりで大丈夫。何度か試すと慣れてきます！',
+      'enc.p3.high': '時刻が正確で、針の長さもはっきりしています！',
+      'enc.p3.med': '方向はほぼ合っています。あと少しです！',
+      'enc.p3.low': '針の向きをもう一度、時刻と一緒に確認しましょう！',
+      'enc.p4.high': 'すばらしい！時計を最後まで完成できました！',
+      'enc.p4.med': '全体の形が整い、とてもよくできています！',
+      'enc.p4.low': '時計を一人で完成できましたね。続けていきましょう！',
+      'enc.total.perfect': '4項目すべて満点です！',
+      'enc.total.high': '素晴らしい出来栄えです！',
+      'enc.total.mid': 'チャレンジ成功です！練習を続けると、もっと慣れていきますよ！',
+      'enc.total.normal': '全ステージ完了です！'
+    },
+    'ko': {
+      'game.title': '그림으로 연결하기',
+      'nav.back_category': '게임 카테고리로',
+      'nav.back_intro': '게임 설명으로 돌아가기',
+      'nav.home': '홈으로',
+      'intro.notice': '서두르지 말고 자신의 속도에 맞게 완성해보세요.',
+      
+      'stage.1.title': '제 1 단계｜원 그리기',
+      'stage.1.desc': '캔버스에 완전한 원을 그리세요.',
+      'stage.1.inst': '아래 캔버스에 완전한 원 하나를 그리세요.',
+      
+      'stage.2.title': '제 2 단계｜숫자 쓰기',
+      'stage.2.desc': '시계 원형 틀 안에 1부터 12까지 숫자를 쓰세요.',
+      'stage.2.inst': '시계 원형 틀 안에 1부터 12까지 숫자를 위치에 맞게 쓰세요.',
+      
+      'stage.3.title': '제 3 단계｜바늘 그리기',
+      'stage.3.desc': '목표 시간을 보고 가운데 점을 누른 채 바깥쪽으로 당겨 빨간색 짧은 시침과 파란색 긴 분침을 그리세요.',
+      'stage.3.inst': '가운데 점을 누른 채 바깥쪽으로 당겨 빨간색 짧은 시침과 파란색 긴 분침을 그리세요.',
+      
+      'stage.4.title': '제 4 단계｜종합 시계 그리기',
+      'stage.4.desc': '캔버스에 원, 숫자, 바늘을 모두 그리세요.',
+      'stage.4.inst': '캔버스에 원과 1~12 숫자를 그리세요.\n그다음 가운데 점을 누른 채 바깥쪽으로 당겨 빨간색 짧은 시침과 파란색 긴 분침을 그리세요.',
+
+      'btn.start': '게임 시작',
+      'tool.pen': '펜',
+      'tool.eraser': '지우개',
+      'tool.undo': '실행 취소',
+      'tool.clear': '전체 지우기',
+      'btn.submit': '다 그렸어요',
+      'btn.scoring': '채점 중...',
+      'settlement.reason_fallback': '이 단계의 평가가 완료되었습니다.',
+      'target.time': '목표 시간: ',
+
+      'modal.know': '확인',
+      'modal.cancel': '취소',
+      'modal.confirm_clear': '지우기',
+      'modal.check_again': '다시 확인',
+      'modal.submit_confirm': '제출 확정',
+      
+      'modal.restart_title': '모두 지우고 다시 그릴까요?',
+      'modal.restart_desc': '지우면 현재 캔버스가 모두 빈 화면으로 바뀝니다!',
+      'modal.submit_title': '제출하시겠습니까?',
+      'modal.submit_desc': '그리기를 확인해 주세요. 제출 후 AI 채점이 진행됩니다.',
+      'modal.no_hand_title': '바늘이 그려지지 않았습니다!',
+      'modal.no_hand_desc': '가운데 점을 누른 채 바깥쪽으로 당겨 빨간색 짧은 시침과 파란색 긴 분침을 그린 뒤 결과를 확인하세요.',
+      'modal.empty_draw_title': '그리기를 진행해주세요!',
+      'modal.empty_draw_desc': '캔버스에 그리기를 완료한 후 제출해 주세요.',
+      'modal.step_wait_title': '차근차근 진행해주세요!',
+      'modal.step_wait_desc': '이전 단계를 먼저 완료해 주세요!',
+      'modal.step_current_title': '현재 단계를 먼저 완료하세요!',
+      'modal.step_current_desc': '이전 단계를 완료하셨습니다. 계속해서 도전해 보세요!',
+
+      'settlement.stage_score': '이번 단계 점수: ',
+      'settlement.total_score': '평균 점수: ',
+      'settlement.total_title': '종합 결과',
+      'settlement.reason': '채점 이유: ',
+      'settlement.advice': '연습 조언: ',
+      'settlement.next_stage': '제 {stage} 단계로',
+      'settlement.view_total': '총 결과 보기',
+      'settlement.replay': '다시 하기',
+      'settlement.btn_clap': '🎉 박수 소리 다시 듣기',
+      'disclaimer': '채점은 연습 참고용이며 의료 진단을 제공하지 않습니다.',
+
+      'nav.sublevel.1': '제 1 단계',
+      'nav.sublevel.2': '제 2 단계',
+      'nav.sublevel.3': '제 3 단계',
+      'nav.sublevel.4': '제 4 단계',
+      'nav.stage_desc.1': '원 그리기',
+      'nav.stage_desc.2': '숫자 쓰기',
+      'nav.stage_desc.3': '시계 바늘 그리기',
+      'nav.stage_desc.4': '종합 시계 그리기',
+
+      'cat.title.1': '제 1 단계 완료!',
+      'cat.title.2': '제 2 단계 완료!',
+      'cat.title.3': '제 3 단계 완료!',
+      'cat.title.4': '제 4 단계 완료!',
+
+      'num.one': '2', 'num.two': '3', 'num.three': '4', 'num.four': '4',
+
+      'summary.perfect': '대단해요! 4개 단계 모두 만점입니다!',
+      'summary.excellent': '시각적 구성｜훌륭한 수행력입니다!',
+      'summary.good': '축하합니다! 모든 도전 완료!',
+      'enc.p1.high': '원이 완성되었고 선도 부드러워요!',
+      'enc.p1.med': '윤곽이 잘 완성됐어요. 정말 잘했어요!',
+      'enc.p1.low': '도전을 마쳤어요. 다시 힘내서 해봐요!',
+      'enc.p2.high': '숫자가 모두 있고 위치도 딱 좋아요!',
+      'enc.p2.med': '숫자를 잘 써냈어요. 참 잘했어요!',
+      'enc.p2.low': '천천히 해도 괜찮아요. 몇 번 더 하면 익숙해져요!',
+      'enc.p3.high': '시간이 정확하고 시곗바늘 길이도 잘 구분돼요!',
+      'enc.p3.med': '방향이 거의 맞아요. 조금만 더 해봐요!',
+      'enc.p3.low': '바늘 방향을 시간과 함께 다시 확인해 봐요!',
+      'enc.p4.high': '정말 대단해요! 시계를 완성했어요!',
+      'enc.p4.med': '전체 구성이 잘 갖춰졌어요. 아주 훌륭해요!',
+      'enc.p4.low': '혼자서 시계를 완성했어요. 계속 힘내요!',
+      'enc.total.perfect': '네 항목 모두 만점이에요!',
+      'enc.total.high': '훌륭한 결과예요. 계속 유지하세요!',
+      'enc.total.mid': '도전에 성공했어요! 계속 연습하면 더 익숙해질 거예요!',
+      'enc.total.normal': '모든 단계를 완료했어요. 수고하셨습니다!'
     }
-    html += '</div>';
-    return html;
-  }
-
-  function getStageEncouragement(stg, score, item) {
-    if (score >= 20) {
-      const highEncouragements = [
-        '太棒了！圓圈畫得很完整，繼續挑戰下一階段！',
-        '好厲害！數字位置與排列非常清楚！',
-        '做得非常好！指針指向非常準確！',
-        '太了不起了！完整挑戰成功！'
-      ];
-      return highEncouragements[stg];
-    } else if (score >= 12) {
-      const medEncouragements = [
-        '很不錯喔！已有基本輪廓，稍微調整繪筆會更圓滿！',
-        '有抓到數字順序喔！再留意一下排列位置就更棒了！',
-        '指針方向大致正確，多練習幾次會越來越精準！',
-        '完成了大部分畫作，很棒的嘗試！再接再厲！'
-      ];
-      return medEncouragements[stg];
-    } else {
-      const lowEncouragements = [
-        '沒關係，慢慢來！多試幾次繪畫感覺就會越來越順手喔！',
-        '別著急，按著順序多練習幾次，數字位置會越寫越準喔！',
-        '一步一步來，順著中心點向外牽線，再挑戰一次看看吧！',
-        '沒關係，按照自己的節奏多加練習，一定會越來越有心得！'
-      ];
-      return lowEncouragements[stg];
-    }
-  }
-
-  function showCustomModal(title, content) {
-    let existing = $('custom-modal-overlay');
-    if (existing) existing.remove();
-    const overlay = document.createElement('div');
-    overlay.id = 'custom-modal-overlay';
-    overlay.className = 'modal-overlay';
-    overlay.innerHTML = `
-      <div class="modal-card">
-        <div class="modal-title">${title}</div>
-        <div class="modal-content">${content}</div>
-        <button class="btn-modal-close" onclick="closeCustomModal()">我知道了</button>
-      </div>
-    `;
-    document.body.appendChild(overlay);
-  }
-
-  function showConfirmModal(title, content, onConfirm) {
-    let existing = $('custom-modal-overlay');
-    if (existing) existing.remove();
-    const overlay = document.createElement('div');
-    overlay.id = 'custom-modal-overlay';
-    overlay.className = 'modal-overlay';
-    overlay.innerHTML = `
-      <div class="modal-card">
-        <div class="modal-title">${title}</div>
-        <div class="modal-content">${content}</div>
-        <div style="display: flex; justify-content: center; gap: 14px; margin-top: 14px;">
-          <button class="btn-modal-cancel" id="modal-btn-cancel">取消</button>
-          <button class="btn-modal-confirm" id="modal-btn-confirm">確定清除</button>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(overlay);
-    $('modal-btn-cancel').onclick = closeCustomModal;
-    $('modal-btn-confirm').onclick = function() {
-      closeCustomModal();
-      if (typeof onConfirm === 'function') onConfirm();
-    };
-  }
-
-  function showSubmitConfirmModal(onConfirm) {
-    let existing = $('custom-modal-overlay');
-    if (existing) existing.remove();
-    const overlay = document.createElement('div');
-    overlay.id = 'custom-modal-overlay';
-    overlay.className = 'modal-overlay';
-    overlay.innerHTML = `
-      <div class="modal-card">
-        <div class="modal-title">準備好要交卷了嗎？</div>
-        <div class="modal-content">請先確認你的作答。提交後就會進行評分，無法直接修改答案。</div>
-        <div style="display: flex; justify-content: center; gap: 14px; margin-top: 14px;">
-          <button class="btn-modal-cancel" id="modal-btn-check-again">再檢查一下</button>
-          <button class="btn-modal-submit-primary" id="modal-btn-submit-confirm">確定提交</button>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(overlay);
-    $('modal-btn-check-again').onclick = closeCustomModal;
-    $('modal-btn-submit-confirm').onclick = function() {
-      closeCustomModal();
-      if (typeof onConfirm === 'function') onConfirm();
-    };
-  }
-
-  window.closeCustomModal = function() {
-    const overlay = $('custom-modal-overlay');
-    if (overlay) overlay.remove();
   };
 
-  let cheerAudioInstance = null;
-  const CHEER_SOURCES = [
-    "https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3",
-    "https://cdn.freesound.org/previews/391/391539_5121236-lq.mp3"
-  ];
+  var currentLang = 'zh-TW';
+  var currentFontScale = '100';
 
-  window.playCheerSound = function() {
-    let currentTotal = 0;
-    results.forEach(res => {
-      if (res) currentTotal += (Number(res.stageScore) || 0);
-    });
+  function initDisplaySettings() {
+    var urlParams = new URLSearchParams(window.location.search);
+    currentLang = urlParams.get('lang') || localStorage.getItem('app_lang') || 'zh-TW';
+    currentFontScale = urlParams.get('fontScale') || localStorage.getItem('app_font_scale') || '100';
 
-    if (currentTotal < 80) return;
+    localStorage.setItem('app_lang', currentLang);
+    localStorage.setItem('app_font_scale', currentFontScale);
 
-    try {
-      if (!cheerAudioInstance) {
-        cheerAudioInstance = new Audio();
-        cheerAudioInstance.crossOrigin = "anonymous";
-        cheerAudioInstance.src = CHEER_SOURCES[0];
+    document.body.classList.remove('font-scale-90', 'font-scale-100', 'font-scale-115', 'font-scale-130');
+    document.body.classList.add('font-scale-' + currentFontScale);
+  }
+
+  function t(key, vars) {
+    var dict = i18nDict[currentLang] || i18nDict['zh-TW'];
+    var text = dict[key] || i18nDict['zh-TW'][key] || key;
+    if (vars) {
+      for (var k in vars) {
+        text = text.replace(new RegExp('\\{' + k + '\\}', 'g'), vars[k]);
       }
-      cheerAudioInstance.pause();
-      cheerAudioInstance.currentTime = 0;
-      cheerAudioInstance.play().catch(() => {
-        cheerAudioInstance.src = CHEER_SOURCES[1];
-        cheerAudioInstance.play().catch(e => console.log("Audio play error:", e));
-      });
-    } catch (e) {
-      console.log("Audio play error:", e);
     }
-  };
-
-  function makeRandomTime() {
-    const hour = Math.floor(Math.random() * 12) + 1;
-    const minute = Math.floor(Math.random() * 12) * 5;
-    return String(hour).padStart(2, '0') + ':' + String(minute).padStart(2, '0');
+    return text;
   }
 
-  function setTool(t) {
-    tool = t;
-    $('pen').classList.toggle('selected', tool === 'pen');
-    $('eraser').classList.toggle('selected', tool === 'eraser');
-  }
-
-  function drawArrowLine(x1, y1, x2, y2, color, lineWidth, headLen) {
-    const angle = Math.atan2(y2 - y1, x2 - x1);
-    ctx.save();
-    ctx.strokeStyle = color;
-    ctx.fillStyle = color;
-    ctx.lineWidth = lineWidth;
-    ctx.lineCap = 'round';
-    ctx.beginPath();
-    ctx.moveTo(x1, y1);
-    ctx.lineTo(x2, y2);
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.moveTo(x2, y2);
-    ctx.lineTo(x2 - headLen * Math.cos(angle - Math.PI / 6), y2 - headLen * Math.sin(angle - Math.PI / 6));
-    ctx.lineTo(x2 - headLen * Math.cos(angle + Math.PI / 6), y2 - headLen * Math.sin(angle + Math.PI / 6));
-    ctx.closePath();
-    ctx.fill();
-    ctx.restore();
-  }
-
-  function drawTemplate() {
-    if (stage === 1 || stage === 2) { 
-      ctx.save();
-      ctx.strokeStyle = '#b9c7bd';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.arc(300, 300, 220, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.restore();
-    }
-
-    if (stage === 2) {
-      ctx.save();
-      ctx.fillStyle = '#87958b';
-      ctx.font = 'bold 31px Arial';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      for (let n = 1; n <= 12; n++) {
-        const a = n * Math.PI / 6 - Math.PI / 2;
-        ctx.fillText(String(n), 300 + 177 * Math.cos(a), 300 + 177 * Math.sin(a));
+  function applyStaticI18n() {
+    const setT = function(id, k) {
+      const el = document.getElementById(id);
+      if (el) {
+        // 工具按鈕只更新文字節點，保留前方的 SVG 線條圖示。
+        const label = el.querySelector('.tool-label');
+        (label || el).textContent = t(k);
       }
-      ctx.restore();
+    };
+
+    setT('lbl-app-header-title', 'game.title');
+    setT('lbl-btn-back-cat', 'nav.back_category');
+    setT('lbl-btn-back-intro', 'nav.back_intro');
+    setT('lbl-intro-main-title', 'game.title');
+    setT('lbl-intro-notice', 'intro.notice');
+
+    setT('lbl-card-1-title', 'stage.1.title'); setT('lbl-card-1-desc', 'stage.1.desc');
+    setT('lbl-card-2-title', 'stage.2.title'); setT('lbl-card-2-desc', 'stage.2.desc');
+    setT('lbl-card-3-title', 'stage.3.title'); setT('lbl-card-3-desc', 'stage.3.desc');
+    setT('lbl-card-4-title', 'stage.4.title'); setT('lbl-card-4-desc', 'stage.4.desc');
+
+    setT('intro-start-btn', 'btn.start');
+    setT('pen', 'tool.pen');
+    setT('eraser', 'tool.eraser');
+    setT('undo', 'tool.undo');
+    setT('clear', 'tool.clear');
+    setT('next', 'btn.submit');
+    setT('disclaimer-box', 'disclaimer');
+
+    for (let i = 0; i < 4; i++) {
+      setT('nav-label-' + i, 'nav.sublevel.' + (i + 1));
+      setT('nav-desc-' + i, 'nav.stage_desc.' + (i + 1));
     }
   }
 
-  function drawClockHands(historyHands) {
-    if (stage !== 2 && stage !== 3) return;
-    const cx = 300, cy = 300;
-    let hands = [...historyHands];
-
-    if (isDraggingHand && previewHand) {
-      if (hands.length >= 2) hands[1] = previewHand;
-      else hands.push(previewHand);
-    }
-
-    if (hands.length === 0) {
-      if (stage === 2 || stage === 3) {
-        ctx.save();
-        ctx.fillStyle = '#4F7058';
-        ctx.beginPath();
-        ctx.arc(cx, cy, 3.5, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
+  function getBaseUrl() {
+    var baseUrl = document.body.getAttribute('data-base-url');
+    if (!baseUrl || baseUrl.indexOf('http') !== 0) {
+      try {
+        baseUrl = window.top.location.href.split('?')[0].split('#')[0];
+      } catch(e) {
+        baseUrl = window.location.href.split('?')[0].split('#')[0];
       }
-      return;
     }
-
-    if (hands.length === 1) {
-      const h = hands[0];
-      const hLen = h.length || 130;
-      drawArrowLine(cx, cy, cx + hLen * Math.cos(h.angle), cy + hLen * Math.sin(h.angle), '#d32f2f', 8, 18);
-    } else if (hands.length >= 2) {
-      let shortHand = hands[0];
-      let longHand = hands[1];
-      if (hands[1].length < hands[0].length) {
-        shortHand = hands[1];
-        longHand = hands[0];
-      }
-      drawArrowLine(cx, cy, cx + shortHand.length * Math.cos(shortHand.angle), cy + shortHand.length * Math.sin(shortHand.angle), '#d32f2f', 8, 18);
-      drawArrowLine(cx, cy, cx + longHand.length * Math.cos(longHand.angle), cy + longHand.length * Math.sin(longHand.angle), '#1976d2', 6, 18);
-    }
-
-    ctx.save();
-    ctx.fillStyle = '#4F7058';
-    ctx.beginPath();
-    ctx.arc(cx, cy, 3.5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
+    return baseUrl;
   }
 
-  function drawStrokeToContext(targetCtx, s) {
-    if (!s || !s.points || !s.points.length) return;
-    targetCtx.save();
-    targetCtx.lineCap = 'round';
-    targetCtx.lineJoin = 'round';
-
-    if (s.tool === 'eraser') {
-      targetCtx.lineWidth = 28;
-      targetCtx.globalCompositeOperation = 'destination-out';
-      targetCtx.strokeStyle = 'rgba(0,0,0,1)';
-    } else {
-      targetCtx.lineWidth = 7;
-      targetCtx.globalCompositeOperation = 'source-over';
-      targetCtx.strokeStyle = '#172f25';
-    }
-
-    targetCtx.beginPath();
-    targetCtx.moveTo(s.points[0].x, s.points[0].y);
-    if (s.points.length === 1) {
-      targetCtx.lineTo(s.points[0].x + 0.1, s.points[0].y + 0.1);
-    } else {
-      for (let i = 1; i < s.points.length; i++) targetCtx.lineTo(s.points[i].x, s.points[i].y);
-    }
-    targetCtx.stroke();
-    targetCtx.restore();
-  }
-
-  function redraw() {
-    ctx.clearRect(0, 0, 600, 600);
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, 600, 600);
-    drawTemplate();
-
-    userCtx.clearRect(0, 0, 600, 600);
-
-    const currentStageHistory = actionHistory[stage] || [];
-    const handsToDraw = [];
-    currentStageHistory.forEach(item => {
-      if (item.type === 'stroke') drawStrokeToContext(userCtx, item.data);
-      else if (item.type === 'hand') handsToDraw.push(item.data);
-    });
-    if (current && current.type === 'stroke') drawStrokeToContext(userCtx, current.data);
-
-    ctx.drawImage(userCanvas, 0, 0);
-    drawClockHands(handsToDraw);
-  }
-
-  function showIntroView() {
-    $('header-nav').classList.add('hidden');
-    $('drawing-view').classList.add('hidden');
-    $('stage-settlement-view').classList.add('hidden');
-    $('total-settlement-view').classList.add('hidden');
-    $('disclaimer-box').classList.add('hidden');
-    $('intro-view').classList.remove('hidden');
-  }
-
-  function startGame() {
-    $('intro-view').classList.add('hidden');
-    $('header-nav').classList.remove('hidden');
-    showDrawingView();
-  }
-
-  function showDrawingView() {
-    $('stage-settlement-view').classList.add('hidden');
-    $('total-settlement-view').classList.add('hidden');
-    $('intro-view').classList.add('hidden');
-    $('header-nav').classList.remove('hidden');
-    $('disclaimer-box').classList.add('hidden');
-    $('drawing-view').classList.remove('hidden');
-    render();
-  }
-
-  function render() {
-    $('title').textContent = titles[stage];
-    $('instruction').textContent = instructions[stage];
-    $('target').textContent = '目標時間：' + targetTime;
-    $('target').classList.toggle('hidden', stage !== 2 && stage !== 3);
-    $('next').textContent = '完成作答';
-    $('status').textContent = '請完成本關，再按「完成作答」查看本關分數。';
-
-    $('draw-tools').classList.remove('hidden');
-    setTool(tool);
+  function postNavigate(pageName) {
+    var baseUrl = getBaseUrl();
+    var form = document.createElement('form');
+    form.method = 'GET';
+    form.action = baseUrl;
+    form.target = '_top';
     
-    for (let i = 0; i < 4; i++) {
-      const el = $('nav-' + i);
-      if (el) {
-        el.classList.toggle('active', i === stage);
-        el.classList.toggle('completed', results[i] !== null && i !== stage);
-      }
-    }
-    redraw();
+    var pageInput = document.createElement('input');
+    pageInput.type = 'hidden'; pageInput.name = 'page'; pageInput.value = pageName;
+    form.appendChild(pageInput);
+
+    var langInput = document.createElement('input');
+    langInput.type = 'hidden'; langInput.name = 'lang'; langInput.value = currentLang;
+    form.appendChild(langInput);
+
+    var fontInput = document.createElement('input');
+    fontInput.type = 'hidden'; fontInput.name = 'fontScale'; fontInput.value = currentFontScale;
+    form.appendChild(fontInput);
+
+    document.body.appendChild(form);
+    form.submit();
   }
 
-  function showStageSettlement(stg) {
-    const data = results[stg];
-    if (!data) return;
+  (function () {
+    document.addEventListener('contextmenu', function (e) { e.preventDefault(); });
 
-    const cat = categories[stg];
-    const item = data[cat.key] || {};
-    const score = Number(item.score) || 0;
+    const $ = function(id) { return document.getElementById(id); };
+    const canvas = $('canvas');
+    const ctx = canvas.getContext('2d');
 
-    const starCount = (stg === 0) ? 1 : (stg === 1) ? 2 : 3;
-    const starsHTML = renderFivePointStars(starCount);
+    // 高解析度畫布：實際像素依裝置 DPR 放大，遊戲座標仍固定為 600×600。
+    const canvasDpr = Math.min(Math.max(window.devicePixelRatio || 1, 1), 2);
+    canvas.width = Math.round(600 * canvasDpr);
+    canvas.height = Math.round(600 * canvasDpr);
+    ctx.setTransform(canvasDpr, 0, 0, canvasDpr, 0, 0);
 
-    const encouragementText = getStageEncouragement(stg, score, item);
+    const userCanvas = document.createElement('canvas');
+    userCanvas.width = Math.round(600 * canvasDpr);
+    userCanvas.height = Math.round(600 * canvasDpr);
+    const userCtx = userCanvas.getContext('2d');
+    userCtx.setTransform(canvasDpr, 0, 0, canvasDpr, 0, 0);
 
-    const nextBtnText = stg === 3 ? '完成遊戲，查看總成績' : `前往第${['二','三','四'][stg]}階段`;
-    const nextAction = stg === 3 ? 'window.showTotalSettlement()' : 'window.goToNextStage()';
+    let stage = 0;
+    let tool = 'pen';
+    let drawing = false;
+    let current = null;
+    
+    let actionHistory = [[], [], [], []];
+    let results = [null, null, null, null];
+    let finished = false;
+    let targetTime = makeRandomTime();
 
-    const view = $('stage-settlement-view');
-    view.innerHTML = `
-      <div class="settlement-card">
-        <h2 class="settlement-title">${cat.title}</h2>
-        ${starsHTML}
+    let isDraggingHand = false;
+    let previewHand = null;
+    let activeInputPoint = null;
 
-        <div class="settlement-score-pill">本階段得分：<strong>${score}</strong> / 25 分</div>
-        
-        <div class="settlement-encouragement-text">${encouragementText}</div>
+    const FOUR_POINT_STAR_SVG = 
+      '<svg class="four-point-star-svg" viewBox="0 0 24 24" fill="none">' +
+        '<path d="M12 0 C12 7 17 12 24 12 C17 12 12 17 12 24 C12 17 7 12 0 12 C7 12 12 7 12 0 Z" fill="#FFD700"/>' +
+      '</svg>';
 
-        <div class="stage-detail-card">
-          <p class="stage-detail-p"><strong>評分理由：</strong>${item.reason || '表現良好，已完成本階段作答。'}</p>
-          ${item.advice ? `<p class="stage-detail-p"><strong>練習建議：</strong>${item.advice}</p>` : ''}
-        </div>
-
-        <div class="action-bar" style="margin-top: 14px;">
-          <button type="button" class="btn-submit" onclick="${nextAction}">${nextBtnText}</button>
-        </div>
-      </div>
-    `;
-
-    $('drawing-view').classList.add('hidden');
-    $('total-settlement-view').classList.add('hidden');
-    $('disclaimer-box').classList.remove('hidden');
-    view.classList.remove('hidden');
-
-    for (let i = 0; i < 4; i++) {
-      const el = $('nav-' + i);
-      if (el) {
-        el.classList.toggle('active', i === stg);
-        el.classList.toggle('completed', results[i] !== null);
+    function renderFivePointStars(count) {
+      let html = '<div class="settlement-stars">';
+      for (let i = 1; i <= count; i++) {
+        html += '' +
+          '<div class="star-wrapper star-' + i + '">' +
+            '<svg class="five-point-star-icon" viewBox="0 0 24 24">' +
+              '<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>' +
+            '</svg>' +
+            '<svg class="sparkle-icon sparkle-top" viewBox="0 0 24 24">' +
+              '<path d="M12 0 C12 7 17 12 24 12 C17 12 12 17 12 24 C12 17 7 12 0 12 C7 12 12 7 12 0 Z" fill="#FFD700"/>' +
+            '</svg>' +
+            '<svg class="sparkle-icon sparkle-bottom" viewBox="0 0 24 24">' +
+              '<path d="M12 0 C12 7 17 12 24 12 C17 12 12 17 12 24 C12 17 7 12 0 12 C7 12 12 7 12 0 Z" fill="#FFF59D"/>' +
+            '</svg>' +
+          '</div>';
       }
-    }
-  }
-
-  window.goToNextStage = function() {
-    if (stage < 3) {
-      stage++;
-      showDrawingView();
-    }
-  };
-
-  window.showTotalSettlement = function() {
-    let total = 0;
-    results.forEach(res => {
-      if (res) total += (Number(res.stageScore) || 0);
-    });
-
-    const canPlayApplause = (total >= 80);
-
-    if (canPlayApplause) {
-      playCheerSound();
+      html += '</div>';
+      return html;
     }
 
-    let titleText = "太棒了！完成所有挑戰！";
-    let showTrophy = false;
-    let show4PointStars = false;
-    let showConfetti = true; 
-    let encouragementText = "做得好！再接再厲，持續練習會越來越順手喔！";
 
-    if (total >= 100) {
-      titleText = "太棒了！三關滿分！";
-      showTrophy = true;
-      show4PointStars = true;
-      encouragementText = "太了不起了！四個項目皆獲得滿分，表現完美！";
-    } else if (total >= 80) {
-      titleText = "視覺建構｜畫畫看連連看，表現優異！";
-      showTrophy = true;
-      show4PointStars = true;
-      encouragementText = "太棒了！表現非常優異，繼續保持這份專注力！";
-    } else {
-      titleText = "太棒了！完成所有挑戰！";
-      showTrophy = false;
-      show4PointStars = false;
-      encouragementText = "做得好！再接再厲，持續練習會越來越順手喔！";
+    // 總成績星星門檻：80 分以上 3 顆、60–79 分 2 顆、1–59 分 1 顆；0 分顯示鼓勵星。
+    // 以金星與灰星顯示三個固定位置，不改變四關平均分數。
+    function renderTotalSettlementStars(goldCount) {
+      const delays = [0.1, 0.25, 0.4];
+      let html = '<div class="settlement-stars total-settlement-stars">';
+      for (let i = 1; i <= 3; i++) {
+        const isGold = i <= goldCount;
+        const fillId = isGold ? 'totalStarGoldGrad' + i : 'totalStarGreyGrad' + i;
+        html += '<span class="total-settlement-star ' + (isGold ? 'gold' : 'grey') + ' star-' + i + '">' +
+          '<svg class="total-star-svg" viewBox="0 0 50 50" aria-hidden="true">' +
+            '<defs>' +
+              '<linearGradient id="totalStarGoldGrad' + i + '" x1="0%" y1="0%" x2="0%" y2="100%">' +
+                '<stop offset="0%" stop-color="#FFC107"/><stop offset="100%" stop-color="#FF8F00"/>' +
+              '</linearGradient>' +
+              '<linearGradient id="totalStarGreyGrad' + i + '" x1="0%" y1="0%" x2="0%" y2="100%">' +
+                '<stop offset="0%" stop-color="#E0E0E0"/><stop offset="100%" stop-color="#BDBDBD"/>' +
+              '</linearGradient>' +
+            '</defs>' +
+            '<path d="M 25 3.2 L 31.8 17.0 L 47 19.2 L 36 29.9 L 38.6 45 L 25 37.8 L 11.4 45 L 14 29.9 L 3 19.2 L 18.2 17.0 Z" fill="url(#' + fillId + ')" />' +
+          '</svg>' +
+        '</span>';
+      }
+      html += '</div>';
+      return html;
     }
 
-    let confettiHTML = '';
-    if (showConfetti) {
-      const confettiColors = ['#ff7043', '#4caf50', '#42a5f5', '#fbc02d', '#ab47bc', '#26a69a', '#ff4081', '#ffb300'];
+    // 單關結算專用：維持原本各階段星星數量，使用舊遊戲的金星／灰星登場動畫。
+    // 此函式只負責顯示，不會改變 AI 評分結果或分數。
+    function renderStageSettlementStars(goldCount) {
+      const delays = [0.1, 0.25, 0.4];
+      let html = '<div class="settlement-stars stage-score-stars">';
+      for (let i = 1; i <= 3; i++) {
+        html += '<span class="stage-rating-star ' + (i <= goldCount ? 'gold' : 'grey') +
+          '" style="animation-delay:' + delays[i - 1] + 's;">★</span>';
+      }
+      html += '</div>';
+      return html;
+    }
+
+    // 每關獎牌門檻統一為：80–100 分金牌、60–79 分銀牌、1–59 分銅牌、0 分鼓勵圖示。
+    // 第一至第四關都會在各自的單關結算分數旁顯示對應獎牌。
+    function getStageMedalIcon(score) {
+      let fill = '#5F8575';
+      let symbol = '<path d="M16 22.5s-5.8-3.8-5.8-7.7c0-2.1 1.7-3.8 3.8-3.8 1.3 0 2.4.6 3 1.6.6-1 1.7-1.6 3-1.6 2.1 0 3.8 1.7 3.8 3.8 0 3.9-5.8 7.7-5.8 7.7z" fill="#FFFFFF"/>';
+      if (score >= 80) {
+        fill = '#D98A2B';
+        symbol = '<path d="M16 6l3.1 6.3 6.9 1-5 4.9 1.2 6.8-6.2-3.3-6.2 3.3 1.2-6.8-5-4.9 6.9-1z" fill="#FFFFFF"/>';
+      } else if (score >= 60) {
+        fill = '#788B7C';
+        symbol = '<path d="M16 6l3.1 6.3 6.9 1-5 4.9 1.2 6.8-6.2-3.3-6.2 3.3 1.2-6.8-5-4.9 6.9-1z" fill="#FFFFFF"/>';
+      } else if (score > 0) {
+        fill = '#B36239';
+        symbol = '<path d="M16 6l3.1 6.3 6.9 1-5 4.9 1.2 6.8-6.2-3.3-6.2 3.3 1.2-6.8-5-4.9 6.9-1z" fill="#FFFFFF"/>';
+      }
+      return '<svg viewBox="0 0 32 32" width="24" height="24" style="vertical-align:middle; margin-right:4px; flex-shrink:0;"><circle cx="16" cy="16" r="15" fill="' + fill + '"/>' + symbol + '</svg>';
+    }
+
+    // 總成績專用獎牌：80 分以上金牌、60–79 分銀牌、1–59 分銅牌、0 分顯示鼓勵圖示。
+    // 不影響單關獎牌門檻與各關既有評分。
+    function getTotalMedalIcon(score) {
+      let fill = '#5F8575';
+      let symbol = '<path d="M16 22.5s-5.8-3.8-5.8-7.7c0-2.1 1.7-3.8 3.8-3.8 1.3 0 2.4.6 3 1.6.6-1 1.7-1.6 3-1.6 2.1 0 3.8 1.7 3.8 3.8 0 3.9-5.8 7.7-5.8 7.7z" fill="#FFFFFF"/>';
+      if (score >= 80) {
+        fill = '#D98A2B';
+        symbol = '<path d="M16 6l3.1 6.3 6.9 1-5 4.9 1.2 6.8-6.2-3.3-6.2 3.3 1.2-6.8-5-4.9 6.9-1z" fill="#FFFFFF"/>';
+      } else if (score >= 60) {
+        fill = '#788B7C';
+        symbol = '<path d="M16 6l3.1 6.3 6.9 1-5 4.9 1.2 6.8-6.2-3.3-6.2 3.3 1.2-6.8-5-4.9 6.9-1z" fill="#FFFFFF"/>';
+      } else if (score > 0) {
+        fill = '#B36239';
+        symbol = '<path d="M16 6l3.1 6.3 6.9 1-5 4.9 1.2 6.8-6.2-3.3-6.2 3.3 1.2-6.8-5-4.9 6.9-1z" fill="#FFFFFF"/>';
+      }
+      return '<svg viewBox="0 0 32 32" width="24" height="24" style="vertical-align:middle; margin-right:4px; flex-shrink:0;"><circle cx="16" cy="16" r="15" fill="' + fill + '"/>' + symbol + '</svg>';
+    }
+
+    function getStagePerfectConfettiHTML() {
+      const colors = ['#ff7043', '#4caf50', '#42a5f5', '#fbc02d', '#ab47bc', '#26a69a', '#ff4081', '#ffb300'];
+      let html = '';
       for (let i = 0; i < 22; i++) {
         const left = Math.floor((i / 22) * 92 + 4);
-        const color = confettiColors[i % confettiColors.length];
         const delay = (Math.random() * 2.2).toFixed(2);
         const duration = (2.4 + Math.random() * 1.2).toFixed(2);
-        confettiHTML += `<span class="confetti-piece" style="left:${left}%; background:${color}; width:8px; height:12px; border-radius:2px; animation-delay:${delay}s; animation-duration:${duration}s;"></span>`;
+        html += '<span class="confetti-piece" style="left:' + left + '%; background:' + colors[i % colors.length] + '; width:8px; height:12px; border-radius:2px; animation-delay:' + delay + 's; animation-duration:' + duration + 's;"></span>';
+      }
+      return html;
+    }
+
+    function getStagePerfectTrophyHTML() {
+      return '<div class="trophy-star-wrap">' +
+        FOUR_POINT_STAR_SVG.replace('class="four-point-star-svg"', 'class="four-point-star-svg star-left"') +
+        '<span class="trophy-icon" aria-label="trophy">🏆</span>' +
+        FOUR_POINT_STAR_SVG.replace('class="four-point-star-svg"', 'class="four-point-star-svg star-right"') +
+      '</div>';
+    }
+
+    function getStageEncouragement(stg, score) {
+      const keys = [
+        ['enc.p1.high', 'enc.p1.med', 'enc.p1.low'],
+        ['enc.p2.high', 'enc.p2.med', 'enc.p2.low'],
+        ['enc.p3.high', 'enc.p3.med', 'enc.p3.low'],
+        ['enc.p4.high', 'enc.p4.med', 'enc.p4.low']
+      ];
+      if (score >= 80) return t(keys[stg][0]);
+      if (score >= 60) return t(keys[stg][1]);
+      return t(keys[stg][2]);
+    }
+
+    function showCustomModal(title, content) {
+      let existing = $('custom-modal-overlay');
+      if (existing) existing.remove();
+      const overlay = document.createElement('div');
+      overlay.id = 'custom-modal-overlay';
+      overlay.className = 'modal-overlay';
+      overlay.innerHTML = '' +
+        '<div class="modal-card">' +
+          '<div class="modal-title">' + title + '</div>' +
+          '<div class="modal-content">' + content + '</div>' +
+          '<button class="btn-modal-close" onclick="closeCustomModal()">' + t('modal.know') + '</button>' +
+        '</div>';
+      document.body.appendChild(overlay);
+    }
+
+    function showConfirmModal(title, content, onConfirm) {
+      let existing = $('custom-modal-overlay');
+      if (existing) existing.remove();
+      const overlay = document.createElement('div');
+      overlay.id = 'custom-modal-overlay';
+      overlay.className = 'modal-overlay';
+      overlay.innerHTML = '' +
+        '<div class="modal-card">' +
+          '<div class="modal-title">' + title + '</div>' +
+          '<div class="modal-content">' + content + '</div>' +
+          '<div style="display: flex; justify-content: center; gap: 14px; margin-top: 14px;">' +
+            '<button class="btn-modal-cancel" id="modal-btn-cancel">' + t('modal.cancel') + '</button>' +
+            '<button class="btn-modal-confirm" id="modal-btn-confirm">' + t('modal.confirm_clear') + '</button>' +
+          '</div>' +
+        '</div>';
+      document.body.appendChild(overlay);
+      $('modal-btn-cancel').onclick = closeCustomModal;
+      $('modal-btn-confirm').onclick = function() {
+        closeCustomModal();
+        if (typeof onConfirm === 'function') onConfirm();
+      };
+    }
+
+    function showSubmitConfirmModal(onConfirm) {
+      let existing = $('custom-modal-overlay');
+      if (existing) existing.remove();
+      const overlay = document.createElement('div');
+      overlay.id = 'custom-modal-overlay';
+      overlay.className = 'modal-overlay';
+      overlay.innerHTML = '' +
+        '<div class="modal-card">' +
+          '<div class="modal-title">' + t('modal.submit_title') + '</div>' +
+          '<div class="modal-content">' + t('modal.submit_desc') + '</div>' +
+          '<div style="display: flex; justify-content: center; gap: 14px; margin-top: 14px;">' +
+            '<button class="btn-modal-cancel" id="modal-btn-check-again">' + t('modal.check_again') + '</button>' +
+            '<button class="btn-modal-submit-primary" id="modal-btn-submit-confirm">' + t('modal.submit_confirm') + '</button>' +
+          '</div>' +
+        '</div>';
+      document.body.appendChild(overlay);
+      $('modal-btn-check-again').onclick = closeCustomModal;
+      $('modal-btn-submit-confirm').onclick = function() {
+        closeCustomModal();
+        if (typeof onConfirm === 'function') onConfirm();
+      };
+    }
+
+    window.closeCustomModal = function() {
+      const overlay = $('custom-modal-overlay');
+      if (overlay) overlay.remove();
+    };
+
+    let cheerAudioInstance = null;
+    const CHEER_SOURCES = [
+      "https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3",
+      "https://cdn.freesound.org/previews/391/391539_5121236-lq.mp3"
+    ];
+
+    window.playCheerSound = function(allowStageOrTotalReward) {
+      const isPerfectTotal = results.length === 4 && results.every(function(res) {
+        return !!res && Number(res.stageScore) === 100;
+      });
+
+      // 單關分數或總平均達 80 分以上時，由結算畫面明確呼叫即可播放歡呼聲。
+      if (!isPerfectTotal && allowStageOrTotalReward !== true) return;
+
+      try {
+        if (!cheerAudioInstance) {
+          cheerAudioInstance = new Audio();
+          cheerAudioInstance.crossOrigin = "anonymous";
+          cheerAudioInstance.src = CHEER_SOURCES[0];
+        }
+        cheerAudioInstance.pause();
+        cheerAudioInstance.currentTime = 0;
+        cheerAudioInstance.play().catch(function() {
+          cheerAudioInstance.src = CHEER_SOURCES[1];
+          cheerAudioInstance.play().catch(function(e) { console.log("Audio play error:", e); });
+        });
+      } catch (e) {
+        console.log("Audio play error:", e);
+      }
+    };
+
+    function makeRandomTime() {
+      const hour = Math.floor(Math.random() * 12) + 1;
+      const minute = Math.floor(Math.random() * 12) * 5;
+      return String(hour).padStart(2, '0') + ':' + String(minute).padStart(2, '0');
+    }
+
+    // 僅轉換畫面顯示格式；targetTime 原始 HH:MM 值仍保留供評分使用。
+    function formatTargetTimeForDisplay(timeValue) {
+      const parts = String(timeValue || '').split(':');
+      if (parts.length !== 2) return String(timeValue || '');
+
+      const hour = Number.parseInt(parts[0], 10);
+      const minute = Number.parseInt(parts[1], 10);
+      if (!Number.isFinite(hour) || !Number.isFinite(minute)) return String(timeValue);
+
+      if (currentLang === 'en') {
+        return hour + ':' + String(minute).padStart(2, '0');
+      }
+      if (currentLang === 'ja') {
+        return minute === 0 ? hour + '時ちょうど' : hour + '時' + minute + '分';
+      }
+      if (currentLang === 'ko') {
+        return minute === 0 ? hour + '시 정각' : hour + '시 ' + minute + '분';
+      }
+      return minute === 0 ? hour + ' 點整' : hour + ' 點 ' + minute + ' 分';
+    }
+
+    function setTool(tName) {
+      tool = tName;
+      $('pen').classList.toggle('selected', tool === 'pen');
+      $('eraser').classList.toggle('selected', tool === 'eraser');
+    }
+
+    function drawArrowLine(x1, y1, x2, y2, color, lineWidth, headLen) {
+      const angle = Math.atan2(y2 - y1, x2 - x1);
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.lineWidth = lineWidth;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(x2, y2);
+      ctx.lineTo(x2 - headLen * Math.cos(angle - Math.PI / 6), y2 - headLen * Math.sin(angle - Math.PI / 6));
+      ctx.lineTo(x2 - headLen * Math.cos(angle + Math.PI / 6), y2 - headLen * Math.sin(angle + Math.PI / 6));
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawTemplate() {
+      if (stage === 1 || stage === 2) { 
+        ctx.save();
+        ctx.strokeStyle = '#b9c7bd';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(300, 300, 220, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      if (stage === 2) {
+        ctx.save();
+        ctx.fillStyle = '#87958b';
+        ctx.font = 'bold 31px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        for (let n = 1; n <= 12; n++) {
+          const a = n * Math.PI / 6 - Math.PI / 2;
+          ctx.fillText(String(n), 300 + 177 * Math.cos(a), 300 + 177 * Math.sin(a));
+        }
+        ctx.restore();
       }
     }
 
-    let trophyStarHTML = '';
-    if (showTrophy) {
-      trophyStarHTML = `
-        <div class="trophy-star-wrap">
-          ${show4PointStars ? FOUR_POINT_STAR_SVG.replace('class="four-point-star-svg"', 'class="four-point-star-svg star-left"') : ''}
-          <span class="trophy-icon">🏆</span>
-          ${show4PointStars ? FOUR_POINT_STAR_SVG.replace('class="four-point-star-svg"', 'class="four-point-star-svg star-right"') : ''}
-        </div>
-      `;
-    }
+    function drawClockHands(historyHands) {
+      if (stage !== 2 && stage !== 3) return;
+      const cx = 300, cy = 300;
+      let hands = [...historyHands];
 
-    let clapPopupHTML = canPlayApplause ? '<div class="clapping-popup-overlay">👏</div>' : '';
-    let clapButtonHTML = canPlayApplause ? `
-      <div>
-        <button class="btn-clap-sound" onclick="playCheerSound()">🎉 重新播放鼓掌聲</button>
-      </div>
-    ` : '';
+      if (isDraggingHand && previewHand) {
+        if (hands.length >= 2) hands[1] = previewHand;
+        else hands.push(previewHand);
+      }
 
-    const view = $('total-settlement-view');
-    view.innerHTML = `
-      <div class="settlement-card">
-        ${confettiHTML ? `<div class="confetti-container">${confettiHTML}</div>` : ''}
-        ${clapPopupHTML}
-        
-        <h2 class="settlement-title">${titleText}</h2>
-        ${trophyStarHTML}
-        ${renderFivePointStars(3)}
-        
-        <div class="settlement-score-pill">總成績分數：<strong>${total}</strong> / 100 分</div>
-        
-        <div class="settlement-encouragement-text">
-          ${encouragementText}
-        </div>
-
-        <div class="summary-breakdown-box">
-          <div class="summary-breakdown-row">
-            <span>第一階段（畫圓圈）：</span>
-            <span class="summary-breakdown-score">${results[0] ? results[0].stageScore : 0} / 25 分</span>
-          </div>
-          <div class="summary-breakdown-row">
-            <span>第二階段（寫數字）：</span>
-            <span class="summary-breakdown-score">${results[1] ? results[1].stageScore : 0} / 25 分</span>
-          </div>
-          <div class="summary-breakdown-row">
-            <span>第三階段（畫指針）：</span>
-            <span class="summary-breakdown-score">${results[2] ? results[2].stageScore : 0} / 25 分</span>
-          </div>
-          <div class="summary-breakdown-row">
-            <span>第四階段（綜合評分）：</span>
-            <span class="summary-breakdown-score">${results[3] ? results[3].stageScore : 0} / 25 分</span>
-          </div>
-        </div>
-
-        ${clapButtonHTML}
-
-        <div class="action-bar" style="margin-top: 14px;">
-          <button type="button" class="btn-submit" onclick="window.restartGame()">再玩一次</button>
-        </div>
-
-        <div class="settlement-nav-wrap">
-          <button type="button" onclick="goToHome()" class="btn-settlement-nav">
-            <svg viewBox="0 0 24 24">
-              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-              <polyline points="9 22 9 12 15 12 15 22"></polyline>
-            </svg>
-            <span>回首頁</span>
-          </button>
-          <button type="button" onclick="goToLevelSelect()" class="btn-settlement-nav">
-            <svg viewBox="0 0 24 24">
-              <line x1="19" y1="12" x2="5" y2="12"></line>
-              <polyline points="12 19 5 12 12 5"></polyline>
-            </svg>
-            <span>回遊戲分類</span>
-          </button>
-        </div>
-      </div>
-    `;
-
-    $('intro-view').classList.add('hidden');
-    $('drawing-view').classList.add('hidden');
-    $('stage-settlement-view').classList.add('hidden');
-    $('header-nav').classList.remove('hidden');
-    $('disclaimer-box').classList.remove('hidden');
-    view.classList.remove('hidden');
-    finished = true;
-  };
-
-  window.restartGame = function() {
-    stage = 0;
-    tool = 'pen';
-    drawing = false;
-    current = null;
-    actionHistory = [[], [], [], []];
-    results = [null, null, null, null];
-    finished = false;
-    targetTime = makeRandomTime();
-    isDraggingHand = false;
-    previewHand = null;
-
-    setTool('pen');
-    showDrawingView();
-  };
-
-  function goToStage(targetStage) {
-    if (targetStage < stage) {
-      showCustomModal('先完成當前關卡喔！', '您已經完成之前的關卡，請繼續往前挑戰喔！');
-      return;
-    }
-    if (targetStage === stage) return;
-    for (let i = 0; i < targetStage; i++) {
-      if (!results[i]) {
-        showCustomModal('一步一步來！', '請先完成上一關，再繼續挑戰喔！');
+      if (hands.length === 0) {
+        if (stage === 2 || stage === 3) {
+          ctx.save();
+          ctx.fillStyle = '#4F7058';
+          ctx.beginPath();
+          ctx.arc(cx, cy, 3.5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
         return;
       }
+
+      if (hands.length === 1) {
+        const h = hands[0];
+        const hLen = h.length || 130;
+        drawArrowLine(cx, cy, cx + hLen * Math.cos(h.angle), cy + hLen * Math.sin(h.angle), '#d32f2f', 8, 18);
+      } else if (hands.length >= 2) {
+        let shortHand = hands[0];
+        let longHand = hands[1];
+        if (hands[1].length < hands[0].length) {
+          shortHand = hands[1];
+          longHand = hands[0];
+        }
+        drawArrowLine(cx, cy, cx + shortHand.length * Math.cos(shortHand.angle), cy + shortHand.length * Math.sin(shortHand.angle), '#d32f2f', 8, 18);
+        drawArrowLine(cx, cy, cx + longHand.length * Math.cos(longHand.angle), cy + longHand.length * Math.sin(longHand.angle), '#1976d2', 6, 18);
+      }
+
+      ctx.save();
+      ctx.fillStyle = '#4F7058';
+      ctx.beginPath();
+      ctx.arc(cx, cy, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
     }
-    stage = targetStage;
-    if (results[targetStage]) showStageSettlement(targetStage);
-    else showDrawingView();
-  }
 
-  for (let i = 0; i < 4; i++) {
-    const navEl = $('nav-' + i);
-    if (navEl) navEl.addEventListener('click', () => goToStage(i));
-  }
+    function drawStrokeToContext(targetCtx, s) {
+      if (!s || !s.points || !s.points.length) return;
+      targetCtx.save();
+      targetCtx.lineCap = 'round';
+      targetCtx.lineJoin = 'round';
 
-  function point(e) {
-    const r = canvas.getBoundingClientRect();
-    let clientX = e.clientX;
-    let clientY = e.clientY;
+      if (s.tool === 'eraser') {
+        targetCtx.lineWidth = 28;
+        targetCtx.globalCompositeOperation = 'destination-out';
+        targetCtx.strokeStyle = 'rgba(0,0,0,1)';
+      } else {
+        targetCtx.lineWidth = 5;
+        targetCtx.globalCompositeOperation = 'source-over';
+        targetCtx.strokeStyle = '#172f25';
+      }
 
-    if ((clientX === undefined || clientY === undefined) && e.touches && e.touches.length > 0) {
-      clientX = e.touches[0].clientX;
-      clientY = e.touches[0].clientY;
-    } else if ((clientX === undefined || clientY === undefined) && e.changedTouches && e.changedTouches.length > 0) {
-      clientX = e.changedTouches[0].clientX;
-      clientY = e.changedTouches[0].clientY;
+      // 以相鄰座標中點作為曲線終點，使用二次貝茲曲線平滑連接筆跡。
+      // 原始 points 仍完整保留，撤銷、重畫及作答資料結構不變。
+      const points = s.points;
+      targetCtx.beginPath();
+      targetCtx.moveTo(points[0].x, points[0].y);
+
+      if (points.length === 1) {
+        targetCtx.lineTo(points[0].x + 0.1, points[0].y + 0.1);
+      } else if (points.length === 2) {
+        targetCtx.lineTo(points[1].x, points[1].y);
+      } else {
+        for (let i = 1; i < points.length - 1; i++) {
+          const midX = (points[i].x + points[i + 1].x) / 2;
+          const midY = (points[i].y + points[i + 1].y) / 2;
+          targetCtx.quadraticCurveTo(points[i].x, points[i].y, midX, midY);
+        }
+        const lastPoint = points[points.length - 1];
+        targetCtx.lineTo(lastPoint.x, lastPoint.y);
+      }
+
+      targetCtx.stroke();
+      targetCtx.restore();
     }
 
-    const scaleX = (r.width > 0) ? (canvas.width / r.width) : 1;
-    const scaleY = (r.height > 0) ? (canvas.height / r.height) : 1;
+    function redraw() {
+      ctx.clearRect(0, 0, 600, 600);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, 600, 600);
+      drawTemplate();
 
-    return { 
-      x: (clientX - r.left) * scaleX, 
-      y: (clientY - r.top) * scaleY 
-    };
-  }
+      userCtx.clearRect(0, 0, 600, 600);
 
-  canvas.addEventListener('contextmenu', function (e) { e.preventDefault(); e.stopPropagation(); });
-  canvas.addEventListener('selectstart', function (e) { e.preventDefault(); });
-  canvas.addEventListener('dragstart', function (e) { e.preventDefault(); });
+      const currentStageHistory = actionHistory[stage] || [];
+      const handsToDraw = [];
+      currentStageHistory.forEach(function(item) {
+        if (item.type === 'stroke') drawStrokeToContext(userCtx, item.data);
+        else if (item.type === 'hand') handsToDraw.push(item.data);
+      });
+      if (current && current.type === 'stroke') drawStrokeToContext(userCtx, current.data);
 
-  canvas.addEventListener('pointerdown', function (e) {
-    if (finished) return;
-    if (e.pointerType === 'mouse' && e.button !== 0) return;
+      // 重要：userCanvas 的 backing store 是 600×DPR，必須縮回 600×600 邏輯座標。
+      // 若省略目的寬高，DPR=2 時筆跡會被放大並裁切，造成看似無法繪圖。
+      ctx.drawImage(userCanvas, 0, 0, 600, 600);
+      drawClockHands(handsToDraw);
 
-    e.preventDefault();
-    e.stopPropagation();
+      if (isDraggingHand) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(120, 148, 125, 0.20)';
+        ctx.strokeStyle = 'rgba(79, 112, 88, 0.55)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(300, 300, 40, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+      }
 
-    try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
+      if (drawing && current && current.data && current.data.tool === 'eraser' && activeInputPoint) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(120, 148, 125, 0.12)';
+        ctx.strokeStyle = 'rgba(79, 112, 88, 0.65)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(activeInputPoint.x, activeInputPoint.y, 28, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
 
-    const pt = point(e);
-    const cx = 300, cy = 300;
-    const distFromCenter = Math.hypot(pt.x - cx, pt.y - cy);
+    function showIntroView() {
+      $('header-nav').classList.add('hidden');
+      $('drawing-view').classList.add('hidden');
+      $('stage-settlement-view').classList.add('hidden');
+      $('total-settlement-view').classList.add('hidden');
+      $('disclaimer-box').classList.add('hidden');
+      $('intro-view').classList.remove('hidden');
+    }
 
-    const isHandDragStart = (stage === 2) || (stage === 3 && distFromCenter <= 100);
+    function startGame() {
+      $('intro-view').classList.add('hidden');
+      $('header-nav').classList.remove('hidden');
+      showDrawingView();
+    }
 
-    if (isHandDragStart) {
-      isDraggingHand = true;
-      const angle = Math.atan2(pt.y - cy, pt.x - cx);
-      const len = distFromCenter < 30 ? 130 : Math.min(Math.max(distFromCenter, 40), 220);
+    function showDrawingView() {
+      setTotalSummaryNav(false);
+      $('stage-settlement-view').classList.add('hidden');
+      $('total-settlement-view').classList.add('hidden');
+      $('intro-view').classList.add('hidden');
+      $('header-nav').classList.remove('hidden');
+      $('disclaimer-box').classList.add('hidden');
+      $('drawing-view').classList.remove('hidden');
+      render();
+    }
 
-      previewHand = { angle: angle, length: len };
+    function render() {
+      $('title').textContent = t('stage.' + (stage + 1) + '.title');
+      const instructionText = t('stage.' + (stage + 1) + '.inst');
+      // 關卡提示為程式內固定文案；第四關使用 <br /> 強制斷行，其餘文字維持純文字輸出。
+      if (instructionText.includes('<br />')) {
+        $('instruction').innerHTML = instructionText;
+      } else {
+        $('instruction').textContent = instructionText;
+      }
+      $('target').textContent = t('target.time') + formatTargetTimeForDisplay(targetTime);
+      $('target').classList.toggle('hidden', stage !== 2 && stage !== 3);
+      $('next').textContent = t('btn.submit');
+
+      $('draw-tools').classList.remove('hidden');
+      setTool(tool);
+      
+      for (let i = 0; i < 4; i++) {
+        const el = $('nav-' + i);
+        if (el) {
+          el.classList.toggle('active', i === stage);
+          el.classList.toggle('completed', results[i] !== null && i !== stage);
+        }
+      }
       redraw();
-      return;
     }
 
-    drawing = true;
-    current = {
-      type: 'stroke',
-      data: { tool: (tool === 'eraser' ? 'eraser' : 'pen'), points: [pt] }
+    // 結算評價與建議由前端依目前語言、關卡及分數決定，
+    // 不再依賴後端是否正確部署語言參數，避免英文／日文／韓文畫面混入中文。
+    function getLocalizedClockStageFeedback(stageNumber, stageScore) {
+      const tier = Number(stageScore) >= 80 ? 'high' : (Number(stageScore) >= 60 ? 'medium' : 'low');
+      const lang = i18nDict[currentLang] ? currentLang : 'zh-TW';
+      const messages = {
+        'zh-TW': {
+          1: {
+            high: { reason: '起筆和收尾接得很自然，整體輪廓非常圓潤。', advice: '手感非常穩定，繼續保持這個節奏挑戰下一關吧！' },
+            medium: { reason: '圓圈大致閉合，已看得出清楚的圓形外框。', advice: '畫的時候稍微放慢速度，讓左右兩邊更對稱喔！' },
+            low: { reason: '已經勇敢畫出第一步，不過圓圈起點和終點還沒接起來。', advice: '試著慢慢一筆畫完，讓線條頭尾接在一起！' }
+          },
+          2: {
+            high: { reason: '1 到 12 的數字都寫得清楚，而且均勻分布在圓圈內側。', advice: '空間感抓得非常準確，準備好來挑戰畫指針囉！' },
+            medium: { reason: '1 到 12 的數字大多正確，只有少數幾個稍微擠在一起或偏離框線。', advice: '下次先寫上下左右的「12、3、6、9」定位，其他數字更好擺放！' },
+            low: { reason: '部分數字有遺漏、重複，或是寫到圓圈外面去了。', advice: '照時鐘順序從 12 開始寫，寫錯可按「取消上一筆」修改喔！' }
+          },
+          3: {
+            high: { reason: '時針和分針都從中心點出發，長短區別清楚，方向也正確。', advice: '對時間與方向掌握得很好，準備挑戰最後一關吧！' },
+            medium: { reason: '指針有指向正確數字，不過兩根針長度較接近或稍微偏離中心。', advice: '記得讓時針短一點、分針長一點，看起來更清楚喔！' },
+            low: { reason: '指針指向的數字和目標時間不同，或是只畫出了一根指針。', advice: '先看清楚指定時間，再從圓心畫出短針（時）和長針（分）喔！' }
+          },
+          4: {
+            high: { reason: '圓框完整、數字排列整齊，指針長短與時間也都非常準確。', advice: '你的手眼協調與記憶力都很棒，每天動動手畫一下更有精神喔！' },
+            medium: { reason: '時鐘外框、數字和指針都有畫出來，只有少數細節稍微歪斜或擁擠。', advice: '能在空白畫布獨立完成很不容易，下次把圓框畫大一點，數字更好寫喔！' },
+            low: { reason: '沒有提示就能完成作畫很值得鼓勵，數字排列或指針時間還有些誤差。', advice: '先畫大圓，再寫 12、3、6、9，最後補上長短針，照步驟慢慢來！' }
+          }
+        },
+        en: {
+          1: {
+            high: { reason: 'Your starting and ending points connect naturally, creating a smooth, rounded outline.', advice: 'Your hand is very steady. Keep this comfortable rhythm as you move to the next stage!' },
+            medium: { reason: 'The circle is mostly closed, and its outline is easy to recognize.', advice: 'Try drawing a little more slowly to keep both sides balanced.' },
+            low: { reason: 'You took the first step by drawing a circle. Its starting and ending points have not joined yet.', advice: 'Try completing the circle in one slow, steady stroke.' }
+          },
+          2: {
+            high: { reason: 'All numbers from 1 to 12 are clear and evenly spaced around the clock.', advice: 'You placed the numbers very well. You are ready to draw the clock hands!' },
+            medium: { reason: 'Most numbers are correct, but a few are crowded together or slightly out of place.', advice: 'Place 12, 3, 6, and 9 first, then fill in the remaining numbers.' },
+            low: { reason: 'Some numbers are missing, repeated, or placed outside the clock circle.', advice: 'Follow the clock order starting at 12. Use Undo to correct a stroke if needed.' }
+          },
+          3: {
+            high: { reason: 'Both hands start at the center, with clear differences in length and the correct directions.', advice: 'You understand the time and directions very well. You are ready for the final stage!' },
+            medium: { reason: 'The hands point toward the correct numbers, but their lengths are similar or slightly off-center.', advice: 'Keep the hour hand shorter and the minute hand longer.' },
+            low: { reason: 'The hands point to different numbers than the target time, or only one hand is drawn.', advice: 'Check the target time, then draw the short hour hand and long minute hand from the center.' }
+          },
+          4: {
+            high: { reason: 'The circle is complete, the numbers are neat, and both hands show the correct time.', advice: 'Your coordination and memory are excellent. Keep practicing with confidence!' },
+            medium: { reason: 'The circle, numbers, and hands are all present, with only a few small details to adjust.', advice: 'Completing the clock independently is impressive. A slightly larger circle can make the numbers easier to place.' },
+            low: { reason: 'You completed the drawing without prompts—that is worth celebrating. Some numbers or the clock hands still need adjustment.', advice: 'Draw a large circle first, place 12, 3, 6, and 9, then add the hour and minute hands step by step.' }
+          }
+        },
+        ja: {
+          1: {
+            high: { reason: '書き始めと終わりが自然につながり、全体がとてもきれいな円になっています。', advice: 'とても安定して描けています。この調子で次のステージに進みましょう！' },
+            medium: { reason: '円はほぼ閉じていて、輪郭もはっきりしています。', advice: '少しゆっくり描くと、左右のバランスが整いやすくなります。' },
+            low: { reason: '最初の一歩を描けましたね。円の始点と終点はまだつながっていません。', advice: 'ゆっくり一筆で描き、線の始まりと終わりをつなげてみましょう。' }
+          },
+          2: {
+            high: { reason: '1から12までの数字がはっきり書けていて、間隔も均等です。', advice: '数字の配置がとても上手です。次は時計の針に挑戦しましょう！' },
+            medium: { reason: '数字はほとんど正しく書けていますが、一部が重なったり位置がずれたりしています。', advice: 'まず12、3、6、9を配置してから、残りの数字を書きましょう。' },
+            low: { reason: '数字の抜けや重複があり、円の外側に書かれたものもあります。', advice: '12から時計回りに書きましょう。間違えた線は「元に戻す」で修正できます。' }
+          },
+          3: {
+            high: { reason: '時針と分針が中心から伸び、長さの違いも方向も正しく描けています。', advice: '時刻と針の向きをよく理解できています。最後のステージに進みましょう！' },
+            medium: { reason: '針は正しい数字を指していますが、長さが似ているか、中心から少しずれています。', advice: '時針は短く、分針は長く描くことを意識しましょう。' },
+            low: { reason: '針が目標の時刻と違う数字を指しているか、針が一本しか描かれていません。', advice: '目標の時刻を確認し、中心から短い時針と長い分針を描きましょう。' }
+          },
+          4: {
+            high: { reason: '円と数字が整っていて、針の長さと時刻も正確です。', advice: '手と目の協調や記憶力がとても優れています。この調子で続けましょう！' },
+            medium: { reason: '円、数字、針をすべて描けています。細かな部分に少し調整が必要です。', advice: '一人で最後まで完成できたのは素晴らしいことです。数字を書きやすいよう、円を少し大きくしてみましょう。' },
+            low: { reason: 'ヒントなしで最後まで描けたことは立派です。数字の配置や針の時刻に少しずれがあります。', advice: 'まず大きな円を描き、12、3、6、9を置いてから、時針と分針を順番に描きましょう。' }
+          }
+        },
+        ko: {
+          1: {
+            high: { reason: '선을 시작하고 마무리한 부분이 자연스럽게 이어져 전체 모양이 아주 둥글어요.', advice: '손 움직임이 매우 안정적이에요. 지금의 리듬을 유지하며 다음 단계로 가볼까요?' },
+            medium: { reason: '원이 거의 닫혀 있고 바깥 윤곽도 알아보기 쉬워요.', advice: '조금 더 천천히 그리면 양쪽 균형을 맞추는 데 도움이 돼요.' },
+            low: { reason: '첫 번째 원을 그려냈어요. 다만 시작점과 끝점이 아직 이어지지 않았어요.', advice: '천천히 한 번에 그려 선의 시작과 끝을 이어보세요.' }
+          },
+          2: {
+            high: { reason: '1부터 12까지 숫자가 또렷하고 시계 둘레에 고르게 배치되어 있어요.', advice: '숫자 위치를 아주 잘 잡았어요. 이제 시계 바늘에 도전해 보세요!' },
+            medium: { reason: '대부분의 숫자가 맞지만 일부 숫자가 모여 있거나 위치가 조금 어긋났어요.', advice: '먼저 12, 3, 6, 9를 표시한 뒤 나머지 숫자를 채워보세요.' },
+            low: { reason: '일부 숫자가 빠지거나 중복되었고 원 바깥에 적힌 숫자도 있어요.', advice: '12부터 시계 방향으로 적어보세요. 잘못 그린 선은 실행 취소로 고칠 수 있어요.' }
+          },
+          3: {
+            high: { reason: '시침과 분침이 중심에서 시작하고 길이 차이와 방향도 정확해요.', advice: '시간과 방향을 아주 잘 이해하고 있어요. 마지막 단계에 도전해 보세요!' },
+            medium: { reason: '바늘이 맞는 숫자를 가리키지만 두 바늘의 길이가 비슷하거나 중심에서 조금 벗어났어요.', advice: '시침은 짧게, 분침은 길게 그리는 것을 기억해 주세요.' },
+            low: { reason: '바늘이 목표 시간과 다른 숫자를 가리키거나 바늘 하나만 그려졌어요.', advice: '목표 시간을 확인한 뒤 중심에서 짧은 시침과 긴 분침을 그려보세요.' }
+          },
+          4: {
+            high: { reason: '시계 테두리와 숫자가 깔끔하고 바늘의 길이와 시간도 정확해요.', advice: '눈과 손의 협응력과 기억력이 훌륭해요. 자신감을 갖고 계속 연습해요!' },
+            medium: { reason: '시계 테두리와 숫자, 바늘을 모두 그렸고 몇 가지 세부 부분만 조금 다듬으면 돼요.', advice: '혼자서 끝까지 완성한 점이 정말 훌륭해요. 숫자를 쓰기 쉽도록 원을 조금 더 크게 그려보세요.' },
+            low: { reason: '도움말 없이 그림을 완성한 것만으로도 훌륭해요. 숫자 위치나 바늘의 시간에 조금 차이가 있어요.', advice: '먼저 큰 원을 그리고 12, 3, 6, 9를 표시한 다음 시침과 분침을 차례로 그려보세요.' }
+          }
+        }
+      };
+      const stageMessages = messages[lang] && messages[lang][stageNumber];
+      return (stageMessages && stageMessages[tier]) || messages['zh-TW'][stageNumber][tier];
+    }
+
+    function showStageSettlement(stg) {
+      setTotalSummaryNav(false);
+      const data = results[stg];
+      if (!data) return;
+
+      const categoryKeys = ['c1', 'c2', 'c3', 'c4'];
+      const catKey = categoryKeys[stg];
+      const item = data[catKey] || {};
+      const score = Number(item.score) || 0;
+
+      // 四關統一星星門檻：80 分以上 3 顆、60–79 分 2 顆、59 分以下 1 顆。
+      // scoreCurrentStage() 會先檢查必須有實際筆跡才能送出，因此完成作答至少保底 1 顆星，不會出現 0 顆。
+      const starCount = score >= 80 ? 3 : (score >= 60 ? 2 : 1);
+      const starsHTML = renderStageSettlementStars(starCount);
+      const medalHTML = getStageMedalIcon(score);
+      const encouragementText = getStageEncouragement(stg, score);
+      // 單關結算只保留本關原有的分數、獎牌、評分星星與評語。
+      // 80 分慶祝特效僅限第四關結束後的總平均成績頁面，不套用到任何單關。
+
+      // 下一關固定使用阿拉伯數字，並與實際 stage++ 的跳轉目標一致。
+      // stg 為目前關卡的 0-based 索引，因此下一關編號為 stg + 2。
+      const nextStageNumber = stg + 2;
+      const nextBtnText = stg === 3 ? t('settlement.view_total') : t('settlement.next_stage', { stage: nextStageNumber });
+      const nextAction = stg === 3 ? 'window.showTotalSettlement()' : 'window.goToNextStage()';
+
+      // 後端舊部署版本可能仍回傳中文；以目前前端語言及最終分數選出正確回饋。
+      const localizedFeedback = getLocalizedClockStageFeedback(stg + 1, score);
+      const reasonText = localizedFeedback.reason || item.reason || t('settlement.reason_fallback');
+      const adviceText = localizedFeedback.advice || item.advice || '';
+      const adviceHTML = adviceText
+        ? '<div class="stage-result-detail-card advice">' +
+            '<strong>' + t('settlement.advice') + '</strong>' +
+            '<span>' + adviceText + '</span>' +
+          '</div>'
+        : '';
+
+      const view = $('stage-settlement-view');
+      view.innerHTML = '' +
+        '<div class="settlement-card">' +
+          '<h2 class="settlement-title">' + t('cat.title.' + (stg + 1)) + '</h2>' +
+          starsHTML +
+          '<div class="settlement-score-pill">' + medalHTML + t('settlement.stage_score') + '<strong>' + score + '</strong> / 100</div>' +
+          '<div class="sublevel-encouragement">' + encouragementText + '</div>' +
+          '<div class="stage-result-details">' +
+            '<div class="stage-result-detail-card reason">' +
+              '<strong>' + t('settlement.reason') + '</strong>' +
+              '<span>' + reasonText + '</span>' +
+            '</div>' +
+            adviceHTML +
+          '</div>' +
+          '<div class="stage-summary-actions-group">' +
+            '<button type="button" class="stage-summary-full-btn" onclick="' + nextAction + '">' + nextBtnText + '</button>' +
+          '</div>' +
+        '</div>';
+
+      $('drawing-view').classList.add('hidden');
+      $('total-settlement-view').classList.add('hidden');
+      $('disclaimer-box').classList.remove('hidden');
+      view.classList.remove('hidden');
+
+      for (let i = 0; i < 4; i++) {
+        const el = $('nav-' + i);
+        if (el) {
+          el.classList.toggle('active', i === stg);
+          el.classList.toggle('completed', results[i] !== null);
+        }
+      }
+
+    }
+
+    window.goToNextStage = function() {
+      if (stage < 3) {
+        stage++;
+        showDrawingView();
+      }
     };
-    redraw();
-  }, { passive: false });
 
-  canvas.addEventListener('pointermove', function (e) {
-    if (!isDraggingHand && !drawing) return;
+    function setTotalSummaryNav(isTotal) {
+      const navBar = $('nav-bar');
+      if (!navBar) return;
+      const existing = $('total-nav-item');
+      if (isTotal) {
+        navBar.classList.add('total-summary-nav');
+        if (existing) {
+          // 每次進入總成績頁都重新依目前語言更新標籤，避免沿用舊語言或固定中文。
+          existing.textContent = t('settlement.total_title');
+        } else {
+          const item = document.createElement('div');
+          item.id = 'total-nav-item';
+          item.className = 'total-nav-item';
+          item.textContent = t('settlement.total_title');
+          navBar.appendChild(item);
+        }
+      } else {
+        navBar.classList.remove('total-summary-nav');
+        if (existing) existing.remove();
+      }
+    }
 
-    e.preventDefault();
-    e.stopPropagation();
+    window.showTotalSettlement = function() {
+      let total = 0;
+      results.forEach(function(res) {
+        if (res) total += (Number(res.stageScore) || 0);
+      });
+      // 保留視覺建構原本四關算術平均，總分仍為 100 分制。
+      const averageScore = Math.round(total / 4);
+      const isPerfectTotal = results.length === 4 && results.every(function(res) {
+        return !!res && Number(res.stageScore) === 100;
+      });
 
-    if (isDraggingHand && previewHand) {
+      // 總成績級距：80–100 金牌／3 星；60–79 銀牌／2 星；1–59 銅牌／1 星；0 分顯示鼓勵圖示／1 顆鼓勵星。
+      const totalStarCount = averageScore >= 80 ? 3 : (averageScore >= 60 ? 2 : 1);
+      const totalMedalHTML = getTotalMedalIcon(averageScore);
+
+      // 總平均達 80 分以上，總成績結算立即觸發獎盃、四角星、彩帶及歡呼聲。
+      const hasTotalRewardEffect = averageScore >= 80;
+      const canPlayApplause = hasTotalRewardEffect;
+      if (canPlayApplause) {
+        playCheerSound(true);
+      }
+
+      // 總平均達 80 分以上即顯示獎盃與四角星；未達 80 分不顯示慶祝特效。
+      let titleText = t('summary.good');
+      let encouragementText = averageScore >= 80
+        ? t('enc.total.high')
+        : (averageScore >= 60 ? t('enc.total.mid') : t('enc.total.normal'));
+      if (averageScore >= 80) {
+        titleText = t('summary.excellent');
+      }
+
+      let confettiHTML = '';
+      if (hasTotalRewardEffect) {
+        const confettiColors = ['#ff7043', '#4caf50', '#42a5f5', '#fbc02d', '#ab47bc', '#26a69a', '#ff4081', '#ffb300'];
+        for (let i = 0; i < 22; i++) {
+          const left = Math.floor((i / 22) * 92 + 4);
+          const color = confettiColors[i % confettiColors.length];
+          const delay = (Math.random() * 2.2).toFixed(2);
+          const duration = (2.4 + Math.random() * 1.2).toFixed(2);
+          confettiHTML += '<span class="confetti-piece" style="left:' + left + '%; background:' + color + '; width:8px; height:12px; border-radius:2px; animation-delay:' + delay + 's; animation-duration:' + duration + 's;"></span>';
+        }
+      }
+
+      let trophyGraphicHTML = '';
+      if (hasTotalRewardEffect) {
+        const decorStarsSVG =
+          '<svg class="total-perfect-decor-stars" viewBox="0 0 40 40">' +
+            '<path d="M20 2 L23 15 L36 18 L23 21 L20 34 L17 21 L4 18 L17 15 Z" fill="#FFB74D"/>' +
+            '<path d="M32 24 L33.5 28.5 L38 29.5 L33.5 30.5 L32 35 L30.5 30.5 L26 29.5 L30.5 28.5 Z" fill="#FFE082"/>' +
+            '<path d="M10 4 L11 7.5 L14.5 8.5 L11 9.5 L10 13 L9 9.5 L5.5 8.5 L9 7.5 Z" fill="#FFE082"/>' +
+          '</svg>';
+        trophyGraphicHTML =
+          '<div class="total-perfect-graphic-group">' +
+            '<div class="total-perfect-side-decor">' + decorStarsSVG + '</div>' +
+            '<svg class="total-perfect-trophy-svg" viewBox="0 0 100 100" aria-label="trophy" role="img">' +
+              '<defs>' +
+                '<linearGradient id="total-gold-grad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#FFE082"/><stop offset="30%" stop-color="#FFD54F"/><stop offset="55%" stop-color="#FFB300"/><stop offset="85%" stop-color="#FF8F00"/><stop offset="100%" stop-color="#FF6F00"/></linearGradient>' +
+                '<linearGradient id="total-base-grad" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#8D6E63"/><stop offset="50%" stop-color="#5D4037"/><stop offset="100%" stop-color="#3E2723"/></linearGradient>' +
+                '<linearGradient id="total-stem-grad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#FFB300"/><stop offset="50%" stop-color="#FFE082"/><stop offset="100%" stop-color="#FF8F00"/></linearGradient>' +
+              '</defs>' +
+              '<path d="M 24 22 C 8 22, 8 46, 26 48 M 76 22 C 92 22, 92 46, 74 48" fill="none" stroke="url(#total-gold-grad)" stroke-width="5" stroke-linecap="round"/>' +
+              '<path d="M 22 18 L 78 18 L 70 54 C 66 68, 34 68, 30 54 Z" fill="url(#total-gold-grad)"/>' +
+              '<ellipse cx="50" cy="18" rx="28" ry="5" fill="#FFE082"/>' +
+              '<path d="M 32 22 L 40 22 C 37 38, 38 48, 36 56 C 34 54, 33 40, 32 22 Z" fill="#FFFFFF" opacity="0.45"/>' +
+              '<rect x="43" y="66" width="14" height="12" fill="url(#total-stem-grad)"/>' +
+              '<ellipse cx="50" cy="66" rx="10" ry="3" fill="#FFA000"/>' +
+              '<path d="M 28 78 L 72 78 L 76 92 L 24 92 Z" fill="url(#total-base-grad)"/>' +
+              '<rect x="24" y="78" width="52" height="4" fill="#A1887F"/>' +
+            '</svg>' +
+            '<div class="total-perfect-side-decor">' + decorStarsSVG + '</div>' +
+          '</div>';
+      }
+
+      let clapPopupHTML = canPlayApplause ? '<div class="clapping-popup-overlay">👏</div>' : '';
+      let clapButtonHTML = canPlayApplause ?
+        '<div><button class="btn-clap-sound" onclick="playCheerSound(true)">' + t('settlement.btn_clap') + '</button></div>' : '';
+
+      setTotalSummaryNav(true);
+      const view = $('total-settlement-view');
+      view.innerHTML = '' +
+        '<div class="settlement-card">' +
+          (confettiHTML ? '<div class="confetti-container">' + confettiHTML + '</div>' : '') +
+          clapPopupHTML +
+          '<h2 class="settlement-title">' + titleText + '</h2>' +
+          trophyGraphicHTML +
+          renderTotalSettlementStars(totalStarCount) +
+          '<div class="settlement-score-pill total-settlement-score-pill">' + totalMedalHTML + t('settlement.total_score') + '<strong>' + averageScore + '</strong> / 100</div>' +
+          '<div class="settlement-encouragement-text">' + encouragementText + '</div>' +
+          '<div class="summary-breakdown-box">' +
+            '<div class="summary-breakdown-row"><span>' + t('stage.1.title') + '：</span><span class="summary-breakdown-score">' + getStageMedalIcon(results[0] ? (Number(results[0].stageScore) || 0) : 0) + (results[0] ? results[0].stageScore : 0) + ' / 100</span></div>' +
+            '<div class="summary-breakdown-row"><span>' + t('stage.2.title') + '：</span><span class="summary-breakdown-score">' + getStageMedalIcon(results[1] ? (Number(results[1].stageScore) || 0) : 0) + (results[1] ? results[1].stageScore : 0) + ' / 100</span></div>' +
+            '<div class="summary-breakdown-row"><span>' + t('stage.3.title') + '：</span><span class="summary-breakdown-score">' + getStageMedalIcon(results[2] ? (Number(results[2].stageScore) || 0) : 0) + (results[2] ? results[2].stageScore : 0) + ' / 100</span></div>' +
+            '<div class="summary-breakdown-row"><span>' + t('stage.4.title') + '：</span><span class="summary-breakdown-score">' + getStageMedalIcon(results[3] ? (Number(results[3].stageScore) || 0) : 0) + (results[3] ? results[3].stageScore : 0) + ' / 100</span></div>' +
+          '</div>' +
+          clapButtonHTML +
+          '<div class="action-bar" style="margin-top: 14px;">' +
+            '<button type="button" class="btn-submit" onclick="window.restartGame()">' + t('settlement.replay') + '</button>' +
+          '</div>' +
+          '<div class="settlement-nav-wrap">' +
+            '<button type="button" onclick="postNavigate(\'home\')" class="btn-settlement-nav">' +
+              '<svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>' +
+              '<span>' + t('nav.home') + '</span>' +
+            '</button>' +
+            '<button type="button" onclick="postNavigate(\'level_select\')" class="btn-settlement-nav">' +
+              '<svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>' +
+              '<span>' + t('nav.back_category') + '</span>' +
+            '</button>' +
+          '</div>' +
+        '</div>';
+
+      $('intro-view').classList.add('hidden');
+      $('drawing-view').classList.add('hidden');
+      $('stage-settlement-view').classList.add('hidden');
+      $('header-nav').classList.remove('hidden');
+      $('disclaimer-box').classList.remove('hidden');
+      view.classList.remove('hidden');
+      finished = true;
+    };
+
+    window.restartGame = function() {
+      stage = 0;
+      tool = 'pen';
+      drawing = false;
+      current = null;
+      actionHistory = [[], [], [], []];
+      results = [null, null, null, null];
+      finished = false;
+      targetTime = makeRandomTime();
+      isDraggingHand = false;
+      previewHand = null;
+
+      setTool('pen');
+      showDrawingView();
+    };
+
+    function goToStage(targetStage) {
+      if (targetStage < stage) {
+        showCustomModal(t('modal.step_current_title'), t('modal.step_current_desc'));
+        return;
+      }
+      if (targetStage === stage) return;
+      for (let i = 0; i < targetStage; i++) {
+        if (!results[i]) {
+          showCustomModal(t('modal.step_wait_title'), t('modal.step_wait_desc'));
+          return;
+        }
+      }
+      stage = targetStage;
+      if (results[targetStage]) showStageSettlement(targetStage);
+      else showDrawingView();
+    }
+
+    for (let i = 0; i < 4; i++) {
+      const navEl = $('nav-' + i);
+      if (navEl) navEl.addEventListener('click', (function(idx) {
+        return function() { goToStage(idx); };
+      })(i));
+    }
+
+    // 統一滑鼠、觸控與觸控筆的座標換算，確保不同螢幕尺寸下都能準確落筆。
+    function point(e) {
+      const r = canvas.getBoundingClientRect();
+      let clientX = e.clientX;
+      let clientY = e.clientY;
+
+      if ((!Number.isFinite(clientX) || !Number.isFinite(clientY)) && e.touches && e.touches.length > 0) {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+      } else if ((!Number.isFinite(clientX) || !Number.isFinite(clientY)) && e.changedTouches && e.changedTouches.length > 0) {
+        clientX = e.changedTouches[0].clientX;
+        clientY = e.changedTouches[0].clientY;
+      }
+
+      const scaleX = (r.width > 0) ? (600 / r.width) : 1;
+      const scaleY = (r.height > 0) ? (600 / r.height) : 1;
+
+      return {
+        x: (clientX - r.left) * scaleX,
+        y: (clientY - r.top) * scaleY
+      };
+    }
+
+    let activePointerId = null;
+
+    canvas.addEventListener('contextmenu', function (e) { e.preventDefault(); e.stopPropagation(); });
+    canvas.addEventListener('selectstart', function (e) { e.preventDefault(); });
+    canvas.addEventListener('dragstart', function (e) { e.preventDefault(); });
+
+    function handlePointerDown(e) {
+      if (finished) return;
+      if (e.isPrimary === false) return;
+      // 觸控裝置統一交由 Touch Events 處理，避免部分 iOS / App 內建瀏覽器
+      // 雖宣告支援 Pointer Events，實際觸控追蹤卻中斷的情況。
+      if (e.pointerType === 'touch') return;
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      // 忽略第二根手指，避免同時觸控造成筆跡跳動或中斷。
+      if (activePointerId !== null) return;
+
+      if (e.preventDefault) e.preventDefault();
+      if (e.stopPropagation) e.stopPropagation();
+      activePointerId = (e.pointerId !== undefined && e.pointerId !== null) ? e.pointerId : 'touch-fallback';
+
+      if (e.pointerId !== undefined && canvas.setPointerCapture) {
+        try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
+      }
+
       const pt = point(e);
       const cx = 300, cy = 300;
       const distFromCenter = Math.hypot(pt.x - cx, pt.y - cy);
-      const angle = Math.atan2(pt.y - cy, pt.x - cx);
-      const len = distFromCenter < 30 ? 130 : Math.min(Math.max(distFromCenter, 40), 220);
-      previewHand.angle = angle;
-      previewHand.length = len;
+
+      const isHandDragStart = (stage === 2 || stage === 3) && distFromCenter <= 40;
+      activeInputPoint = pt;
+      if (stage === 2 && !isHandDragStart) {
+        if (e.pointerId !== undefined && canvas.releasePointerCapture) {
+          try { if (canvas.hasPointerCapture && canvas.hasPointerCapture(e.pointerId)) canvas.releasePointerCapture(e.pointerId); } catch (_) {}
+        }
+        activePointerId = null;
+        activeInputPoint = null;
+        return;
+      }
+
+      if (isHandDragStart) {
+        isDraggingHand = true;
+        const angle = Math.atan2(pt.y - cy, pt.x - cx);
+        const len = Math.max(distFromCenter, 40);
+        previewHand = { angle: angle, length: len };
+        redraw();
+        return;
+      }
+
+      drawing = true;
+      current = {
+        type: 'stroke',
+        data: { tool: (tool === 'eraser' ? 'eraser' : 'pen'), points: [pt] }
+      };
       redraw();
-      return;
     }
 
-    if (drawing && current && current.type === 'stroke') {
-      let events = [e];
-      if (e.getCoalescedEvents && typeof e.getCoalescedEvents === 'function') {
-        try {
-          const cEvents = e.getCoalescedEvents();
-          if (cEvents && cEvents.length > 0) {
-            events = cEvents;
+    function handlePointerMove(e) {
+      if (e.pointerType === 'touch') return;
+      if (e.isPrimary === false) return;
+      if (activePointerId === null) return;
+      if (e.pointerId !== undefined && e.pointerId !== activePointerId) return;
+      if (!isDraggingHand && !drawing) return;
+
+      if (e.preventDefault) e.preventDefault();
+      if (e.stopPropagation) e.stopPropagation();
+
+      if (isDraggingHand && previewHand) {
+        const pt = point(e);
+        activeInputPoint = pt;
+        const cx = 300, cy = 300;
+        const distFromCenter = Math.hypot(pt.x - cx, pt.y - cy);
+        const angle = Math.atan2(pt.y - cy, pt.x - cx);
+        const len = distFromCenter < 30 ? 130 : Math.min(Math.max(distFromCenter, 40), 220);
+        previewHand.angle = angle;
+        previewHand.length = len;
+        redraw();
+        return;
+      }
+
+      if (drawing && current && current.type === 'stroke') {
+        let events = [e];
+        if (e.getCoalescedEvents && typeof e.getCoalescedEvents === 'function') {
+          try {
+            const cEvents = e.getCoalescedEvents();
+            if (cEvents && cEvents.length > 0) events = cEvents;
+          } catch (_) {}
+        }
+
+        for (let i = 0; i < events.length; i++) {
+          const eventPoint = point(events[i]);
+          if (Number.isFinite(eventPoint.x) && Number.isFinite(eventPoint.y)) {
+            current.data.points.push(eventPoint);
+            activeInputPoint = eventPoint;
           }
+        }
+        redraw();
+      }
+    }
+
+    function stopDraw(e) {
+      if (e && e.pointerId !== undefined && activePointerId !== null && e.pointerId !== activePointerId) return;
+      if (activePointerId === null && !drawing && !isDraggingHand) return;
+
+      if (e && e.pointerId !== undefined && canvas.hasPointerCapture) {
+        try {
+          if (canvas.hasPointerCapture(e.pointerId)) canvas.releasePointerCapture(e.pointerId);
         } catch (_) {}
       }
+      activePointerId = null;
 
-      for (let i = 0; i < events.length; i++) {
-        current.data.points.push(point(events[i]));
-      }
-      redraw();
-    }
-  }, { passive: false });
-
-  function stopDraw(e) {
-    if (e && e.pointerId) {
-      try {
-        if (canvas.hasPointerCapture && canvas.hasPointerCapture(e.pointerId)) {
-          canvas.releasePointerCapture(e.pointerId);
-        }
-      } catch (_) {}
-    }
-
-    if (isDraggingHand) {
-      if (previewHand) {
-        const currentStageHistory = actionHistory[stage] || [];
-        let handCount = 0;
-        let lastHandIndex = -1;
-        for (let i = 0; i < currentStageHistory.length; i++) {
-          if (currentStageHistory[i].type === 'hand') {
-            handCount++;
-            lastHandIndex = i;
-          }
-        }
-        if (handCount >= 2 && lastHandIndex !== -1) {
-          currentStageHistory[lastHandIndex] = { type: 'hand', data: { angle: previewHand.angle, length: previewHand.length } };
-        } else {
-          currentStageHistory.push({ type: 'hand', data: { angle: previewHand.angle, length: previewHand.length } });
-        }
-      }
-      isDraggingHand = false;
-      previewHand = null;
-      redraw();
-      return;
-    }
-
-    if (!drawing) return;
-    drawing = false;
-    if (current && current.type === 'stroke') {
-      if (current.data && current.data.points && current.data.points.length > 0) {
-        actionHistory[stage].push(current);
-      }
-    }
-    current = null;
-    redraw();
-  }
-
-  canvas.addEventListener('pointerup', stopDraw);
-  canvas.addEventListener('pointercancel', stopDraw);
-  canvas.addEventListener('pointerleave', stopDraw);
-
-  $('pen').addEventListener('click', () => { if (!finished) setTool('pen'); });
-  $('eraser').addEventListener('click', () => { if (!finished) setTool('eraser'); });
-  $('undo').addEventListener('click', () => {
-    if (finished) return;
-    if (drawing || isDraggingHand) stopDraw();
-    isDraggingHand = false;
-    previewHand = null;
-    actionHistory[stage].pop();
-    redraw();
-  });
-
-  $('clear').addEventListener('click', () => {
-    if (finished) return;
-    showConfirmModal('確定要重新作答嗎？', '確定要清除本關所有作答嗎？', function() {
-      actionHistory[stage] = [];
-      current = null;
-      drawing = false;
-      isDraggingHand = false;
-      previewHand = null;
-      redraw();
-    });
-  });
-
-  $('intro-start-btn').addEventListener('click', startGame);
-
-  function getHandsFromHistory(stg) {
-    const currentStageHistory = actionHistory[stg] || [];
-    const hands = [];
-
-    currentStageHistory.forEach(item => {
-      if (item.type === 'hand' && item.data) {
-        hands.push(item.data);
-      }
-    });
-
-    if (hands.length === 0) {
-      const cx = 300, cy = 300;
-      currentStageHistory.forEach(item => {
-        if (item.type === 'stroke' && item.data && item.data.points && item.data.points.length >= 2) {
-          const pts = item.data.points;
-          const startPt = pts[0];
-          const endPt = pts[pts.length - 1];
-          const startDist = Math.hypot(startPt.x - cx, startPt.y - cy);
-          const endDist = Math.hypot(endPt.x - cx, endPt.y - cy);
-
-          if (startDist <= 120 || endDist <= 120) {
-            let outerPt = startDist > endDist ? startPt : endPt;
-            const angle = Math.atan2(outerPt.y - cy, outerPt.x - cx);
-            const len = Math.hypot(outerPt.x - cx, outerPt.y - cy);
-            if (len >= 30) {
-              hands.push({ angle: angle, length: len });
+      if (isDraggingHand) {
+        if (previewHand) {
+          const currentStageHistory = actionHistory[stage] || [];
+          let handCount = 0;
+          let lastHandIndex = -1;
+          for (let i = 0; i < currentStageHistory.length; i++) {
+            if (currentStageHistory[i].type === 'hand') {
+              handCount++;
+              lastHandIndex = i;
             }
           }
+          if (handCount >= 2 && lastHandIndex !== -1) {
+            currentStageHistory[lastHandIndex] = { type: 'hand', data: { angle: previewHand.angle, length: previewHand.length } };
+          } else {
+            currentStageHistory.push({ type: 'hand', data: { angle: previewHand.angle, length: previewHand.length } });
+          }
         }
+        isDraggingHand = false;
+        previewHand = null;
+        activeInputPoint = null;
+        redraw();
+        return;
+      }
+
+      if (!drawing) { activeInputPoint = null; redraw(); return; }
+      drawing = false;
+      if (current && current.type === 'stroke') {
+        const pts = current.data && current.data.points;
+        if (pts && pts.length > 1 && (stage === 0 || stage === 3)) {
+          const first = pts[0];
+          const last = pts[pts.length - 1];
+          if (Math.hypot(last.x - first.x, last.y - first.y) <= 30) {
+            pts.push({ x: first.x, y: first.y });
+          }
+        }
+        if (pts && pts.length > 0) actionHistory[stage].push(current);
+      }
+      current = null;
+      activeInputPoint = null;
+      redraw();
+    }
+
+    // 在 document capture 階段接收畫布範圍內的起筆事件。
+    // 若 iPad / 內嵌瀏覽器上方有透明覆蓋層攔截事件，直接綁在 canvas
+    // 會導致畫布上半部無法起筆；capture 可在事件到達覆蓋層前先接收。
+    function isInsideCanvasBounds(e) {
+      const r = canvas.getBoundingClientRect();
+      const x = e && Number.isFinite(e.clientX) ? e.clientX : null;
+      const y = e && Number.isFinite(e.clientY) ? e.clientY : null;
+      return x !== null && y !== null &&
+        x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+    }
+
+    document.addEventListener('pointerdown', function(e) {
+      // 確認／提示視窗開啟時，按鈕可能覆蓋在畫布範圍上方。
+      // document capture 會比按鈕先收到事件，因此必須先排除彈窗，
+      // 避免 Apple Pencil 點擊「提交確認」被誤判成畫布起筆。
+      if (document.getElementById('custom-modal-overlay')) return;
+      if (!isInsideCanvasBounds(e)) return;
+      handlePointerDown(e);
+    }, { passive: false, capture: true });
+    canvas.addEventListener('pointermove', handlePointerMove, { passive: false });
+    canvas.addEventListener('pointerup', stopDraw);
+    canvas.addEventListener('pointercancel', stopDraw);
+    // 不使用 pointerleave 結束筆跡：手指靠近畫布邊緣時，瀏覽器仍可能送出 leave，
+    // 會造成數字尚未寫完就被截斷。以 pointerup / pointercancel / lostpointercapture 結束即可。
+    canvas.addEventListener('lostpointercapture', function(e) {
+      if (activePointerId === e.pointerId) stopDraw(e);
+    });
+    window.addEventListener('pointerup', function(e) {
+      if (activePointerId === e.pointerId) stopDraw(e);
+    }, false);
+
+    // 手指使用原生 Touch Events；滑鼠與觸控筆使用 Pointer Events。
+    // 兩條輸入路徑分開處理，避免 iOS 將同一次手指操作同時派送成
+    // pointer/touch 事件而互相搶占 activePointerId。
+    let activeTouchIdentifier = null;
+
+    function getTrackedTouch(list, identifier) {
+      if (!list) return null;
+      for (let i = 0; i < list.length; i++) {
+        if (list[i].identifier === identifier) return list[i];
+      }
+      return null;
+    }
+
+    function startNativeTouch(touch) {
+      if (finished || activePointerId !== null || activeTouchIdentifier !== null) return;
+      activeTouchIdentifier = touch.identifier;
+      const pt = point(touch);
+      const cx = 300, cy = 300;
+      const distFromCenter = Math.hypot(pt.x - cx, pt.y - cy);
+      const isHandDragStart = (stage === 2 || stage === 3) && distFromCenter <= 40;
+      activeInputPoint = pt;
+      if (stage === 2 && !isHandDragStart) {
+        activeTouchIdentifier = null;
+        activeInputPoint = null;
+        return;
+      }
+
+      if (isHandDragStart) {
+        isDraggingHand = true;
+        const angle = Math.atan2(pt.y - cy, pt.x - cx);
+        const len = Math.max(distFromCenter, 40);
+        previewHand = { angle: angle, length: len };
+      } else {
+        drawing = true;
+        current = {
+          type: 'stroke',
+          data: { tool: (tool === 'eraser' ? 'eraser' : 'pen'), points: [pt] }
+        };
+      }
+      redraw();
+    }
+
+    function moveNativeTouch(touch) {
+      if (activeTouchIdentifier === null || !touch) return;
+      const pt = point(touch);
+      activeInputPoint = pt;
+
+      if (isDraggingHand && previewHand) {
+        const cx = 300, cy = 300;
+        const distFromCenter = Math.hypot(pt.x - cx, pt.y - cy);
+        previewHand.angle = Math.atan2(pt.y - cy, pt.x - cx);
+        previewHand.length = distFromCenter < 30 ? 130 : Math.min(Math.max(distFromCenter, 40), 220);
+        redraw();
+        return;
+      }
+
+      if (drawing && current && current.type === 'stroke') {
+        const pts = current.data.points;
+        const last = pts[pts.length - 1];
+        // 過近的連續觸控座標不重複加入，降低無效筆跡點，但保留細小移動。
+        if (!last || Math.hypot(pt.x - last.x, pt.y - last.y) >= 0.6) {
+          pts.push(pt);
+          redraw();
+        }
+      }
+    }
+
+    function endNativeTouch() {
+      if (activeTouchIdentifier === null) return;
+      if (isDraggingHand) {
+        if (previewHand) {
+          const history = actionHistory[stage] || [];
+          let count = 0, lastIndex = -1;
+          for (let i = 0; i < history.length; i++) {
+            if (history[i].type === 'hand') { count++; lastIndex = i; }
+          }
+          const handData = { angle: previewHand.angle, length: previewHand.length };
+          if (count >= 2 && lastIndex !== -1) history[lastIndex] = { type: 'hand', data: handData };
+          else history.push({ type: 'hand', data: handData });
+        }
+        isDraggingHand = false;
+        previewHand = null;
+      } else if (drawing) {
+        drawing = false;
+        if (current && current.type === 'stroke' && current.data.points.length) {
+          const pts = current.data.points;
+          if (pts.length > 1 && (stage === 0 || stage === 3)) {
+            const first = pts[0];
+            const last = pts[pts.length - 1];
+            if (Math.hypot(last.x - first.x, last.y - first.y) <= 30) {
+              pts.push({ x: first.x, y: first.y });
+            }
+          }
+          actionHistory[stage].push(current);
+        }
+        current = null;
+      }
+      activeTouchIdentifier = null;
+      activeInputPoint = null;
+      redraw();
+    }
+
+    document.addEventListener('touchstart', function(e) {
+      // 彈窗按鈕不屬於繪圖操作；不可讓按鈕觸控被轉成畫布筆跡。
+      // 此判斷需放在 preventDefault() 之前，確保按鈕仍可正常觸發 click。
+      if (document.getElementById('custom-modal-overlay')) return;
+      if (!e.changedTouches || !e.changedTouches.length) return;
+      const touch = e.changedTouches[0];
+      // 只接收畫布可視範圍內的觸控，並在 capture 階段先處理，
+      // 避免上方透明元素或 iOS 內嵌頁面攔截 11、12、1 點鐘位置的起筆。
+      if (!isInsideCanvasBounds(touch)) return;
+      if (e.cancelable) e.preventDefault();
+      if (activeTouchIdentifier === null && activePointerId === null) {
+        startNativeTouch(touch);
+      }
+    }, { passive: false, capture: true });
+
+    window.addEventListener('touchmove', function(e) {
+      if (activeTouchIdentifier === null) return;
+      if (e.cancelable) e.preventDefault();
+      const touch = getTrackedTouch(e.touches, activeTouchIdentifier) ||
+                    getTrackedTouch(e.changedTouches, activeTouchIdentifier);
+      if (touch) moveNativeTouch(touch);
+    }, { passive: false, capture: true });
+
+    function finishNativeTouch(e) {
+      if (activeTouchIdentifier === null) return;
+      const ended = getTrackedTouch(e.changedTouches, activeTouchIdentifier);
+      if (!ended) return;
+      if (e.cancelable) e.preventDefault();
+      endNativeTouch();
+    }
+    window.addEventListener('touchend', finishNativeTouch, { passive: false, capture: true });
+    window.addEventListener('touchcancel', finishNativeTouch, { passive: false, capture: true });
+
+    // 僅在完全不支援 Pointer Events 的舊瀏覽器，補上滑鼠事件。
+    if (typeof window.PointerEvent !== 'function') {
+      canvas.addEventListener('mousedown', function(e) {
+        handlePointerDown({
+          pointerId: 'mouse-fallback', pointerType: 'mouse', button: e.button,
+          clientX: e.clientX, clientY: e.clientY,
+          preventDefault: function() { e.preventDefault(); },
+          stopPropagation: function() { e.stopPropagation(); }
+        });
+      });
+      window.addEventListener('mousemove', function(e) {
+        if (activePointerId !== 'mouse-fallback') return;
+        handlePointerMove({
+          pointerId: 'mouse-fallback', clientX: e.clientX, clientY: e.clientY,
+          preventDefault: function() { e.preventDefault(); },
+          stopPropagation: function() { e.stopPropagation(); }
+        });
+      });
+      window.addEventListener('mouseup', function() {
+        if (activePointerId === 'mouse-fallback') stopDraw({ pointerId: 'mouse-fallback' });
       });
     }
-    return hands;
-  }
 
-  function scoreCurrentStage() {
-    if (drawing || isDraggingHand) stopDraw();
+    $('pen').addEventListener('click', function() { if (!finished) setTool('pen'); });
+    $('eraser').addEventListener('click', function() { if (!finished) setTool('eraser'); });
+    $('undo').addEventListener('click', function() {
+      if (finished) return;
+      if (drawing || isDraggingHand) stopDraw();
+      isDraggingHand = false;
+      previewHand = null;
+      actionHistory[stage].pop();
+      redraw();
+    });
 
-    const currentStageHistory = actionHistory[stage] || [];
-    const strokeCount = currentStageHistory.filter(i => i.type === 'stroke').length;
-    const handCount = currentStageHistory.filter(i => i.type === 'hand').length;
+    $('clear').addEventListener('click', function() {
+      if (finished) return;
+      showConfirmModal(t('modal.restart_title'), t('modal.restart_desc'), function() {
+        actionHistory[stage] = [];
+        current = null;
+        drawing = false;
+        isDraggingHand = false;
+        previewHand = null;
+        redraw();
+      });
+    });
 
-    if (stage === 2) {
-      if (handCount === 0) {
-        showCustomModal('指針還沒設定喔！', '請先在畫布上從中心點向外拖曳畫出指針，再查看結果。');
-        return;
+    $('intro-start-btn').addEventListener('click', startGame);
+    $('drawing-back-btn').addEventListener('click', showIntroView);
+
+
+    function getHandsFromHistory(stg) {
+      const currentStageHistory = actionHistory[stg] || [];
+      const hands = [];
+
+      currentStageHistory.forEach(function(item) {
+        if (item.type === 'hand' && item.data) {
+          hands.push(item.data);
+        }
+      });
+
+      if (hands.length === 0) {
+        const cx = 300, cy = 300;
+        currentStageHistory.forEach(function(item) {
+          if (item.type === 'stroke' && item.data && item.data.points && item.data.points.length >= 2) {
+            const pts = item.data.points;
+            const startPt = pts[0];
+            const endPt = pts[pts.length - 1];
+            const startDist = Math.hypot(startPt.x - cx, startPt.y - cy);
+            const endDist = Math.hypot(endPt.x - cx, endPt.y - cy);
+
+            if (startDist <= 120 || endDist <= 120) {
+              let outerPt = startDist > endDist ? startPt : endPt;
+              const angle = Math.atan2(outerPt.y - cy, outerPt.x - cx);
+              const len = Math.hypot(outerPt.x - cx, outerPt.y - cy);
+              if (len >= 30) {
+                hands.push({ angle: angle, length: len });
+              }
+            }
+          }
+        });
       }
-    } else if (stage === 3) {
-      if (strokeCount === 0 && handCount === 0) {
-        showCustomModal('我們先畫一畫喔！', '請先在畫布上完成手繪圓圈、寫數字與拖曳指針，再查看結果。');
-        return;
-      }
-      if (handCount === 0 && getHandsFromHistory(stage).length === 0) {
-        showCustomModal('指針還沒設定喔！', '請先從中心點向外拖曳畫出指針，再查看結果。');
-        return;
-      }
-    } else {
-      if (strokeCount === 0) {
-        showCustomModal('我們先畫一畫喔！', '請先在畫布上完成作答，再查看結果。');
-        return;
-      }
+      return hands;
     }
 
-    showSubmitConfirmModal(function() { executeSubmission(); });
-  }
+    function scoreCurrentStage() {
+      if (drawing || isDraggingHand) stopDraw();
 
-  function executeSubmission() {
-    const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = 600;
-    tempCanvas.height = 600;
-    const tempCtx = tempCanvas.getContext('2d');
-    tempCtx.fillStyle = '#ffffff';
-    tempCtx.fillRect(0, 0, 600, 600);
-    tempCtx.drawImage(canvas, 0, 0);
+      const currentStageHistory = actionHistory[stage] || [];
+      const strokeCount = currentStageHistory.filter(function(i) { return i.type === 'stroke'; }).length;
+      const handCount = currentStageHistory.filter(function(i) { return i.type === 'hand'; }).length;
 
-    const dataUrl = tempCanvas.toDataURL('image/png');
-    const nextBtn = $('next');
-    if (nextBtn.disabled) return;
-    nextBtn.disabled = true;
-    nextBtn.textContent = '評分進行中...';
+      if (stage === 2) {
+        if (handCount === 0) {
+          showCustomModal(t('modal.no_hand_title'), t('modal.no_hand_desc'));
+          return;
+        }
+      } else if (stage === 3) {
+        if (strokeCount === 0 && handCount === 0) {
+          showCustomModal(t('modal.empty_draw_title'), t('modal.empty_draw_desc'));
+          return;
+        }
+        if (handCount === 0 && getHandsFromHistory(stage).length === 0) {
+          showCustomModal(t('modal.no_hand_title'), t('modal.no_hand_desc'));
+          return;
+        }
+      } else {
+        if (strokeCount === 0) {
+          showCustomModal(t('modal.empty_draw_title'), t('modal.empty_draw_desc'));
+          return;
+        }
+      }
 
-    const hands = getHandsFromHistory(stage);
-    const handDataJson = JSON.stringify(hands);
-
-    if (!(window.google && google.script && google.script.run)) {
-      alert('目前不是從 Apps Script 網頁應用程式開啟，無法呼叫 AI 評分。');
-      nextBtn.disabled = false;
-      nextBtn.textContent = '完成作答';
-      return;
+      showSubmitConfirmModal(function() { executeSubmission(); });
     }
 
-    google.script.run
-      .withSuccessHandler(data => {
-        nextBtn.disabled = false;
-        nextBtn.textContent = '完成作答';
-        results[stage] = data;
-        const navEl = $('nav-' + stage);
-        if (navEl) navEl.classList.add('completed');
-        showStageSettlement(stage);
-      })
-      .withFailureHandler(err => {
-        nextBtn.disabled = false;
-        nextBtn.textContent = '完成作答';
-        showCustomModal('評分發生錯誤', (err && err.message ? err.message : String(err)));
-      })
-      .scoreClock(dataUrl, stage + 1, targetTime, handDataJson);
-  }
+    function executeSubmission() {
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = 600;
+      tempCanvas.height = 600;
+      const tempCtx = tempCanvas.getContext('2d');
+      tempCtx.fillStyle = '#ffffff';
+      tempCtx.fillRect(0, 0, 600, 600);
+      // 將高解析度主畫布完整縮放回評分使用的 600×600 圖片，避免只截取左上角。
+      tempCtx.drawImage(canvas, 0, 0, 600, 600);
 
-  $('next').addEventListener('click', scoreCurrentStage);
+      const dataUrl = tempCanvas.toDataURL('image/png');
+      const nextBtn = $('next');
+      if (nextBtn.disabled) return;
+      nextBtn.disabled = true;
+      nextBtn.textContent = t('btn.scoring');
 
-  showIntroView();
-})();
+      const hands = getHandsFromHistory(stage);
+      const handDataJson = JSON.stringify(hands);
+
+      if (!(window.google && google.script && google.script.run)) {
+        alert('目前不是從 Apps Script 網頁應用程式開啟，無法呼叫 AI 評分。');
+        nextBtn.disabled = false;
+        nextBtn.textContent = t('btn.submit');
+        return;
+      }
+
+      google.script.run
+        .withSuccessHandler(function(data) {
+          nextBtn.disabled = false;
+          nextBtn.textContent = t('btn.submit');
+          results[stage] = data;
+          const navEl = $('nav-' + stage);
+          if (navEl) navEl.classList.add('completed');
+          showStageSettlement(stage);
+        })
+        .withFailureHandler(function(err) {
+          nextBtn.disabled = false;
+          nextBtn.textContent = t('btn.submit');
+          showCustomModal('評分發生錯誤', (err && err.message ? err.message : String(err)));
+        })
+        .scoreClock(dataUrl, stage + 1, targetTime, handDataJson, currentLang);
+    }
+
+    $('next').addEventListener('click', scoreCurrentStage);
+
+    window.addEventListener('DOMContentLoaded', function() {
+      initDisplaySettings();
+      applyStaticI18n();
+      showIntroView();
+    });
+  })();
 </script>
 </body>
 </html>
