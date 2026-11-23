@@ -2822,7 +2822,7 @@ body[data-step="step-p1"] #test-status-sub {
 </style>
 
 </head>
-<body data-base-url="<?!= baseUrl ?>">
+<body>
   <div class="exam-wrapper">
 
     <!-- 頂部頁頭區塊 -->
@@ -7655,33 +7655,39 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       showStep('step-p1-intro');
     }
 
-    function getValidBaseUrl() {
-      var baseUrl = document.body.getAttribute('data-base-url') || '';
-      if (baseUrl && baseUrl.indexOf('script.google.com') !== -1) return baseUrl.split('?')[0].split('#')[0];
-      if (document.referrer && document.referrer.indexOf('script.google.com') !== -1) return document.referrer.split('?')[0].split('#')[0];
-      try {
-        if (window.top && window.top.location && window.top.location.href && window.top.location.href.indexOf('script.google.com') !== -1) {
-          return window.top.location.href.split('?')[0].split('#')[0];
-        }
-      } catch(e) {}
-      return window.location.href.split('?')[0].split('#')[0];
-    }
-
+    /* GitHub Pages 靜態頁面導向：不再使用 Apps Script 的 page 參數表單。 */
     function navigateTo(pageTarget) {
-      var baseUrl = getValidBaseUrl();
-      var form = document.createElement('form');
-      form.method = 'GET'; form.action = baseUrl; form.target = '_top';
+      var routeMap = {
+        level_select: 'LevelSelect.html',
+        home: 'index.html'
+      };
+      var fileName = routeMap[pageTarget];
 
-      var pageInput = document.createElement('input'); pageInput.type = 'hidden'; pageInput.name = 'page'; pageInput.value = pageTarget; form.appendChild(pageInput);
-      var langInput = document.createElement('input'); langInput.type = 'hidden'; langInput.name = 'lang';
-      // examState.language 是作答語音模式；離開測驗時必須傳回主頁的介面語言。
-      langInput.value = EXAM_DISPLAY_LANG || 'zh-TW'; form.appendChild(langInput);
+      if (!fileName) {
+        console.warn('未知的頁面導向目標：', pageTarget);
+        return;
+      }
 
-      var fontInput = document.createElement('input'); fontInput.type = 'hidden'; fontInput.name = 'fontScale';
-      fontInput.value = EXAM_DISPLAY_FONT_SCALE || '100'; form.appendChild(fontInput);
+      // 顯示語言與字級沿用目前測驗頁設定，避免返回後切回預設值。
+      var safeLang = normalizeExamDisplayLanguage(EXAM_DISPLAY_LANG || 'zh-TW');
+      var requestedScale = String(EXAM_DISPLAY_FONT_SCALE || '100');
+      var safeFontScale = ['90', '100', '115', '130'].indexOf(requestedScale) !== -1
+        ? requestedScale
+        : '100';
 
-      document.body.appendChild(form);
-      form.submit();
+      try {
+        localStorage.setItem('app_lang', safeLang);
+        localStorage.setItem('app_font_scale', safeFontScale);
+      } catch (storageError) {
+        console.warn('無法保存語言或字級設定：', storageError);
+      }
+
+      var targetUrl = new URL(fileName, window.location.href);
+      targetUrl.search = '';
+      targetUrl.hash = '';
+      targetUrl.searchParams.set('lang', safeLang);
+      targetUrl.searchParams.set('fontScale', safeFontScale);
+      window.location.assign(targetUrl.href);
     }
 
     function navToLevelSelect() { navigateTo('level_select'); }
