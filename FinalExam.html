@@ -11656,5 +11656,237 @@ html:lang(ko) .choice-btn.active::after {
 })();
 </script>
 
+
+
+<!-- Final numeric keypad layout correction: keep the existing keypad floating and preserve physical keyboard input. -->
+<style id="final-floating-keypad-layout-fix-styles">
+#p1-number-pad-floating-panel[hidden]{display:none!important}
+#p1-number-pad-floating-panel{
+  position:fixed!important;z-index:2147483000!important;display:block;
+  box-sizing:border-box;width:328px;max-width:calc(100vw - 32px);
+  max-height:calc(100vh - 32px);overflow:auto;overscroll-behavior:contain;
+  padding:12px;background:#FFFFFF;border:2px solid #26392D;border-radius:16px;
+  box-shadow:0 12px 34px rgba(24,40,29,.24);visibility:visible;
+}
+#p1-number-pad-floating-panel .number-pad-float-header{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  margin:0 0 8px;color:#17271B;font-size:18px;font-weight:900;line-height:1.5
+}
+#p1-number-pad-floating-panel .number-pad-float-close{
+  flex:0 0 auto;min-width:56px;min-height:48px;padding:8px 12px;
+  border:2px solid #26392D;border-radius:10px;background:#F0F5ED;
+  color:#17271B;font:900 16px/1.3 inherit;cursor:pointer
+}
+#p1-number-pad-floating-panel .number-pad-help{
+  margin:4px 0 10px!important;padding:0!important;border:0!important;
+  background:transparent!important;font-size:16px!important;line-height:1.5!important
+}
+#p1-number-pad-floating-panel .number-pad-grid{
+  display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:8px!important;margin:0!important;width:100%!important
+}
+#p1-number-pad-floating-panel .number-key{
+  min-width:0;min-height:56px!important;padding:7px!important;
+  border:2px solid #26392D!important;border-radius:10px!important;
+  background:#FFFFFF!important;color:#17271B!important;
+  font-family:inherit!important;font-size:23px!important;font-weight:900!important;
+  line-height:1.3!important;cursor:pointer
+}
+#p1-number-pad-floating-panel .number-pad-actions{
+  display:grid!important;grid-template-columns:1fr 1fr!important;
+  gap:8px!important;margin:8px 0 0!important
+}
+#p1-number-pad-floating-panel .number-pad-action{
+  min-width:0;min-height:54px!important;padding:7px!important;
+  border:2px solid #26392D!important;border-radius:10px!important;
+  background:#F2F2EA!important;color:#17271B!important;
+  font-family:inherit!important;font-size:16px!important;font-weight:900!important;
+  line-height:1.4!important;white-space:normal!important;cursor:pointer
+}
+#p1-number-pad-floating-panel .number-pad-feedback{
+  margin:8px 0 0!important;padding:8px 10px!important;
+  border:2px solid #26392D!important;border-radius:9px!important;
+  background:#F0F5ED!important;color:#17271B!important;
+  font-size:16px!important;font-weight:800!important;line-height:1.5!important
+}
+</style>
+<script id="final-floating-keypad-layout-fix">
+(function(){
+  'use strict';
+  var control=document.getElementById('p1-answer-control');
+  var input=document.getElementById('p1-answer-input');
+  if(!control||!input)return;
+
+  var PANEL_ID='p1-number-pad-floating-panel';
+  var PAD_SELECTOR='.number-pad-help,.number-pad-grid,.number-pad-actions,.number-pad-feedback';
+  var panel=document.getElementById(PANEL_ID);
+  var observer=null;
+  var syncTimer=null;
+  var openedByUser=false;
+  var suppressFocusOpen=false;
+  var lang=function(){return String(window.EXAM_DISPLAY_LANG||'zh-TW');};
+  var isMobileUA=function(){return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent||'');};
+
+  function labels(){
+    var l=lang();
+    if(l==='en')return {title:'Numeric keypad',close:'Close',closeAria:'Close numeric keypad'};
+    if(l==='ja')return {title:'数字キーパッド',close:'閉じる',closeAria:'数字キーパッドを閉じる'};
+    if(l==='ko')return {title:'숫자 키패드',close:'닫기',closeAria:'숫자 키패드 닫기'};
+    return {title:'數字鍵盤',close:'收起',closeAria:'收起數字鍵盤'};
+  }
+  function ensurePanel(){
+    if(panel&&panel.isConnected)return panel;
+    panel=document.createElement('section');
+    panel.id=PANEL_ID;
+    panel.className='number-pad-float';
+    panel.hidden=true;
+    panel.setAttribute('role','dialog');
+    panel.setAttribute('aria-modal','false');
+    var header=document.createElement('div');
+    header.className='number-pad-float-header';
+    var title=document.createElement('strong');
+    title.setAttribute('data-keypad-title','1');
+    var close=document.createElement('button');
+    close.type='button';
+    close.className='number-pad-float-close';
+    close.setAttribute('data-keypad-close','1');
+    close.addEventListener('click',function(){closePanel(true);});
+    header.appendChild(title);header.appendChild(close);panel.appendChild(header);
+    document.body.appendChild(panel);
+    updatePanelLanguage();
+    return panel;
+  }
+  function updatePanelLanguage(){
+    if(!panel)return;
+    var t=panel.querySelector('[data-keypad-title]');
+    var b=panel.querySelector('[data-keypad-close]');
+    var copy=labels();
+    if(t)t.textContent=copy.title;
+    if(b){b.textContent=copy.close;b.setAttribute('aria-label',copy.closeAria);}
+  }
+  function padNodes(){return Array.prototype.slice.call(control.querySelectorAll(PAD_SELECTOR));}
+  function panelHasKeypad(){return !!(panel&&panel.querySelector('.number-pad-grid'));}
+  function moveCurrentKeypadToPanel(){
+    var nodes=padNodes();
+    if(!nodes.length)return false;
+    var host=ensurePanel();
+    var existing=Array.prototype.slice.call(host.querySelectorAll(PAD_SELECTOR));
+    existing.forEach(function(n){if(n.parentNode)n.parentNode.removeChild(n);});
+    nodes.forEach(function(n){host.appendChild(n);});
+    // Desktop hardware keyboard remains active. inputmode=none suppresses only the virtual OS keyboard.
+    input.readOnly=false;
+    input.disabled=false;
+    input.type='text';
+    input.setAttribute('inputmode',isMobileUA()?(lang()==='zh-TW'?'numeric':'text'):'none');
+    input.setAttribute('aria-haspopup',isMobileUA()?'false':'dialog');
+    input.setAttribute('aria-expanded',panelHasKeypad()&&!host.hidden?'true':'false');
+    if(!isMobileUA() && openedByUser)openPanel();
+    return true;
+  }
+  function clearStalePanel(){
+    if(!panel||padNodes().length)return;
+    // No keypad nodes in the control usually means they have already been moved
+    // into this floating panel. Clear them only after switching to a plain-text question.
+    var plainTextMode=input.classList.contains('zodiac-text-input')||
+      input.classList.contains('weekday-text-input')||input.classList.contains('p1-open-text-input');
+    if(!plainTextMode)return;
+    Array.prototype.slice.call(panel.querySelectorAll(PAD_SELECTOR)).forEach(function(n){n.remove();});
+    panel.hidden=true;openedByUser=false;
+    input.setAttribute('aria-expanded','false');
+  }
+  function positionPanel(){
+    if(!panel||panel.hidden)return;
+    var r=input.getBoundingClientRect();
+    var vw=Math.max(document.documentElement.clientWidth,window.innerWidth||0);
+    var vh=Math.max(document.documentElement.clientHeight,window.innerHeight||0);
+    var margin=14;
+    var width=Math.min(328,Math.max(250,vw-margin*2));
+    panel.style.width=width+'px';
+    panel.style.maxHeight=Math.max(180,vh-margin*2)+'px';
+    panel.style.left='0px';panel.style.top='0px';
+    var h=panel.getBoundingClientRect().height;
+    var top=r.bottom+10;
+    if(top+h>vh-margin)top=r.top-h-10;
+    if(top<margin)top=Math.max(margin,Math.min(vh-h-margin,(vh-h)/2));
+    var left=Math.min(Math.max(margin,r.left),vw-width-margin);
+    panel.style.left=Math.round(left)+'px';
+    panel.style.top=Math.round(top)+'px';
+  }
+  function openPanel(){
+    if(isMobileUA()||!panelHasKeypad())return;
+    openedByUser=true;
+    updatePanelLanguage();
+    panel.hidden=false;
+    input.setAttribute('aria-expanded','true');
+    positionPanel();
+  }
+  function closePanel(returnFocus){
+    openedByUser=false;
+    if(panel)panel.hidden=true;
+    input.setAttribute('aria-expanded','false');
+    if(returnFocus){suppressFocusOpen=true;try{input.focus({preventScroll:true});}catch(e){try{input.focus();}catch(ignore){}}setTimeout(function(){suppressFocusOpen=false;},0);}
+  }
+  function sync(){
+    syncTimer=null;
+    if(!input.isConnected||!control.isConnected)return;
+    var moved=moveCurrentKeypadToPanel();
+    if(!moved)clearStalePanel();
+    updatePanelLanguage();
+  }
+  function scheduleSync(){if(syncTimer)clearTimeout(syncTimer);syncTimer=setTimeout(sync,0);}
+
+  // Re-home any existing keypad immediately, then watch for later question/mode renderers.
+  ensurePanel();
+  sync();
+  if(window.MutationObserver){
+    observer=new MutationObserver(function(records){
+      var relevant=records.some(function(rec){
+        return Array.prototype.some.call(rec.addedNodes||[],function(node){
+          if(node.nodeType!==1)return false;
+          return (node.matches&&node.matches(PAD_SELECTOR))||(node.querySelector&&node.querySelector(PAD_SELECTOR));
+        });
+      });
+      if(relevant)scheduleSync();
+      else if(!padNodes().length&&panelHasKeypad())scheduleSync();
+    });
+    observer.observe(control,{childList:true,subtree:true});
+  }
+
+  function bindOpenEvents(){
+    if(input.dataset.finalFloatingPadBound==='1')return;
+    input.dataset.finalFloatingPadBound='1';
+    input.addEventListener('focus',function(){if(!suppressFocusOpen&&!isMobileUA())openPanel();});
+    input.addEventListener('click',function(){if(!isMobileUA())openPanel();});
+    input.addEventListener('keydown',function(e){if(e.key==='Escape'&&panel&&!panel.hidden){e.preventDefault();closePanel(true);}});
+  }
+  bindOpenEvents();
+
+  // Run after every app renderer/mode switch. Wrapping these functions at the end
+  // ensures later language/validation patches cannot put the keys back into page flow.
+  ['setP1Q1Mode','setP1Q2Mode','setP1Q3Mode','renderP1Question','showStep'].forEach(function(name){
+    var prior=window[name];
+    if(typeof prior!=='function'||prior.__finalFloatingKeypadWrapped)return;
+    var wrapped=function(){
+      var result=prior.apply(this,arguments);
+      scheduleSync();
+      return result;
+    };
+    wrapped.__finalFloatingKeypadWrapped=true;
+    window[name]=wrapped;
+  });
+
+  document.addEventListener('pointerdown',function(e){
+    if(!panel||panel.hidden)return;
+    if(panel.contains(e.target)||e.target===input)return;
+    closePanel(false);
+  },true);
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&panel&&!panel.hidden)closePanel(true);});
+  window.addEventListener('resize',function(){if(panel&&!panel.hidden)positionPanel();});
+  window.addEventListener('scroll',function(){if(panel&&!panel.hidden)positionPanel();},true);
+  window.addEventListener('orientationchange',function(){setTimeout(function(){if(panel&&!panel.hidden)positionPanel();scheduleSync();},100);});
+  if(window.MutationObserver){var inputAttributeObserver=new MutationObserver(function(){if(!isMobileUA()&&input.readOnly){input.readOnly=false;input.setAttribute('inputmode','none');}});inputAttributeObserver.observe(input,{attributes:true,attributeFilter:['readonly']});}
+})();
+</script>
+
 </body>
 </html>
