@@ -275,7 +275,7 @@
     }
   </style>
 </head>
-<body data-base-url="<?!= baseUrl ?>">
+<body>
 
   <div class="top-controls-bar">
     <div class="setting-dropdown-wrap" id="lang-dropdown-wrap">
@@ -482,43 +482,20 @@
       }
     };
 
-    function getValidBaseUrl() {
-      var baseUrl = document.body.getAttribute('data-base-url') || '';
-      if (baseUrl && baseUrl.indexOf('script.google.com') !== -1) {
-        return baseUrl.split('?')[0].split('#')[0];
-      }
-      if (document.referrer && document.referrer.indexOf('script.google.com') !== -1) {
-        return document.referrer.split('?')[0].split('#')[0];
-      }
-      try {
-        if (window.top && window.top.location && window.top.location.href && window.top.location.href.indexOf('script.google.com') !== -1) {
-          return window.top.location.href.split('?')[0].split('#')[0];
-        }
-      } catch(e) {}
-      return window.location.href.split('?')[0].split('#')[0];
-    }
-
+    // GitHub Pages 靜態頁面導覽：不再使用 Apps Script 的 page 參數或表單提交。
     function navigateTo(pageTarget) {
-      var baseUrl = getValidBaseUrl();
-      var form = document.createElement('form');
-      form.method = 'GET';
-      form.action = baseUrl;
-      form.target = '_top';
+      var pageFiles = {
+        'level_select': 'LevelSelect.html',
+        'home': 'index.html'
+      };
+      var targetFile = pageFiles[pageTarget] || pageTarget;
+      var targetUrl = new URL(targetFile, window.location.href);
 
-      var pageInput = document.createElement('input');
-      pageInput.type = 'hidden'; pageInput.name = 'page'; pageInput.value = pageTarget;
-      form.appendChild(pageInput);
+      // 保留語言與字體設定，讓分類頁沿用首頁的顯示偏好。
+      targetUrl.searchParams.set('lang', window.appDisplay.lang || 'zh-TW');
+      targetUrl.searchParams.set('fontScale', window.appDisplay.fontScale || '100');
 
-      var langInput = document.createElement('input');
-      langInput.type = 'hidden'; langInput.name = 'lang'; langInput.value = window.appDisplay.lang || 'zh-TW';
-      form.appendChild(langInput);
-
-      var fontInput = document.createElement('input');
-      fontInput.type = 'hidden'; fontInput.name = 'fontScale'; fontInput.value = window.appDisplay.fontScale || '100';
-      form.appendChild(fontInput);
-
-      document.body.appendChild(form);
-      form.submit();
+      window.location.href = targetUrl.toString();
     }
 
     window.navigateTo = navigateTo;
