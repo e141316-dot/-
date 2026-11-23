@@ -1762,20 +1762,38 @@
     return val !== undefined ? val : key;
   }
 
-  // GitHub Pages 靜態頁面導向：保留語言與字體設定，避免再提交 Apps Script 的 page 參數。
-  function buildPageUrl(fileName) {
-    var params = new URLSearchParams();
-    params.set('lang', currentLang || 'zh-TW');
-    params.set('fontScale', currentFontScale || '100');
-    return fileName + '?' + params.toString();
+  // GitHub Pages 靜態頁面導向：不再使用 Google Apps Script 的 page 參數表單。
+  // 使用相對路徑，讓根目錄或專案型 GitHub Pages 都能沿用目前網站路徑。
+  function navigateToStaticPage(fileName) {
+    var safeLang = i18nDict[currentLang] ? currentLang : 'zh-TW';
+    var safeFontScale = ['90', '100', '115', '130'].indexOf(String(currentFontScale)) >= 0
+      ? String(currentFontScale)
+      : '100';
+
+    // 同步保存設定，避免跨頁後語言或字體大小還原成預設值。
+    try {
+      localStorage.setItem('app_lang', safeLang);
+      localStorage.setItem('app_font_scale', safeFontScale);
+    } catch (e) {
+      // 部分瀏覽環境可能限制 localStorage；仍繼續執行頁面導向。
+    }
+
+    var targetUrl = new URL(fileName, window.location.href);
+    targetUrl.search = '';
+    targetUrl.hash = '';
+    targetUrl.searchParams.set('lang', safeLang);
+    targetUrl.searchParams.set('fontScale', safeFontScale);
+
+    // 直接在目前頁面導向，避免表單提交、跨框架 target 與需要重複點擊的情況。
+    window.location.assign(targetUrl.href);
   }
 
   function goToLevelSelect() {
-    window.location.assign(buildPageUrl('LevelSelect.html'));
+    navigateToStaticPage('LevelSelect.html');
   }
 
   function goToHome() {
-    window.location.assign(buildPageUrl('index.html'));
+    navigateToStaticPage('index.html');
   }
 
   function navToGameCategories() { goToLevelSelect(); }
