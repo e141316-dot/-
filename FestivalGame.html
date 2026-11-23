@@ -1,29 +1,33 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
+  <base target="_top">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>節慶猜謎遊戲 - 認知訓練 App</title>
+  <title>節慶猜謎遊戲 - 高齡駕照輔助平台</title>
   <style>
-    /* ==========================================
-       1. 全局樣式與奶油白柔和綠色系主題
-       ========================================== */
     :root {
-      --primary-color: #78947D;      /* 鼠尾草綠 */
-      --primary-dark: #35473C;       /* 深綠色 */
-      --primary-light: #F3F6F0;      /* 淺綠白 */
-      --accent-color: #5C7761;       /* 強調綠 */
-      --bg-color: #FCFBF7;           /* 統一奶油白背景 */
+      --primary-color: #5C7761;
+      --primary-dark: #2E4032;
+      --primary-light: #F3F6F0;
+      --accent-color: #4A634E;
+      --bg-color: #FCFBF7;
       --card-bg: #FCFBF7;
-      --text-main: #35473C;          /* 深綠色文字 */
-      --text-muted: #66776C;         /* 柔和深綠文字 */
-      --border-color: #E4E9DF;       /* 淡灰綠邊框 */
+      --text-main: #2E4032;
+      --text-muted: #526356;
+      --border-color: #E4E9DF;
       --border-radius: 16px;
       --shadow: none;
       --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
       --font-scale: 1;
       --base-font-size: 18px;
     }
+
+    body.font-scale-90 { --font-scale: 0.9; }
+    body.font-scale-100 { --font-scale: 1.0; }
+    body.font-scale-115 { --font-scale: 1.15; }
+    body.font-scale-130 { --font-scale: 1.3; }
+
     * {
       box-sizing: border-box;
       margin: 0;
@@ -44,22 +48,24 @@
       line-height: 1.6;
     }
 
-    /* 頂部導覽列（返回按鈕、大標題與進度標籤） */
     header {
       width: 100%;
       background-color: var(--bg-color);
       color: var(--primary-dark);
-      padding: 14px 16px 4px 16px;
+      padding: 18px 16px 8px 16px; /* 增加頂部間距 */
       text-align: center;
       border-bottom: none;
     }
     .top-nav-bar {
       width: 92%;
       max-width: 800px;
-      margin: 0 auto 8px auto;
+      margin: 0 auto 12px auto;
       display: flex;
       justify-content: flex-start;
       align-items: center;
+    }
+    #btn-back-cat-header {
+      padding: 8px 20px !important; /* 加大點擊觸控範圍 */
     }
     header h1 {
       font-size: calc(36px * var(--font-scale));
@@ -82,15 +88,14 @@
     .progress-badge {
       background-color: var(--primary-light);
       color: var(--primary-dark);
-      border: 1px solid var(--border-color);
-      padding: 4px 18px;
+      border: 1.5px solid #C8E6C9;
+      padding: 4px 20px;
       border-radius: 30px;
-      font-size: calc(16px * var(--font-scale));
-      font-weight: bold;
+      font-size: calc(18px * var(--font-scale));
+      font-weight: 800;
       letter-spacing: 1px;
     }
 
-    /* 主要內容容器 - 無外框與無陰影 */
     main {
       width: 92%;
       max-width: 800px;
@@ -100,15 +105,16 @@
       border: none;
       margin: 0 auto;
       padding: clamp(8px, 2.5vw, 16px);
+      transition: max-width 0.3s ease;
+    }
+    main.summary-mode {
+      max-width: 900px;
     }
 
-    /* ==========================================
-       2. 說明首頁專用視覺樣式
-       ========================================== */
     .home-wrapper {
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 16px;
       padding: 4px 0;
       text-align: center;
       width: 100%;
@@ -119,90 +125,114 @@
       margin-bottom: 0;
     }
     .home-subtitle {
-      font-size: calc(20px * var(--font-scale));
-      color: var(--text-muted);
-      font-weight: 600;
+      font-size: calc(21px * var(--font-scale));
+      color: var(--primary-dark);
+      font-weight: 700;
       line-height: 1.5;
     }
-    .home-reminder-box {
-      background-color: var(--primary-light);
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
+    
+    .home-steps-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background-color: #ffffff;
+      border: 1.5px solid var(--border-color);
+      border-radius: 16px;
       padding: 16px 18px;
+    }
+    .home-step-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
       text-align: left;
-      font-size: calc(16.5px * var(--font-scale));
-      color: var(--primary-dark);
-      line-height: 1.6;
     }
-    .home-reminder-title {
-      font-size: calc(20px * var(--font-scale));
-      font-weight: bold;
-      color: var(--primary-dark);
-      margin-bottom: 6px;
-      text-align: center;
+    .home-step-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background-color: var(--primary-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
     }
-    .home-ready-text {
-      font-size: calc(20px * var(--font-scale));
-      font-weight: bold;
+    .home-step-text {
+      font-size: calc(18.5px * var(--font-scale));
+      font-weight: 700;
       color: var(--primary-dark);
-      margin-top: 2px;
+      line-height: 1.4;
     }
+
+    .home-reassurance-card {
+      background-color: #EEF7ED;
+      border: 2px solid #A5D6A7;
+      border-radius: 16px;
+      padding: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 4px;
+    }
+    .home-reassurance-text {
+      font-size: calc(21px * var(--font-scale));
+      font-weight: 900;
+      color: var(--primary-dark);
+      line-height: 1.4;
+    }
+
     .home-action-bar {
       display: flex;
       justify-content: center;
-      margin-top: 6px;
+      margin-top: 8px;
     }
     .btn-start-game {
       width: 100%;
-      max-width: 420px;
-      height: 48px;
-      background-color: var(--primary-color);
+      max-width: 440px;
+      height: 52px;
+      background-color: var(--primary-dark);
       color: #ffffff;
-      font-size: calc(20px * var(--font-scale));
+      font-size: calc(21px * var(--font-scale));
       font-weight: 800;
       border: none;
       border-radius: 30px;
       cursor: pointer;
-      box-shadow: 0 4px 12px rgba(120, 148, 125, 0.25);
+      box-shadow: 0 4px 14px rgba(46, 64, 50, 0.3);
       transition: all 0.2s ease;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
-      touch-action: manipulation;
     }
     .btn-start-game:hover {
-      background-color: var(--primary-dark);
+      background-color: #1E2D22;
       transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(53, 71, 60, 0.3);
+      box-shadow: 0 6px 18px rgba(30, 45, 34, 0.4);
     }
     .btn-start-game:active {
       transform: scale(0.98);
     }
 
-    /* ==========================================
-       3. 題目區塊（左右並排與響應式）
-       ========================================== */
     .question-box {
       background-color: var(--primary-light);
-      border: 1px solid var(--border-color);
-      padding: 10px 14px;
-      border-radius: 12px;
-      margin-bottom: 12px;
+      border: 1.5px solid var(--border-color);
+      padding: 14px 18px;
+      border-radius: 14px;
+      margin-bottom: 14px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
+      gap: 14px;
     }
     .question-text-side {
       flex: 0 0 58%;
       text-align: left;
     }
     .question-prompt-text {
-      font-size: calc(20px * var(--font-scale));
-      font-weight: bold;
+      font-size: calc(22px * var(--font-scale));
+      font-weight: 800;
       color: var(--primary-dark);
-      line-height: 1.35;
+      line-height: 1.4;
     }
     .question-img-side {
       flex: 0 0 40%;
@@ -212,7 +242,7 @@
     }
     .question-img {
       max-width: 100%;
-      max-height: 120px;
+      max-height: 125px;
       object-fit: contain;
       border-radius: 8px;
     }
@@ -220,7 +250,7 @@
       .question-box {
         flex-direction: column;
         text-align: center;
-        padding: 12px;
+        padding: 14px;
       }
       .question-text-side, .question-img-side {
         flex: 1 1 100%;
@@ -234,19 +264,16 @@
       }
     }
 
-    /* ==========================================
-       4. 選項卡片區域
-       ========================================== */
     .options-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: clamp(8px, 1.8vw, 12px);
-      margin: 12px 0;
+      gap: clamp(10px, 2vw, 14px);
+      margin: 14px 0;
     }
     .option-card {
-      border: 2px solid var(--border-color);
+      border: 2.5px solid var(--border-color);
       border-radius: var(--border-radius);
-      padding: clamp(6px, 1.2vw, 10px);
+      padding: clamp(8px, 1.5vw, 12px);
       text-align: center;
       cursor: pointer;
       background: #ffffff;
@@ -257,8 +284,6 @@
       justify-content: space-between;
       position: relative;
       user-select: none;
-      -webkit-user-select: none;
-      touch-action: manipulation;
     }
     .option-card:hover:not(.disabled) {
       border-color: var(--primary-color);
@@ -266,7 +291,7 @@
     }
     .option-card.selected {
       border-color: var(--primary-dark);
-      background-color: var(--primary-light);
+      background-color: #EEF7ED;
       box-shadow: 0 0 0 2px var(--primary-dark);
     }
     .option-card.disabled {
@@ -276,11 +301,11 @@
     .option-img-wrapper {
       width: 100%;
       aspect-ratio: 16 / 9;
-      max-height: clamp(75px, 11vw, 100px);
+      max-height: clamp(80px, 12vw, 110px);
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-bottom: 6px;
+      margin-bottom: 8px;
       overflow: hidden;
       border-radius: 8px;
       background-color: #FCFBF7;
@@ -296,39 +321,23 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
       width: 100%;
       margin-top: 2px;
     }
-    .option-badge {
-      background-color: var(--primary-color);
-      color: white;
-      font-size: calc(15px * var(--font-scale));
-      font-weight: bold;
-      padding: 2px 8px;
-      border-radius: 6px;
-      flex-shrink: 0;
-    }
-    .option-card.selected .option-badge {
-      background-color: var(--primary-dark);
-    }
     .option-text {
-      font-size: calc(17px * var(--font-scale));
-      font-weight: bold;
-      color: var(--text-main);
+      font-size: calc(19px * var(--font-scale));
+      font-weight: 800;
+      color: var(--primary-dark);
     }
 
-    /* ==========================================
-       5. 按鈕與操作控制列
-       ========================================== */
     .action-bar {
       display: flex;
       justify-content: center;
       gap: 12px;
-      margin-top: 10px;
+      margin-top: 12px;
     }
     .btn {
-      background-color: var(--primary-color);
+      background-color: var(--primary-dark);
       color: white;
       border: none;
       padding: 8px 22px;
@@ -336,38 +345,39 @@
       font-weight: bold;
       border-radius: 30px;
       cursor: pointer;
-      min-height: 46px;
+      min-height: 48px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
       transition: all 0.2s ease;
-      box-shadow: 0 3px 8px rgba(120, 148, 125, 0.25);
-      touch-action: manipulation;
+      box-shadow: 0 3px 8px rgba(46, 64, 50, 0.25);
     }
     .btn:hover:not(:disabled) {
-      background-color: var(--primary-dark);
+      background-color: #1E2D22;
       transform: translateY(-2px);
-      box-shadow: 0 5px 12px rgba(53, 71, 60, 0.3);
     }
     .btn:active:not(:disabled) {
       transform: scale(0.98);
     }
     .btn:disabled {
-      background-color: #e0e0e0;
-      color: #888888;
+      background-color: #E0E0E0 !important;
+      color: #888888 !important;
       cursor: not-allowed;
-      box-shadow: none;
+      box-shadow: none !important;
     }
     .btn-submit {
       width: 100%;
-      max-width: 420px;
-      height: 48px;
-      font-size: calc(20px * var(--font-scale));
+      max-width: 440px;
+      height: 50px;
+      font-size: calc(21px * var(--font-scale));
       font-weight: 800;
     }
+    .btn-submit:not(:disabled) {
+      background-color: var(--primary-dark);
+      color: #ffffff;
+    }
 
-    /* 結算頁下方導覽按鈕群組 */
     .summary-actions-group {
       display: flex;
       flex-direction: column;
@@ -375,7 +385,7 @@
       gap: 12px;
       width: 100%;
       max-width: 480px;
-      margin: 14px auto 0 auto;
+      margin: 16px auto 0 auto;
       position: relative;
       z-index: 2;
     }
@@ -396,12 +406,12 @@
       color: var(--primary-dark);
       border: 2px solid var(--primary-color);
       padding: 8px 16px;
-      font-size: calc(16px * var(--font-scale));
-      font-weight: bold;
+      font-size: calc(17px * var(--font-scale));
+      font-weight: 800;
       border-radius: 25px;
       cursor: pointer;
       flex: 1 1 0px;
-      height: 46px;
+      height: 48px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -409,7 +419,6 @@
       box-shadow: 0 2px 6px rgba(0,0,0,0.04);
       white-space: nowrap;
       text-decoration: none;
-      touch-action: manipulation;
     }
     .btn-secondary:hover {
       background-color: #E2EADF;
@@ -428,193 +437,200 @@
       }
     }
 
-    /* ==========================================
-       6. 回饋與單題結果樣式
-       ========================================== */
     .result-box {
       width: 100%;
-      padding: 16px;
+      padding: 18px 16px;
       border-radius: 16px;
       text-align: center;
       animation: fadeIn 0.3s ease;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 8px;
-    }
-    .result-box.correct {
-      background-color: #EEF7ED;
-      border: 1.5px solid #C8E6C9;
-    }
-    .result-box.incorrect {
-      background-color: #FFFEF2;
-      border: 1.5px solid #FFE082;
+      gap: 10px;
+      background-color: var(--bg-color);
+      border: none;
+      box-shadow: none;
     }
     .settlement-title {
       color: var(--primary-dark);
-      font-size: calc(26px * var(--font-scale));
-      font-weight: 800;
+      font-size: calc(28px * var(--font-scale));
+      font-weight: 900;
       line-height: 1.3;
     }
-    .result-box.incorrect .settlement-title {
-      color: #795548;
-    }
-    .settlement-stars {
+
+    .settlement-stars, .settlement-svg-stars, .settlement-stars-simple {
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 8px;
-      font-size: clamp(2rem, 6vw, 2.5rem);
-      color: #FBC02D;
-      margin: 2px 0;
-      filter: drop-shadow(0 2px 4px rgba(251, 192, 45, 0.4));
+      gap: 12px;
+      margin: 4px 0 6px 0;
     }
-    .star-icon {
-      display: inline-block;
-      font-size: clamp(2rem, 6vw, 2.5rem);
-      line-height: 1;
-      color: #FBC02D;
+    .feedback-svg-star, .settlement-svg-star, .simple-star {
+      width: clamp(42px, 8vw, 50px);
+      height: clamp(42px, 8vw, 50px);
+      filter: drop-shadow(0 2px 10px rgba(245, 158, 11, 0.65));
       opacity: 0;
-      transform: scale(0.2);
-      animation: starPopIn 0.45s ease-out forwards;
-      filter: drop-shadow(0 3px 5px rgba(245, 158, 11, 0.3));
+      transform: translateY(-20px) scale(0.3);
+      animation: starDropIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.25) forwards;
     }
+    .feedback-svg-star:nth-child(1), .settlement-svg-star.star-1 { animation-delay: 0.1s; }
+    .feedback-svg-star:nth-child(2), .settlement-svg-star.star-2 { animation-delay: 0.25s; }
+    .feedback-svg-star:nth-child(3), .settlement-svg-star.star-3 { animation-delay: 0.4s; }
+    .simple-star { opacity: 1; transform: none; animation: none; }
 
-    @keyframes starPopIn {
-      0% { opacity: 0; transform: scale(0.2); }
-      70% { transform: scale(1.25); }
-      100% { opacity: 1; transform: scale(1); }
+    @keyframes starDropIn {
+      0% { opacity: 0; transform: translateY(-25px) scale(0.3); }
+      70% { opacity: 1; transform: translateY(3px) scale(1.15); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
     }
 
     .settlement-score-pill {
-      background-color: #E8F5E9;
-      border: 1.5px solid #A5D6A7;
+      background-color: #EEF7ED;
+      border: 1.5px solid #C8E6C9;
       color: var(--primary-dark);
-      padding: 5px 18px;
+      padding: 6px 22px;
       border-radius: 30px;
       display: inline-block;
       font-size: calc(18px * var(--font-scale));
-      font-weight: bold;
-    }
-    .result-box.incorrect .settlement-score-pill {
-      background-color: #FFF8E1;
-      border: 1.5px solid #FFE082;
-      color: #795548;
-    }
-    .settlement-tags-group {
-      display: flex;
-      justify-content: center;
-      gap: 12px;
-      font-size: calc(16.5px * var(--font-scale));
-      font-weight: bold;
-      margin: 2px 0;
-    }
-    .tag-correct {
-      background: #E8F5E9;
-      border: 1.5px solid #A5D6A7;
-      color: #2E7D32;
-      padding: 4px 14px;
-      border-radius: 10px;
-    }
-    .tag-wrong {
-      background: #FFF8E1;
-      border: 1.5px solid #FFE082;
-      color: #8D6E63;
-      padding: 4px 14px;
-      border-radius: 10px;
+      font-weight: 800;
     }
     .settlement-encouragement {
-      font-size: calc(17px * var(--font-scale));
-      font-weight: bold;
-      color: var(--text-main);
+      font-size: calc(18px * var(--font-scale));
+      font-weight: 800;
+      color: var(--primary-dark);
       line-height: 1.45;
+      text-align: center;
+      margin: 4px 0;
     }
-    .result-box.incorrect .settlement-encouragement {
-      color: #5D4037;
+    .settlement-stats-table {
+      width: 100%;
+      max-width: 380px;
+      margin: 4px auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 18px;
+      border-radius: 12px;
+      font-size: calc(18px * var(--font-scale));
+      font-weight: 800;
+      height: 46px;
+      box-sizing: border-box;
+      width: 100%;
+    }
+    .stat-row.correct {
+      background-color: #EEF7ED;
+      color: var(--primary-dark);
+    }
+    .stat-row.incorrect {
+      background-color: #F5F5F5;
+      color: #526356;
+      border: none;
+    }
+    .stat-row .stat-val {
+      font-weight: 900;
+      text-align: right;
     }
     .feedback-divider {
       width: 100%;
       border: none;
-      border-top: 1px solid #C8E6C9;
-      margin: 4px 0;
-    }
-    .result-box.incorrect .feedback-divider {
-      border-top: 1px solid #FFE082;
+      border-top: 1.5px solid #C8E6C9;
+      margin: 6px 0;
     }
     .feedback-correct-label {
-      font-size: calc(20px * var(--font-scale));
-      font-weight: bold;
-      color: var(--primary-dark);
+      font-size: calc(22px * var(--font-scale));
+      font-weight: 900;
+      color: #1B5E20;
+      margin-bottom: 2px;
     }
     .feedback-explanation {
-      font-size: calc(16.5px * var(--font-scale));
-      color: var(--text-muted);
-      line-height: 1.45;
+      font-size: calc(18px * var(--font-scale));
+      color: #37474F;
+      font-weight: 600;
+      line-height: 1.6;
     }
     .btn-settlement-next {
       width: 100%;
-      max-width: 420px;
-      height: 48px;
-      background-color: var(--primary-color);
+      max-width: 440px;
+      height: 50px;
+      background-color: var(--primary-dark);
       color: #ffffff;
-      font-size: calc(20px * var(--font-scale));
+      font-size: calc(21px * var(--font-scale));
       font-weight: 800;
       border: none;
       border-radius: 30px;
       cursor: pointer;
-      box-shadow: 0 4px 12px rgba(120, 148, 125, 0.25);
+      box-shadow: 0 4px 12px rgba(46, 64, 50, 0.25);
       transition: all 0.2s ease;
       display: flex;
       align-items: center;
       justify-content: center;
-      touch-action: manipulation;
     }
     .btn-settlement-next:hover {
-      background-color: var(--primary-dark);
+      background-color: #1E2D22;
       transform: translateY(-2px);
     }
 
-    /* ==========================================
-       7. 總結算畫面專用視覺
-       ========================================== */
     .summary-cream-card {
       position: relative;
       background-color: #FCFBF7;
-      border: 2px solid #FFE082;
+      border: none;
       border-radius: 20px;
       padding: 20px 16px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
       text-align: center;
       box-shadow: none;
       overflow: hidden;
+      width: 100%;
     }
+
+    .summary-encouragement-text {
+      font-size: calc(20px * var(--font-scale));
+      font-weight: 800;
+      color: var(--primary-dark);
+      line-height: 1.55;
+      margin: 6px 0;
+      text-align: center;
+    }
+
     .summary-breakdown-box {
       background-color: #F1F8E9;
       border: 1.5px solid #C8E6C9;
       border-radius: 14px;
-      padding: 10px 16px;
+      padding: 12px 20px;
       margin: 4px 0;
       text-align: left;
+      width: 100%;
+      box-sizing: border-box;
+      overflow: visible !important;
     }
     .summary-breakdown-row {
       position: relative;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: calc(17px * var(--font-scale));
-      font-weight: bold;
-      color: #37474F;
-      padding: 8px 0;
+      font-size: calc(18px * var(--font-scale));
+      font-weight: 800;
+      color: #263238;
+      padding: 10px 0;
+      min-height: 48px;
       border-bottom: 1px dashed #C8E6C9;
+      overflow: visible !important;
     }
     .summary-breakdown-row:last-child {
       border-bottom: none;
     }
     .summary-breakdown-score {
       color: #1B5E20;
-      font-weight: 800;
+      font-weight: 900;
+      font-size: calc(18px * var(--font-scale));
+      text-align: right;
     }
 
     .table-clap-container {
@@ -627,6 +643,10 @@
       align-items: center;
       justify-content: center;
       z-index: 10;
+      overflow: visible;
+      transition: opacity 0.6s ease;
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
     }
     .table-clap-emoji {
       font-size: clamp(36px, 6vw, 44px);
@@ -637,6 +657,7 @@
       transform-origin: center center;
       animation: continuousClapping 0.5s ease-in-out infinite alternate;
       filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.15));
+      will-change: transform;
     }
     @keyframes continuousClapping {
       0% { transform: scale(0.9) rotate(-12deg); }
@@ -650,6 +671,7 @@
       border: 3px solid #FFC107;
       opacity: 0;
       animation: clapRingPulse 0.8s ease-out infinite;
+      will-change: transform, opacity;
     }
     @keyframes clapRingPulse {
       0% { transform: scale(0.4); opacity: 0.9; }
@@ -661,7 +683,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      margin: 10px 0 6px 0;
+      margin: 8px 0 4px 0;
       position: relative;
       width: 100%;
     }
@@ -739,7 +761,6 @@
       align-items: center;
       gap: 6px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.06);
-      touch-action: manipulation;
     }
     .btn-clap-sound:hover {
       background-color: var(--primary-light);
@@ -767,13 +788,12 @@
     }
   </style>
 </head>
-<body>
+<body data-base-url="<?!= baseUrl ?>">
 
-  <!-- 頂部標題與動態進度 -->
   <header id="main-header">
     <div class="top-nav-bar" id="top-nav-bar">
       <div class="intro-back-wrap">
-        <button type="button" onclick="goToLevelSelect()" class="btn-secondary" style="flex: initial; padding: 6px 18px;">
+        <button type="button" onclick="goToLevelSelect()" class="btn-secondary" style="flex: initial; padding: 6px 18px;" id="btn-back-cat-header">
           ← 返回遊戲分類
         </button>
       </div>
@@ -784,41 +804,471 @@
     </div>
   </header>
 
-  <!-- 主要內容容器 -->
   <main id="game-container">
-    <!-- 動態內容載入處 -->
   </main>
 
   <script>
-    /*****************************************************************
-     * 1. 完整選項類圖庫 (OPTION_IMAGES)
-     *****************************************************************/
-    const OPTION_IMAGES = {
-      '大掃除': 'https://lh3.googleusercontent.com/d/1ZZPA1Q_vsWTtw7OwrzR4W8DZredKeLPJ',
-      '元宵': 'https://lh3.googleusercontent.com/d/1DMQ9uFL8KwMJ8mSyXoouZYRApYcXeseZ',
-      '月餅': 'https://lh3.googleusercontent.com/d/1hWPLCITXnXRy4O-N0dcr2fDqem2-jueC',
-      '牛排': 'https://lh3.googleusercontent.com/d/1lLPopGu_jes__N6Awi2BUfHY0scCVqhW',
-      '春捲': 'https://lh3.googleusercontent.com/d/1RO6o5i0kMsljbnp9iCm8TatnuB6BDDd3',
-      '蛋糕': 'https://lh3.googleusercontent.com/d/1NuYl1pRx_UqEqndHL9vuvbqlTKX-D5Mh',
-      '釣魚': 'https://lh3.googleusercontent.com/d/1eoKP0M5D0qgG7830gZzBo8IZ1V6bxxlg',
-      '湯圓': 'https://lh3.googleusercontent.com/d/1XgnSZCWLO0daaR0RcY5ZfppxBThW2QUo',
-      '運動': 'https://lh3.googleusercontent.com/d/1qxZDrydd90k44tKuzbYHMR9WK6LIQl_4',
-      '壽司': 'https://lh3.googleusercontent.com/d/1mDkSyrhKE-NevaDVYA-R-EcbZb9cdyeG',
-      '粽子': 'https://lh3.googleusercontent.com/d/1RZ_k-OCH7kmoExfHxC4R1cIceLHfbIL2',
-      '看電影': 'https://lh3.googleusercontent.com/d/1_-Q0zRSP0EcbN1kQWtzEKdYdB6gkxWWV',
-      '堆雪人': 'https://lh3.googleusercontent.com/d/10HaA6A9TigyDSPq6XuoxHjnjAuVpFntK',
-      '賞花': 'https://lh3.googleusercontent.com/d/1wc0Ga4ar57DrOHwNmxE999Ut90GEY1m5',
-      '掃墓': 'https://lh3.googleusercontent.com/d/1OSBmmWFPkgYvou6MiwTuKOtE1BQTqcMo',
-      '龍舟': 'https://lh3.googleusercontent.com/d/1CKJI8sFXkXSBlHyEb-5N1hnFyPfIA4EG',
-      '賞月': 'https://lh3.googleusercontent.com/d/1khesKU8DQfSB6PMbbD7Sf8o-OIqcszmf',
-      '放煙火': 'https://lh3.googleusercontent.com/d/1W1vJ9J65KWYRRm4fnDjGcwlgG79huax6',
-      '跑步': 'https://lh3.googleusercontent.com/d/1Szz0gTQK-pFpcGxgcUhSZbnzEensDeyl'
+    function getValidBaseUrl() {
+      var baseUrl = document.body.getAttribute('data-base-url') || '';
+      if (baseUrl && baseUrl.indexOf('script.google.com') !== -1) {
+        return baseUrl.split('?')[0].split('#')[0];
+      }
+      if (document.referrer && document.referrer.indexOf('script.google.com') !== -1) {
+        return document.referrer.split('?')[0].split('#')[0];
+      }
+      try {
+        if (window.top && window.top.location && window.top.location.href && window.top.location.href.indexOf('script.google.com') !== -1) {
+          return window.top.location.href.split('?')[0].split('#')[0];
+        }
+      } catch(e) {}
+      return window.location.href.split('?')[0].split('#')[0];
+    }
+
+    function navigateTo(targetPage) {
+      var currentLangVal = (typeof currentLang !== 'undefined' && currentLang) ? currentLang : (localStorage.getItem('app_lang') || 'zh-TW');
+      var currentFontVal = (typeof currentFontScale !== 'undefined' && currentFontScale) ? currentFontScale : (localStorage.getItem('app_font_scale') || '100');
+
+      var baseUrl = getValidBaseUrl();
+      var form = document.createElement('form');
+      form.method = 'GET';
+      form.action = baseUrl;
+      form.target = '_top';
+
+      var pageInput = document.createElement('input');
+      pageInput.type = 'hidden'; pageInput.name = 'page'; pageInput.value = targetPage;
+      form.appendChild(pageInput);
+
+      var langInput = document.createElement('input');
+      langInput.type = 'hidden'; langInput.name = 'lang'; langInput.value = currentLangVal;
+      form.appendChild(langInput);
+
+      var fontInput = document.createElement('input');
+      fontInput.type = 'hidden'; fontInput.name = 'fontScale'; fontInput.value = currentFontVal;
+      form.appendChild(fontInput);
+
+      document.body.appendChild(form);
+      form.submit();
+    }
+
+    window.navigateTo = navigateTo;
+    window.navigateToPage = navigateTo;
+    window.goToLevelSelect = function() { navigateTo('level_select'); };
+    window.goToHome = function() { navigateTo('home'); };
+
+    var i18nDict = {
+      'zh-TW': {
+        'game.title': '節慶猜謎遊戲',
+        'nav.back_cat': '← 返回遊戲分類',
+        'nav.home': '回首頁',
+        'nav.cat': '回到遊戲分類',
+        'nav.progress_p1': '第 ',
+        'nav.progress_p2': ' 題 ／ 共 3 題',
+        'nav.summary': '遊戲結算',
+        'home.subtitle': '我們準備了 3 道有趣的小題目，一起動動腦，認識生活中的節慶吧！',
+       'home.step1': '<b>仔細看</b>題目和圖片。',
+        'home.step2': '<b>點選</b>您認為正確的答案。',
+        'home.step3': '按下<b>「完成並查看結果」</b>。',
+        'home.reassurance': '按照自己的步調慢慢來，不用緊張！',
+        'home.start': '開始遊戲',
+        'btn.submit': '完成並查看結果',
+        'btn.next': '下一題',
+        'btn.view_summary': '查看總成績',
+        'btn.play_again': '再玩一次',
+        'btn.replay_clap': '🎉 再聽一次歡呼聲',
+        'settle.q_p1': '第',
+        'settle.q_p2': '題完成！',
+        'settle.num1': '一', 'settle.num2': '二', 'settle.num3': '三',
+        'settle.score_label': '本題得分：',
+        'settle.score_none': '本題得分：尚未得分',
+        'settle.score_unit': ' 分',
+        'settle.correct_q': '答對題數',
+        'settle.wrong_q': '答錯題數',
+        'settle.unit_q': ' 題',
+        'settle.ans_label': '正確答案：',
+        'settle.encourage_perfect': '太棒了！您答對了，繼續保持！',
+        'settle.encourage_wrong': '沒關係！看看正確答案，再試一次就會更熟悉。',
+        'final.perfect_title': '恭喜完成全部三關！',
+        'final.normal_title': '今天辛苦了！完成三關練習！',
+        'final.avg_label': '總平均成績：',
+        'final.msg_perfect': '太厲害了！全部答對，您對傳統節慶非常瞭解！給自己一個大大的掌聲！',
+        'final.msg_good': '表現得非常好！多動腦練習，大腦會越來越靈活喔！',
+        'final.msg_keep': '沒關係！多練習就會越來越熟悉，<br>繼續加油！',
+        'final.l_p1': '第', 'final.l_p2': '關',
+        'opt.cleaning': '大掃除',
+        'opt.lantern': '元宵',
+        'opt.mooncake': '月餅',
+        'opt.steak': '牛排',
+        'opt.springroll': '春捲',
+        'opt.cake': '蛋糕',
+        'opt.fishing': '釣魚',
+        'opt.tangyuan': '湯圓',
+        'opt.exercise': '運動',
+        'opt.sushi': '壽司',
+        'opt.zongzi': '粽子',
+        'opt.movie': '看電影',
+        'opt.snowman': '堆雪人',
+        'opt.flower': '賞花',
+        'opt.tombsweeping': '掃墓',
+        'opt.dragonboat': '龍舟賽',
+        'opt.moongazing': '賞月',
+        'opt.fireworks': '放煙火',
+        'opt.running': '跑步比賽',
+        'fest.mid_autumn': '中秋節',
+        'fest.dragon_boat': '端午節',
+        'fest.winter_solstice': '冬至',
+        'fest.lantern_fest': '元宵節',
+        'fest.spring_fest': '春節（過年前）',
+        'fest.tomb_sweeping': '清明節',
+        'q1.prompt': '「中秋節」你會聯想到什麼應景的食物呢？',
+        'q1.exp': '中秋節常吃月餅，也象徵團圓。',
+        'q2.prompt': '「端午節」你會聯想到什麼應景的食物呢？',
+        'q2.exp': '端午節常吃粽子，祈求平安順利。',
+        'q3.prompt': '「冬至」你會聯想到什麼應景的食物呢？',
+        'q3.exp': '冬至常吃湯圓，象徵添歲與圓滿。',
+        'q4.prompt': '「元宵節」你會聯想到什麼應景的食物呢？',
+        'q4.exp': '元宵節吃湯圓，象徵新的一年圓圓滿滿。',
+        'q5.prompt': '「春節（過年前）」你在家裡會做什麼準備呢？',
+        'q5.exp': '過年前大家會大掃除，象徵除舊佈新迎好運。',
+        'q6.prompt': '「清明節」你通常會做什麼活動呢？',
+        'q6.exp': '清明節大家會掃墓，表達對祖先的懷念。',
+        'q7.prompt': '「端午節」你可能會參與什麼活動呢？',
+        'q7.exp': '端午節划龍舟與看龍舟比賽，是非常熱鬧的傳統活動。',
+        'q8.prompt': '「中秋節」你可能會做什麼活動呢？',
+        'q8.exp': '中秋節全家人聚在一起賞月，溫馨又團圓。',
+        'badge.pending': '待挑戰',
+        'badge.gold_msg': '完美通關！頭腦超靈光！',
+        'badge.silver_msg': '挑戰成功！反應非常快！',
+        'badge.bronze_msg': '順利完成！越玩越厲害！',
+        'badge.encourage_msg': '用心練習！給自己拍拍手！'
+      },
+      'en': {
+        'game.title': 'Festival Quiz Game',
+        'nav.back_cat': '← Back to Game Categories',
+        'nav.home': 'Back to Home',
+        'nav.cat': 'Back to Game Categories',
+        'nav.progress_p1': 'Question ',
+        'nav.progress_p2': ' / 3',
+        'nav.summary': 'Final Results',
+        'home.subtitle': 'We have prepared 3 fun questions to exercise your mind and explore festive customs!',
+        'home.step1': 'Look carefully at the question and picture.',
+        'home.step2': 'Tap the answer you think is correct.',
+        'home.step3': 'Click "Submit & View Results".',
+        'home.reassurance': 'Take your time at your own pace, no rush!',
+        'home.start': 'Start Game',
+        'btn.submit': 'Submit & View Results',
+        'btn.next': 'Next Question',
+        'btn.view_summary': 'View Total Score',
+        'btn.play_again': 'Play Again',
+        'btn.replay_clap': '🎉 Replay Cheering',
+        'settle.q_p1': 'Question ',
+        'settle.q_p2': ' Completed!',
+        'settle.num1': '1', 'settle.num2': '2', 'settle.num3': '3',
+        'settle.score_label': 'Question Score: ',
+        'settle.score_none': 'Question Score: No Score',
+        'settle.score_unit': ' pts',
+        'settle.correct_q': 'Correct Answers',
+        'settle.wrong_q': 'Wrong Answers',
+        'settle.unit_q': '',
+        'settle.ans_label': 'Correct Answer: ',
+        'settle.encourage_perfect': 'Awesome! You got it right, keep it up!',
+        'settle.encourage_wrong': 'No worries! Check the correct answer and try again.',
+        'final.perfect_title': 'Congratulations on completing all levels!',
+        'final.normal_title': 'Great effort! Practice completed!',
+        'final.avg_label': 'Total Average Score: ',
+        'final.msg_perfect': 'Amazing! All correct! You know festival customs very well! Give yourself a warm applause!',
+        'final.msg_good': 'Great job! Regular practice keeps the mind active and sharp!',
+        'final.msg_keep': 'No worries! Practice makes perfect,<br>keep going!',
+        'final.l_p1': 'Level ', 'final.l_p2': '',
+        'opt.cleaning': 'Spring Cleaning',
+        'opt.lantern': 'Tangyuan (Lantern Fest)',
+        'opt.mooncake': 'Mooncake',
+        'opt.steak': 'Steak',
+        'opt.springroll': 'Spring Roll',
+        'opt.cake': 'Cake',
+        'opt.fishing': 'Fishing',
+        'opt.tangyuan': 'Tangyuan',
+        'opt.exercise': 'Exercise',
+        'opt.sushi': 'Sushi',
+        'opt.zongzi': 'Zongzi (Rice Dumpling)',
+        'opt.movie': 'Watch Movies',
+        'opt.snowman': 'Build Snowman',
+        'opt.flower': 'Flower Viewing',
+        'opt.tombsweeping': 'Tomb Sweeping',
+        'opt.dragonboat':'Dragon Boat Race',
+        'opt.moongazing': 'Moon Gazing',
+        'opt.fireworks': 'Fireworks',
+        'opt.running': 'Running Race',
+        'fest.mid_autumn': 'Mid-Autumn Festival',
+        'fest.dragon_boat': 'Dragon Boat Festival',
+        'fest.winter_solstice': 'Winter Solstice',
+        'fest.lantern_fest': 'Lantern Festival',
+        'fest.spring_fest': 'Chinese New Year (Eve)',
+        'fest.tomb_sweeping': 'Tomb Sweeping Day',
+        'q1.prompt': 'What traditional food do you associate with "Mid-Autumn Festival"?',
+        'q1.exp': 'Mooncakes are eaten during Mid-Autumn Festival, symbolizing family reunion.',
+        'q2.prompt': 'What traditional food do you associate with "Dragon Boat Festival"?',
+        'q2.exp': 'Zongzi is eaten during Dragon Boat Festival to pray for peace and safety.',
+        'q3.prompt': 'What traditional food do you associate with "Winter Solstice"?',
+        'q3.exp': 'Tangyuan is eaten during Winter Solstice, symbolizing fulfillment and growing a year wiser.',
+        'q4.prompt': 'What traditional food do you associate with "Lantern Festival"?',
+        'q4.exp': 'Eating Tangyuan on Lantern Festival symbolizes a sweet and harmonious new year.',
+        'q5.prompt': 'What preparation do you do at home before "Chinese New Year"?',
+        'q5.exp': 'Spring cleaning before New Year symbolizes clearing out old energy for good fortune.',
+        'q6.prompt': 'What traditional activity do people do during "Tomb Sweeping Day"?',
+        'q6.exp': 'Tomb Sweeping Day is dedicated to honoring and remembering ancestors.',
+        'q7.prompt': 'What activity might you participate in during the "Dragon Boat Festival"?',
+        'q7.exp': 'Watching or joining dragon boat races is a vibrant traditional custom.',
+        'q8.prompt': 'What activity might you do during the "Mid-Autumn Festival"?',
+        'q8.exp': 'Families gather under the full moon to appreciate its beauty together.',
+        'badge.pending': 'Try Again',
+        'badge.gold_msg': 'Perfect! Sharp as a tack!',
+        'badge.silver_msg': 'Success! Quick thinking!',
+        'badge.bronze_msg': 'Completed! Practice makes perfect!',
+        'badge.encourage_msg': 'Great Effort! Give yourself a hand!'
+      },
+      'ja': {
+        'game.title': '祝日クイズゲーム',
+        'nav.back_cat': '← ゲーム分類へ戻る',
+        'nav.home': 'ホームへ戻る',
+        'nav.cat': 'ゲーム分類へ戻る',
+        'nav.progress_p1': '第 ',
+        'nav.progress_p2': ' 問 ／ 全 3 問',
+        'nav.summary': '成績発表',
+        'home.subtitle': '楽しいクイズを3問ご用意しました。頭の体操をしながら節句の行事を楽しみましょう！',
+        'home.step1': '問題と写真をよく見てみましょう。',
+        'home.step2': '正しいと思う回答をタップします。',
+        'home.step3': '「決定して結果を見る」を押します。',
+        'home.reassurance': 'ご自分のペースでゆっくり進めてくださいね！',
+        'home.start': 'ゲーム開始',
+        'btn.submit': '決定して結果を見る',
+        'btn.next': '次の問題へ',
+        'btn.view_summary': '総合成績を見る',
+        'btn.play_again': 'もう一度遊ぶ',
+        'btn.replay_clap': '🎉 歓声声を再再生',
+        'settle.q_p1': '第 ',
+        'settle.q_p2': ' 問完了！',
+        'settle.num1': '1', 'settle.num2': '2', 'settle.num3': '3',
+        'settle.score_label': 'この問題の得点：',
+        'settle.score_none': 'この問題の得点：得点なし',
+        'settle.score_unit': ' 点',
+        'settle.correct_q': '正解数',
+        'settle.wrong_q': '不正解数',
+        'settle.unit_q': ' 問',
+        'settle.ans_label': '正解：',
+        'settle.encourage_perfect': '素晴らしい！大正解です、その調子！',
+        'settle.encourage_wrong': '大丈夫！正解を確認して、もう一度挑戦しましょう。',
+        'final.perfect_title': 'おめでとうございます！全ステージクリア！',
+        'final.normal_title': 'お疲れ様でした！練習完了！',
+        'final.avg_label': '総合平均点：',
+        'final.msg_perfect': '全問正解です！傳統行事について素晴らしい知識をお持ちですね！盛大な拍手を贈りましょう！',
+        'final.msg_good': '大変素晴らしい結果です！頭の運動を続けることで脳がどんどん活性化します！',
+        'final.msg_keep': '大丈夫！練習すればどんどん上達します、<br>これからも頑張りましょう！',
+        'final.l_p1': '第', 'final.l_p2': '問',
+        'opt.cleaning': '大掃除',
+        'opt.lantern': '元宵団子',
+        'opt.mooncake': '月餅',
+        'opt.steak': 'ステーキ',
+        'opt.springroll': '春巻き',
+        'opt.cake': 'ケーキ',
+        'opt.fishing': '釣り',
+        'opt.tangyuan': '湯円（タンユエン）',
+        'opt.exercise': '運動',
+        'opt.sushi': '寿司',
+        'opt.zongzi': '粽（ちまき）',
+        'opt.movie': '映画鑑賞',
+        'opt.snowman': '雪だるま作り',
+        'opt.flower': 'お花見',
+        'opt.tombsweeping': 'お墓参り',
+        'opt.dragonboat': 'ドラゴンボートレース',
+        'opt.moongazing': '月見',
+        'opt.fireworks': '花火大会',
+        'opt.running': 'マラソン大会',
+        'fest.mid_autumn': '中秋節',
+        'fest.dragon_boat': '端午節',
+        'fest.winter_solstice': '冬至',
+        'fest.lantern_fest': '元宵節',
+        'fest.spring_fest': '春節（舊正月前）',
+        'fest.tomb_sweeping': '清明節',
+        'q1.prompt': '「中秋節」に食べる傳統的な食べ物はどれですか？',
+        'q1.exp': '中秋節には月餅を食べ、家族の団らんを象徴します。',
+        'q2.prompt': '「端午節（端午の節句）」に食べる代表的な食物はどれですか？',
+        'q2.exp': '端午節には粽（ちまき）を食べ、健康と無病息災を祈ります。',
+        'q3.prompt': '「冬至」に食べる傳統的な食べ物はどれですか？',
+        'q3.exp': '冬至には湯円（団子）を食べ、一歳年を重ねることと円満を象徴します。',
+        'q4.prompt': '「元宵節（ランタン節）」に食べる傳統的な食べ物はどれですか？',
+        'q4.exp': '元宵節に湯円を食べ、新しい一年の円満を祈ります。',
+        'q5.prompt': '「春節（舊正月）」の前に、家でどんな準備をしますか？',
+        'q5.exp': '年末に大掃除をして、古いものを払い幸運を迎えます。',
+        'q6.prompt': '「清明節」には通常どんな行事をしますか？',
+        'q6.exp': '清明節にはお墓参りをして、ご先祖様を供養します。',
+        'q7.prompt': '「端午節」にはどんなイベントに参加または観賞しますか？',
+        'q7.exp': 'ドラゴンボートレースを見たり参加したりするのは賑やかな傳統行事です。',
+        'q8.prompt': '「中秋節」にはどんな過ごし方をしますか？',
+        'q8.exp': '中秋節には家族が集まってお月見をし、溫かく過ごします。',
+        'badge.pending': '再挑戦',
+        'badge.gold_msg': 'パーフェクト！頭の回転がすばらしい！',
+        'badge.silver_msg': 'チャレンジ成功！とても素早い反応ですね！',
+        'badge.bronze_msg': 'クリア達成！やるほど上手になります！',
+        'badge.encourage_msg': 'よくがんばりました！自分に拍手を送りましょう！'
+      },
+      'ko': {
+        'game.title': '명절 퀴즈 게임',
+        'nav.back_cat': '← 게임 카테고리로',
+        'nav.home': '홈으로',
+        'nav.cat': '게임 카테고리로',
+        'nav.progress_p1': '제 ',
+        'nav.progress_p2': ' 문제 / 총 3 문제',
+        'nav.summary': '결과 보기',
+        'home.subtitle': '재미있는 퀴즈 3문제를 준비했습니다. 뇌 운동을 하며 명절 풍습을 알아보세요!',
+        'home.step1': '문제와 사진을 주의 깊게 살펴보세요.',
+        'home.step2': '정답이라고 생각하는 항목을 누르세요.',
+        'home.step3': '「완료 및 결과 보기」를 누르세요.',
+        'home.reassurance': '자신의 속도에 맞춰 천천히 진행하세요!',
+        'home.start': '게임 시작',
+        'btn.submit': '완료 및 결과 보기',
+        'btn.next': '다음 문제',
+        'btn.view_summary': '총 성적 보기',
+        'btn.play_again': '다시 하기',
+        'btn.replay_clap': '🎉 환호성 소리 다시 듣기',
+        'settle.q_p1': '제 ',
+        'settle.q_p2': ' 문제 완료!',
+        'settle.num1': '1', 'settle.num2': '2', 'settle.num3': '3',
+        'settle.score_label': '이번 문제 점수: ',
+        'settle.score_none': '이번 문제 점수: 점수 없음',
+        'settle.score_unit': ' 점',
+        'settle.correct_q': '맞힌 문제',
+        'settle.wrong_q': '틀린 문제',
+        'settle.unit_q': ' 문제',
+        'settle.ans_label': '정답: ',
+        'settle.encourage_perfect': '훌륭합니다! 정답입니다. 계속 유지하세요!',
+        'settle.encourage_wrong': '괜찮습니다! 정답을 확인하고 다시 도전해 보세요.',
+        'final.perfect_title': '모든 단계를 완료했습니다!',
+        'final.normal_title': '수고하셨습니다! 연습 완료!',
+        'final.avg_label': '총 평균 점수: ',
+        'final.msg_perfect': '대단합니다! 전문 맞히셨네요. 전통 명절을 정말 잘 알고 계십니다! 자신에게 큰 박수를 보내주세요!',
+        'final.msg_good': '아주 훌륭한 결과입니다! 꾸준한 두뇌 운동으로 뇌가 점점 더 활성화됩니다!',
+        'final.msg_keep': '괜찮습니다! 연습할수록 점점 익숙해집니다.<br>파이팅!',
+        'final.l_p1': '제', 'final.l_p2': '문제',
+        'opt.cleaning': '대청소',
+        'opt.lantern': '원소절 경단',
+        'opt.mooncake': '월병',
+        'opt.steak': '스테이크',
+        'opt.springroll': '춘권',
+        'opt.cake': '케이크',
+        'opt.fishing': '낚시',
+        'opt.tangyuan': '새알심(탕원)',
+        'opt.exercise': '운동',
+        'opt.sushi': '초밥',
+        'opt.zongzi': '종쯔(대나무잎 밥)',
+        'opt.movie': '영화 보기',
+        'opt.snowman': '눈사람 만들기',
+        'opt.flower': '꽃구경',
+        'opt.tombsweeping': '성묘',
+        'opt.dragonboat': '용선 경주',
+        'opt.moongazing': '달구경',
+        'opt.fireworks': '불꽃놀이',
+        'opt.running': '달리기 경주',
+        'fest.mid_autumn': '중추절(추석)',
+        'fest.dragon_boat': '단오절',
+        'fest.winter_solstice': '동지',
+        'fest.lantern_fest': '원소절(정월대보름)',
+        'fest.spring_fest': '춘절(설날 전)',
+        'fest.tomb_sweeping': '청명절',
+        'q1.prompt': '"중추절(추석)" 하면 떠오르는 대표적인 음식은 무엇인가요?',
+        'q1.exp': '중추절에는 월병을 먹으며 가족의 단란함을 상징합니다.',
+        'q2.prompt': '"단오절" 하면 떠오르는 대표적인 음식은 무엇인가요?',
+        'q2.exp': '단오절에는 종쯔를 먹으며 평안과 무병장수를 기원합니다.',
+        'q3.prompt': '"동지" 하면 떠오르는 대표적인 음식은 무엇인가요?',
+        'q3.exp': '동지에는 새알심(탕원)을 먹으며 한 살을 더 먹고 원만함을 상징합니다.',
+        'q4.prompt': '"원소절(정월대보름)" 하면 떠오르는 음식은 무엇인가요?',
+        'q4.exp': '원소절에 새알심을 먹으며 새해의 원만함을 기원합니다.',
+        'q5.prompt': '"춘절(설날)" 전 집에서 어떤 준비를 하나요?',
+        'q5.exp': '설날 전 대청소를 하여 묵은 때를 벗기고 복을 맞이합니다.',
+        'q6.prompt': '"청명절"에는 보통 어떤 전통 활동을 하나요?',
+        'q6.exp': '청명절에는 성묘를 하며 조상에 대한 그리움을 표합니다.',
+        'q7.prompt': '"단오절"에는 어떤 활동에 참여하나요?',
+        'q7.exp': '용선 경주에 참여하거나 구경하는 것은 매우 열띤 전통 행사입니다.',
+        'q8.prompt': '"중추절(추석)"에는 어떤 활동을 하나요?',
+        'q8.exp': '중추절에는 온 가족이 모여 달구경을 하며 따뜻한 시간을 보냅니다.',
+        'badge.pending': '재도전',
+        'badge.gold_msg': '완벽한 통과! 두뇌가 아주 비상해요!',
+        'badge.silver_msg': '도전 성공! 반응 속도가 정말 빨라요!',
+        'badge.bronze_msg': '무사히 완료! 할수록 더 잘해져요!',
+        'badge.encourage_msg': '열심히 연습했어요! 자신에게 박수를 보내주세요!'
+      }
     };
 
-    /*****************************************************************
-     * 2. 完整題目大圖圖庫 (FESTIVAL_QUESTION_IMAGES)
-     *****************************************************************/
-    const FESTIVAL_QUESTION_IMAGES = {
+    var currentLang = 'zh-TW';
+    var currentFontScale = '100';
+
+    function initDisplaySettings() {
+      var urlParams = new URLSearchParams(window.location.search);
+      currentLang = urlParams.get('lang') || localStorage.getItem('app_lang') || 'zh-TW';
+      currentFontScale = urlParams.get('fontScale') || localStorage.getItem('app_font_scale') || '100';
+
+      localStorage.setItem('app_lang', currentLang);
+      localStorage.setItem('app_font_scale', currentFontScale);
+
+      document.body.classList.remove('font-scale-90', 'font-scale-100', 'font-scale-115', 'font-scale-130');
+      document.body.classList.add('font-scale-' + currentFontScale);
+    }
+
+    function t(key) {
+      var dict = i18nDict[currentLang] || i18nDict['zh-TW'];
+      return dict[key] || i18nDict['zh-TW'][key] || key;
+    }
+
+    function getBadgeData(score) {
+      var unit = t('settle.score_unit');
+      if (score >= 90) {
+        return {
+          svg: '<svg viewBox="0 0 36 36" width="32" height="32" style="vertical-align:middle; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.15));"><circle cx="18" cy="18" r="16" fill="url(#goldGrad)" stroke="#B78103" stroke-width="1.5"/><path d="M18 7l2.5 5.5 6 .5-4.5 4 1.5 6-5.5-3-5.5 3 1.5-6-4.5-4 6-.5z" fill="#FFF" opacity="0.95"/><defs><linearGradient id="goldGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FFE066"/><stop offset="100%" stop-color="#FFB703"/></linearGradient></defs></svg>',
+          scoreText: score + unit,
+          comment: t('badge.gold_msg')
+        };
+      } else if (score >= 60) {
+        return {
+          svg: '<svg viewBox="0 0 36 36" width="32" height="32" style="vertical-align:middle; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.15));"><circle cx="18" cy="18" r="16" fill="url(#silverGrad)" stroke="#607D8B" stroke-width="1.5"/><path d="M18 7l2.5 5.5 6 .5-4.5 4 1.5 6-5.5-3-5.5 3 1.5-6-4.5-4 6-.5z" fill="#FFF" opacity="0.95"/><defs><linearGradient id="silverGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FFFFFF"/><stop offset="100%" stop-color="#B0BEC5"/></linearGradient></defs></svg>',
+          scoreText: score + unit,
+          comment: t('badge.silver_msg')
+        };
+      } else if (score >= 1) {
+        return {
+          svg: '<svg viewBox="0 0 36 36" width="32" height="32" style="vertical-align:middle; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.15));"><circle cx="18" cy="18" r="16" fill="url(#bronzeGrad)" stroke="#5D4037" stroke-width="1.5"/><path d="M18 7l2.5 5.5 6 .5-4.5 4 1.5 6-5.5-3-5.5 3 1.5-6-4.5-4 6-.5z" fill="#FFF" opacity="0.95"/><defs><linearGradient id="bronzeGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#E0A96D"/><stop offset="100%" stop-color="#A0522D"/></linearGradient></defs></svg>',
+          scoreText: score + unit,
+          comment: t('badge.bronze_msg')
+        };
+      } else {
+        return {
+          svg: '<svg viewBox="0 0 36 36" width="32" height="32" style="vertical-align:middle; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.15));"><circle cx="18" cy="18" r="16" fill="url(#encGrad)" stroke="#4F7058" stroke-width="1.5"/><path d="M18 25s-7-4.5-7-9a4 4 0 0 1 7-2.5A4 4 0 0 1 25 16c0 4.5-7 9-7 9z" fill="#FFF"/><defs><linearGradient id="encGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#A3E0B5"/><stop offset="100%" stop-color="#4F7058"/></linearGradient></defs></svg>',
+          scoreText: t('badge.pending'),
+          comment: t('badge.encourage_msg')
+        };
+      }
+    }
+
+    var OPTION_IMAGES = {
+      '大掃除': 'https://lh3.googleusercontent.com/d/1ZEXCe0ED9qcjxEdohum4ld_laCyDMASS',
+      '元宵': 'https://lh3.googleusercontent.com/d/174vvQ6e-Ac5Qf5fQZFEmh_KY7fA6phvs',
+      '月餅': 'https://lh3.googleusercontent.com/d/1_obZlpeLkVuRSCO8junxF5fcwJemFYT1',
+      '牛排': 'https://lh3.googleusercontent.com/d/1ofuI92y3yCY060U8wQg3QOwr9dR3xgyL',
+      '春捲': 'https://lh3.googleusercontent.com/d/1zDi2_oF6pnIcHFJJiKuWN62oAVbechsn',
+      '蛋糕': 'https://lh3.googleusercontent.com/d/1jeYkKx-BbEs5Fib2cCQUoMoLUK0Ge_O4',
+      '釣魚': 'https://lh3.googleusercontent.com/d/1pGbDbpfEka7zzxRRpKO8kw95wamUBBRv',
+      '湯圓': 'https://lh3.googleusercontent.com/d/1mK9Xh4gz3vnWe-JFFSVsBcz4g8ftVwhM',
+      '運動': 'https://lh3.googleusercontent.com/d/1SR7IEeACtgKyQQOaeALtcphHqHzOyGyc',
+      '壽司': 'https://lh3.googleusercontent.com/d/1K2IyuNGWG6iOEUL16e_9hctEBGoLL1HM',
+      '粽子': 'https://lh3.googleusercontent.com/d/1irCIK0lrq513nLfSD3eFIpta3SQpEDpp',
+      '看電影': 'https://lh3.googleusercontent.com/d/1WFIfJ-20WygpYbRAplk6g6tcExet3Oyd',
+      '堆雪人': 'https://lh3.googleusercontent.com/d/1K13D3of-sZyzg2RMAxhxdMfAhJ8tF80b',
+      '賞花': 'https://lh3.googleusercontent.com/d/1FvhyQafwnJefFNq3Jd0hp8ssmnPA1ozG',
+      '掃墓': 'https://lh3.googleusercontent.com/d/1t53Ew5olDS8aot4RQ3mM2tgsLmzZrJmp',
+      '龍舟': 'https://lh3.googleusercontent.com/d/1JanzYRzmu7yUC2akSJEkrvG8VPbql4Rq',
+      '賞月': 'https://lh3.googleusercontent.com/d/1vNDRkSUoE7SKLZYXD1jW3RkF87NyjgOI',
+      '放煙火': 'https://lh3.googleusercontent.com/d/1i0EpqE8nETVImUGqy2ipvpJgq3YSdAdq',
+      '跑步': 'https://lh3.googleusercontent.com/d/192Pq4hL5Welf1Dx8MJiizIgkPgtoqyE8'
+    };
+    var FESTIVAL_QUESTION_IMAGES = {
       '冬至': 'https://lh3.googleusercontent.com/d/1XiPOeNPimVlKJT6-0KPJzxG_bnW6ISW8',
       '春節': 'https://lh3.googleusercontent.com/d/1xyqw7A6xvDQly_4BVmds9L-kxuxfIYCq',
       '清明節': 'https://lh3.googleusercontent.com/d/1OYpLLzMkWzkvNKQtDFIkyeWeGN0kNLDu',
@@ -827,162 +1277,143 @@
       '元宵節': 'https://lh3.googleusercontent.com/d/1yj8PMGGHYiVpzFw0K63jfhYXTCBXpROh'
     };
 
-    /*****************************************************************
-     * 3. 完整 8 道題目與配對邏輯
-     *****************************************************************/
-    const QUESTION_BANK = [
+    var QUESTION_BANK = [
       {
         id: 1,
-        festival: '中秋節',
-        prompt: '「中秋節」你會聯想到什麼應景的食物呢？',
+        festKey: 'fest.mid_autumn',
+        promptKey: 'q1.prompt',
         qImage: FESTIVAL_QUESTION_IMAGES['中秋節'],
         correctAns: 'A',
-        explanation: '中秋節常吃月餅，也象徵團圓。',
+        explanationKey: 'q1.exp',
         options: [
-          { key: 'A', text: '月餅', img: OPTION_IMAGES['月餅'] },
-          { key: 'B', text: '粽子', img: OPTION_IMAGES['粽子'] },
-          { key: 'C', text: '湯圓', img: OPTION_IMAGES['湯圓'] },
-          { key: 'D', text: '春捲', img: OPTION_IMAGES['春捲'] }
+          { key: 'A', textKey: 'opt.mooncake', img: OPTION_IMAGES['月餅'] },
+          { key: 'B', textKey: 'opt.zongzi', img: OPTION_IMAGES['粽子'] },
+          { key: 'C', textKey: 'opt.tangyuan', img: OPTION_IMAGES['湯圓'] },
+          { key: 'D', textKey: 'opt.springroll', img: OPTION_IMAGES['春捲'] }
         ]
       },
       {
         id: 2,
-        festival: '端午節',
-        prompt: '「端午節」你會聯想到什麼應景的食物呢？',
+        festKey: 'fest.dragon_boat',
+        promptKey: 'q2.prompt',
         qImage: FESTIVAL_QUESTION_IMAGES['端午節'],
         correctAns: 'A',
-        explanation: '端午節常吃粽子，祈求平安順利。',
+        explanationKey: 'q2.exp',
         options: [
-          { key: 'A', text: '粽子', img: OPTION_IMAGES['粽子'] },
-          { key: 'B', text: '月餅', img: OPTION_IMAGES['月餅'] },
-          { key: 'C', text: '湯圓', img: OPTION_IMAGES['湯圓'] },
-          { key: 'D', text: '蛋糕', img: OPTION_IMAGES['蛋糕'] }
+          { key: 'A', textKey: 'opt.zongzi', img: OPTION_IMAGES['粽子'] },
+          { key: 'B', textKey: 'opt.mooncake', img: OPTION_IMAGES['月餅'] },
+          { key: 'C', textKey: 'opt.tangyuan', img: OPTION_IMAGES['湯圓'] },
+          { key: 'D', textKey: 'opt.cake', img: OPTION_IMAGES['蛋糕'] }
         ]
       },
       {
         id: 3,
-        festival: '冬至',
-        prompt: '「冬至」你會聯想到什麼應景的食物呢？',
+        festKey: 'fest.winter_solstice',
+        promptKey: 'q3.prompt',
         qImage: FESTIVAL_QUESTION_IMAGES['冬至'],
         correctAns: 'A',
-        explanation: '冬至常吃湯圓，象徵添歲與圓滿。',
+        explanationKey: 'q3.exp',
         options: [
-          { key: 'A', text: '湯圓', img: OPTION_IMAGES['湯圓'] },
-          { key: 'B', text: '粽子', img: OPTION_IMAGES['粽子'] },
-          { key: 'C', text: '壽司', img: OPTION_IMAGES['壽司'] },
-          { key: 'D', text: '牛排', img: OPTION_IMAGES['牛排'] }
+          { key: 'A', textKey: 'opt.tangyuan', img: OPTION_IMAGES['湯圓'] },
+          { key: 'B', textKey: 'opt.zongzi', img: OPTION_IMAGES['粽子'] },
+          { key: 'C', textKey: 'opt.sushi', img: OPTION_IMAGES['壽司'] },
+          { key: 'D', textKey: 'opt.steak', img: OPTION_IMAGES['牛排'] }
         ]
       },
       {
         id: 4,
-        festival: '元宵節',
-        prompt: '「元宵節」你會聯想到什麼應景的食物呢？',
+        festKey: 'fest.lantern_fest',
+        promptKey: 'q4.prompt',
         qImage: FESTIVAL_QUESTION_IMAGES['元宵節'],
         correctAns: 'A',
-        explanation: '元宵節吃湯圓，象徵新的一年圓圓滿滿。',
+        explanationKey: 'q4.exp',
         options: [
-          { key: 'A', text: '湯圓', img: OPTION_IMAGES['元宵'] },
-          { key: 'B', text: '月餅', img: OPTION_IMAGES['月餅'] },
-          { key: 'C', text: '春捲', img: OPTION_IMAGES['春捲'] },
-          { key: 'D', text: '粽子', img: OPTION_IMAGES['粽子'] }
+          { key: 'A', textKey: 'opt.tangyuan', img: OPTION_IMAGES['元宵'] },
+          { key: 'B', textKey: 'opt.mooncake', img: OPTION_IMAGES['月餅'] },
+          { key: 'C', textKey: 'opt.springroll', img: OPTION_IMAGES['春捲'] },
+          { key: 'D', textKey: 'opt.zongzi', img: OPTION_IMAGES['粽子'] }
         ]
       },
       {
         id: 5,
-        festival: '春節（過年前）',
-        prompt: '「春節（過年前）」你在家裡會做什麼準備呢？',
+        festKey: 'fest.spring_fest',
+        promptKey: 'q5.prompt',
         qImage: FESTIVAL_QUESTION_IMAGES['春節'],
         correctAns: 'A',
-        explanation: '過年前大家會大掃除，象徵除舊佈新迎好運。',
+        explanationKey: 'q5.exp',
         options: [
-          { key: 'A', text: '大掃除', img: OPTION_IMAGES['大掃除'] },
-          { key: 'B', text: '釣魚', img: OPTION_IMAGES['釣魚'] },
-          { key: 'C', text: '運動', img: OPTION_IMAGES['運動'] },
-          { key: 'D', text: '看電影', img: OPTION_IMAGES['看電影'] }
+          { key: 'A', textKey: 'opt.cleaning', img: OPTION_IMAGES['大掃除'] },
+          { key: 'B', textKey: 'opt.fishing', img: OPTION_IMAGES['釣魚'] },
+          { key: 'C', textKey: 'opt.exercise', img: OPTION_IMAGES['運動'] },
+          { key: 'D', textKey: 'opt.movie', img: OPTION_IMAGES['看電影'] }
         ]
       },
       {
         id: 6,
-        festival: '清明節',
-        prompt: '「清明節」你通常會做什麼活動呢？',
+        festKey: 'fest.tomb_sweeping',
+        promptKey: 'q6.prompt',
         qImage: FESTIVAL_QUESTION_IMAGES['清明節'],
         correctAns: 'A',
-        explanation: '清明節大家會掃墓，表達對祖先的懷念。',
+        explanationKey: 'q6.exp',
         options: [
-          { key: 'A', text: '掃墓、祭祖', img: OPTION_IMAGES['掃墓'] },
-          { key: 'B', text: '賞月', img: OPTION_IMAGES['賞月'] },
-          { key: 'C', text: '划龍舟', img: OPTION_IMAGES['龍舟'] },
-          { key: 'D', text: '放煙火', img: OPTION_IMAGES['放煙火'] }
+          { key: 'A', textKey: 'opt.tombsweeping', img: OPTION_IMAGES['掃墓'] },
+          { key: 'B', textKey: 'opt.moongazing', img: OPTION_IMAGES['賞月'] },
+          { key: 'C', textKey: 'opt.dragonboat', img: OPTION_IMAGES['龍舟'] },
+          { key: 'D', textKey: 'opt.fireworks', img: OPTION_IMAGES['放煙火'] }
         ]
       },
       {
         id: 7,
-        festival: '端午節',
-        prompt: '「端午節」你可能會參與什麼活動呢？',
+        festKey: 'fest.dragon_boat',
+        promptKey: 'q7.prompt',
         qImage: FESTIVAL_QUESTION_IMAGES['端午節'],
         correctAns: 'A',
-        explanation: '端午節划龍舟與看龍舟比賽，是非常熱鬧的傳統活動。',
+        explanationKey: 'q7.exp',
         options: [
-          { key: 'A', text: '看或參加龍舟比賽', img: OPTION_IMAGES['龍舟'] },
-          { key: 'B', text: '掃墓', img: OPTION_IMAGES['掃墓'] },
-          { key: 'C', text: '賞花', img: OPTION_IMAGES['賞花'] },
-          { key: 'D', text: '堆雪人', img: OPTION_IMAGES['堆雪人'] }
+          { key: 'A', textKey: 'opt.dragonboat', img: OPTION_IMAGES['龍舟'] },
+          { key: 'B', textKey: 'opt.tombsweeping', img: OPTION_IMAGES['掃墓'] },
+          { key: 'C', textKey: 'opt.flower', img: OPTION_IMAGES['賞花'] },
+          { key: 'D', textKey: 'opt.snowman', img: OPTION_IMAGES['堆雪人'] }
         ]
       },
       {
         id: 8,
-        festival: '中秋節',
-        prompt: '「中秋節」你可能會做什麼活動呢？',
+        festKey: 'fest.mid_autumn',
+        promptKey: 'q8.prompt',
         qImage: FESTIVAL_QUESTION_IMAGES['中秋節'],
         correctAns: 'A',
-        explanation: '中秋節全家人聚在一起賞月，溫馨又團圓。',
+        explanationKey: 'q8.exp',
         options: [
-          { key: 'A', text: '賞月', img: OPTION_IMAGES['賞月'] },
-          { key: 'B', text: '掃墓', img: OPTION_IMAGES['掃墓'] },
-          { key: 'C', text: '跑步比賽', img: OPTION_IMAGES['跑步'] },
-          { key: 'D', text: '划龍舟', img: OPTION_IMAGES['龍舟'] }
+          { key: 'A', textKey: 'opt.moongazing', img: OPTION_IMAGES['賞月'] },
+          { key: 'B', textKey: 'opt.tombsweeping', img: OPTION_IMAGES['掃墓'] },
+          { key: 'C', textKey: 'opt.running', img: OPTION_IMAGES['跑步'] },
+          { key: 'D', textKey: 'opt.dragonboat', img: OPTION_IMAGES['龍舟'] }
         ]
       }
     ];
 
-    /*****************************************************************
-     * 4. 全局遊戲狀態管理 (Game State)
-     *****************************************************************/
-    const gameState = {
-      currentStep: 0, // 0: 說明首頁, 1~3: 題目, 4: 結算頁
+    var gameState = {
+      currentStep: 0,
       selectedQuestions: [],
       userAnswers: []
     };
 
-    window.addEventListener('DOMContentLoaded', () => {
+    window.addEventListener('DOMContentLoaded', function() {
+      initDisplaySettings();
       renderCurrentStep();
     });
 
-    /*****************************************************************
-     * 導覽處理函式：標準靜態頁面跳轉
-     *****************************************************************/
     function replayGame() {
       startGame();
     }
 
-    function goToLevelSelect() {
-      window.location.href = "LevelSelect.html";
-    }
-
-    function goToHome() {
-      window.location.href = "index.html";
-    }
-
-    /*****************************************************************
-     * 音效引擎
-     *****************************************************************/
-    const CHEER_AUDIO_URLS = [
+    var CHEER_AUDIO_URLS = [
       "https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3",
       "https://actions.google.com/sounds/v1/crowd/cheering.ogg",
       "https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3"
     ];
-    let cheerAudioPlayer = null;
-    let currentSourceIndex = 0;
+    var cheerAudioPlayer = null;
+    var currentSourceIndex = 0;
 
     function getCheerAudioPlayer() {
       if (!cheerAudioPlayer) {
@@ -995,7 +1426,7 @@
             cheerAudioPlayer.src = CHEER_AUDIO_URLS[currentSourceIndex];
             cheerAudioPlayer.load();
           } else {
-            const statusTag = document.getElementById('audio-status-tag');
+            var statusTag = document.getElementById('audio-status-tag');
             if (statusTag) {
               statusTag.innerHTML = "<span style='color:#c62828;'>❌ 音訊檔案載入失敗</span>";
             }
@@ -1006,22 +1437,59 @@
     }
 
     function unlockAudioOnGesture() {
-      const player = getCheerAudioPlayer();
+      var player = getCheerAudioPlayer();
       if (player && player.paused && player.readyState === 0) {
         player.load();
       }
     }
-    document.addEventListener('click', unlockAudioOnGesture, { once: false });
-    document.addEventListener('touchstart', unlockAudioOnGesture, { once: false });
+    document.addEventListener('click', unlockAudioOnGesture, false);
+    document.addEventListener('touchstart', unlockAudioOnGesture, false);
 
-    function playCheerSound(isManualClick = false) {
-      const player = getCheerAudioPlayer();
+    function showClapEffect() {
+      var rows = document.querySelectorAll('.summary-breakdown-row');
+      if (!rows || rows.length < 2) return;
+      var targetRow = rows[1];
+
+      var clapEl = document.getElementById('temp-clap-effect');
+      if (!clapEl) {
+        clapEl = document.createElement('div');
+        clapEl.id = 'temp-clap-effect';
+        clapEl.className = 'table-clap-container';
+        clapEl.innerHTML = '<span class="table-clap-emoji">👏</span><span class="clap-impact-ring"></span>';
+        targetRow.appendChild(clapEl);
+      }
+
+      clapEl.style.transition = 'opacity 0.6s ease';
+      clapEl.style.opacity = '1';
+
+      if (window.clapTimer) clearTimeout(window.clapTimer);
+      if (window.clapFadeTimer) clearTimeout(window.clapFadeTimer);
+
+      window.clapTimer = setTimeout(function() {
+        var el = document.getElementById('temp-clap-effect');
+        if (el) {
+          el.style.opacity = '0';
+          window.clapFadeTimer = setTimeout(function() {
+            if (el && el.parentNode) {
+              el.parentNode.removeChild(el);
+            }
+          }, 600);
+        }
+      }, 3800);
+    }
+
+    function playCheerSound(isManualClick) {
+      var player = getCheerAudioPlayer();
       if (!player) return;
       player.currentTime = 0;
       player.volume = 0.6;
-      const playPromise = player.play();
+      var playPromise = player.play();
       if (playPromise !== undefined) {
-        playPromise.then(() => {});
+        playPromise.then(function() {});
+      }
+
+      if (isManualClick) {
+        showClapEffect();
       }
     }
 
@@ -1032,12 +1500,9 @@
       }
     }
 
-    /*****************************************************************
-     * 5. 遊戲流程控制 (Game Flow)
-     *****************************************************************/
     function startGame() {
       stopCheerSound();
-      const shuffled = [...QUESTION_BANK].sort(() => Math.random() - 0.5);
+      var shuffled = QUESTION_BANK.slice().sort(function() { return Math.random() - 0.5; });
       gameState.selectedQuestions = shuffled.slice(0, 3);
       gameState.userAnswers = [
         { selectedOption: null, submitted: false, score: 0, shuffledOptions: null },
@@ -1049,67 +1514,84 @@
     }
 
     function renderCurrentStep() {
-      const card = document.getElementById('game-container');
-      const progressBadge = document.getElementById('progress-text');
-      const headerTitle = document.getElementById('header-title');
-      const topNavBar = document.getElementById('top-nav-bar');
+      var card = document.getElementById('game-container');
+      var progressBadge = document.getElementById('progress-text');
+      var headerTitle = document.getElementById('header-title');
+      var topNavBar = document.getElementById('top-nav-bar');
+      var btnBackHeader = document.getElementById('btn-back-cat-header');
+
+      if (btnBackHeader) btnBackHeader.innerHTML = t('nav.back_cat');
 
       if (gameState.currentStep === 0) {
-        if (headerTitle) headerTitle.textContent = "節慶猜謎遊戲";
+        card.classList.remove('summary-mode');
+        if (headerTitle) headerTitle.textContent = t('game.title');
         if (topNavBar) topNavBar.style.display = 'flex';
         if (progressBadge) {
           progressBadge.style.display = 'none';
         }
         renderWelcome();
       } else if (gameState.currentStep >= 1 && gameState.currentStep <= 3) {
-        if (headerTitle) headerTitle.textContent = "節慶猜謎遊戲";
+        card.classList.remove('summary-mode');
+        if (headerTitle) headerTitle.textContent = t('game.title');
         if (topNavBar) topNavBar.style.display = 'none';
         if (progressBadge) {
           progressBadge.style.display = 'inline-block';
-          progressBadge.textContent = `第 ${gameState.currentStep} 題 ／ 共 3 題`;
+          progressBadge.textContent = t('nav.progress_p1') + gameState.currentStep + t('nav.progress_p2');
         }
         renderQuestion(card, gameState.currentStep - 1);
       } else if (gameState.currentStep === 4) {
-        if (headerTitle) headerTitle.textContent = "節慶猜謎遊戲";
+        card.classList.add('summary-mode');
+        if (headerTitle) headerTitle.textContent = t('game.title');
         if (topNavBar) topNavBar.style.display = 'none';
         if (progressBadge) {
           progressBadge.style.display = 'inline-block';
-          progressBadge.textContent = "遊戲結算";
+          progressBadge.textContent = t('nav.summary');
         }
         renderSummary(card);
       }
     }
 
-    /*****************************************************************
-     * 6. 說明首頁渲染
-     *****************************************************************/
     function renderWelcome() {
-      const container = document.getElementById('game-container');
-      const html = `
-        <div class="home-wrapper">
-          <div class="home-subtitle">我們準備了 3 道有趣的小題目，一起動動腦，認識生活中的節慶吧！</div>
-          <div class="home-reminder-box">
-            <div class="home-reminder-title">遊戲說明</div>
-            1. 仔細看看題目和圖片。<br>
-            2. 點選您認為正確的答案。<br>
-            3. 按下「完成並查看結果」，看看自己的表現。<br>
-            4. 按照自己的步調慢慢來，不用緊張！
-          </div>
-          <div class="home-ready-text">準備好了嗎？讓我們開始吧！</div>
-          <div class="home-action-bar">
-            <button class="btn-start-game" onclick="startGame()">開始遊戲</button>
-          </div>
-        </div>
-      `;
+      var container = document.getElementById('game-container');
+      var html = 
+        '<div class="home-wrapper">' +
+          '<div class="home-subtitle">' + t('home.subtitle') + '</div>' +
+          '<div class="home-steps-container">' +
+            '<div class="home-step-item">' +
+              '<div class="home-step-icon" style="font-size: 22px; font-weight: 900; color: var(--primary-dark);">1</div>' +
+              '<div class="home-step-text">' + t('home.step1') + '</div>' +
+            '</div>' +
+            '<div class="home-step-item">' +
+              '<div class="home-step-icon" style="font-size: 22px; font-weight: 900; color: var(--primary-dark);">2</div>' +
+              '<div class="home-step-text">' + t('home.step2') + '</div>' +
+            '</div>' +
+            '<div class="home-step-item">' +
+              '<div class="home-step-icon" style="font-size: 22px; font-weight: 900; color: var(--primary-dark);">3</div>' +
+              '<div class="home-step-text">' + t('home.step3') + '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="home-reassurance-card">' +
+            '<div class="home-step-icon" style="background-color: #C8E6C9;">' +
+              '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1B5E20" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">' +
+                '<path d="M18 8h1a4 4 0 0 1 0 8h-1"></path>' +
+                '<path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path>' +
+                '<line x1="6" y1="1" x2="6" y2="4"></line>' +
+                '<line x1="10" y1="1" x2="10" y2="4"></line>' +
+                '<line x1="14" y1="1" x2="14" y2="4"></line>' +
+              '</svg>' +
+            '</div>' +
+            '<div class="home-reassurance-text">' + t('home.reassurance') + '</div>' +
+          '</div>' +
+          '<div class="home-action-bar">' +
+            '<button class="btn-start-game" onclick="startGame()">' + t('home.start') + '</button>' +
+          '</div>' +
+        '</div>';
       container.innerHTML = html;
     }
 
-    /*****************************************************************
-     * 7. 單一題目渲染（左右並排版型）
-     *****************************************************************/
     function renderQuestion(container, qIndex) {
-      const q = gameState.selectedQuestions[qIndex];
-      const answerState = gameState.userAnswers[qIndex];
+      var q = gameState.selectedQuestions[qIndex];
+      var answerState = gameState.userAnswers[qIndex];
 
       if (answerState.submitted) {
         renderFeedback(container, qIndex);
@@ -1117,59 +1599,56 @@
       }
 
       if (!answerState.shuffledOptions) {
-        answerState.shuffledOptions = [...q.options]
-          .sort(() => Math.random() - 0.5);
+        answerState.shuffledOptions = q.options.slice().sort(function() { return Math.random() - 0.5; });
       }
 
-      let html = `
-        <div class="question-box">
-          <div class="question-text-side">
-            <div class="question-prompt-text">${q.prompt}</div>
-          </div>
-          <div class="question-img-side">
-            <img src="${q.qImage}" alt="${q.festival}" class="question-img" onerror="handleImgError(this, '${q.festival}')" />
-          </div>
-        </div>
-        <div class="options-grid">
-          ${(answerState.shuffledOptions || q.options).map(opt => `
-            <div class="option-card ${answerState.selectedOption === opt.key ? 'selected' : ''}"
-                 onclick="selectOption(${qIndex}, '${opt.key}')">
-              <div class="option-img-wrapper">
-                <img src="${opt.img}" alt="${opt.text}" class="option-img" onerror="handleImgError(this, '${opt.text}')" />
-              </div>
-              <div class="option-label-container">
-                <span class="option-badge">${opt.key}</span>
-                <span class="option-text">${opt.text}</span>
-              </div>
-            </div>
-          `).join('')}
-        </div>
-        <div class="action-bar">
-          <button class="btn btn-submit" id="btn-submit" 
-                  onclick="submitAnswer(${qIndex})" 
-                  ${!answerState.selectedOption ? 'disabled' : ''}>
-            完成並查看結果
-          </button>
-        </div>
-      `;
+      var promptText = t(q.promptKey);
+      var festTitle = t(q.festKey);
+
+      var optionsHtml = (answerState.shuffledOptions || q.options).map(function(opt) {
+        var optText = t(opt.textKey);
+        return '<div class="option-card ' + (answerState.selectedOption === opt.key ? 'selected' : '') + '" onclick="selectOption(' + qIndex + ', \'' + opt.key + '\')">' +
+          '<div class="option-img-wrapper">' +
+            '<img src="' + opt.img + '" alt="' + optText + '" class="option-img" onerror="handleImgError(this, \'' + optText + '\')" />' +
+          '</div>' +
+          '<div class="option-label-container">' +
+            '<span class="option-text">' + optText + '</span>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+
+      var html = 
+        '<div class="question-box">' +
+          '<div class="question-text-side">' +
+            '<div class="question-prompt-text">' + promptText + '</div>' +
+          '</div>' +
+          '<div class="question-img-side">' +
+            '<img src="' + q.qImage + '" alt="' + festTitle + '" class="question-img" onerror="handleImgError(this, \'' + festTitle + '\')" />' +
+          '</div>' +
+        '</div>' +
+        '<div class="options-grid">' +
+          optionsHtml +
+        '</div>' +
+        '<div class="action-bar">' +
+          '<button class="btn btn-submit" id="btn-submit" onclick="submitAnswer(' + qIndex + ')" ' + (!answerState.selectedOption ? 'disabled' : '') + '>' +
+            t('btn.submit') +
+          '</button>' +
+        '</div>';
       container.innerHTML = html;
     }
 
-    /*****************************************************************
-     * 8. 作答選擇與提交邏輯
-     *****************************************************************/
     function selectOption(qIndex, optionKey) {
-      const answerState = gameState.userAnswers[qIndex];
+      var answerState = gameState.userAnswers[qIndex];
       if (answerState.submitted) return;
       answerState.selectedOption = optionKey;
       renderCurrentStep();
     }
 
     function submitAnswer(qIndex) {
-      const answerState = gameState.userAnswers[qIndex];
+      var answerState = gameState.userAnswers[qIndex];
       if (answerState.submitted || !answerState.selectedOption) return;
-      const q = gameState.selectedQuestions[qIndex];
-      const isCorrect = (answerState.selectedOption === q.correctAns);
+      var q = gameState.selectedQuestions[qIndex];
+      var isCorrect = (answerState.selectedOption === q.correctAns);
       answerState.submitted = true;
       answerState.score = isCorrect ? 100 : 0;
       renderCurrentStep();
@@ -1183,206 +1662,195 @@
       }
       renderCurrentStep();
     }
-
-    /*****************************************************************
-     * 9. 獨立單題結果畫面
-     *****************************************************************/
-    function renderFeedback(container, qIndex) {
-      const q = gameState.selectedQuestions[qIndex];
-      const answerState = gameState.userAnswers[qIndex];
+function renderFeedback(container, qIndex) {
+      var q = gameState.selectedQuestions[qIndex];
+      var answerState = gameState.userAnswers[qIndex];
       
-      const score = answerState.score;
-      const correctOption = q.options.find(o => o.key === q.correctAns);
-      const levelTitles = ['第一關完成！', '第二關完成！', '第三關完成！'];
-      const currentLevelTitle = levelTitles[qIndex];
-      const starsCount = qIndex + 1;
-      const starsHtml = Array(starsCount).fill('<span class="star-icon">★</span>').join('');
-      let encouragementMsg = '';
-      if (score >= 100) {
-        encouragementMsg = '答得很好！真棒！';
-      } else {
-        encouragementMsg = '沒關係！一起看看正確答案，多練習就會越來越熟悉！';
+      var score = answerState.score;
+      var isCorrect = (score > 0);
+      var badgeData = getBadgeData(score);
+      
+      var correctOption = q.options.filter(function(o) { return o.key === q.correctAns; })[0];
+      var numKey = 'settle.num' + (qIndex + 1);
+      var currentLevelTitle = t('settle.q_p1') + t(numKey) + t('settle.q_p2');
+      
+      // 答對顯示金色星星，答錯顯示灰色星星
+      var starsCount = qIndex + 1;
+      var starsHtml = '';
+      for (var i = 0; i < starsCount; i++) {
+        var starColorStart = isCorrect ? "#FFC107" : "#E0E0E0";
+        var starColorEnd = isCorrect ? "#FF8F00" : "#BDBDBD";
+        
+        starsHtml += 
+          '<svg class="feedback-svg-star" viewBox="0 0 24 24">' +
+            '<defs>' +
+              '<linearGradient id="starGrad_' + qIndex + '_' + i + '" x1="0%" y1="0%" x2="0%" y2="100%">' +
+                '<stop offset="0%" stop-color="' + starColorStart + '"/>' +
+                '<stop offset="100%" stop-color="' + starColorEnd + '"/>' +
+              '</linearGradient>' +
+            '</defs>' +
+            '<path fill="url(#starGrad_' + qIndex + '_' + i + ')" d="M12 2l2.9 6.26 6.86.83-5.1 4.75 1.4 6.74L12 17.27l-6.06 3.31 1.4-6.74-5.1-4.75 6.86-.83L12 2z"/>' +
+          '</svg>';
       }
-      const correctCount = score > 0 ? 1 : 0;
-      const wrongCount = score > 0 ? 0 : 1;
-      const html = `
-        <div class="result-box ${score >= 100 ? 'correct' : 'incorrect'}">
-          <div class="settlement-title">${currentLevelTitle}</div>
-          <div class="settlement-stars">${starsHtml}</div>
-          <div class="settlement-score-pill">本題得分：${score} 分</div>
-          <div class="settlement-tags-group">
-            <span class="tag-correct">答對：${correctCount} 題</span>
-            <span class="tag-wrong">未答對：${wrongCount} 題</span>
-          </div>
-          <div class="settlement-encouragement" style="margin-top: 4px;">${encouragementMsg}</div>
-          <hr class="feedback-divider" />
-          <div class="feedback-correct-label">正確答案：${correctOption.text}</div>
-          <div class="feedback-explanation">${q.explanation}</div>
-        </div>
-        <div class="action-bar">
-          <button class="btn btn-settlement-next" onclick="nextQuestion()">
-            ${qIndex === 2 ? '查看總成績' : '下一題'}
-          </button>
-        </div>
-      `;
+
+      var nextBtnText = (qIndex === 2) ? t('btn.view_summary') : t('btn.next');
+
+      var html = 
+        '<div class="result-box">' +
+          '<div class="settlement-title">' + currentLevelTitle + '</div>' +
+          '<div class="settlement-stars">' + starsHtml + '</div>' +
+          '<div class="settlement-score-pill">' + badgeData.svg + ' ' + badgeData.scoreText + '</div>' +
+          '<div class="settlement-encouragement">' + badgeData.comment + '</div>' +
+          '<hr class="feedback-divider" />' +
+          '<div class="feedback-correct-label">' + t('settle.ans_label') + (correctOption ? t(correctOption.textKey) : '') + '</div>' +
+          '<div class="feedback-explanation">' + t(q.explanationKey) + '</div>' +
+        '</div>' +
+        '<div class="action-bar">' +
+          '<button class="btn btn-settlement-next" onclick="nextQuestion()">' + nextBtnText + '</button>' +
+        '</div>';
       container.innerHTML = html;
     }
-
-    /*****************************************************************
-     * 10. 最終結算頁面
-     *****************************************************************/
-    function renderSummary(container) {
+function renderSummary(container) {
       stopCheerSound();
-      const ans = gameState.userAnswers;
-      const totalScore = ans.reduce((sum, item) => sum + item.score, 0);
-      const avgScore = totalScore / 3;
+      var ans = gameState.userAnswers;
+      var totalScore = ans.reduce(function(sum, item) { return sum + item.score; }, 0);
+      var avgScore = Math.round(totalScore / 3);
+      var isPerfect = (avgScore === 100);
       
-      const formattedAvg = Number.isInteger(avgScore) ? avgScore.toString() : avgScore.toFixed(1);
-      let summaryMsg = '';
+      var summaryMsg = '';
       if (avgScore === 100) {
-        summaryMsg = '太厲害了！全部答對，您對傳統節慶非常瞭解！給自己一個大大的掌聲！';
+        summaryMsg = t('final.msg_perfect');
       } else if (avgScore >= 60) {
-        summaryMsg = '表現得非常好！多動腦練習，大腦會越來越靈活喔！';
+        summaryMsg = t('final.msg_good');
       } else {
-        summaryMsg = '非常棒的嘗試！多玩幾次認識節慶，會一次比一次進步！';
-      }
-      const levelLabels = ['第一關', '第二關', '第三關'];
-      
-      // 彩帶顆粒
-      const confettiColors = ['#e91e63', '#4caf50', '#2196f3', '#ffeb3b', '#ff9800', '#9c27b0', '#00bcd4', '#ff5722'];
-      let confettiHTML = '';
-      for (let i = 0; i < 24; i++) {
-        const left = Math.floor((i / 24) * 92 + 4 + (Math.random() * 3 - 1.5));
-        const color = confettiColors[i % confettiColors.length];
-        const delay = (Math.random() * 2.5).toFixed(2);
-        const duration = (2.4 + Math.random() * 1.2).toFixed(2);
-        const isCircle = i % 3 === 0;
-        const width = isCircle ? '8px' : '7px';
-        const height = isCircle ? '13px' : '9px';
-        const borderRadius = isCircle ? '50%' : '2px';
-        confettiHTML += `<span class="confetti-piece" style="left:${left}%; background:${color}; width:${width}; height:${height}; border-radius:${borderRadius}; animation-delay:${delay}s; animation-duration:${duration}s;"></span>`;
+        summaryMsg = t('final.msg_keep');
       }
       
-      // 金黃色四角星 SVG
-      const decorStarSVG = `
-        <svg viewBox="0 0 40 40" style="width:100%; height:100%;">
-          <path d="M20 2 L23.5 15.5 L37 19 L23.5 22.5 L20 36 L16.5 22.5 L3 19 L16.5 15.5 Z" fill="#FFB74D"/>
-          <path d="M20 6 L22 16 L31 19 L22 22 L20 32 L18 22 L9 19 L18 16 Z" fill="#FFE082"/>
-        </svg>
-      `;
+      var confettiColors = ['#e91e63', '#4caf50', '#2196f3', '#ffeb3b', '#ff9800', '#9c27b0', '#00bcd4', '#ff5722'];
+      var confettiHTML = '';
+      for (var i = 0; i < 24; i++) {
+        var left = Math.floor((i / 24) * 92 + 4 + (Math.random() * 3 - 1.5));
+        var color = confettiColors[i % confettiColors.length];
+        var delay = (Math.random() * 2.5).toFixed(2);
+        var duration = (2.4 + Math.random() * 1.2).toFixed(2);
+        var isCircle = i % 3 === 0;
+        var width = isCircle ? '8px' : '7px';
+        var height = isCircle ? '13px' : '9px';
+        var borderRadius = isCircle ? '50%' : '2px';
+        confettiHTML += '<span class="confetti-piece" style="left:' + left + '%; background:' + color + '; width:' + width + '; height:' + height + '; border-radius:' + borderRadius + '; animation-delay:' + delay + 's; animation-duration:' + duration + 's;"></span>';
+      }
 
-      // 立體金色獎盃 SVG
-      const trophySVG = `
-        <svg class="perfect-trophy-svg" viewBox="0 0 100 100">
-          <defs>
-            <linearGradient id="gold-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stop-color="#FFE082"/>
-              <stop offset="30%" stop-color="#FFD54F"/>
-              <stop offset="55%" stop-color="#FFB300"/>
-              <stop offset="85%" stop-color="#FF8F00"/>
-              <stop offset="100%" stop-color="#FF6F00"/>
-            </linearGradient>
-            <linearGradient id="base-grad" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stop-color="#8D6E63"/>
-              <stop offset="50%" stop-color="#5D4037"/>
-              <stop offset="100%" stop-color="#3E2723"/>
-            </linearGradient>
-            <linearGradient id="stem-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stop-color="#FFB300"/>
-              <stop offset="50%" stop-color="#FFE082"/>
-              <stop offset="100%" stop-color="#FF8F00"/>
-            </linearGradient>
-          </defs>
-          <path d="M 24 22 C 8 22, 8 46, 26 48 M 76 22 C 92 22, 92 46, 74 48" fill="none" stroke="url(#gold-grad)" stroke-width="5" stroke-linecap="round"/>
-          <path d="M 22 18 L 78 18 L 70 54 C 66 68, 34 68, 30 54 Z" fill="url(#gold-grad)"/>
-          <ellipse cx="50" cy="18" rx="28" ry="5" fill="#FFE082"/>
-          <path d="M 32 22 L 40 22 C 37 38, 38 48, 36 56 C 34 54, 33 40, 32 22 Z" fill="#FFFFFF" opacity="0.45"/>
-          <rect x="43" y="66" width="14" height="12" fill="url(#stem-grad)"/>
-          <ellipse cx="50" cy="66" rx="10" ry="3" fill="#FFA000"/>
-          <path d="M 28 78 L 72 78 L 76 92 L 24 92 Z" fill="url(#base-grad)"/>
-          <rect x="24" y="78" width="52" height="4" fill="#A1887F"/>
-        </svg>
-      `;
+      // 🌟 依據平均分數動態決定金黃星星數量（100分: 3星 / 60~99分: 2星 / 60分以下: 1星）
+      var goldStarsCount = (avgScore === 100) ? 3 : ((avgScore >= 60) ? 2 : 1);
+      var summaryStarsHtml = '';
+      for (var s = 0; s < 3; s++) {
+        var isGold = (s < goldStarsCount);
+        var cStart = isGold ? "#FFC107" : "#E0E0E0";
+        var cEnd = isGold ? "#FF8F00" : "#BDBDBD";
+        summaryStarsHtml += 
+          '<svg class="settlement-svg-star star-' + (s + 1) + '" viewBox="0 0 24 24">' +
+            '<defs>' +
+              '<linearGradient id="sumStarGrad_' + s + '" x1="0%" y1="0%" x2="0%" y2="100%">' +
+                '<stop offset="0%" stop-color="' + cStart + '"/>' +
+                '<stop offset="100%" stop-color="' + cEnd + '"/>' +
+              '</linearGradient>' +
+            '</defs>' +
+            '<path fill="url(#sumStarGrad_' + s + ')" d="M12 2l2.9 6.26 6.86.83-5.1 4.75 1.4 6.74L12 17.27l-6.06 3.31 1.4-6.74-5.1-4.75 6.86-.83L12 2z"/>' +
+          '</svg>';
+      }
+      
+      var decorStarSVG = 
+        '<svg viewBox="0 0 40 40" style="width:100%; height:100%;">' +
+          '<path d="M20 2 L23.5 15.5 L37 19 L23.5 22.5 L20 36 L16.5 22.5 L3 19 L16.5 15.5 Z" fill="#FFB74D"/>' +
+          '<path d="M20 6 L22 16 L31 19 L22 22 L20 32 L18 22 L9 19 L18 16 Z" fill="#FFE082"/>' +
+        '</svg>';
 
-      let html = `
-        <div class="summary-cream-card">
-          <div class="confetti-container">${confettiHTML}</div>
-          <h2 class="settlement-title" style="font-size: calc(26px * var(--font-scale)); position: relative; z-index: 2;">恭喜完成全部三關！</h2>
-          
-          ${avgScore === 100 ? `
-            <div class="perfect-graphic-group" style="position: relative; z-index: 2;">
-              <div class="trophy-wrapper">
-                <div class="star-decor star-left">${decorStarSVG}</div>
-                ${trophySVG}
-                <div class="star-decor star-right">${decorStarSVG}</div>
-              </div>
-            </div>
-          ` : ''}
+      var trophySVG = 
+        '<svg class="perfect-trophy-svg" viewBox="0 0 100 100">' +
+          '<defs>' +
+            '<linearGradient id="gold-grad" x1="0%" y1="0%" x2="100%" y2="0%">' +
+              '<stop offset="0%" stop-color="#FFE082"/><stop offset="30%" stop-color="#FFD54F"/><stop offset="55%" stop-color="#FFB300"/><stop offset="85%" stop-color="#FF8F00"/><stop offset="100%" stop-color="#FF6F00"/>' +
+            '</linearGradient>' +
+            '<linearGradient id="base-grad" x1="0%" y1="0%" x2="0%" y2="100%">' +
+              '<stop offset="0%" stop-color="#8D6E63"/><stop offset="50%" stop-color="#5D4037"/><stop offset="100%" stop-color="#3E2723"/>' +
+            '</linearGradient>' +
+            '<linearGradient id="stem-grad" x1="0%" y1="0%" x2="100%" y2="0%">' +
+              '<stop offset="0%" stop-color="#FFB300"/><stop offset="50%" stop-color="#FFE082"/><stop offset="100%" stop-color="#FF8F00"/>' +
+            '</linearGradient>' +
+          '</defs>' +
+          '<path d="M 24 22 C 8 22, 8 46, 26 48 M 76 22 C 92 22, 92 46, 74 48" fill="none" stroke="url(#gold-grad)" stroke-width="5" stroke-linecap="round"/>' +
+          '<path d="M 22 18 L 78 18 L 70 54 C 66 68, 34 68, 30 54 Z" fill="url(#gold-grad)"/>' +
+          '<ellipse cx="50" cy="18" rx="28" ry="5" fill="#FFE082"/>' +
+          '<path d="M 32 22 L 40 22 C 37 38, 38 48, 36 56 C 34 54, 33 40, 32 22 Z" fill="#FFFFFF" opacity="0.45"/>' +
+          '<rect x="43" y="66" width="14" height="12" fill="url(#stem-grad)"/>' +
+          '<ellipse cx="50" cy="66" rx="10" ry="3" fill="#FFA000"/>' +
+          '<path d="M 28 78 L 72 78 L 76 92 L 24 92 Z" fill="url(#base-grad)"/>' +
+          '<rect x="24" y="78" width="52" height="4" fill="#A1887F"/>' +
+        '</svg>';
 
-          <div class="settlement-stars" style="position: relative; z-index: 2;">
-            <span class="star-icon">★</span>
-            <span class="star-icon">★</span>
-            <span class="star-icon">★</span>
-          </div>
+      var breakdownRows = gameState.selectedQuestions.map(function(q, idx) {
+        var lvlName = t('final.l_p1') + t('settle.num' + (idx + 1)) + t('final.l_p2');
+        var festTitle = t(q.festKey);
+        var bData = getBadgeData(ans[idx].score);
+        return '<div class="summary-breakdown-row">' +
+          '<span>' + lvlName + '（' + festTitle + '）：</span>' +
+          '<span class="summary-breakdown-score">' + bData.svg + ' <span style="vertical-align:middle; margin-left:4px;">' + bData.scoreText + '</span></span>' +
+        '</div>';
+      }).join('');
 
-          <div class="settlement-score-pill" style="align-self: center; position: relative; z-index: 2;">總平均成績：<strong>${formattedAvg}</strong> 分</div>
+      var avgBadgeData = getBadgeData(avgScore);
 
-          <div class="summary-breakdown-box" style="position: relative; z-index: 2;">
-            ${gameState.selectedQuestions.map((q, idx) => `
-              <div class="summary-breakdown-row">
-                <span>${levelLabels[idx]}（${q.festival}）</span>
-                ${idx === 1 ? `
-                  <div class="table-clap-container">
-                    <span class="table-clap-emoji">👏</span>
-                    <span class="clap-impact-ring"></span>
-                  </div>
-                ` : ''}
-                <span class="summary-breakdown-score">${ans[idx].score} 分</span>
-              </div>
-            `).join('')}
-          </div>
-
-          ${avgScore === 100 ? `
-            <div style="position: relative; z-index: 2;">
-              <button class="btn-clap-sound" onclick="playCheerSound(true)">🎉 播放歡呼聲</button>
-              <div id="audio-status-tag" class="audio-status-msg"></div>
-            </div>
-          ` : ''}
-
-          <div class="home-reminder-box" style="text-align: center; background-color: #E8F5E9; border: 1.5px solid #C8E6C9; position: relative; z-index: 2;">
-            <div style="font-size: calc(16.5px * var(--font-scale)); color: var(--primary-dark); font-weight: bold;">
-              ${summaryMsg}
-            </div>
-          </div>
-          
-          <!-- 導覽按鈕列 -->
-          <div class="summary-actions-group">
-            <button class="btn-start-game" onclick="replayGame()">再玩一次</button>
-            <div class="secondary-btn-row">
-              <button class="btn-secondary" onclick="goToLevelSelect()">回到遊戲分類</button>
-              <button class="btn-secondary" onclick="goToHome()">回首頁</button>
-            </div>
-          </div>
-
-        </div>
-      `;
+      var html = 
+        '<div class="summary-cream-card">' +
+          '<div class="confetti-container">' + confettiHTML + '</div>' +
+          '<h2 class="settlement-title" style="font-size: calc(28px * var(--font-scale)); position: relative; z-index: 2;">' +
+            (isPerfect ? t('final.perfect_title') : t('final.normal_title')) +
+          '</h2>' +
+          (isPerfect ? 
+            '<div class="perfect-graphic-group" style="position: relative; z-index: 2;">' +
+              '<div class="trophy-wrapper">' +
+                '<div class="star-decor star-left">' + decorStarSVG + '</div>' +
+                trophySVG +
+                '<div class="star-decor star-right">' + decorStarSVG + '</div>' +
+              '</div>' +
+            '</div>' : '') +
+          '<div style="position: relative; z-index: 2;">' +
+            '<div class="settlement-svg-stars">' + summaryStarsHtml + '</div>' +
+          '</div>' +
+          '<div style="position: relative; z-index: 2; align-self: center;">' +
+            '<div class="settlement-score-pill">' + avgBadgeData.svg + ' ' + t('final.avg_label') + avgBadgeData.scoreText + '</div>' +
+          '</div>' +
+          '<div class="summary-encouragement-text" style="position: relative; z-index: 2;">' +
+            summaryMsg +
+          '</div>' +
+          '<div class="summary-breakdown-box" style="position: relative; z-index: 2;">' +
+            breakdownRows +
+          '</div>' +
+          (isPerfect ? 
+            '<div style="position: relative; z-index: 2;">' +
+              '<button class="btn-clap-sound" onclick="playCheerSound(true)">' + t('btn.replay_clap') + '</button>' +
+              '<div id="audio-status-tag" class="audio-status-msg"></div>' +
+            '</div>' : '') +
+          '<div class="summary-actions-group">' +
+            '<button class="btn-start-game" onclick="replayGame()">' + t('btn.play_again') + '</button>' +
+            '<div class="secondary-btn-row">' +
+              '<button class="btn-secondary" onclick="goToLevelSelect()">' + t('nav.cat') + '</button>' +
+              '<button class="btn-secondary" onclick="goToHome()">' + t('nav.home') + '</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
       container.innerHTML = html;
-      
-      // 彩帶噴發動畫
-      setTimeout(triggerConfetti, 100);
-      
-      // 滿分播放歡呼聲
-      if (avgScore === 100) {
+
+      if (isPerfect) {
         playCheerSound();
+        showClapEffect();
+        setTimeout(triggerConfetti, 100);
       }
     }
 
-    /*****************************************************************
-     * 11. 彩色彩帶噴發動畫 與 圖片備援
-     *****************************************************************/
     function triggerConfetti() {
       if (document.getElementById('confetti-canvas')) return;
-      const canvas = document.createElement('canvas');
+      var canvas = document.createElement('canvas');
       canvas.id = 'confetti-canvas';
       canvas.style.position = 'fixed';
       canvas.style.top = '0';
@@ -1391,13 +1859,15 @@
       canvas.style.height = '100vh';
       canvas.style.pointerEvents = 'none';
       canvas.style.zIndex = '9999';
+      canvas.style.transition = 'opacity 0.6s ease';
       document.body.appendChild(canvas);
-      const ctx = canvas.getContext('2d');
+
+      var ctx = canvas.getContext('2d');
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
-      const particles = [];
-      const colors = ['#4caf50', '#81c784', '#ffeb3b', '#ff9800', '#2196f3', '#e91e63'];
-      for (let i = 0; i < 120; i++) {
+      var particles = [];
+      var colors = ['#4caf50', '#81c784', '#ffeb3b', '#ff9800', '#2196f3', '#e91e63'];
+      for (var i = 0; i < 120; i++) {
         particles.push({
           x: Math.random() * canvas.width,
           y: Math.random() * canvas.height - canvas.height,
@@ -1409,10 +1879,11 @@
           tiltAngle: 0
         });
       }
-      let animationId;
+      var animationId;
       function render() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        particles.forEach((p, i) => {
+        for (var idx = 0; idx < particles.length; idx++) {
+          var p = particles[idx];
           p.tiltAngle += p.tiltAngleIncremental;
           p.y += (Math.cos(p.d) + 3 + p.r / 2) / 2;
           p.x += Math.sin(p.d);
@@ -1424,7 +1895,7 @@
           ctx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r / 2);
           ctx.stroke();
           if (p.y > canvas.height) {
-            particles[i] = {
+            particles[idx] = {
               x: Math.random() * canvas.width,
               y: -20,
               r: p.r,
@@ -1435,23 +1906,25 @@
               tiltAngle: p.tiltAngle
             };
           }
-        });
+        }
         animationId = requestAnimationFrame(render);
       }
       render();
-      setTimeout(() => {
-        cancelAnimationFrame(animationId);
-        if (canvas.parentNode) canvas.parentNode.removeChild(canvas);
-      }, 4000);
+
+      setTimeout(function() {
+        canvas.style.opacity = '0';
+        setTimeout(function() {
+          cancelAnimationFrame(animationId);
+          if (canvas.parentNode) canvas.parentNode.removeChild(canvas);
+        }, 600);
+      }, 3800);
     }
 
     function handleImgError(imgEl, titleText) {
-      const wrapper = imgEl.parentElement;
-      wrapper.innerHTML = `
-        <div class="img-fallback">
-          <strong>${titleText}</strong>
-        </div>
-      `;
+      var wrapper = imgEl.parentElement;
+      if (wrapper) {
+        wrapper.innerHTML = '<div class="img-fallback"><strong>' + titleText + '</strong></div>';
+      }
     }
   </script>
 </body>
