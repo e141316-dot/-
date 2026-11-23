@@ -929,7 +929,7 @@
     }
   </style>
 </head>
-<body data-base-url="<?!= baseUrl ?>">
+<body>
 
   <!-- 頂部導覽列 -->
   <header id="main-header" style="display: none;">
@@ -1903,43 +1903,27 @@ function getBadgeData(score) {
       const btnNavHome = document.getElementById('btn-nav-home'); if (btnNavHome) btnNavHome.textContent = t('nav.home');
     }
 
-    function getBaseUrl() {
-      var baseUrl = document.body.getAttribute('data-base-url');
-      if (!baseUrl || baseUrl.indexOf('http') !== 0) {
-        try {
-          baseUrl = window.top.location.href.split('?')[0].split('#')[0];
-        } catch(e) {
-          baseUrl = window.location.href.split('?')[0].split('#')[0];
-        }
-      }
-      return baseUrl;
+    // GitHub Pages 使用靜態 HTML 路徑，不再透過 Apps Script 的 page 參數導頁。
+    // 以目前遊戲檔案所在資料夾為基準，避免 GitHub 專案網站的 /repository/ 路徑遺失。
+    function navigateToStaticPage(fileName) {
+      var targetUrl = new URL(fileName, window.location.href);
+
+      // 延續目前使用者的語言與字體大小設定。
+      targetUrl.search = '';
+      targetUrl.searchParams.set('lang', currentLang || 'zh-TW');
+      targetUrl.searchParams.set('fontScale', currentFontScale || '100');
+
+      // 單次點擊立即導頁，不建立表單、不送出 page=home/level_select。
+      window.location.assign(targetUrl.href);
     }
 
-    function postNavigate(pageName) {
-      var baseUrl = getBaseUrl();
-      var form = document.createElement('form');
-      form.method = 'GET';
-      form.action = baseUrl;
-      form.target = '_top';
-      
-      var pageInput = document.createElement('input');
-      pageInput.type = 'hidden'; pageInput.name = 'page'; pageInput.value = pageName;
-      form.appendChild(pageInput);
-
-      var langInput = document.createElement('input');
-      langInput.type = 'hidden'; langInput.name = 'lang'; langInput.value = currentLang;
-      form.appendChild(langInput);
-
-      var fontInput = document.createElement('input');
-      fontInput.type = 'hidden'; fontInput.name = 'fontScale'; fontInput.value = currentFontScale;
-      form.appendChild(fontInput);
-
-      document.body.appendChild(form);
-      form.submit();
+    function goToGameCategories() {
+      navigateToStaticPage('LevelSelect.html');
     }
 
-    function goToGameCategories() { postNavigate('level_select'); }
-    function goToHomePage() { postNavigate('home'); }
+    function goToHomePage() {
+      navigateToStaticPage('index.html');
+    }
 
     const levelOrder = { 'l1': 1, 'l2': 2, 'l3': 3 };
 
