@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <base target="_top">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>遊戲分類｜高齡駕駛輔助認知訓練平台</title>
@@ -268,7 +267,7 @@
     圖片對應：time_game / festival_game / situation_game / semantic_game / visual_game / attention_game。
   -->
 </head>
-<body data-base-url="<?!= baseUrl ?>
+<body>
 <script>
   var i18nDict = {
     'zh-TW': {
@@ -472,55 +471,49 @@
     updateScrollHint();
   }
 
-  function getValidBaseUrl() {
-    var baseUrl = document.body.getAttribute('data-base-url') || '';
-    if (baseUrl && baseUrl.indexOf('script.google.com') !== -1) {
-      return baseUrl.split('?')[0].split('#')[0];
-    }
-    if (document.referrer && document.referrer.indexOf('script.google.com') !== -1) {
-      return document.referrer.split('?')[0].split('#')[0];
-    }
-    try {
-      if (window.top && window.top.location && window.top.location.href && window.top.location.href.indexOf('script.google.com') !== -1) {
-        return window.top.location.href.split('?')[0].split('#')[0];
-      }
-    } catch(e) {}
-    return window.location.href.split('?')[0].split('#')[0];
+  // ==========================================
+  // GitHub Pages 靜態網站導頁
+  // 使用 Repository 內實際存在的 HTML 檔名，不再提交 GAS 的 ?page= 參數
+  // ==========================================
+
+  function getCurrentDisplaySettings() {
+    return {
+      lang: currentLang || localStorage.getItem('app_lang') || 'zh-TW',
+      fontScale: currentFontScale || localStorage.getItem('app_font_scale') || '100'
+    };
   }
+
+  // GitHub Repository 目前存在的遊戲頁面
+  var githubPageRoutes = {
+    home: 'index.html',
+    time_game: 'TimeGame.html',
+    festival_game: 'FestivalGame.html',
+    situation_game: 'SituationGame.html',
+    semantic_game: 'SemanticGame.html',
+    visual_game: 'VisualGame.html',
+    attention_game: 'AttentionGame.html'
+  };
 
   function navigateTo(pageTarget) {
-    var baseUrl = getValidBaseUrl();
-    var form = document.createElement('form');
-    form.method = 'GET';
-    form.action = baseUrl;
-    form.target = '_top';
-
-    var pageInput = document.createElement('input');
-    pageInput.type = 'hidden'; pageInput.name = 'page'; pageInput.value = pageTarget;
-    form.appendChild(pageInput);
-
-    var langInput = document.createElement('input');
-    langInput.type = 'hidden'; langInput.name = 'lang'; langInput.value = currentLang || 'zh-TW';
-    form.appendChild(langInput);
-
-    var fontInput = document.createElement('input');
-    fontInput.type = 'hidden'; fontInput.name = 'fontScale'; fontInput.value = currentFontScale || '100';
-    form.appendChild(fontInput);
-
-    document.body.appendChild(form);
-    form.submit();
-  }
-
-  window.addEventListener('message', function(event) {
-    if (event.data && (event.data.type === 'CHANGE_LANG' || event.data.lang)) {
-      var newLang = event.data.lang || event.data.payload;
-      currentLang = normalizeLang(newLang);
-      try {
-        localStorage.setItem('app_lang', currentLang);
-      } catch(e) {}
-      applyLanguage();
+    // final_exam 目前尚未出現在 GitHub Repository 的檔案清單中，避免導向不存在的頁面
+    if (pageTarget === 'final_exam') {
+      alert('目前 GitHub 網站尚未加入 FinalExam.html，請先將正式測驗頁面加入 Repository。');
+      return;
     }
-  });
+
+    var fileName = githubPageRoutes[pageTarget];
+    if (!fileName) {
+      console.warn('找不到對應的 GitHub 頁面：', pageTarget);
+      return;
+    }
+
+    var settings = getCurrentDisplaySettings();
+    var targetUrl = new URL(fileName, window.location.href);
+    targetUrl.searchParams.set('lang', settings.lang);
+    targetUrl.searchParams.set('fontScale', settings.fontScale);
+
+    window.location.assign(targetUrl.href);
+  }
 
   window.navigateTo = navigateTo;
   window.navigateToPage = navigateTo;
@@ -554,12 +547,11 @@
     setTimeout(updateScrollHint, 100);
   });
 </script>
-">
 
 <div class="category-container">
   <header class="category-header">
     <div class="category-nav">
-      <a href="https://e141316-dot.github.io/-/index.html" target="_self" rel="noopener" class="category-back-btn" data-i18n="nav.backHome" aria-label="返回平台首頁">← 返回首頁</a>
+      <a href="./index.html" target="_self" rel="noopener" class="category-back-btn" data-i18n="nav.backHome" aria-label="返回平台首頁">← 返回首頁</a>
     </div>
     <h1 class="category-title" data-i18n="cat.title">遊戲分類</h1>
     <p class="category-subtitle" data-i18n="cat.subtitle">依照自己的興趣，選擇想練習的遊戲。</p>
