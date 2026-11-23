@@ -1,27 +1,34 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
+  <base target="_self">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>看時間回答遊戲 - 認知訓練 App</title>
+  <title>看時間回答遊戲 - 高齡駕照輔助平台</title>
   <style>
     /* ==========================================
        1. 全局樣式與奶油白 & 鼠尾草綠視覺主題
        ========================================== */
     :root {
+      --font-scale: 1;
       --primary-color: #4F7058;
-      --primary-dark: #35473C;
+      --primary-dark: #2B3D30;
       --primary-light: #EAF0E7;
-      --accent-color: #6E8075;
+      --accent-color: #5C6E62;
       --bg-color: #FCFBF7;
       --card-bg: #FFFFFF;
-      --text-main: #35473C;
-      --text-muted: #6E8075;
-      --border-color: #E4E9DF;
+      --text-main: #000000;
+      --text-muted: #000000;
+      --border-color: #D6DEC8;
       --border-radius: 16px;
-      --shadow: none;
       --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Microsoft JhengHei", sans-serif;
     }
+
+    body.font-scale-90 { --font-scale: 0.9; }
+    body.font-scale-100 { --font-scale: 1.0; }
+    body.font-scale-115 { --font-scale: 1.15; }
+    body.font-scale-130 { --font-scale: 1.3; }
+
     * {
       box-sizing: border-box;
       margin: 0;
@@ -36,30 +43,33 @@
       flex-direction: column;
       align-items: center;
       min-height: 100vh;
-      padding-bottom: 12px;
+      padding-bottom: calc(32px + env(safe-area-inset-bottom, 0px));
       overflow-x: hidden;
       width: 100%;
+      font-size: calc(16px * var(--font-scale));
     }
 
-    /* 頂部導覽列 */
     header {
       position: relative;
       width: 100%;
       background-color: #FCFBF7;
       color: var(--primary-color);
-      padding: 10px 16px 4px 16px;
+      padding: 0 16px 6px 16px;
       text-align: center;
       overflow: hidden;
     }
-    header h1 {
-      font-size: clamp(24px, 5vw, 32px);
-      font-weight: 800;
-      color: var(--primary-color);
-      margin-bottom: 4px;
-      line-height: 1.2;
-      text-align: center;
+
+    header h1, #main-header h1, .home-main-title {
+      margin-top: 14px !important;
+      font-size: calc(36px * var(--font-scale)) !important;
+      font-weight: 900 !important;
+      color: #2E4032 !important;
+      line-height: 1.25 !important;
+      text-align: center !important;
+      margin-bottom: 6px !important;
       position: relative;
       z-index: 2;
+      -webkit-font-smoothing: antialiased;
     }
 
     .nav-bar {
@@ -76,14 +86,13 @@
 
     .nav-item {
       flex: 1 1 0px;
-      height: 44px;
+      min-height: 56px;
       background-color: #8A9E90;
       color: #ffffff;
-      padding: 0 4px;
-      border-radius: 30px;
-      font-size: clamp(0.95rem, 3.6vw, 1.2rem);
-      font-weight: bold;
+      padding: 6px 4px;
+      border-radius: 20px;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       cursor: pointer;
@@ -91,15 +100,53 @@
       text-align: center;
       white-space: nowrap;
       border: 2px solid transparent;
+      touch-action: manipulation;
+      line-height: 1.25;
     }
+    .nav-title-main {
+      font-size: calc(17px * var(--font-scale));
+      font-weight: 800;
+    }
+    .nav-title-sub {
+      font-size: calc(14px * var(--font-scale));
+      font-weight: 700;
+      margin-top: 2px;
+      opacity: 0.92;
+    }
+
+    .nav-item.locked {
+      background-color: #EEF1EB !important;
+      color: #66756A !important;
+      border: 2px solid transparent !important;
+      cursor: not-allowed !important;
+      opacity: 1;
+      pointer-events: none;
+    }
+    .nav-item.locked .nav-title-main,
+    .nav-item.locked .nav-title-sub {
+      color: #66756A !important;
+    }
+
     .nav-item.active {
-      background-color: #ffffff;
-      color: var(--primary-color);
-      border: 2px solid var(--primary-color);
-      box-shadow: 0 2px 8px rgba(79, 112, 88, 0.15);
+      background-color: var(--primary-dark) !important;
+      color: #ffffff !important;
+      border: 2.5px solid var(--primary-dark) !important;
+      box-shadow: 0 4px 12px rgba(43, 61, 48, 0.25) !important;
     }
+    .nav-item.active .nav-title-main,
+    .nav-item.active .nav-title-sub {
+      color: #ffffff !important;
+    }
+
     .nav-item.completed {
-      border: 2px solid var(--primary-color);
+      background-color: #EAF0E7 !important;
+      color: var(--primary-dark) !important;
+      border: 2px solid #8A9E90 !important;
+      cursor: pointer;
+    }
+    .nav-item.completed .nav-title-main,
+    .nav-item.completed .nav-title-sub {
+      color: var(--primary-dark) !important;
     }
 
     main {
@@ -112,37 +159,49 @@
       margin-top: 8px;
       padding: clamp(8px, 2.5vw, 16px);
     }
-    .section-title {
-      text-align: center;
-      color: var(--primary-dark);
-      font-size: clamp(1.2rem, 3.6vw, 1.5rem);
-      margin-bottom: 6px;
-      font-weight: 800;
-    }
+
     .question-box {
       background-color: var(--primary-light);
       border-left: 6px solid var(--primary-color);
-      padding: 8px 12px;
-      border-radius: 12px;
-      margin-bottom: 10px;
+      padding: 14px 18px;
+      border-radius: 14px;
+      margin-bottom: 14px;
       text-align: center;
     }
     .question-text {
-      font-size: clamp(1.05rem, 3.4vw, 1.3rem);
-      font-weight: bold;
-      color: var(--primary-dark);
+      font-size: calc(24px * var(--font-scale));
+      font-weight: 800;
+      color: #000000;
+      line-height: 1.4;
+      letter-spacing: 0.3px;
     }
-    .hint-text {
-      font-size: 0.9rem;
-      color: var(--text-muted);
+    .question-line {
+      display: block;
+    }
+    .question-line + .question-line {
       margin-top: 2px;
     }
+    .hint-text {
+      font-size: calc(18px * var(--font-scale));
+      color: #000000;
+      font-weight: 800;
+      margin-top: 8px;
+      line-height: 1.45;
+    }
 
-    /* 說明首頁專用視覺樣式 */
+    .clock-question-box .question-text {
+      color: #35473C;
+    }
+    .clock-question-box .hint-text {
+      color: #35473C;
+      font-weight: 700;
+      line-height: 1.5;
+    }
+
     .home-wrapper {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 14px;
       padding: 4px 0;
     }
     .intro-back-wrap {
@@ -152,39 +211,33 @@
     }
     .home-header {
       text-align: center;
-      margin-bottom: 2px;
-    }
-    .home-main-title {
-      font-size: clamp(1.35rem, 4.2vw, 1.7rem);
-      color: var(--primary-dark);
-      font-weight: 800;
-      margin-bottom: 2px;
+      margin-bottom: 4px;
     }
     .home-subtitle {
-      font-size: clamp(0.9rem, 3vw, 1.05rem);
-      color: var(--text-muted);
-      font-weight: 600;
+      font-size: calc(18px * var(--font-scale));
+      color: #35473C;
+      font-weight: 800;
     }
     .home-card {
       background-color: var(--primary-light);
       border: 1.5px solid var(--border-color);
       border-radius: 16px;
-      padding: 12px 14px;
+      padding: 14px 16px;
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 16px;
     }
     .home-icon-box {
-      width: 60px;
-      height: 60px;
-      min-width: 60px;
+      width: 64px;
+      height: 64px;
+      min-width: 64px;
       background: #ffffff;
       border: 1.5px solid var(--border-color);
       border-radius: 14px;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 5px;
+      padding: 6px;
     }
     .home-icon-svg {
       width: 100%;
@@ -192,75 +245,78 @@
     }
     .home-card-content {
       display: flex;
+      flex: 1 1 0%;
+      min-width: 0;
       flex-direction: column;
       align-items: flex-start;
-      gap: 2px;
+      gap: 4px;
     }
     .home-badge {
       background-color: var(--primary-color);
       color: #ffffff;
-      font-size: 0.8rem;
-      font-weight: bold;
-      padding: 2px 10px;
+      font-size: calc(14px * var(--font-scale));
+      font-weight: 800;
+      padding: 3px 12px;
       border-radius: 12px;
       display: inline-block;
     }
+
+    .home-card {
+      position: relative;
+      background-color: var(--primary-light);
+      border: 1.5px solid var(--border-color);
+      border-radius: 16px;
+      padding: 16px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
     .home-card-title {
-      font-size: clamp(1.1rem, 3.4vw, 1.25rem);
-      color: var(--primary-dark);
+      font-size: calc(22px * var(--font-scale)) !important;
+      color: #1E3326 !important;
       font-weight: 800;
     }
     .home-card-desc {
-      font-size: clamp(0.9rem, 2.8vw, 1rem);
-      color: var(--text-main);
-      line-height: 1.4;
-      font-weight: 500;
+      font-size: calc(19px * var(--font-scale)) !important;
+      color: #1E3326 !important;
+      line-height: 1.5;
+      font-weight: 700;
+      word-break: normal;
+      overflow-wrap: break-word;
+      text-wrap: pretty;
     }
-    .home-reminder-box {
-      background-color: #FFFDF0;
-      border: 1.5px dashed #E5C158;
-      border-radius: 12px;
-      padding: 10px 14px;
-      text-align: center;
-      font-size: clamp(0.9rem, 3vw, 1.02rem);
-      color: #5C4A1E;
-      font-weight: bold;
-      margin-top: 2px;
-      line-height: 1.45;
-    }
-    .home-action-bar {
-      display: flex;
-      justify-content: center;
-      margin-top: 6px;
-    }
-    .btn-start-game {
+
+    .btn-start-game, .btn-settlement-next, .btn-play-again {
       width: 100%;
       max-width: 420px;
-      height: 48px;
+      min-height: 54px;
+      padding: 12px 24px;
       background-color: var(--primary-color);
       color: #ffffff;
-      font-size: clamp(1.15rem, 3.8vw, 1.3rem);
+      font-size: calc(20px * var(--font-scale));
       font-weight: 800;
       border: none;
       border-radius: 30px;
       cursor: pointer;
-      box-shadow: 0 4px 12px rgba(79, 112, 88, 0.25);
-      transition: all 0.2s ease;
+      box-shadow: 0 4px 14px rgba(79, 112, 88, 0.28);
+      transition: all 0.18s ease;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
+      touch-action: manipulation;
     }
-    .btn-start-game:hover {
+    .btn-start-game:hover, .btn-settlement-next:hover, .btn-play-again:hover {
       background-color: var(--primary-dark);
       transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(79, 112, 88, 0.35);
+      box-shadow: 0 6px 18px rgba(79, 112, 88, 0.38);
     }
-    .btn-start-game:active {
+    .btn-start-game:active, .btn-settlement-next:active, .btn-play-again:active {
       transform: scale(0.98);
     }
 
-    /* 第一關：時鐘樣式與尺寸 */
     .clock-container {
       display: flex;
       flex-direction: column;
@@ -269,12 +325,23 @@
       touch-action: none;
     }
     .clock-svg {
-      width: min(250px, 60vw);
-      height: min(250px, 60vw);
+      width: min(260px, 62vw);
+      height: min(260px, 62vw);
       user-select: none;
       touch-action: none;
       cursor: pointer;
+      transition: transform 0.1s ease;
     }
+    @keyframes clockSnapBounce {
+      0% { transform: scale(1); }
+      40% { transform: scale(1.03); }
+      75% { transform: scale(0.98); }
+      100% { transform: scale(1); }
+    }
+    .clock-snap-anim {
+      animation: clockSnapBounce 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
     .clock-face {
       fill: #ffffff;
       stroke: var(--primary-color);
@@ -283,10 +350,10 @@
     .clock-number {
       font-size: 21px;
       font-weight: bold;
-      fill: var(--text-main);
+      fill: #000000;
       text-anchor: middle;
       dominant-baseline: central;
-      pointer-events: none;
+      cursor: pointer;
     }
     .hand-hour {
       stroke: #C85A5A;
@@ -302,46 +369,36 @@
     }
     .hand-select-group {
       display: flex;
-      gap: 10px;
-      margin-top: 10px;
+      gap: 12px;
+      margin-top: 12px;
       width: 100%;
       max-width: 440px;
       justify-content: center;
     }
+
     .btn-hand {
-      flex: 1;
-      background-color: #ffffff;
-      color: var(--primary-color);
-      border: 2px solid var(--primary-color);
-      padding: 6px 10px;
-      font-size: clamp(0.9rem, 2.8vw, 1rem);
-      font-weight: bold;
-      border-radius: 25px;
-      cursor: pointer;
-      height: 44px;
+      font-size: calc(17px * var(--font-scale)) !important;
+      font-weight: 800 !important;
+      border-width: 2.5px !important;
       transition: all 0.2s ease;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
     }
     .btn-hand.active {
-      background-color: var(--primary-color);
-      color: #ffffff;
-      border-color: var(--primary-color);
+      background-color: var(--primary-dark) !important;
+      color: #ffffff !important;
+      border-color: var(--primary-dark) !important;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15) !important;
     }
 
-    /* 第二與三關：選項卡片樣式 */
     .options-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: clamp(6px, 1.8vw, 12px);
-      margin: 8px 0 4px 0;
+      gap: clamp(8px, 2vw, 14px);
+      margin: 10px 0 6px 0;
     }
     .option-card {
-      border: 2px solid var(--border-color);
+      border: 2.5px solid var(--border-color);
       border-radius: var(--border-radius);
-      padding: clamp(5px, 1.2vw, 8px);
+      padding: clamp(8px, 1.6vw, 12px);
       text-align: center;
       cursor: pointer;
       background: #ffffff;
@@ -352,6 +409,8 @@
       justify-content: space-between;
       position: relative;
       height: 100%;
+      touch-action: manipulation;
+      user-select: none;
     }
     .option-card:hover {
       border-color: var(--primary-color);
@@ -360,15 +419,21 @@
     .option-card.selected {
       border-color: var(--primary-color);
       background-color: var(--primary-light);
-      box-shadow: 0 0 0 2px var(--primary-color);
+      box-shadow: 0 0 0 3px var(--primary-color);
+    }
+    .option-img-container, 
+    .option-img-container img, 
+    .option-img-container svg, 
+    .option-label {
+      pointer-events: none;
     }
     .option-img-container {
       width: 100%;
-      height: clamp(86px, 19vw, 130px);
+      height: clamp(88px, 20vw, 135px);
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-bottom: 4px;
+      margin-bottom: 6px;
       overflow: hidden;
       border-radius: 8px;
       background-color: #F8FAF7;
@@ -379,10 +444,10 @@
       object-fit: contain;
     }
     .option-label {
-      font-size: clamp(0.9rem, 2.6vw, 1.05rem);
-      font-weight: bold;
-      color: var(--text-main);
-      margin-top: 2px;
+      font-size: calc(18px * var(--font-scale));
+      font-weight: 800;
+      color: #000000;
+      margin-top: 4px;
       word-break: break-word;
     }
 
@@ -390,51 +455,41 @@
       background-color: var(--primary-color);
       color: white;
       border: none;
-      padding: 8px 20px;
-      font-size: 1.05rem;
-      font-weight: bold;
+      padding: 10px 24px;
+      font-size: calc(18px * var(--font-scale));
+      font-weight: 800;
       border-radius: 30px;
       cursor: pointer;
-      min-height: 44px;
+      min-height: 48px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
       transition: background-color 0.2s, transform 0.1s;
-      box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+      box-shadow: 0 3px 8px rgba(0,0,0,0.12);
+      touch-action: manipulation;
     }
-    .btn:hover {
-      background-color: var(--primary-dark);
+    .btn:hover { background-color: var(--primary-dark); }
+    .btn:active { transform: scale(0.98); }
+
+    .action-bar {
+      display: flex !important;
+      justify-content: center !important;
+      width: 100% !important;
+      margin-top: 16px !important;
     }
-    .btn:active {
-      transform: scale(0.98);
+    .clock-action-bar {
+      margin-bottom: calc(20px + env(safe-area-inset-bottom, 0px)) !important;
     }
     .btn-submit {
-      width: 100%;
-      max-width: 380px;
-      font-size: 1.05rem;
-      padding: 8px 20px;
-    }
-    .action-bar {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      margin-top: 6px;
-      flex-wrap: wrap;
-    }
-    .fixed-disclaimer {
-      margin-top: 8px;
-      padding: 8px 10px;
-      background-color: #F7F9F6;
-      border-radius: 10px;
-      font-size: clamp(0.8rem, 2.3vw, 0.88rem);
-      color: var(--text-muted);
-      text-align: center;
-      line-height: 1.45;
-      word-break: break-word;
+      width: 100% !important;
+      max-width: 420px !important;
+      min-height: 54px !important;
+      font-size: calc(20px * var(--font-scale)) !important;
+      font-weight: 800 !important;
+      margin: 0 auto !important;
     }
 
-    /* 結算頁專用樣式 */
     .settlement-card {
       position: relative;
       background: transparent;
@@ -444,19 +499,20 @@
       margin-bottom: 6px;
       text-align: center;
       box-shadow: none;
-      overflow: hidden;
+      overflow: visible;
     }
     .settlement-card > *:not(.confetti-container) {
       position: relative;
       z-index: 2;
     }
     .settlement-title {
-      color: var(--primary-color);
-      font-size: clamp(1.2rem, 3.8vw, 1.55rem);
+      color: var(--primary-dark);
+      font-size: calc(26px * var(--font-scale));
       font-weight: 800;
-      margin-bottom: 4px;
+      margin-bottom: 6px;
       line-height: 1.25;
     }
+
     .perfect-graphic-group {
       display: flex;
       align-items: center;
@@ -473,28 +529,13 @@
       align-items: center;
       justify-content: center;
     }
-    .perfect-clap-icon {
-      position: absolute;
-      font-size: clamp(1.8rem, 5vw, 2.3rem);
-      animation: clapSequence 1.6s ease-in-out forwards;
-    }
-    .clap-left { transform-origin: bottom right; }
-    .clap-right { transform-origin: bottom left; }
-    @keyframes clapSequence {
-      0% { opacity: 0; transform: scale(0.5); }
-      20% { opacity: 1; transform: scale(1) rotate(-10deg); }
-      40% { transform: scale(1.15) rotate(10deg); }
-      60% { transform: scale(1) rotate(-10deg); }
-      75% { opacity: 1; transform: scale(1.02); }
-      100% { opacity: 0; transform: scale(0.2); visibility: hidden; }
-    }
     .decor-stars {
       position: absolute;
       width: 36px;
       height: 36px;
       opacity: 0;
       transform: scale(0);
-      animation: decorStarsFadeIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) 1.5s forwards;
+      animation: decorStarsFadeIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.2s forwards;
       filter: drop-shadow(0 2px 4px rgba(255, 179, 0, 0.4));
     }
     @keyframes decorStarsFadeIn {
@@ -503,8 +544,8 @@
       100% { opacity: 1; transform: scale(1) rotate(0deg); }
     }
     .perfect-trophy-svg {
-      width: clamp(56px, 15vw, 72px);
-      height: clamp(56px, 15vw, 72px);
+      width: clamp(58px, 16vw, 76px);
+      height: clamp(58px, 16vw, 76px);
       filter: drop-shadow(0 4px 10px rgba(255, 179, 0, 0.45));
       animation: trophyPopIn 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, trophyFloat 3s ease-in-out 0.7s infinite alternate;
     }
@@ -518,97 +559,90 @@
       0% { transform: translateY(0) rotate(0deg); }
       100% { transform: translateY(-5px) rotate(3deg); }
     }
+
     .settlement-stars {
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 10px;
-      font-size: clamp(1.8rem, 5.2vw, 2.3rem);
-      color: #FFB300;
-      margin: 2px 0 4px 0;
-      filter: drop-shadow(0 2px 5px rgba(255, 179, 0, 0.35));
+      gap: 12px;
+      margin: 6px 0 10px 0;
+    }
+    .star-svg-icon {
+      width: clamp(40px, 9.5vw, 50px);
+      height: clamp(40px, 9.5vw, 50px);
+      display: block;
+      filter: drop-shadow(0 3px 6px rgba(245, 158, 11, 0.35));
     }
     .star-item {
       display: inline-block;
       opacity: 0;
-      animation: starPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, starGlow 2.5s ease-in-out 1.2s infinite alternate;
+      transform: translateY(-50px) scale(0.6);
+      animation: starDrop 0.65s cubic-bezier(0.25, 1, 0.5, 1) forwards, starSparkle 2.6s ease-in-out 0.65s infinite alternate;
     }
-    .star-1 { animation-delay: 0.2s, 1.2s; }
-    .star-2 { animation-delay: 0.45s, 1.45s; }
-    .star-3 { animation-delay: 0.7s, 1.7s; }
-    @keyframes starPop {
-      0% { transform: scale(0) rotate(-45deg); opacity: 0; }
-      70% { transform: scale(1.4) rotate(12deg); opacity: 1; }
-      100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    .star-1 { animation-delay: 0.1s, 0.8s; }
+    .star-2 { animation-delay: 0.25s, 1.0s; }
+    .star-3 { animation-delay: 0.4s, 1.2s; }
+    @keyframes starDrop {
+      0% { opacity: 0; transform: translateY(-50px) scale(0.6); }
+      70% { opacity: 1; transform: translateY(5px) scale(1.12); }
+      85% { transform: translateY(-2px) scale(0.98); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
     }
-    @keyframes starGlow {
-      0% { filter: drop-shadow(0 2px 4px rgba(255, 179, 0, 0.35)); transform: scale(1); }
-      100% { filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.9)); transform: scale(1.06); }
+
+    @keyframes starSparkle {
+      0% { filter: drop-shadow(0 3px 6px rgba(245, 158, 11, 0.35)); transform: scale(1); }
+      50% { filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.8)) drop-shadow(0 0 20px rgba(251, 191, 36, 0.6)); transform: scale(1.05); }
+      100% { filter: drop-shadow(0 3px 6px rgba(245, 158, 11, 0.35)); transform: scale(1); }
     }
+
     .settlement-score-pill {
-      background-color: var(--primary-light);
-      border: 1.5px solid #C4D6C7;
+      background-color: #EBF1EA;
       color: var(--primary-dark);
-      padding: 4px 18px;
+      padding: 8px 26px;
       border-radius: 30px;
       display: inline-block;
-      font-size: clamp(0.98rem, 3.2vw, 1.15rem);
-      font-weight: bold;
-      margin: 2px 0 6px 0;
+      font-size: calc(18px * var(--font-scale));
+      font-weight: 800;
+      margin: 2px 0 10px 0;
     }
-    .settlement-result-box {
-      border: 1.5px solid var(--border-color);
-      border-radius: 12px;
+
+    .settlement-encouragement {
+      background: transparent;
+      border: none;
       padding: 8px 12px;
-      margin-bottom: 6px;
-      background: #ffffff;
+      color: #000000;
+      font-size: calc(20px * var(--font-scale));
+      font-weight: 800;
+      line-height: 1.5;
+      margin: 8px auto 12px auto;
+      max-width: 480px;
+      text-align: center;
     }
-    .settlement-result-title {
-      color: var(--text-main);
-      font-weight: bold;
-      font-size: clamp(0.95rem, 3vw, 1.05rem);
-      margin-bottom: 6px;
-    }
-    .settlement-tags-group {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-    .tag-correct {
-      background: var(--primary-light);
-      border: 1.5px solid #C4D6C7;
-      color: var(--primary-dark);
-      padding: 4px 14px;
-      border-radius: 12px;
-      font-weight: bold;
-      font-size: clamp(0.9rem, 2.8vw, 1rem);
-    }
-    .tag-wrong {
-      background: #FFFDF0;
-      border: 1.5px solid #E5C158;
-      color: #9E7412;
-      padding: 4px 14px;
-      border-radius: 12px;
-      font-weight: bold;
-      font-size: clamp(0.9rem, 2.8vw, 1rem);
+
+    .summary-breakdown-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 620px;
+      margin: 14px auto 10px auto;
     }
     .summary-breakdown-box {
       background-color: var(--primary-light);
-      border-radius: 12px;
-      padding: 6px 14px;
-      margin-bottom: 6px;
+      border-radius: 14px;
+      padding: 12px 24px;
       text-align: left;
+      width: 100%;
     }
     .summary-breakdown-row {
+      position: relative;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: clamp(0.92rem, 3vw, 1.05rem);
-      font-weight: bold;
-      color: var(--text-main);
-      padding: 4px 0;
-      border-bottom: 1px dashed var(--border-color);
+      font-size: calc(17px * var(--font-scale));
+      font-weight: 800;
+      color: #000000;
+      padding: 10px 0;
+      border-bottom: 1.5px dashed #D0DACF;
+      gap: 10px;
     }
     .summary-breakdown-row:last-child {
       border-bottom: none;
@@ -616,37 +650,70 @@
     .summary-breakdown-score {
       color: var(--primary-dark);
       font-weight: 800;
+      font-size: calc(18px * var(--font-scale));
     }
+
+    .settlement-table-card {
+      width: 100%;
+      max-width: 420px;
+      margin: 10px auto 16px auto;
+      background-color: transparent;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .settlement-table-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 20px;
+      font-size: calc(18px * var(--font-scale));
+      font-weight: 800;
+      border-radius: 12px;
+      gap: 12px;
+    }
+    .row-correct {
+      background-color: #E2EFE0;
+      color: #2A5235;
+    }
+    .row-correct .settlement-row-label,
+    .row-correct .settlement-row-val {
+      color: #2A5235;
+      font-weight: 800;
+    }
+    .row-wrong {
+      background-color: #EBECEB;
+      color: #4A4D4A;
+    }
+    .row-wrong .settlement-row-label,
+    .row-wrong .settlement-row-val {
+      color: #4A4D4A;
+      font-weight: 800;
+    }
+    .settlement-row-val {
+      font-size: calc(20px * var(--font-scale));
+      letter-spacing: 0.5px;
+    }
+
     .btn-clap-sound {
       background-color: #ffffff;
-      border: 1.5px solid var(--primary-color);
+      border: 2px solid var(--primary-color);
       color: var(--primary-dark);
-      padding: 5px 16px;
-      border-radius: 20px;
-      font-size: clamp(0.88rem, 2.7vw, 0.98rem);
-      font-weight: bold;
+      padding: 8px 20px;
+      border-radius: 22px;
+      font-size: calc(16px * var(--font-scale));
+      font-weight: 800;
       cursor: pointer;
-      margin: 2px 0 6px 0;
+      margin: 8px 0 12px 0;
       transition: all 0.2s ease;
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      touch-action: manipulation;
     }
-    .btn-clap-sound:hover {
-      background-color: var(--primary-light);
-    }
-    .settlement-encouragement {
-      background: #FFFDF0;
-      border: 1.5px solid #E5C158;
-      border-radius: 12px;
-      padding: 8px 12px;
-      color: #5C4A1E;
-      font-size: clamp(0.9rem, 3vw, 1.02rem);
-      font-weight: bold;
-      line-height: 1.45;
-      margin-bottom: 6px;
-    }
+    .btn-clap-sound:hover { background-color: var(--primary-light); }
+
     .confetti-container {
       position: absolute;
       top: 0;
@@ -673,50 +740,27 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
       width: 100%;
       max-width: 520px;
-      margin: 4px auto 0 auto;
-    }
-    .btn-play-again {
-      width: 100%;
-      height: 48px;
-      background-color: var(--primary-color);
-      color: #ffffff;
-      font-size: clamp(1.15rem, 3.8vw, 1.3rem);
-      font-weight: 800;
-      border: none;
-      border-radius: 30px;
-      cursor: pointer;
-      box-shadow: 0 3px 10px rgba(79, 112, 88, 0.22);
-      transition: all 0.2s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .btn-play-again:hover {
-      background-color: var(--primary-dark);
-      transform: translateY(-1px);
-    }
-    .btn-play-again:active {
-      transform: scale(0.98);
+      margin: 10px auto 0 auto;
     }
 
     .sub-nav-row {
       display: flex;
       justify-content: center;
-      gap: 8px;
+      gap: 10px;
       width: 100%;
     }
     .btn-sub-nav {
       flex: 1 1 0px;
-      min-width: 95px;
-      height: 42px;
+      min-width: 100px;
+      height: 46px;
       background-color: #FCFBF7;
-      border: 1.5px solid var(--primary-color);
+      border: 2px solid var(--primary-color);
       color: var(--primary-dark);
-      font-size: clamp(0.88rem, 2.7vw, 1rem);
-      font-weight: bold;
+      font-size: calc(15px * var(--font-scale));
+      font-weight: 800;
       border-radius: 25px;
       cursor: pointer;
       display: flex;
@@ -725,9 +769,10 @@
       text-align: center;
       white-space: nowrap;
       transition: all 0.2s ease;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.04);
-      padding: 0 6px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      padding: 0 8px;
       text-decoration: none;
+      touch-action: manipulation;
     }
     .btn-sub-nav:hover {
       background-color: #FFFFFF;
@@ -736,13 +781,210 @@
       transform: translateY(-1px);
       box-shadow: 0 3px 8px rgba(79, 112, 88, 0.15);
     }
-    .btn-sub-nav:active {
-      transform: scale(0.98);
-    }
+    .btn-sub-nav:active { transform: scale(0.98); }
 
     @media (max-width: 520px) {
-      .sub-nav-row { gap: 6px; }
-      .btn-sub-nav { font-size: 0.85rem; height: 40px; padding: 0 3px; }
+      .sub-nav-row { gap: 8px; }
+      .btn-sub-nav { font-size: calc(13px * var(--font-scale)); height: 44px; padding: 0 4px; }
+
+      .home-card {
+        gap: 10px;
+        padding: 14px 14px;
+      }
+      .home-icon-box {
+        flex: 0 0 54px;
+        width: 54px;
+        min-width: 54px;
+        height: 54px;
+        padding: 5px;
+      }
+      .home-card-content {
+        flex: 1 1 0%;
+        min-width: 0;
+      }
+    }
+
+    /* 三關總成績頁：獨立展開／收合作答詳解 */
+    .summary-review-section {
+      width: 100%;
+      max-width: 620px;
+      margin: 16px auto 12px auto;
+      text-align: left;
+    }
+    .summary-review-title {
+      margin: 0 0 5px 0;
+      color: #35473C;
+      font-size: calc(21px * var(--font-scale));
+      font-weight: 800;
+      line-height: 1.4;
+    }
+    .summary-review-subtitle {
+      margin: 0 0 12px 0;
+      color: #53675A;
+      font-size: calc(16px * var(--font-scale));
+      font-weight: 600;
+      line-height: 1.5;
+    }
+    .summary-review-accordion {
+      margin: 9px 0;
+      overflow: hidden;
+      border: 1.5px solid #D6DEC8;
+      border-radius: 14px;
+      background: #FFFFFF;
+    }
+    .summary-review-toggle {
+      width: 100%;
+      min-height: 60px;
+      padding: 14px 17px;
+      border: 0;
+      background: #FFFFFF;
+      color: #35473C;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      text-align: left;
+      font-family: inherit;
+      font-size: calc(18px * var(--font-scale));
+      font-weight: 800;
+      line-height: 1.4;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    .summary-review-toggle:focus-visible {
+      outline: 3px solid rgba(79, 112, 88, 0.45);
+      outline-offset: -3px;
+    }
+    .summary-review-chevron {
+      width: 12px;
+      height: 12px;
+      flex: 0 0 12px;
+      border-right: 2.5px solid #4F7058;
+      border-bottom: 2.5px solid #4F7058;
+      transform: rotate(45deg) translateY(-2px);
+      transition: transform 0.24s ease;
+    }
+    .summary-review-toggle[aria-expanded="true"] .summary-review-chevron {
+      transform: rotate(225deg) translate(-2px, -1px);
+    }
+    .summary-review-panel {
+      display: grid;
+      grid-template-rows: 0fr;
+      transition: grid-template-rows 0.26s ease;
+    }
+    .summary-review-panel.is-open {
+      grid-template-rows: 1fr;
+    }
+    .summary-review-panel-clip {
+      min-height: 0;
+      overflow: hidden;
+    }
+    .summary-review-panel-content {
+      padding: 0 15px;
+      opacity: 0;
+      transform: translateY(-4px);
+      transition: opacity 0.2s ease, transform 0.2s ease, padding 0.26s ease;
+    }
+    .summary-review-panel.is-open .summary-review-panel-content {
+      padding: 0 15px 15px;
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .summary-review-card {
+      margin: 0 0 10px 0;
+      padding: 14px 15px;
+      border-radius: 12px;
+      background: #F5F7F2;
+      color: #35473C;
+    }
+    .summary-review-card:last-child { margin-bottom: 0; }
+    .summary-review-card.is-wrong {
+      background: #F7F5EE;
+    }
+    .summary-review-item-title {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 0 0 8px 0;
+      color: #35473C;
+      font-size: calc(17px * var(--font-scale));
+      font-weight: 800;
+      line-height: 1.45;
+    }
+    .summary-review-status {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: #E3EEE1;
+      color: #315B3D;
+      font-size: calc(14px * var(--font-scale));
+      font-weight: 800;
+    }
+    .summary-review-card.is-wrong .summary-review-status {
+      background: #EEE8DA;
+      color: #66583C;
+    }
+    .summary-review-line {
+      margin: 7px 0;
+      color: #35473C;
+      font-size: calc(16px * var(--font-scale));
+      font-weight: 600;
+      line-height: 1.6;
+      overflow-wrap: anywhere;
+    }
+    .summary-review-line strong { font-weight: 800; }
+    .summary-review-tip {
+      margin: 10px 0 0 0;
+      padding-top: 9px;
+      border-top: 1px solid rgba(79, 112, 88, 0.2);
+      color: #35473C;
+      font-size: calc(16px * var(--font-scale));
+      font-weight: 600;
+      line-height: 1.6;
+    }
+    .summary-review-empty {
+      margin: 0;
+      padding: 12px 14px;
+      border-radius: 10px;
+      background: #F5F7F2;
+      color: #53675A;
+      font-size: calc(16px * var(--font-scale));
+      line-height: 1.55;
+    }
+    .summary-level1-result {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .summary-clock-preview {
+      width: 132px;
+      height: 132px;
+      flex: 0 0 132px;
+      display: block;
+      margin: 2px auto;
+    }
+    .summary-level1-info {
+      flex: 1 1 190px;
+      min-width: 0;
+    }
+    .summary-level1-score-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 7px 0;
+      border-top: 1px solid rgba(79, 112, 88, 0.16);
+    }
+    @media (max-width: 520px) {
+      .summary-review-toggle { min-height: 58px; padding: 13px 14px; }
+      .summary-review-panel-content { padding-left: 10px; padding-right: 10px; }
+      .summary-review-panel.is-open .summary-review-panel-content { padding: 0 10px 12px; }
+      .summary-review-card { padding: 12px 13px; }
+      .summary-level1-result { gap: 10px; }
+      .summary-clock-preview { width: 116px; height: 116px; flex-basis: 116px; }
     }
 
     .modal-overlay {
@@ -786,761 +1028,1966 @@
     }
     .modal-title {
       color: var(--primary-color);
-      font-size: clamp(1.25rem, 3.8vw, 1.5rem);
+      font-size: calc(22px * var(--font-scale));
       font-weight: 800;
       margin-bottom: 10px;
     }
     .modal-content {
-      color: var(--text-main);
-      font-size: clamp(1rem, 3.4vw, 1.15rem);
+      color: #000000;
+      font-size: calc(17px * var(--font-scale));
       line-height: 1.55;
       margin-bottom: 20px;
-      font-weight: 500;
+      font-weight: 700;
     }
     .btn-modal-close {
       background-color: var(--primary-color);
       color: #ffffff;
       border: none;
       padding: 10px 32px;
-      font-size: clamp(1rem, 3.4vw, 1.15rem);
-      font-weight: bold;
+      font-size: calc(17px * var(--font-scale));
+      font-weight: 800;
       border-radius: 30px;
       cursor: pointer;
       box-shadow: 0 4px 10px rgba(79, 112, 88, 0.25);
       transition: background-color 0.2s, transform 0.1s;
+      touch-action: manipulation;
     }
     .btn-modal-close:hover { background-color: var(--primary-dark); }
     .btn-modal-close:active { transform: scale(0.96); }
+
+    .badge-pill-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 18px;
+      border-radius: 30px;
+      font-size: calc(18px * var(--font-scale));
+      font-weight: 800;
+      margin: 4px 0 10px 0;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+      transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .badge-pill-tag:hover { transform: scale(1.05); }
+
+    .badge-gold { background-color: #FFF8E1; color: #B78103; border: 2px solid #FFC107; }
+    .badge-silver { background-color: #ECEFF1; color: #455A64; border: 2px solid #90A4AE; }
+    .badge-bronze { background-color: #EFEBE9; color: #5D4037; border: 2px solid #A1887F; }
+    .badge-encourage { background-color: #EAF0E7; color: #2B3D30; border: 2px solid #8A9E90; }
+
+    .clapping-hand-breakdown {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      font-size: clamp(3rem, 8vw, 4rem);
+      line-height: 1;
+      opacity: 0;
+      z-index: 10;
+      filter: drop-shadow(0 10px 18px rgba(0,0,0,0.22)) drop-shadow(0 0 16px rgba(255,184,0,0.6));
+      pointer-events: none;
+    }
+    .summary-breakdown-box.active-anim .clapping-hand-breakdown {
+      animation: breakdownClapAnim 3.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+
+    @keyframes breakdownClapAnim {
+      0% { opacity: 0; transform: translate(-50%, -50%) scale(0) rotate(-20deg); }
+      18% { opacity: 1; transform: translate(-50%, -50%) scale(1.35) rotate(0deg); }
+      32% { transform: translate(-50%, -50%) scale(0.95) rotate(-12deg); }
+      48% { transform: translate(-50%, -50%) scale(1.3) rotate(10deg); }
+      64% { transform: translate(-50%, -50%) scale(1.0) rotate(-6deg); }
+      78% { opacity: 1; transform: translate(-50%, -50%) scale(1.15) rotate(0deg); }
+      100% { opacity: 0; transform: translate(-50%, -50%) scale(0.3) translateY(-25px); }
+    }
+
+    .home-wrapper { align-items: center !important; }
+    .home-action-bar {
+      display: flex !important;
+      justify-content: center !important;
+      align-items: center !important;
+      width: 100% !important;
+      margin-top: 16px !important;
+    }
+    .btn-start-game { margin: 0 auto !important; }
+    .home-wrapper {
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: stretch !important;
+      gap: 14px;
+      padding: 4px 0;
+      width: 100%;
+    }
+    .intro-back-wrap {
+      width: 100% !important;
+      display: flex !important;
+      justify-content: flex-start !important;
+    }
+
+    .home-card::after {
+      content: none !important;
+      display: none !important;
+    }
+    .home-card:nth-of-type(3)::after,
+    .home-card:nth-of-type(4)::after {
+      content: "↓" !important;
+      display: block !important;
+      position: absolute;
+      bottom: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 20px;
+      color: #788B7C;
+      font-weight: bold;
+      z-index: 2;
+    }
+
+    .home-action-bar {
+      display: flex !important;
+      justify-content: center !important;
+      align-items: center !important;
+      width: 100% !important;
+      margin-top: 16px !important;
+    }
+
+    .btn-start-game {
+      width: 100% !important;
+      max-width: 420px !important;
+      margin: 0 auto !important;
+    }
+
+    .hand-select-group {
+      display: flex !important;
+      justify-content: center !important;
+      gap: 14px !important;
+      width: 100% !important;
+      max-width: 440px !important;
+      margin: 16px auto 0 auto !important;
+    }
+
+    .btn-hand {
+      flex: 1 !important;
+      min-height: 48px !important;
+      padding: 10px 16px !important;
+      background-color: #ffffff !important;
+      color: #2B3D30 !important;
+      border: 2.5px solid #4F7058 !important;
+      border-radius: 25px !important;
+      font-size: calc(17px * var(--font-scale)) !important;
+      font-weight: 800 !important;
+      cursor: pointer !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08) !important;
+      transition: all 0.2s ease !important;
+    }
+
+    .btn-hand.active {
+      background-color: #2B3D30 !important;
+      color: #ffffff !important;
+      border-color: #2B3D30 !important;
+      box-shadow: 0 4px 10px rgba(43, 61, 48, 0.25) !important;
+    }
   </style>
 </head>
 <body>
-  <!-- 頂部導覽列 -->
+
   <header id="main-header" style="display: none;">
-    <h1>看時間回答遊戲</h1>
-    <div id="nav-bar" class="nav-bar">
-      <div id="nav-1" class="nav-item" onclick="goToLevel(1)">第一關</div>
-      <div id="nav-2" class="nav-item" onclick="goToLevel(2)">第二關</div>
-      <div id="nav-3" class="nav-item" onclick="goToLevel(3)">第三關</div>
-    </div>
+    <h1 id="header-main-title">看時間回答遊戲</h1>
+    <div id="nav-bar" class="nav-bar"></div>
   </header>
 
-  <!-- 主要遊戲與題目顯示區 -->
   <main id="game-container"></main>
 
   <script>
-    /* ==========================================
-       頁面靜態跳轉機制 (適應 GitHub Pages 與一般網頁)
-       ========================================== */
-    function goToLevelSelect() {
-      window.location.href = "LevelSelect.html";
+  var i18nDict = {
+    'zh-TW': {
+      'game.title': '看時間回答遊戲',
+      'nav.lvl1_name': '第 1 關',
+      'nav.lvl1_theme': '撥動時鐘',
+      'nav.lvl2_name': '第 2 關',
+      'nav.lvl2_theme': '判斷天空',
+      'nav.lvl3_name': '第 3 關',
+      'nav.lvl3_theme': '日常生活',
+      'nav.summary': '成績結算',
+      'home.subtitle': '看時鐘、看天空，動動腦選答案！',
+      'image.fallback': '情境圖',
+      'home.back': '← 返回遊戲分類',
+      'home.start': '準備好了，進入第一關 ❯',
+      'home.card1_desc': '設定時鐘指針，指向正確時間。',
+      'home.card2_desc': '根據時間，選出相符的天空景色。',
+      'home.card3_desc': '依照時間，選出適合的日常活動。',
+      'lvl1.q_prefix': '請將時鐘轉到 ',
+      'lvl1.q_suffix': '',
+      'lvl1.hint': '可以用手指直接轉動指針，或是點擊時鐘上的數字。',
+      'lvl1.select_hour': '選擇時針（短針）',
+      'lvl1.select_minute': '選擇分針（長針）',
+      'btn.submit': '完成並查看結果',
+      'btn.next_question': '完成本題，繼續下一題',
+      'btn.check_answer': '確認答案',
+      'lvl2.explain.sky_night': '晚上 10 點已經是夜晚，通常天色已暗，符合夜晚的時段。圖片中的星空代表夜間情境；實際上若天候陰雨，不一定看得到星星。',
+      'lvl2.explain.sky_noon': '中午 12 點屬於白天時段。這題以晴朗白天代表白天情境；夜晚星空是夜間，傍晚夕陽則是太陽下山前後的景色。',
+      'lvl2.explain.sky_sunset': '題目已說明正值太陽下山的時候，這段時間就是傍晚，天空可能出現夕陽景色。日落時間會隨季節與地點改變，所以不以固定的下午 5 點判斷。',
+      'lvl2.explain.time_earliest': '依照一般一天的生活時段順序，清晨是白天開始的時段，接著是中午、傍晚，再到夜晚。因此在這三個選項中，清晨最早。',
+      'lvl2.explain.time_after_dawn': '清晨過後，白天逐漸進入上午，再接近中午。題目提供的選項中，中午是清晨之後最合適的時段；傍晚和夜晚都更晚。',
+      'lvl2.explain.time_after_noon': '中午過後，接著進入傍晚，之後才是夜晚。清晨則是下一個白天較早的時段。',
+      'lvl2.q_prefix': '現在是',
+      'lvl2.q_suffix': '，天空通常是什麼樣子？',
+      'lvl2.q.prompt': '天空通常是什麼樣子？',
+      'lvl2.q.sunset': '現在正值太陽下山的時候，天空通常是什麼樣子？',
+      'lvl2.q.earliest': '一天當中，哪個時段最早出現？',
+      'lvl2.q.after_dawn': '清晨過後，接下來是哪個時段？',
+      'lvl2.q.after_noon': '中午過後，接下來是哪個時段？',
+      'lvl2.hint': '請點擊下方最符合的情境卡片。',
+      'lvl3.hint': '請選擇最符合日常生活經驗的選項。',
+      'opt.sky_sun': '晴朗白天',
+      'opt.sky_stars': '夜晚星空',
+      'opt.sky_sunset': '傍晚夕陽',
+      'opt.dusk': '傍晚',
+      'opt.dawn': '清晨',
+      'opt.night': '夜晚',
+      'opt.noon': '中午',
+      'opt.breakfast': '早餐',
+      'opt.lunch': '午餐',
+      'opt.dinner': '晚餐',
+      'opt.jacket': '挑選今天要穿的夾克外套',
+      'opt.sweep': '拿出掃帚掃掃地',
+      'opt.water': '拿起澆水壺幫花澆水',
+      'opt.lights_on': '需要開燈',
+      'opt.lights_off': '外面很亮，不用開燈',
+      'opt.sunset_room': '夕陽光照進來',
+      'q3.1_1': '現在是早上 08:00，通常是吃哪一餐？',
+      'q3.1_2': '現在是中午 12:00，通常是吃哪一餐？',
+      'q3.1_3': '現在是晚上 20:00，通常是吃哪一餐？',
+      'q3.2_1': '現在是早上 07:00，準備出門前，你會在衣櫃前做什麼？',
+      'q3.3_1': '現在是早上 08:00，家裡的燈光通常是？',
+      'q3.3_2': '現在是晚上 22:00，家裡的燈光通常是？',
+      'time.morning_8': '早上 08:00',
+      'time.night_10': '晚上 10:00',
+      'time.noon_12': '中午 12:00',
+      'settle.title_prefix': '第',
+      'settle.title_suffix': '關完成！',
+      'num.1': '一', 'num.2': '二', 'num.3': '三',
+      'settle.encourage_perfect': '太棒了！您答對了，繼續保持！',
+      'settle.encourage_wrong': '用心練習！給自己拍拍手！',
+      'settle.score_label': '本關得分：',
+      'settle.score_unit': ' 分',
+      'settle.score_none': '0 分',
+      'settle.correct_label': '答對題數',
+      'settle.wrong_label': '答錯題數',
+      'settle.unit_q': ' 題',
+      'settle.unit_q_one': ' 題',
+      'settle.unit_q_other': ' 題',
+      'settle.unit_item_one': ' 項',
+      'settle.unit_item_other': ' 項',
+      'btn.next_lvl2': '前往第二關 ➔',
+      'btn.next_lvl3': '前往第三關 ➔',
+      'btn.next_summary': '完成遊戲，查看總成績 ➔',
+      'final.perfect_title': '太棒了！三關滿分！',
+      'final.normal_title': '今天辛苦了！完成三關練習！',
+      'final.avg_label': '總平均成績：',
+      'final.perfect_encourage': '太厲害了！表現完全正確，<br>給自己一個最棒的鼓勵！',
+      'final.normal_encourage': '沒關係！多練習就會越來越熟悉，<br>繼續加油！',
+      'final.l1_label': '第一關（撥動時鐘）：',
+      'final.l2_label': '第二關（判斷天空）：',
+      'final.l3_label': '第三關（日常生活）：',
+      'summary.review_title': '查看各關作答詳解',
+      'summary.review_hint': '可展開查看題目、您的答案及正確答案。',
+      'summary.l1_title': '第一關｜撥動時鐘',
+      'summary.l2_title': '第二關｜判斷天空',
+      'summary.l3_title': '第三關｜日常生活',
+      'summary.empty': '本關尚未完成，沒有可查看的作答紀錄。',
+      'summary.target_time': '題目要求時間：',
+      'summary.user_time': '您設定的時間：',
+      'summary.hour_hand': '時針（短針）',
+      'summary.minute_hand': '分針（長針）',
+      'summary.matched': '符合目標',
+      'summary.needs_review': '需要再練習',
+      'summary.points_unit': '分',
+      'summary.question': '第 ',
+      'summary.question_suffix': ' 題',
+      'summary.correct': '答對',
+      'summary.wrong': '答錯',
+      'summary.question_answer': '您的答案：',
+      'summary.correct_answer': '正確答案：',
+      'summary.tip': '小提醒：',
+      'summary.pending_score': '0 分',
+      'summary.failed_score': '0 分',
+      'lvl3.explain.breakfast': '早上 8 點是早餐時段，通常會吃早餐。',
+      'lvl3.explain.lunch': '中午 12 點接近午餐時間，通常會吃午餐。',
+      'lvl3.explain.dinner': '晚上 8 點是晚餐時段，通常會吃晚餐。',
+      'lvl3.explain.jacket': '早上出門前，可以依照天氣挑選適合穿著的外套。',
+      'lvl3.explain.lights_off': '早上 8 點通常已有日光，室內多半可以利用自然光。',
+      'lvl3.explain.lights_on': '晚上 10 點天色較暗，室內通常需要開燈才能看得清楚。',
+      'btn.replay_clap': '🎉 重新播放鼓掌聲',
+      'btn.play_again': '再玩一次',
+      'btn.game_cat': '回到遊戲分類',
+      'btn.home': '回首頁',
+      'modal.warm_title': '溫馨提示',
+      'modal.completed_msg': '這一關已經完成囉！請繼續目前的關卡。',
+      'modal.pick_title': '再選一個答案喔！',
+      'modal.pick_msg': '請先選擇一個答案喔！',
+      'modal.got_it': '知道了',
+      'badge.gold': '金牌',
+      'badge.gold_comment': '完美通關！頭腦超靈光！',
+      'badge.silver': '銀牌',
+      'badge.silver_comment': '挑戰成功！反應非常快！',
+      'badge.bronze': '銅牌',
+      'badge.bronze_comment': '順利完成！越玩越厲害！'
+    },
+    'en': {
+      'game.title': 'Clock Reading Game',
+      'nav.lvl1_name': 'Level 1',
+      'nav.lvl1_theme': 'Set Clock',
+      'nav.lvl2_name': 'Level 2',
+      'nav.lvl2_theme': 'Sky Condition',
+      'nav.lvl3_name': 'Level 3',
+      'nav.lvl3_theme': 'Daily Life',
+      'nav.summary': 'Final Results',
+      'home.subtitle': 'Look at the clock, look at the sky, and exercise your brain!',
+      'image.fallback': 'Scene',
+      'home.back': '← Back to Game Categories',
+      'home.start': 'Ready! Start Level 1 ❯',
+      'home.card1_desc': 'Set the clock hands to the correct time.',
+      'home.card2_desc': 'Choose the sky scene that matches the time.',
+      'home.card3_desc': 'Choose a daily activity that fits the time.',
+      'lvl1.q_prefix': 'Please set the clock to ',
+      'lvl1.q_suffix': '',
+      'lvl1.hint': 'Drag hands directly or tap numbers on the clock.',
+      'lvl1.select_hour': 'Select Hour Hand (Short)',
+      'lvl1.select_minute': 'Select Minute Hand (Long)',
+      'btn.submit': 'Submit & View Results',
+      'btn.next_question': 'Submit & Continue',
+      'btn.check_answer': 'Check Answer',
+      'lvl2.explain.sky_night': '10:00 PM is nighttime, when the sky is usually dark. The starry-sky picture represents a nighttime scene; stars may not be visible when it is cloudy or rainy.',
+      'lvl2.explain.sky_noon': '12:00 noon is daytime. The sunny daytime picture represents this time of day; a starry sky represents night, while a sunset represents the period around sunset.',
+      'lvl2.explain.sky_sunset': 'The question states that the sun is setting, which is the evening period when sunset colors may appear. Sunset time changes with season and location, so a fixed 5:00 PM is not used.',
+      'lvl2.explain.time_earliest': 'In the usual daily sequence, dawn is when daytime begins, followed by noon, dusk, and night. Of these three choices, dawn comes first.',
+      'lvl2.explain.time_after_dawn': 'After dawn comes the morning, which moves toward noon. Among the choices provided, noon is the best answer; dusk and night are later.',
+      'lvl2.explain.time_after_noon': 'After noon comes dusk, followed by night. Dawn is an earlier period of the next daytime cycle.',
+      'lvl2.q_prefix': 'It is currently ',
+      'lvl2.q_suffix': '. What does the sky usually look like?',
+      'lvl2.q.prompt': 'What does the sky usually look like?',
+      'lvl2.q.sunset': 'The sun is setting. What does the sky usually look like?',
+      'lvl2.q.earliest': 'Which time of day comes first?',
+      'lvl2.q.after_dawn': 'What time of day comes after dawn?',
+      'lvl2.q.after_noon': 'What time of day comes after noon?',
+      'lvl2.hint': 'Please tap the card that best matches the situation.',
+      'lvl3.hint': 'Please select the option fitting daily experience best.',
+      'opt.sky_sun': 'Sunny daytime',
+      'opt.sky_stars': 'Starry night',
+      'opt.sky_sunset': 'Evening sunset',
+      'opt.dusk': 'Dusk',
+      'opt.dawn': 'Dawn',
+      'opt.night': 'Night',
+      'opt.noon': 'Noon',
+      'opt.breakfast': 'Breakfast',
+      'opt.lunch': 'Lunch',
+      'opt.dinner': 'Dinner',
+      'opt.jacket': 'Pick a jacket to wear today',
+      'opt.sweep': 'Take out a broom to sweep',
+      'opt.water': 'Water the flowers with a pot',
+      'opt.lights_on': 'Turn on lights',
+      'opt.lights_off': 'Bright outside, lights off',
+      'opt.sunset_room': 'Sunset light shining in',
+      'q3.1_1': 'It is 08:00 AM, which meal do you usually eat?',
+      'q3.1_2': 'It is 12:00 PM, which meal do you usually eat?',
+      'q3.1_3': 'It is 08:00 PM, which meal do you usually eat?',
+      'q3.2_1': 'It is 07:00 AM. Before going out, what would you do in front of the wardrobe?',
+      'q3.3_1': 'It is 08:00 AM, what is indoor light usually like?',
+      'q3.3_2': 'It is 10:00 PM, what is indoor light usually like?',
+      'time.morning_8': '08:00 AM',
+      'time.night_10': '10:00 PM',
+      'time.noon_12': '12:00 PM',
+      'settle.title_prefix': 'Level ',
+      'settle.title_suffix': ' Complete!',
+      'num.1': '1', 'num.2': '2', 'num.3': '3',
+      'settle.encourage_perfect': 'Awesome! You got it right, keep it up!',
+      'settle.encourage_wrong': 'Great practice! Give yourself a hand!',
+      'settle.score_label': 'Stage Score: ',
+      'settle.score_unit': ' pts',
+      'settle.score_none': '0 pts',
+      'settle.correct_label': 'Correct Questions',
+      'settle.wrong_label': 'Wrong Questions',
+      'settle.unit_q': '',
+      'settle.unit_q_one': ' question',
+      'settle.unit_q_other': ' questions',
+      'settle.unit_item_one': ' item',
+      'settle.unit_item_other': ' items',
+      'btn.next_lvl2': 'Go to Level 2 ➔',
+      'btn.next_lvl3': 'Go to Level 3 ➔',
+      'btn.next_summary': 'Complete Game & View Results ➔',
+      'final.perfect_title': 'Awesome! Perfect Score in All Levels!',
+      'final.normal_title': 'Great Effort! Practice Completed!',
+      'final.avg_label': 'Total Average Score: ',
+      'final.perfect_encourage': 'Amazing! Perfect performance,<br>give yourself a great applause!',
+      'final.normal_encourage': 'No worries! Practice makes perfect,<br>keep going!',
+      'final.l1_label': 'Level 1 (Set Clock): ',
+      'final.l2_label': 'Level 2 (Sky Condition): ',
+      'final.l3_label': 'Level 3 (Daily Life): ',
+      'summary.review_title': 'Review Your Answers',
+      'summary.review_hint': 'Expand a level to view the question, your answer, and the correct answer.',
+      'summary.l1_title': 'Level 1 | Set the Clock',
+      'summary.l2_title': 'Level 2 | Judge the Sky',
+      'summary.l3_title': 'Level 3 | Daily Life',
+      'summary.empty': 'This level was not completed, so there is no answer record to review.',
+      'summary.target_time': 'Requested time: ',
+      'summary.user_time': 'Time you set: ',
+      'summary.hour_hand': 'Hour hand (short hand)',
+      'summary.minute_hand': 'Minute hand (long hand)',
+      'summary.matched': 'Matches the target',
+      'summary.needs_review': 'Needs more practice',
+      'summary.points_unit': 'pts',
+      'summary.question': 'Question ',
+      'summary.question_suffix': '',
+      'summary.correct': 'Correct',
+      'summary.wrong': 'Incorrect',
+      'summary.question_answer': 'Your answer: ',
+      'summary.correct_answer': 'Correct answer: ',
+      'summary.tip': 'Reminder: ',
+      'summary.pending_score': '0 pts',
+      'summary.failed_score': '0 pts',
+      'lvl3.explain.breakfast': '8:00 AM is usually a time for breakfast.',
+      'lvl3.explain.lunch': '12:00 noon is usually a time for lunch.',
+      'lvl3.explain.dinner': '8:00 PM is usually a time for dinner.',
+      'lvl3.explain.jacket': 'Before going out in the morning, choose an outer layer that suits the weather.',
+      'lvl3.explain.lights_off': 'At 8:00 AM, daylight is usually available, so natural light is often enough indoors.',
+      'lvl3.explain.lights_on': 'At 10:00 PM, it is usually dark outside, so indoor lights are generally needed.',
+      'btn.replay_clap': '🎉 Replay Applause',
+      'btn.play_again': 'Play Again',
+      'btn.game_cat': 'Back to Game Categories',
+      'btn.home': 'Back to Home',
+      'modal.warm_title': 'Friendly Reminder',
+      'modal.completed_msg': 'This level is already completed! Please continue with current level.',
+      'modal.pick_title': 'Pick an answer!',
+      'modal.pick_msg': 'Please select an answer first!',
+      'modal.got_it': 'Got it',
+      'badge.gold': 'Gold Medal',
+      'badge.gold_comment': 'Perfect clear! Brilliant mind!',
+      'badge.silver': 'Silver Medal',
+      'badge.silver_comment': 'Challenge completed! Quick reactions!',
+      'badge.bronze': 'Bronze Medal',
+      'badge.bronze_comment': 'Well done! Getting better every time!'
+    },
+    'ja': {
+      'game.title': '時計読みゲーム',
+      'nav.lvl1_name': 'ステージ 1',
+      'nav.lvl1_theme': '時計を回す',
+      'nav.lvl2_name': 'ステージ 2',
+      'nav.lvl2_theme': '空の様子',
+      'nav.lvl3_name': 'ステージ 3',
+      'nav.lvl3_theme': '日常生活',
+      'nav.summary': '成績発表',
+      'home.subtitle': '時計を見て、空を見て、頭の体操をしましょう！',
+      'image.fallback': '場面',
+      'home.back': '← ゲーム分類へ戻る',
+      'home.start': '準備完了！ステージ1へ進む ❯',
+      'home.card1_desc': '時計の針を正しい時刻に合わせましょう。',
+      'home.card2_desc': '時刻に合う空の景色を選びましょう。',
+      'home.card3_desc': '時刻に合う日常の活動を選びましょう。',
+      'lvl1.q_prefix': '時計を ',
+      'lvl1.q_suffix': ' に合わせてください',
+      'lvl1.hint': '指で針を回すか、時計の数字をタップしてください。',
+      'lvl1.select_hour': '時針（短針）を選択',
+      'lvl1.select_minute': '分針（長針）を選択',
+      'btn.submit': '決定して結果を見る',
+      'btn.next_question': '回答して次の問題へ',
+      'btn.check_answer': '答えを確認',
+      'lvl2.explain.sky_night': '夜10時は夜の時間帯で、通常は空が暗くなっています。星空の画像は夜の場面を表しますが、曇りや雨の日には星が見えないこともあります。',
+      'lvl2.explain.sky_noon': '正午12時は昼間です。この問題では晴れた昼間の画像で昼を表しています。星空は夜、夕焼けは日没の前後の景色です。',
+      'lvl2.explain.sky_sunset': '問題文では太陽が沈む頃と示しています。この時間帯は夕方で、空が夕焼け色になることがあります。日没時刻は季節や場所で変わるため、午後5時に固定しません。',
+      'lvl2.explain.time_earliest': '一般的な一日の生活時間の順序では、早朝から昼、夕方、夜へと進みます。この三つの選択肢では早朝が最初です。',
+      'lvl2.explain.time_after_dawn': '早朝の後は午前中になり、やがて正午に近づきます。提示された選択肢では正午が最も適切です。夕方と夜はさらに後です。',
+      'lvl2.explain.time_after_noon': '正午の後は夕方になり、その後に夜が来ます。早朝は次の日中の早い時間帯です。',
+      'lvl2.q_prefix': '現在は ',
+      'lvl2.q_suffix': ' です。空は通常どのように見えますか？',
+      'lvl2.q.prompt': '空は通常どのように見えますか？',
+      'lvl2.q.sunset': '太陽が沈む頃、空は通常どのように見えますか？',
+      'lvl2.q.earliest': '一日の中で、最初に訪れる時間帯はどれですか？',
+      'lvl2.q.after_dawn': '早朝の次に来る時間帯はどれですか？',
+      'lvl2.q.after_noon': '正午の次に来る時間帯はどれですか？',
+      'lvl2.hint': '状況に最も合うカードをタップしてください。',
+      'lvl3.hint': '日常生活に最も合う選択肢を選んでください。',
+      'opt.sky_sun': '晴れた昼間',
+      'opt.sky_stars': '夜の星空',
+      'opt.sky_sunset': '夕暮れの夕日',
+      'opt.dusk': '夕方',
+      'opt.dawn': '早朝',
+      'opt.night': '夜',
+      'opt.noon': '正午',
+      'opt.breakfast': '朝食',
+      'opt.lunch': '昼食',
+      'opt.dinner': '夕食',
+      'opt.jacket': '今日着る上着を選ぶ',
+      'opt.sweep': 'ほうきで掃除をする',
+      'opt.water': 'じょうろで花に水やる',
+      'opt.lights_on': '電気をつける',
+      'opt.lights_off': '外が明るいので電気不要',
+      'opt.sunset_room': '夕陽が差し込んでいる',
+      'q3.1_1': '午前08:00です。通常どの食事をとりますか？',
+      'q3.1_2': '正午12:00です。通常どの食事をとりますか？',
+      'q3.1_3': '夜20:00です。通常どの食事をとりますか？',
+      'q3.2_1': '午前07:00です。外出前にクローゼットの前で何をしますか？',
+      'q3.3_1': '午前08:00です。部屋の明かりは通常どうですか？',
+      'q3.3_2': '夜22:00です。部屋の明かりは通常どうですか？',
+      'time.morning_8': '午前 08:00',
+      'time.night_10': '夜 22:00',
+      'time.noon_12': '正午 12:00',
+      'settle.title_prefix': 'ステージ',
+      'settle.title_suffix': ' 完了！',
+      'num.1': '1', 'num.2': '2', 'num.3': '3',
+      'settle.encourage_perfect': '素晴らしい！大正解です、その調子！',
+      'settle.encourage_wrong': 'ナイス練習！自分に拍手を送りましょう！',
+      'settle.score_label': 'このステージの得点：',
+      'settle.score_unit': ' 点',
+      'settle.score_none': '0 点',
+      'settle.correct_label': '正解数',
+      'settle.wrong_label': '不正解数',
+      'settle.unit_q': ' 問',
+      'settle.unit_q_one': ' 問',
+      'settle.unit_q_other': ' 問',
+      'settle.unit_item_one': ' 項目',
+      'settle.unit_item_other': ' 項目',
+      'btn.next_lvl2': 'ステージ2へ ➔',
+      'btn.next_lvl3': 'ステージ3へ ➔',
+      'btn.next_summary': '全クリア！総合結果を見る ➔',
+      'final.perfect_title': '素晴らしい！全ステージ満点！',
+      'final.normal_title': 'お疲れ様でした！練習完了！',
+      'final.avg_label': '総合平均点：',
+      'final.perfect_encourage': '素晴らしい！完璧な結果です、<br>自分をしっかり褒めてあげましょう！',
+      'final.normal_encourage': '大丈夫！練習すればどんどん上達します、<br>これからも頑張りましょう！',
+      'final.l1_label': 'ステージ1（時計を回す）：',
+      'final.l2_label': 'ステージ2（空の様子）：',
+      'final.l3_label': 'ステージ3（日常生活）：',
+      'summary.review_title': '各ステージの回答を確認',
+      'summary.review_hint': '展開すると、問題・選んだ答え・正しい答えを確認できます。',
+      'summary.l1_title': 'ステージ1｜時計を合わせる',
+      'summary.l2_title': 'ステージ2｜空の様子を判断',
+      'summary.l3_title': 'ステージ3｜日常生活',
+      'summary.empty': 'このステージは未完了のため、確認できる回答記録はありません。',
+      'summary.target_time': '指定された時刻：',
+      'summary.user_time': '設定した時刻：',
+      'summary.hour_hand': '時針（短い針）',
+      'summary.minute_hand': '分針（長い針）',
+      'summary.matched': '目標どおり',
+      'summary.needs_review': 'もう一度練習しましょう',
+      'summary.points_unit': '点',
+      'summary.question': '問題 ',
+      'summary.question_suffix': '',
+      'summary.correct': '正解',
+      'summary.wrong': '不正解',
+      'summary.question_answer': '選んだ答え：',
+      'summary.correct_answer': '正しい答え：',
+      'summary.tip': 'ポイント：',
+      'summary.pending_score': '0 点',
+      'summary.failed_score': '0 点',
+      'lvl3.explain.breakfast': '午前8時は朝食をとることが多い時間です。',
+      'lvl3.explain.lunch': '正午12時は昼食の時間です。',
+      'lvl3.explain.dinner': '夜8時は夕食の時間です。',
+      'lvl3.explain.jacket': '朝、出かける前に天候に合った上着を選びます。',
+      'lvl3.explain.lights_off': '午前8時は日差しがあることが多く、室内では自然光を利用できます。',
+      'lvl3.explain.lights_on': '夜10時は外が暗いため、室内では通常、照明が必要です。',
+      'btn.replay_clap': '🎉 拍手を再再生',
+      'btn.play_again': 'もう一度遊ぶ',
+      'btn.game_cat': 'ゲーム分類へ戻る',
+      'btn.home': 'ホームへ戻る',
+      'modal.warm_title': 'お知らせ',
+      'modal.completed_msg': 'このステージは完了しています。現在のステージを続けてください。',
+      'modal.pick_title': '回答を選んでください',
+      'modal.pick_msg': 'まず回答を一つ選んでください！',
+      'modal.got_it': '確認',
+      'badge.gold': '金メダル',
+      'badge.gold_comment': 'パーフェクトクリア！素晴らしいひらめき！',
+      'badge.silver': '銀メダル',
+      'badge.silver_comment': 'チャレンジ成功！素早い反応！',
+      'badge.bronze': '銅メダル',
+      'badge.bronze_comment': '無事クリア！遊ぶほど上手になります！'
+    },
+    'ko': {
+      'game.title': '시계 보기 게임',
+      'nav.lvl1_name': '1 단계',
+      'nav.lvl1_theme': '시계 맞추기',
+      'nav.lvl2_name': '2 단계',
+      'nav.lvl2_theme': '하늘 판단',
+      'nav.lvl3_name': '3 단계',
+      'nav.lvl3_theme': '일상생활',
+      'nav.summary': '결과 보기',
+      'home.subtitle': '시계를 보고, 하늘을 보며, 뇌 운동을 해보세요!',
+      'image.fallback': '상황',
+      'home.back': '← 게임 카테고리로',
+      'home.start': '준비 완료! 1단계 시작 ❯',
+      'home.card1_desc': '시계 바늘을 정확한 시간에 맞추세요.',
+      'home.card2_desc': '시간에 맞는 하늘 풍경을 선택하세요.',
+      'home.card3_desc': '시간에 맞는 일상 활동을 선택하세요.',
+      'lvl1.q_prefix': '시계를 ',
+      'lvl1.q_suffix': '(으)로 맞추세요.',
+      'lvl1.hint': '손가락으로 바늘을 돌리거나 시계 숫자를 누르세요.',
+      'lvl1.select_hour': '시침(짧은 바늘) 선택',
+      'lvl1.select_minute': '분침(긴 바늘) 선택',
+      'btn.submit': '완료 및 결과 보기',
+      'btn.next_question': '답변하고 다음 문제로',
+      'btn.check_answer': '정답 확인',
+      'lvl2.explain.sky_night': '밤 10시는 밤 시간이며 보통 하늘이 어두워집니다. 별이 있는 하늘 그림은 밤의 상황을 나타냅니다. 흐리거나 비가 오면 실제로 별이 보이지 않을 수도 있습니다.',
+      'lvl2.explain.sky_noon': '낮 12시는 낮 시간입니다. 이 문제에서는 맑은 낮 그림으로 낮을 나타냅니다. 별이 있는 하늘은 밤이고, 노을은 해가 질 무렵의 풍경입니다.',
+      'lvl2.explain.sky_sunset': '문제에서 해가 질 무렵이라고 알려 주었습니다. 이 시간대는 저녁이며 하늘에 노을빛이 나타날 수 있습니다. 일몰 시간은 계절과 장소에 따라 달라지므로 오후 5시로 고정하지 않습니다.',
+      'lvl2.explain.time_earliest': '일반적인 하루의 생활 시간 순서는 이른 아침, 정오, 저녁, 밤입니다. 제시된 세 가지 선택지 중 이른 아침이 가장 먼저입니다.',
+      'lvl2.explain.time_after_dawn': '이른 아침 다음에는 오전 시간이 이어지고 정오에 가까워집니다. 제시된 선택지 중 정오가 가장 알맞으며 저녁과 밤은 더 늦습니다.',
+      'lvl2.explain.time_after_noon': '정오 다음에는 저녁이 오고 그 다음에 밤이 옵니다. 이른 아침은 다음 날의 이른 시간대입니다.',
+      'lvl2.q_prefix': '현재는 ',
+      'lvl2.q_suffix': '입니다. 하늘은 보통 어떤 모습일까요?',
+      'lvl2.q.prompt': '하늘은 보통 어떤 모습일까요?',
+      'lvl2.q.sunset': '해가 질 무렵, 하늘은 보통 어떤 모습일까요?',
+      'lvl2.q.earliest': '하루 중 가장 먼저 찾아오는 시간대는 무엇인가요?',
+      'lvl2.q.after_dawn': '새벽 다음에는 어떤 시간대가 오나요?',
+      'lvl2.q.after_noon': '정오 다음에는 어떤 시간대가 오나요?',
+      'lvl2.hint': '상황에 가장 잘 맞는 카드를 선택하세요.',
+      'lvl3.hint': '일상생활 경험에 가장 잘 맞는 항목을 선택하세요.',
+      'opt.sky_sun': '맑은 낮',
+      'opt.sky_stars': '밤하늘의 별',
+      'opt.sky_sunset': '저녁노을',
+      'opt.dusk': '저녁',
+      'opt.dawn': '새벽',
+      'opt.night': '밤',
+      'opt.noon': '정오',
+      'opt.breakfast': '아침',
+      'opt.lunch': '점심',
+      'opt.dinner': '저녁',
+      'opt.jacket': '오늘 입을 재킷 고르기',
+      'opt.sweep': '빗자루로 쓸기',
+      'opt.water': '물뿌리개로 꽃에 물주기',
+      'opt.lights_on': '불 켜기',
+      'opt.lights_off': '밖이 밝아 불 켤 필요 없음',
+      'opt.sunset_room': '노을빛이 들어옴',
+      'q3.1_1': '아침 08:00입니다. 보통 어떤 식사를 하나요?',
+      'q3.1_2': '점심 12:00입니다. 보통 어떤 식사를 하나요?',
+      'q3.1_3': '저녁 20:00입니다. 보통 어떤 식사를 하나요?',
+      'q3.2_1': '아침 07:00입니다. 외출하기 전에 옷장 앞에서 무엇을 하나요?',
+      'q3.3_1': '아침 08:00입니다. 집안 조명은 보통 어떤가요?',
+      'q3.3_2': '저녁 22:00입니다. 집안 조명은 보통 어떤가요?',
+      'time.morning_8': '아침 08:00',
+      'time.night_10': '밤 22:00',
+      'time.noon_12': '정오 12:00',
+      'settle.title_prefix': '',
+      'settle.title_suffix': '단계 완료!',
+      'num.1': '1', 'num.2': '2', 'num.3': '3',
+      'settle.encourage_perfect': '훌륭합니다! 정답입니다. 계속 유지하세요!',
+      'settle.encourage_wrong': '열심히 연습했어요! 자신에게 박수를 보내주세요!',
+      'settle.score_label': '이번 단계 점수: ',
+      'settle.score_unit': ' 점',
+      'settle.score_none': '0점',
+      'settle.correct_label': '맞힌 문제',
+      'settle.wrong_label': '틀린 문제',
+      'settle.unit_q': ' 문제',
+      'settle.unit_q_one': ' 문제',
+      'settle.unit_q_other': ' 문제',
+      'settle.unit_item_one': ' 항목',
+      'settle.unit_item_other': ' 항목',
+      'btn.next_lvl2': '2단계로 이동 ➔',
+      'btn.next_lvl3': '3단계로 이동 ➔',
+      'btn.next_summary': '게임 완료, 총 성적 보기 ➔',
+      'final.perfect_title': '대단합니다! 3단계 만점!',
+      'final.normal_title': '수고하셨습니다! 연습 완료!',
+      'final.avg_label': '총 평균 점수: ',
+      'final.perfect_encourage': '대단합니다! 완벽한 결과입니다.<br>자신에게 큰 칭찬을 해주세요!',
+      'final.normal_encourage': '괜찮습니다! 연습할수록 점점 익숙해집니다.<br>파이팅!',
+      'final.l1_label': '1단계 (시계 맞추기): ',
+      'final.l2_label': '2단계 (하늘 판단): ',
+      'final.l3_label': '3단계 (일상생활): ',
+      'summary.review_title': '단계별 답변 해설 보기',
+      'summary.review_hint': '펼치면 질문, 선택한 답, 정답을 확인할 수 있습니다.',
+      'summary.l1_title': '1단계｜시계 맞추기',
+      'summary.l2_title': '2단계｜하늘 판단',
+      'summary.l3_title': '3단계｜일상생활',
+      'summary.empty': '이 단계는 완료되지 않아 확인할 답변 기록이 없습니다.',
+      'summary.target_time': '요청된 시간: ',
+      'summary.user_time': '설정한 시간: ',
+      'summary.hour_hand': '시침(짧은 바늘)',
+      'summary.minute_hand': '분침(긴 바늘)',
+      'summary.matched': '목표와 일치',
+      'summary.needs_review': '더 연습이 필요해요',
+      'summary.points_unit': '점',
+      'summary.question': '문항 ',
+      'summary.question_suffix': '',
+      'summary.correct': '정답',
+      'summary.wrong': '오답',
+      'summary.question_answer': '선택한 답: ',
+      'summary.correct_answer': '정답: ',
+      'summary.tip': '참고: ',
+      'summary.pending_score': '0점',
+      'summary.failed_score': '0점',
+      'lvl3.explain.breakfast': '오전 8시는 보통 아침 식사를 하는 시간입니다.',
+      'lvl3.explain.lunch': '낮 12시는 점심 식사 시간입니다.',
+      'lvl3.explain.dinner': '저녁 8시는 저녁 식사 시간입니다.',
+      'lvl3.explain.jacket': '아침에 외출하기 전에는 날씨에 맞는 겉옷을 고릅니다.',
+      'lvl3.explain.lights_off': '오전 8시에는 보통 햇빛이 있어 실내에서 자연광을 이용할 수 있습니다.',
+      'lvl3.explain.lights_on': '밤 10시에는 밖이 어두워 실내 조명이 보통 필요합니다.',
+      'btn.replay_clap': '🎉 박수 소리 다시 듣기',
+      'btn.play_again': '다시 하기',
+      'btn.game_cat': '게임 카테고리로',
+      'btn.home': '홈으로',
+      'modal.warm_title': '알림',
+      'modal.completed_msg': '이 단계는 이미 완료했습니다! 현재 단계를 계속해 주세요.',
+      'modal.pick_title': '답을 선택해 주세요!',
+      'modal.pick_msg': '먼저 답을 하나 선택해 주세요!',
+      'modal.got_it': '확인',
+      'badge.gold': '금메달',
+      'badge.gold_comment': '완벽 통과! 두뇌 회전이 대단해요!',
+      'badge.silver': '은메달',
+      'badge.silver_comment': '도전 성공! 순발력이 빨라요!',
+      'badge.bronze': '동메달',
+      'badge.bronze_comment': '성공적 완료! 할수록 점점 더 잘해요!'
     }
+  };
 
-    function goToHome() {
-      window.location.href = "index.html";
+  var currentLang = 'zh-TW';
+  var currentFontScale = '100';
+
+  function initDisplaySettings() {
+    var urlParams = new URLSearchParams(window.location.search);
+    var requestedLang = urlParams.get('lang') || localStorage.getItem('app_lang') || 'zh-TW';
+    currentLang = i18nDict[requestedLang] ? requestedLang : 'zh-TW';
+    document.documentElement.lang = currentLang;
+    currentFontScale = urlParams.get('fontScale') || localStorage.getItem('app_font_scale') || '100';
+
+    localStorage.setItem('app_lang', currentLang);
+    localStorage.setItem('app_font_scale', currentFontScale);
+
+    document.body.classList.remove('font-scale-90', 'font-scale-100', 'font-scale-115', 'font-scale-130');
+    document.body.classList.add('font-scale-' + currentFontScale);
+  }
+
+  function t(key) {
+    var dict = i18nDict[currentLang] || i18nDict['zh-TW'];
+    var val = (dict && dict[key] !== undefined) ? dict[key] : i18nDict['zh-TW'][key];
+    return val !== undefined ? val : key;
+  }
+
+  // GitHub Pages 靜態頁面導向：保留語言與字體設定，避免再提交 Apps Script 的 page 參數。
+  function buildPageUrl(fileName) {
+    var params = new URLSearchParams();
+    params.set('lang', currentLang || 'zh-TW');
+    params.set('fontScale', currentFontScale || '100');
+    return fileName + '?' + params.toString();
+  }
+
+  function goToLevelSelect() {
+    window.location.assign(buildPageUrl('LevelSelect.html'));
+  }
+
+  function goToHome() {
+    window.location.assign(buildPageUrl('index.html'));
+  }
+
+  function navToGameCategories() { goToLevelSelect(); }
+  function navToPlatformHome() { goToHome(); }
+
+  let isActionLocked = false;
+  function lockAction(timeout) {
+    if (typeof timeout === 'undefined') timeout = 450;
+    if (isActionLocked) return false;
+    isActionLocked = true;
+    setTimeout(function() { isActionLocked = false; }, timeout);
+    return true;
+  }
+
+  function shuffleArray(array) {
+    const arr = array.slice();
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
     }
-
-    /* ==========================================
-       通用全域輔助函式
-       ========================================== */
-    function shuffleArray(array) {
-      const arr = array.slice();
-      for (let i = arr.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
+    return arr;
+  }
+  
+  let audioCtx = null;
+  function playSnapSound() {
+    try {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       }
-      return arr;
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(650, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(180, audioCtx.currentTime + 0.04);
+      
+      gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
+      
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.04);
+    } catch(e) {
+      console.log("Audio snap play error:", e);
+    }
+  }
+
+  function triggerSnapFeedback() {
+    playSnapSound();
+    const svg = document.getElementById('clock-svg');
+    if (svg) {
+      svg.classList.remove('clock-snap-anim');
+      void svg.offsetWidth;
+      svg.classList.add('clock-snap-anim');
+    }
+  }
+
+  let cheerAudioInstance = null;
+  let currentSourceIdx = 0;
+  const CHEER_MP3_SOURCES = [
+    "https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3",
+    "https://cdn.freesound.org/previews/391/391539_5121236-lq.mp3"
+  ];
+  function playCheerSound() {
+    try {
+      if (!cheerAudioInstance) {
+        cheerAudioInstance = new Audio();
+        cheerAudioInstance.crossOrigin = "anonymous";
+        cheerAudioInstance.src = CHEER_MP3_SOURCES[0];
+      }
+      cheerAudioInstance.pause();
+      cheerAudioInstance.currentTime = 0;
+      const playPromise = cheerAudioInstance.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(err => {
+          currentSourceIdx = (currentSourceIdx + 1) % CHEER_MP3_SOURCES.length;
+          cheerAudioInstance.src = CHEER_MP3_SOURCES[currentSourceIdx];
+          cheerAudioInstance.play().catch(e => console.log("Audio play prevented:", e));
+        });
+      }
+    } catch (e) {
+      console.log("Audio play error:", e);
+    }
+  }
+
+  function getBadgeData(score) {
+    if (score >= 90) {
+      return {
+        name: t('badge.gold'),
+        svg: '<svg viewBox="0 0 32 32" width="24" height="24" style="vertical-align:middle; margin-right:4px;"><circle cx="16" cy="16" r="15" fill="#D98A2B"/><path d="M16 6l3.1 6.3 6.9 1-5 4.9 1.2 6.8-6.2-3.3-6.2 3.3 1.2-6.8-5-4.9 6.9-1z" fill="#FFFFFF"/></svg>',
+        scoreText: score + t('settle.score_unit'),
+        comment: t('badge.gold_comment'),
+        stars: 3
+      };
+    } else if (score >= 60) {
+      return {
+        name: t('badge.silver'),
+        svg: '<svg viewBox="0 0 32 32" width="24" height="24" style="vertical-align:middle; margin-right:4px;"><circle cx="16" cy="16" r="15" fill="#788B7C"/><path d="M16 6l3.1 6.3 6.9 1-5 4.9 1.2 6.8-6.2-3.3-6.2 3.3 1.2-6.8-5-4.9 6.9-1z" fill="#FFFFFF"/></svg>',
+        scoreText: score + t('settle.score_unit'),
+        comment: t('badge.silver_comment'),
+        stars: 2
+      };
+    } else if (score >= 1) {
+      return {
+        name: t('badge.bronze'),
+        svg: '<svg viewBox="0 0 32 32" width="24" height="24" style="vertical-align:middle; margin-right:4px;"><circle cx="16" cy="16" r="15" fill="#B36239"/><path d="M16 6l3.1 6.3 6.9 1-5 4.9 1.2 6.8-6.2-3.3-6.2 3.3 1.2-6.8-5-4.9 6.9-1z" fill="#FFFFFF"/></svg>',
+        scoreText: score + t('settle.score_unit'),
+        comment: t('badge.bronze_comment'),
+        stars: 1
+      };
+    } else {
+      return {
+        name: '',
+        svg: '<svg viewBox="0 0 32 32" width="24" height="24" style="vertical-align:middle; margin-right:6px;"><circle cx="16" cy="16" r="15" fill="#5F8575"/><path d="M16 22.5s-5.8-3.8-5.8-7.7c0-2.1 1.7-3.8 3.8-3.8 1.3 0 2.4.6 3 1.6.6-1 1.7-1.6 3-1.6 2.1 0 3.8 1.7 3.8 3.8 0 3.9-5.8 7.7-5.8 7.7z" fill="#FFFFFF"/></svg>',
+        scoreText: '0' + t('settle.score_unit'),
+        comment: t('settle.encourage_wrong'),
+        stars: 1
+      };
+    }
+  }
+
+  function renderStarsSVG(starCount) {
+    let starsHtml = '';
+    for (let i = 1; i <= 3; i++) {
+      let isGold = (i <= starCount);
+      let fillStyle = isGold ? 'url(#starGoldGrad)' : 'url(#starGreyGrad)';
+      let filterStyle = isGold ? 'filter: drop-shadow(0 3px 6px rgba(245, 158, 11, 0.45));' : 'filter: none;';
+      starsHtml += 
+        '<span class="star-item star-' + i + '">' +
+          '<svg class="star-svg-icon" viewBox="0 0 50 50" aria-hidden="true" style="' + filterStyle + '">' +
+            '<defs>' +
+              '<linearGradient id="starGoldGrad" x1="0%" y1="0%" x2="0%" y2="100%">' +
+                '<stop offset="0%" stop-color="#FFC107"/>' +
+                '<stop offset="100%" stop-color="#FF8F00"/>' +
+              '</linearGradient>' +
+              '<linearGradient id="starGreyGrad" x1="0%" y1="0%" x2="0%" y2="100%">' +
+                '<stop offset="0%" stop-color="#E0E0E0"/>' +
+                '<stop offset="100%" stop-color="#BDBDBD"/>' +
+              '</linearGradient>' +
+            '</defs>' +
+            '<path d="M 25 3.2 L 31.8 17.0 L 47 19.2 L 36 29.9 L 38.6 45 L 25 37.8 L 11.4 45 L 14 29.9 L 3 19.2 L 18.2 17.0 Z" fill="' + fillStyle + '" />' +
+          '</svg>' +
+        '</span>';
+    }
+    return starsHtml;
+  }
+
+  const IMAGE_CONFIG = {
+    sky_sun: "https://lh3.googleusercontent.com/d/1ql4YhwzW9DAMo4XdK-Zc59QmQgWgRSJr",
+    sky_sunset: "https://lh3.googleusercontent.com/d/1X52WUDMHPAzPLU5WDovFtFZZt1OQCqV0",
+    sky_stars: "https://lh3.googleusercontent.com/d/1BtcYgf1Rrhwdx_Vzas8T0r2xNR8sAiLU",
+    breakfast: "https://lh3.googleusercontent.com/d/14C7lpXKZ2CW-bGumxPc4aCG3qjpulDq3",
+    lunch: "https://lh3.googleusercontent.com/d/1tKQp69NF51sx8GRpeYVf2-M1dSFoGt19",
+    dinner: "https://lh3.googleusercontent.com/d/1mWPQHnSivu9LMmaYUP437-fC82bFpVsE",
+    jacket: "https://lh3.googleusercontent.com/d/1FLCGOkIRXpTRlOYRz1A3_vJAy0e_LNgd",
+    sweep: "https://lh3.googleusercontent.com/d/19GXxe8F8OUL70jTYs1MMu85dXlG0MfdT",
+    water: "https://lh3.googleusercontent.com/d/1ood6XACgZQ56HvpTMzeMs5vShyoPTQ3R",
+    lights_on: "https://lh3.googleusercontent.com/d/1yuhZQtzMe8nw7yvgJX_IxOj70skTRjUX",
+    lights_off: "https://lh3.googleusercontent.com/d/1XyeU2NB9e9eEFoIgxaRZxZlwhF1pQQly",
+    sunset_room: "https://lh3.googleusercontent.com/d/1T2-TdX3-ijUxGb6o2SC6uSOdzzbIQ-7Y"
+  };
+  const SVG_FALLBACKS = {
+    sky_sun: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='35' fill='%23FFD700'/><g stroke='%23FF8C00' stroke-width='4'><line x1='50' y1='5' x2='50' y2='12'/><line x1='50' y1='88' x2='50' y2='95'/><line x1='5' y1='50' x2='12' y2='50'/><line x1='88' y1='50' x2='95' y2='50'/><line x1='18' y1='18' x2='23' y2='23'/><line x1='77' y1='77' x2='82' y2='82'/><line x1='18' y1='82' x2='23' y2='77'/><line x1='77' y1='18' x2='82' y2='23'/></g></svg>",
+    sky_stars: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%231a237e'/><path d='M50 20 L53 35 L68 35 L56 44 L60 59 L50 50 L40 59 L44 44 L32 35 L47 35 Z' fill='%23FFD700'/><circle cx='20' cy='25' r='3' fill='%23FFF'/><circle cx='80' cy='30' r='2' fill='%23FFF'/><circle cx='75' cy='70' r='3' fill='%23FFF'/><circle cx='25' cy='75' r='2' fill='%23FFF'/></svg>",
+    sky_sunset: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23ff7043'/><path d='M0 60 Q50 40 100 60 L100 100 L0 100 Z' fill='%23d84315'/><circle cx='50' cy='60' r='25' fill='%23ffeb3b'/></svg>",
+  };
+  function getGenericFallbackSvg() {
+    const label = String(t('image.fallback'))
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const svg = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='90' height='90' x='5' y='5' rx='10' fill='#EAF0E7' stroke='#4F7058' stroke-width='4'/><text x='50' y='55' font-size='22' text-anchor='middle' fill='#4F7058'>" + label + "</text></svg>";
+    return 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
+  }
+  function getImgSrc(key) {
+    if (IMAGE_CONFIG[key] && IMAGE_CONFIG[key].trim() !== "") {
+      return IMAGE_CONFIG[key];
+    }
+    return SVG_FALLBACKS[key] || getGenericFallbackSvg();
+  }
+  function handleImgError(img) {
+    img.onerror = null;
+    img.src = getGenericFallbackSvg();
+  }
+
+  function showCustomModal(title, content) {
+    let existingOverlay = document.getElementById('custom-modal-overlay');
+    if (existingOverlay) existingOverlay.remove();
+    
+    const overlay = document.createElement('div');
+    overlay.id = 'custom-modal-overlay';
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = 
+      '<div class="modal-card">' +
+        '<div class="modal-title">' + title + '</div>' +
+        '<div class="modal-content">' + content + '</div>' +
+        '<button class="btn-modal-close" onclick="closeCustomModal()">' + t('modal.got_it') + '</button>' +
+      '</div>';
+    document.body.appendChild(overlay);
+  }
+  function closeCustomModal() {
+    const overlay = document.getElementById('custom-modal-overlay');
+    if (overlay) overlay.remove();
+  }
+
+  function handleCompletedLevelClick(levelNum) {
+    if (!lockAction(400)) return;
+    showCustomModal(t('modal.warm_title'), t('modal.completed_msg'));
+  }
+
+  const gameState = {
+    currentLevel: 'home',
+    maxUnlockedLevel: 1,
+    levels: {
+      1: { completed: false, submitted: false, score: 0, targetHour: 3, targetMin: 30, userHour: 12, userMin: 0, activeHand: 'minute', reviewRecord: null },
+      2: { completed: false, submitted: false, score: 0, questionSet: [], questionIndex: 0, questionData: null, questionResults: [null], selectedOption: null },
+      3: { completed: false, submitted: false, score: 0, questionData: null, selectedOption: null, answerRecords: [] }
+    }
+  };
+
+  window.addEventListener('DOMContentLoaded', function() {
+    initDisplaySettings();
+    setupLevel1Question();
+    setupLevel3Question();
+    renderCurrentStage();
+  });
+
+  function startGame() {
+    if (!lockAction(500)) return;
+    
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx && audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+
+    gameState.currentLevel = 1;
+    gameState.maxUnlockedLevel = 1;
+    gameState.levels[1] = { completed: false, submitted: false, score: 0, targetHour: 3, targetMin: 30, userHour: 12, userMin: 0, activeHand: 'minute', reviewRecord: null };
+    gameState.levels[2] = { completed: false, submitted: false, score: 0, questionSet: [], questionIndex: 0, questionData: null, questionResults: [null], selectedOption: null };
+    gameState.levels[3] = { completed: false, submitted: false, score: 0, questionData: null, selectedOption: null, answerRecords: [] };
+    
+    setupLevel1Question();
+    setupLevel3Question();
+    renderCurrentStage();
+  }
+
+  function restartGame() {
+    if (!lockAction(500)) return;
+    gameState.currentLevel = 'home';
+    gameState.maxUnlockedLevel = 1;
+    gameState.levels[1] = { completed: false, submitted: false, score: 0, targetHour: 3, targetMin: 30, userHour: 12, userMin: 0, activeHand: 'minute', reviewRecord: null };
+    gameState.levels[2] = { completed: false, submitted: false, score: 0, questionSet: [], questionIndex: 0, questionData: null, questionResults: [null], selectedOption: null };
+    gameState.levels[3] = { completed: false, submitted: false, score: 0, questionData: null, selectedOption: null, answerRecords: [] };
+    
+    setupLevel1Question();
+    setupLevel3Question();
+    renderCurrentStage();
+  }
+
+  function showFinalSummary() {
+    if (!lockAction(400)) return;
+    gameState.currentLevel = 'summary';
+    renderCurrentStage();
+  }
+
+  function renderCurrentStage() {
+    const mainHeader = document.getElementById('main-header');
+    const headerTitle = document.getElementById('header-main-title');
+    if (headerTitle) headerTitle.innerHTML = t('game.title');
+
+    const container = document.getElementById('game-container');
+    
+    if (gameState.currentLevel === 'home') {
+      if (mainHeader) mainHeader.style.display = 'none';
+      renderHome(container);
+    } else if (gameState.currentLevel === 'summary') {
+      if (mainHeader) mainHeader.style.display = 'block';
+      updateNavBar();
+      renderFinalSummary(container);
+    } else {
+      if (mainHeader) mainHeader.style.display = 'block';
+      updateNavBar();
+      
+      if (gameState.currentLevel === 1) renderLevel1(container);
+      else if (gameState.currentLevel === 2) renderLevel2(container);
+      else if (gameState.currentLevel === 3) renderLevel3(container);
+    }
+  }
+
+  function updateNavBar() {
+    const navBar = document.getElementById("nav-bar");
+    if (!navBar) return;
+    
+    const levelInfo = [
+      { name: t('nav.lvl1_name'), theme: t('nav.lvl1_theme') },
+      { name: t('nav.lvl2_name'), theme: t('nav.lvl2_theme') },
+      { name: t('nav.lvl3_name'), theme: t('nav.lvl3_theme') }
+    ];
+
+    if (gameState.currentLevel === 'summary') {
+      navBar.innerHTML = 
+        '<div class="nav-item active" style="max-width: 220px; flex: initial; width: 100%;">' +
+          '<span class="nav-title-main">' + t('nav.summary') + '</span>' +
+        '</div>';
+    } else {
+      navBar.innerHTML = levelInfo.map((info, idx) => {
+        const lvlNum = idx + 1;
+        const isCurrent = (gameState.currentLevel === lvlNum);
+        const isCompleted = gameState.levels[lvlNum] && gameState.levels[lvlNum].submitted && !isCurrent;
+        const isLocked = lvlNum > gameState.maxUnlockedLevel;
+
+        let stateClass = "";
+        let clickAttr = "";
+
+        if (isCurrent) {
+          stateClass = "active";
+          clickAttr = 'onclick="goToLevel(' + lvlNum + ')"';
+        } else if (isCompleted) {
+          stateClass = "completed";
+          clickAttr = 'onclick="handleCompletedLevelClick(' + lvlNum + ')"';
+        } else if (isLocked) {
+          stateClass = "locked";
+          clickAttr = 'disabled style="pointer-events: none;"';
+        } else {
+          stateClass = "";
+          clickAttr = 'onclick="goToLevel(' + lvlNum + ')"';
+        }
+
+        return '<div id="nav-' + lvlNum + '" class="nav-item ' + stateClass + '" ' + clickAttr + '>' +
+            '<span class="nav-title-main">' + info.name + '</span>' +
+            '<span class="nav-title-sub">' + info.theme + '</span>' +
+          '</div>';
+      }).join('');
+    }
+  }
+
+  function renderHome(container) {
+    container.innerHTML = 
+      '<div class="home-wrapper">' +
+        '<div class="intro-back-wrap">' +
+          '<button type="button" onclick="goToLevelSelect()" class="btn-sub-nav" style="flex: initial; padding: 8px 20px; background-color: #FFFFFF;">' +
+            t('home.back') +
+          '</button>' +
+        '</div>' +
+        '<div class="home-header">' +
+          '<h2 class="home-main-title">' + t('game.title') + '</h2>' +
+          '<div class="home-subtitle">' + t('home.subtitle') + '</div>' +
+        '</div>' +
+        '<div class="home-card">' +
+          '<div class="home-icon-box">' +
+            '<svg viewBox="0 0 100 100" class="home-icon-svg">' +
+              '<circle cx="50" cy="50" r="38" fill="#ffffff" stroke="#4F7058" stroke-width="6"/>' +
+              '<line x1="50" y1="50" x2="50" y2="26" stroke="#C85A5A" stroke-width="7" stroke-linecap="round"/>' +
+              '<line x1="50" y1="50" x2="72" y2="50" stroke="#4A7A96" stroke-width="5" stroke-linecap="round"/>' +
+              '<circle cx="50" cy="50" r="5" fill="#4F7058"/>' +
+            '</svg>' +
+          '</div>' +
+          '<div class="home-card-content">' +
+            '<span class="home-badge">' + t('nav.lvl1_name') + '</span>' +
+            '<div class="home-card-title">' + t('nav.lvl1_theme') + '</div>' +
+            '<div class="home-card-desc">' + t('home.card1_desc') + '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="home-card">' +
+          '<div class="home-icon-box">' +
+            /* 重構後的第二關太陽+白雲晴空 SVG Icon */
+            '<svg viewBox="0 0 100 100" class="home-icon-svg">' +
+              '<defs>' +
+                '<linearGradient id="sunGrad" x1="0%" y1="0%" x2="100%" y2="100%">' +
+                  '<stop offset="0%" stop-color="#FFE082"/>' +
+                  '<stop offset="100%" stop-color="#FF9800"/>' +
+                '</linearGradient>' +
+              '</defs>' +
+              '<g stroke="#FFA726" stroke-width="4.5" stroke-linecap="round">' +
+                '<line x1="42" y1="14" x2="42" y2="20"/>' +
+                '<line x1="14" y1="42" x2="20" y2="42"/>' +
+                '<line x1="22" y1="22" x2="27" y2="27"/>' +
+                '<line x1="62" y1="22" x2="57" y2="27"/>' +
+              '</g>' +
+              '<circle cx="42" cy="42" r="21" fill="url(#sunGrad)"/>' +
+              '<path d="M 42 70 H 76 A 11 11 0 0 0 76 48 A 14 14 0 0 0 50 42 A 12 12 0 0 0 42 70 Z" fill="#FFFFFF" stroke="#4F7058" stroke-width="4" stroke-linejoin="round"/>' +
+            '</svg>' +
+          '</div>' +
+          '<div class="home-card-content">' +
+            '<span class="home-badge">' + t('nav.lvl2_name') + '</span>' +
+            '<div class="home-card-title">' + t('nav.lvl2_theme') + '</div>' +
+            '<div class="home-card-desc">' + t('home.card2_desc') + '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="home-card">' +
+          '<div class="home-icon-box">' +
+            '<svg viewBox="0 0 100 100" class="home-icon-svg">' +
+              '<rect x="20" y="24" width="60" height="56" rx="10" fill="#ffffff" stroke="#4F7058" stroke-width="5"/>' +
+              '<path d="M20 40 L80 40" stroke="#4F7058" stroke-width="4"/>' +
+              '<line x1="36" y1="16" x2="36" y2="26" stroke="#4F7058" stroke-width="5" stroke-linecap="round"/>' +
+              '<line x1="64" y1="16" x2="64" y2="26" stroke="#4F7058" stroke-width="5" stroke-linecap="round"/>' +
+              '<circle cx="38" cy="54" r="4" fill="#4F7058"/>' +
+              '<circle cx="62" cy="54" r="4" fill="#4F7058"/>' +
+              '<circle cx="38" cy="68" r="4" fill="#4F7058"/>' +
+              '<circle cx="62" cy="68" r="4" fill="#4F7058"/>' +
+            '</svg>' +
+          '</div>' +
+          '<div class="home-card-content">' +
+            '<span class="home-badge">' + t('nav.lvl3_name') + '</span>' +
+            '<div class="home-card-title">' + t('nav.lvl3_theme') + '</div>' +
+            '<div class="home-card-desc">' + t('home.card3_desc') + '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="home-action-bar">' +
+          '<button class="btn-start-game" onclick="startGame()">' + t('home.start') + '</button>' +
+        '</div>' +
+      '</div>';
+  }
+
+  function getLevel2QuestionText(question) {
+    return question.qKey
+      ? t(question.qKey)
+      : t('lvl2.q_prefix') + t(question.timeKey) + t('lvl2.q_suffix');
+  }
+
+  function getLevel2QuestionHTML(question) {
+    // 英文時間題固定分成兩個完整語意行，避免句尾只剩單獨的 "like?"。
+    if (currentLang === 'en' && !question.qKey && question.timeKey) {
+      return '<span class=\"question-line\">' + t('lvl2.q_prefix') + t(question.timeKey) + '.</span>' +
+        '<span class=\"question-line\">' + t('lvl2.q.prompt') + '</span>';
+    }
+    return getLevel2QuestionText(question);
+  }
+
+  function getLevel2OptionText(question, optionKey) {
+    const option = question.options.find(function(item) { return item.key === optionKey; });
+    return option ? t(option.optKey) : '—';
+  }
+
+  function getSummaryClockTime(hour, minute) {
+    return padZero(hour) + ':' + padZero(minute);
+  }
+
+  function renderSummaryClockPreview(hour, minute) {
+    const cx = 90, cy = 90;
+    let numbers = '';
+    for (let i = 1; i <= 12; i++) {
+      const rad = (i * 30 - 90) * (Math.PI / 180);
+      const x = cx + 64 * Math.cos(rad);
+      const y = cy + 64 * Math.sin(rad);
+      numbers += '<text x="' + x.toFixed(2) + '" y="' + y.toFixed(2) + '" text-anchor="middle" dominant-baseline="central" font-size="10" font-weight="700" fill="#35473C">' + i + '</text>';
+    }
+    const hourAngle = (hour % 12) * 30 + minute * 0.5;
+    const minuteAngle = minute * 6;
+    const hourRad = (hourAngle - 90) * Math.PI / 180;
+    const minuteRad = (minuteAngle - 90) * Math.PI / 180;
+    const hourX = cx + 34 * Math.cos(hourRad);
+    const hourY = cy + 34 * Math.sin(hourRad);
+    const minuteX = cx + 51 * Math.cos(minuteRad);
+    const minuteY = cy + 51 * Math.sin(minuteRad);
+    return '<svg class="summary-clock-preview" viewBox="0 0 180 180" role="img" aria-label="' + getSummaryClockTime(hour, minute) + '">' +
+      '<circle cx="90" cy="90" r="82" fill="#FFFFFF" stroke="#4F7058" stroke-width="5"/>' +
+      numbers +
+      '<line x1="90" y1="90" x2="' + hourX.toFixed(2) + '" y2="' + hourY.toFixed(2) + '" stroke="#C85A5A" stroke-width="6" stroke-linecap="round"/>' +
+      '<line x1="90" y1="90" x2="' + minuteX.toFixed(2) + '" y2="' + minuteY.toFixed(2) + '" stroke="#4A7A96" stroke-width="4" stroke-linecap="round"/>' +
+      '<circle cx="90" cy="90" r="5" fill="#4F7058"/>' +
+      '</svg>';
+  }
+
+  function renderLevel1SummaryDetail() {
+    const lvl = gameState.levels[1];
+    if (!lvl || !lvl.submitted) {
+      return '<p class="summary-review-empty">' + t('summary.empty') + '</p>';
+    }
+    // 若這是較早版本的同一輪狀態，仍可由已保存的時鐘數值還原實際設定；不捏造繪圖或評語。
+    const record = lvl.reviewRecord || {
+      targetHour: lvl.targetHour,
+      targetMin: lvl.targetMin,
+      userHour: lvl.userHour,
+      userMin: lvl.userMin,
+      hourCorrect: lvl.userHour === lvl.targetHour,
+      minuteCorrect: lvl.userMin === lvl.targetMin,
+      score: lvl.score
+    };
+    const targetTime = getSummaryClockTime(record.targetHour, record.targetMin);
+    const userTime = getSummaryClockTime(record.userHour, record.userMin);
+    const hourPoints = record.hourCorrect ? 50 : 0;
+    const minutePoints = record.minuteCorrect ? 50 : 0;
+    return '<div class="summary-review-card">' +
+      '<div class="summary-level1-result">' +
+        renderSummaryClockPreview(record.userHour, record.userMin) +
+        '<div class="summary-level1-info">' +
+          '<p class="summary-review-line"><strong>' + t('summary.target_time') + '</strong>' + targetTime + '</p>' +
+          '<p class="summary-review-line"><strong>' + t('summary.user_time') + '</strong>' + userTime + '</p>' +
+          '<p class="summary-review-line"><strong>' + t('settle.score_label') + '</strong>' + record.score + ' ' + t('summary.points_unit') + '</p>' +
+        '</div>' +
+      '</div>' +
+      '<div class="summary-level1-score-row"><span class="summary-review-line"><strong>' + t('summary.hour_hand') + '</strong></span><span class="summary-review-status">' + (record.hourCorrect ? t('summary.matched') : t('summary.needs_review')) + '・' + hourPoints + ' ' + t('summary.points_unit') + '</span></div>' +
+      '<div class="summary-level1-score-row"><span class="summary-review-line"><strong>' + t('summary.minute_hand') + '</strong></span><span class="summary-review-status">' + (record.minuteCorrect ? t('summary.matched') : t('summary.needs_review')) + '・' + minutePoints + ' ' + t('summary.points_unit') + '</span></div>' +
+    '</div>';
+  }
+
+  function renderLevel2SummaryDetail() {
+    const lvl = gameState.levels[2];
+    if (!lvl || !lvl.submitted || !Array.isArray(lvl.questionResults)) {
+      return '<p class="summary-review-empty">' + t('summary.empty') + '</p>';
+    }
+    const items = lvl.questionResults.map(function(result, index) {
+      if (!result) return '';
+      const question = result.questionData || (Array.isArray(lvl.questionSet)
+        ? lvl.questionSet.find(function(item) { return item.id === result.questionId; }) || lvl.questionSet[index]
+        : null);
+      if (!question || !Array.isArray(question.options)) return '';
+      const yourAnswer = getLevel2OptionText(question, result.selectedOption);
+      const correctKey = result.correctOption || question.correct;
+      const correctAnswer = getLevel2OptionText(question, correctKey);
+      const isCorrect = !!result.isCorrect;
+      return '<article class="summary-review-card ' + (isCorrect ? '' : 'is-wrong') + '">' +
+        '<h4 class="summary-review-item-title">' + t('summary.question') + (index + 1) + t('summary.question_suffix') +
+          '<span class="summary-review-status">' + (isCorrect ? t('summary.correct') : t('summary.wrong')) + '</span>' +
+        '</h4>' +
+        '<p class="summary-review-line"><strong>' + getLevel2QuestionText(question) + '</strong></p>' +
+        '<p class="summary-review-line">' + t('summary.question_answer') + yourAnswer + '</p>' +
+        (isCorrect ? '' :
+          '<p class="summary-review-line">' + t('summary.correct_answer') + '<strong>' + correctAnswer + '</strong></p>' +
+          '<p class="summary-review-tip">' + t('summary.tip') + t(question.explanationKey) + '</p>') +
+      '</article>';
+    }).filter(Boolean).join('');
+    return items || '<p class="summary-review-empty">' + t('summary.empty') + '</p>';
+  }
+
+  function getLevel3OptionText(question, optionKey) {
+    if (!question || !Array.isArray(question.options)) return '—';
+    const option = question.options.find(function(item) { return item.key === optionKey; });
+    return option ? t(option.optKey) : '—';
+  }
+
+  function renderLevel3SummaryDetail() {
+    const lvl = gameState.levels[3];
+    if (!lvl || !lvl.submitted) {
+      return '<p class="summary-review-empty">' + t('summary.empty') + '</p>';
+    }
+    // 目前第三關原始流程每輪只抽一題；以陣列保存，未來若原機制有多題，可按作答順序完整呈現。
+    let records = Array.isArray(lvl.answerRecords) ? lvl.answerRecords : [];
+    if (!records.length && lvl.answerRecord) records = [lvl.answerRecord];
+    // 相容同一輪中已有 questionData + selectedOption 的舊狀態，只讀取真實保存值。
+    if (!records.length && lvl.questionData && lvl.selectedOption) {
+      records = [{
+        questionData: lvl.questionData,
+        selectedOption: lvl.selectedOption,
+        correctOption: lvl.questionData.correct,
+        isCorrect: lvl.selectedOption === lvl.questionData.correct,
+        score: lvl.score
+      }];
+    }
+    const items = records.map(function(record, index) {
+      const question = record && record.questionData;
+      if (!question || !record.selectedOption) return '';
+      const isCorrect = !!record.isCorrect;
+      const yourAnswer = getLevel3OptionText(question, record.selectedOption);
+      const correctAnswer = getLevel3OptionText(question, record.correctOption || question.correct);
+      return '<article class="summary-review-card ' + (isCorrect ? '' : 'is-wrong') + '">' +
+        '<h4 class="summary-review-item-title">' + t('summary.question') + (index + 1) + t('summary.question_suffix') +
+          '<span class="summary-review-status">' + (isCorrect ? t('summary.correct') : t('summary.wrong')) + '</span>' +
+        '</h4>' +
+        '<p class="summary-review-line"><strong>' + t(question.qKey) + '</strong></p>' +
+        '<p class="summary-review-line">' + t('summary.question_answer') + yourAnswer + '</p>' +
+        (isCorrect ? '' :
+          '<p class="summary-review-line">' + t('summary.correct_answer') + '<strong>' + correctAnswer + '</strong></p>' +
+          (question.explanationKey ? '<p class="summary-review-tip">' + t('summary.tip') + t(question.explanationKey) + '</p>' : '')) +
+      '</article>';
+    }).filter(Boolean).join('');
+    return items || '<p class="summary-review-empty">' + t('summary.empty') + '</p>';
+  }
+
+  function renderSummaryReviewAccordion() {
+    const sections = [
+      { level: 1, title: t('summary.l1_title'), content: renderLevel1SummaryDetail() },
+      { level: 2, title: t('summary.l2_title'), content: renderLevel2SummaryDetail() },
+      { level: 3, title: t('summary.l3_title'), content: renderLevel3SummaryDetail() }
+    ];
+    return '<section class="summary-review-section" aria-label="' + t('summary.review_title') + '">' +
+      '<h3 class="summary-review-title">' + t('summary.review_title') + '</h3>' +
+      '<p class="summary-review-subtitle">' + t('summary.review_hint') + '</p>' +
+      sections.map(function(section) {
+        const panelId = 'summary-review-panel-' + section.level;
+        return '<section class="summary-review-accordion">' +
+          '<button type="button" class="summary-review-toggle" id="summary-review-toggle-' + section.level + '" aria-expanded="false" aria-controls="' + panelId + '" onclick="toggleSummaryDetail(' + section.level + ')">' +
+            '<span>' + section.title + '</span><span class="summary-review-chevron" aria-hidden="true"></span>' +
+          '</button>' +
+          '<div class="summary-review-panel" id="' + panelId + '" aria-hidden="true">' +
+            '<div class="summary-review-panel-clip"><div class="summary-review-panel-content">' + section.content + '</div></div>' +
+          '</div>' +
+        '</section>';
+      }).join('') +
+    '</section>';
+  }
+
+  function toggleSummaryDetail(levelNum) {
+    const toggle = document.getElementById('summary-review-toggle-' + levelNum);
+    const panel = document.getElementById('summary-review-panel-' + levelNum);
+    if (!toggle || !panel) return;
+    const willOpen = toggle.getAttribute('aria-expanded') !== 'true';
+    toggle.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+    panel.classList.toggle('is-open', willOpen);
+    panel.setAttribute('aria-hidden', willOpen ? 'false' : 'true');
+  }
+
+  function renderLevelSettlement(levelNum, container) {
+    const lvl = gameState.levels[levelNum];
+    const score = lvl.score;
+    
+    let correctCount = 0;
+    let wrongCount = 0;
+
+    if (levelNum === 1) {
+      if (lvl.userHour === lvl.targetHour) correctCount++;
+      if (lvl.userMin === lvl.targetMin) correctCount++;
+      wrongCount = 2 - correctCount;
+    } else if (levelNum === 2) {
+      const results = Array.isArray(lvl.questionResults) ? lvl.questionResults : [];
+      correctCount = results.filter(function(result) { return result && result.isCorrect; }).length;
+      wrongCount = 1 - correctCount;
+    } else {
+      correctCount = score === 100 ? 1 : 0;
+      wrongCount = score === 100 ? 0 : 1;
+    }
+
+    const correctUnit = levelNum === 1
+      ? (correctCount === 1 ? t('settle.unit_item_one') : t('settle.unit_item_other'))
+      : (correctCount === 1 ? t('settle.unit_q_one') : t('settle.unit_q_other'));
+    const wrongUnit = levelNum === 1
+      ? (wrongCount === 1 ? t('settle.unit_item_one') : t('settle.unit_item_other'))
+      : (wrongCount === 1 ? t('settle.unit_q_one') : t('settle.unit_q_other'));
+
+    const numKey = 'num.' + levelNum;
+    const levelCN = t(numKey);
+    const badge = getBadgeData(score);
+
+    let starsHTML = renderStarsSVG(badge.stars);
+    let scorePillHTML = badge.svg + ' ' + t('settle.score_label') + score + t('settle.score_unit');
+
+    let btnText = levelNum === 1 ? t('btn.next_lvl2') : (levelNum === 2 ? t('btn.next_lvl3') : t('btn.next_summary'));
+    let btnAction = levelNum === 1 ? 'goToLevel(2)' : (levelNum === 2 ? 'goToLevel(3)' : 'showFinalSummary()');
+
+
+    container.innerHTML = 
+      '<div class="settlement-card">' +
+        '<h2 class="settlement-title">' + t('settle.title_prefix') + levelCN + t('settle.title_suffix') + '</h2>' +
+        '<div class="settlement-stars">' + starsHTML + '</div>' +
+        '<div class="settlement-score-pill">' + scorePillHTML + '</div>' +
+        '<div class="settlement-encouragement">' + badge.comment + '</div>' +
+        '<div class="settlement-table-card">' +
+          '<div class="settlement-table-row row-correct">' +
+            '<span class="settlement-row-label">' + t('settle.correct_label') + '</span>' +
+            '<span class="settlement-row-val">' + correctCount + correctUnit + '</span>' +
+          '</div>' +
+          '<div class="settlement-table-row row-wrong">' +
+            '<span class="settlement-row-label">' + t('settle.wrong_label') + '</span>' +
+            '<span class="settlement-row-val">' + wrongCount + wrongUnit + '</span>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div style="display: flex; justify-content: center; margin-top: 14px;">' +
+        '<button class="btn-settlement-next" onclick="' + btnAction + '">' + btnText + '</button>' +
+      '</div>';
+  }
+
+  function renderFinalSummary(container) {
+    const s1 = gameState.levels[1].score || 0;
+    const s2 = gameState.levels[2].score || 0;
+    const s3 = gameState.levels[3].score || 0;
+    const avgScore = Math.round((s1 + s2 + s3) / 3);
+    const isPerfect = (s1 === 100 && s2 === 100 && s3 === 100);
+    
+    const bFinal = getBadgeData(avgScore);
+    const b1 = getBadgeData(s1);
+    const b2 = getBadgeData(s2);
+    const b3 = getBadgeData(s3);
+
+    const formatScore = function(score) {
+      return (Number(score) || 0) + t('settle.score_unit');
+    };
+    const formatLevelScore = function(level) {
+      // 尚未挑戰的關卡依既有規則計為 0 分；畫面直接呈現實際數值，不顯示「待挑戰」。
+      return (Number(level && level.score) || 0) + t('settle.score_unit');
+    };
+    
+    const confettiColors = ['#e91e63', '#4caf50', '#2196f3', '#ffeb3b', '#ff9800', '#9c27b0', '#00bcd4', '#ff5722'];
+    let confettiHTML = '';
+    for (let i = 0; i < 24; i++) {
+      const left = Math.floor((i / 24) * 92 + 4 + (Math.random() * 3 - 1.5));
+      const color = confettiColors[i % confettiColors.length];
+      const delay = (Math.random() * 2.5).toFixed(2);
+      const duration = (2.4 + Math.random() * 1.2).toFixed(2);
+      const isCircle = i % 3 === 0;
+      confettiHTML += '<span class="confetti-piece" style="left:' + left + '%; background:' + color + '; width:' + (isCircle ? '8px' : '7px') + '; height:' + (isCircle ? '13px' : '9px') + '; border-radius:' + (isCircle ? '50%' : '2px') + '; animation-delay:' + delay + 's; animation-duration:' + duration + 's;"></span>';
     }
     
-    let cheerAudioInstance = null;
-    let currentSourceIdx = 0;
-    const CHEER_MP3_SOURCES = [
-      "https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3",
-      "https://cdn.freesound.org/previews/391/391539_5121236-lq.mp3"
-    ];
-    function playCheerSound() {
-      try {
-        if (!cheerAudioInstance) {
-          cheerAudioInstance = new Audio();
-          cheerAudioInstance.crossOrigin = "anonymous";
-          cheerAudioInstance.src = CHEER_MP3_SOURCES[0];
-        }
-        cheerAudioInstance.pause();
-        cheerAudioInstance.currentTime = 0;
-        const playPromise = cheerAudioInstance.play();
-        if (playPromise !== undefined) {
-          playPromise.catch(err => {
-            currentSourceIdx = (currentSourceIdx + 1) % CHEER_MP3_SOURCES.length;
-            cheerAudioInstance.src = CHEER_MP3_SOURCES[currentSourceIdx];
-            cheerAudioInstance.play().catch(e => console.log("Audio play prevented:", e));
-          });
-        }
-      } catch (e) {
-        console.log("Audio play error:", e);
-      }
-    }
+    playCheerSound();
+    
+    const actionButtonsHTML = 
+      '<div class="summary-action-group">' +
+        '<button type="button" class="btn-play-again" onclick="restartGame()">' + t('btn.play_again') + '</button>' +
+        '<div class="sub-nav-row">' +
+          '<button type="button" class="btn-sub-nav" onclick="navToGameCategories()">' + t('btn.game_cat') + '</button>' +
+          '<button type="button" class="btn-sub-nav" onclick="navToPlatformHome()">' + t('btn.home') + '</button>' +
+        '</div>' +
+      '</div>';
 
-    /* ==========================================
-       圖片管理區 IMAGE_CONFIG
-       ========================================== */
-    const IMAGE_CONFIG = {
-      sky_sun: "https://lh3.googleusercontent.com/d/1ql4YhwzW9DAMo4XdK-Zc59QmQgWgRSJr",
-      sky_sunset: "https://lh3.googleusercontent.com/d/1X52WUDMHPAzPLU5WDovFtFZZt1OQCqV0",
-      sky_stars: "https://lh3.googleusercontent.com/d/1BtcYgf1Rrhwdx_Vzas8T0r2xNR8sAiLU",
-      breakfast: "https://lh3.googleusercontent.com/d/14C7lpXKZ2CW-bGumxPc4aCG3qjpulDq3",
-      lunch: "https://lh3.googleusercontent.com/d/1tKQp69NF51sx8GRpeYVf2-M1dSFoGt19",
-      dinner: "https://lh3.googleusercontent.com/d/1mWPQHnSivu9LMmaYUP437-fC82bFpVsE",
-      jacket: "https://lh3.googleusercontent.com/d/1FLCGOkIRXpTRlOYRz1A3_vJAy0e_LNgd",
-      sweep: "https://lh3.googleusercontent.com/d/19GXxe8F8OUL70jTYs1MMu85dXlG0MfdT",
-      water: "https://lh3.googleusercontent.com/d/1ood6XACgZQ56HvpTMzeMs5vShyoPTQ3R",
-      lights_on: "https://lh3.googleusercontent.com/d/1yuhZQtzMe8nw7yvgJX_IxOj70skTRjUX",
-      lights_off: "https://lh3.googleusercontent.com/d/1XyeU2NB9e9eEFoIgxaRZxZlwhF1pQQly",
-      sunset_room: "https://lh3.googleusercontent.com/d/1T2-TdX3-ijUxGb6o2SC6uSOdzzbIQ-7Y"
-    };
-    const SVG_FALLBACKS = {
-      sky_sun: `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='35' fill='%23FFD700'/><g stroke='%23FF8C00' stroke-width='4'><line x1='50' y1='5' x2='50' y2='12'/><line x1='50' y1='88' x2='50' y2='95'/><line x1='5' y1='50' x2='12' y2='50'/><line x1='88' y1='50' x2='95' y2='50'/><line x1='18' y1='18' x2='23' y2='23'/><line x1='77' y1='77' x2='82' y2='82'/><line x1='18' y1='82' x2='23' y2='77'/><line x1='77' y1='18' x2='82' y2='23'/></g></svg>`,
-      sky_stars: `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%231a237e'/><path d='M50 20 L53 35 L68 35 L56 44 L60 59 L50 50 L40 59 L44 44 L32 35 L47 35 Z' fill='%23FFD700'/><circle cx='20' cy='25' r='3' fill='%23FFF'/><circle cx='80' cy='30' r='2' fill='%23FFF'/><circle cx='75' cy='70' r='3' fill='%23FFF'/><circle cx='25' cy='75' r='2' fill='%23FFF'/></svg>`,
-      sky_sunset: `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23ff7043'/><path d='M0 60 Q50 40 100 60 L100 100 L0 100 Z' fill='%23d84315'/><circle cx='50' cy='60' r='25' fill='%23ffeb3b'/></svg>`,
-      generic: `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='90' height='90' x='5' y='5' rx='10' fill='%23EAF0E7' stroke='%234F7058' stroke-width='4'/><text x='50' y='55' font-size='28' text-anchor='middle' fill='%234F7058'>情境圖</text></svg>`
-    };
-    function getImgSrc(key) {
-      if (IMAGE_CONFIG[key] && IMAGE_CONFIG[key].trim() !== "") {
-        return IMAGE_CONFIG[key];
-      }
-      return SVG_FALLBACKS[key] || SVG_FALLBACKS.generic;
-    }
-    function handleImgError(img) {
-      img.onerror = null;
-      img.src = SVG_FALLBACKS.generic;
-    }
+    const decorStarsSVG = 
+      '<svg class="decor-stars" viewBox="0 0 40 40">' +
+        '<path d="M20 2 L23 15 L36 18 L23 21 L20 34 L17 21 L4 18 L17 15 Z" fill="#FFB74D"/>' +
+        '<path d="M32 24 L33.5 28.5 L38 29.5 L33.5 30.5 L32 35 L30.5 30.5 L26 29.5 L30.5 28.5 Z" fill="#FFE082"/>' +
+        '<path d="M10 4 L11 7.5 L14.5 8.5 L11 9.5 L10 13 L9 9.5 L5.5 8.5 L9 7.5 Z" fill="#FFE082"/>' +
+      '</svg>';
 
-    /* ==========================================
-       溫馨提示彈窗 (Modal) 邏輯
-       ========================================== */
-    function showCustomModal(title, content) {
-      let existingOverlay = document.getElementById('custom-modal-overlay');
-      if (existingOverlay) existingOverlay.remove();
-      
-      const overlay = document.createElement('div');
-      overlay.id = 'custom-modal-overlay';
-      overlay.className = 'modal-overlay';
-      overlay.innerHTML = `
-        <div class="modal-card">
-          <div class="modal-title">${title}</div>
-          <div class="modal-content">${content}</div>
-          <button class="btn-modal-close" onclick="closeCustomModal()">我知道了</button>
-        </div>
-      `;
-      document.body.appendChild(overlay);
-    }
-    function closeCustomModal() {
-      const overlay = document.getElementById('custom-modal-overlay');
-      if (overlay) overlay.remove();
-    }
+    let trophyGraphicHTML = isPerfect ? 
+      '<div class="perfect-graphic-group">' +
+        '<div class="side-decor">' + decorStarsSVG + '</div>' +
+        '<svg class="perfect-trophy-svg" viewBox="0 0 100 100">' +
+          '<defs>' +
+            '<linearGradient id="gold-grad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#FFE082"/><stop offset="30%" stop-color="#FFD54F"/><stop offset="55%" stop-color="#FFB300"/><stop offset="85%" stop-color="#FF8F00"/><stop offset="100%" stop-color="#FF6F00"/></linearGradient>' +
+            '<linearGradient id="base-grad" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#8D6E63"/><stop offset="50%" stop-color="#5D4037"/><stop offset="100%" stop-color="#3E2723"/></linearGradient>' +
+            '<linearGradient id="stem-grad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#FFB300"/><stop offset="50%" stop-color="#FFE082"/><stop offset="100%" stop-color="#FF8F00"/></linearGradient>' +
+          '</defs>' +
+          '<path d="M 24 22 C 8 22, 8 46, 26 48 M 76 22 C 92 22, 92 46, 74 48" fill="none" stroke="url(#gold-grad)" stroke-width="5" stroke-linecap="round"/>' +
+          '<path d="M 22 18 L 78 18 L 70 54 C 66 68, 34 68, 30 54 Z" fill="url(#gold-grad)"/>' +
+          '<ellipse cx="50" cy="18" rx="28" ry="5" fill="#FFE082"/>' +
+          '<path d="M 32 22 L 40 22 C 37 38, 38 48, 36 56 C 34 54, 33 40, 32 22 Z" fill="#FFFFFF" opacity="0.45"/>' +
+          '<rect x="43" y="66" width="14" height="12" fill="url(#stem-grad)"/>' +
+          '<ellipse cx="50" cy="66" rx="10" ry="3" fill="#FFA000"/>' +
+          '<path d="M 28 78 L 72 78 L 76 92 L 24 92 Z" fill="url(#base-grad)"/>' +
+          '<rect x="24" y="78" width="52" height="4" fill="#A1887F"/>' +
+        '</svg>' +
+        '<div class="side-decor">' + decorStarsSVG + '</div>' +
+      '</div>' : '';
 
-    /* ==========================================
-       狀態管理 (State Management)
-       ========================================== */
-    const gameState = {
-      currentLevel: 'home',
-      levels: {
-        1: { completed: false, submitted: false, score: 0, targetHour: 3, targetMin: 30, userHour: 12, userMin: 0, activeHand: 'minute' },
-        2: { completed: false, submitted: false, score: 0, questionData: null, selectedOption: null },
-        3: { completed: false, submitted: false, score: 0, questionData: null, selectedOption: null }
-      }
-    };
+    container.innerHTML = 
+      '<div class="settlement-card">' +
+        '<div class="confetti-container">' + confettiHTML + '</div>' +
+        '<h2 class="settlement-title">' + (isPerfect ? t('final.perfect_title') : t('final.normal_title')) + '</h2>' +
+        trophyGraphicHTML +
+        '<div class="settlement-stars">' + renderStarsSVG(bFinal.stars) + '</div>' +
+        '<div class="badge-pill-tag ' + bFinal.cssClass + '">' + bFinal.svg + ' <span style="margin-left:4px;">' + t('final.avg_label') + '<strong>' + formatScore(avgScore) + '</strong></span></div>' +
+        '<div class="settlement-encouragement">' + (isPerfect ? t('final.perfect_encourage') : bFinal.comment) + '</div>' +
+        '<div class="summary-breakdown-wrapper">' +
+          '<div class="summary-breakdown-box ' + (isPerfect ? 'active-anim' : '') + '">' +
+            '<div class="clapping-hand-breakdown">👏</div>' +
+            '<div class="summary-breakdown-row"><span>' + t('final.l1_label') + '</span><span class="summary-breakdown-score">' + b1.svg + ' ' + formatLevelScore(gameState.levels[1]) + '</span></div>' +
+            '<div class="summary-breakdown-row"><span>' + t('final.l2_label') + '</span><span class="summary-breakdown-score">' + b2.svg + ' ' + formatLevelScore(gameState.levels[2]) + '</span></div>' +
+            '<div class="summary-breakdown-row"><span>' + t('final.l3_label') + '</span><span class="summary-breakdown-score">' + b3.svg + ' ' + formatLevelScore(gameState.levels[3]) + '</span></div>' +
+          '</div>' +
+        '</div>' +
+        renderSummaryReviewAccordion() +
+        '<div><button class="btn-clap-sound" onclick="playCheerSound()">' + t('btn.replay_clap') + '</button></div>' +
+      '</div>' +
+      actionButtonsHTML;
+  }
 
-    window.addEventListener('DOMContentLoaded', () => {
-      setupLevel1Question();
-      setupLevel2Question();
-      setupLevel3Question();
-      renderCurrentStage();
-    });
-
-    function startGame() {
-      gameState.currentLevel = 1;
-      gameState.levels[1] = { completed: false, submitted: false, score: 0, targetHour: 3, targetMin: 30, userHour: 12, userMin: 0, activeHand: 'minute' };
-      gameState.levels[2] = { completed: false, submitted: false, score: 0, questionData: null, selectedOption: null };
-      gameState.levels[3] = { completed: false, submitted: false, score: 0, questionData: null, selectedOption: null };
-      
-      setupLevel1Question();
-      setupLevel2Question();
-      setupLevel3Question();
-      renderCurrentStage();
-    }
-
-    function restartGame() {
-      gameState.currentLevel = 'home';
-      gameState.levels[1] = { completed: false, submitted: false, score: 0, targetHour: 3, targetMin: 30, userHour: 12, userMin: 0, activeHand: 'minute' };
-      gameState.levels[2] = { completed: false, submitted: false, score: 0, questionData: null, selectedOption: null };
-      gameState.levels[3] = { completed: false, submitted: false, score: 0, questionData: null, selectedOption: null };
-      
-      setupLevel1Question();
-      setupLevel2Question();
-      setupLevel3Question();
-      renderCurrentStage();
-    }
-
-    function showFinalSummary() {
-      gameState.currentLevel = 'summary';
-      renderCurrentStage();
-    }
-
-    function renderCurrentStage() {
-      const mainHeader = document.getElementById('main-header');
-      const container = document.getElementById('game-container');
-      
-      if (gameState.currentLevel === 'home') {
-        if (mainHeader) mainHeader.style.display = 'none';
-        renderHome(container);
-      } else if (gameState.currentLevel === 'summary') {
-        if (mainHeader) mainHeader.style.display = 'block';
-        updateNavBar();
-        renderFinalSummary(container);
-      } else {
-        if (mainHeader) mainHeader.style.display = 'block';
-        updateNavBar();
-        
-        if (gameState.currentLevel === 1) renderLevel1(container);
-        else if (gameState.currentLevel === 2) renderLevel2(container);
-        else if (gameState.currentLevel === 3) renderLevel3(container);
-      }
-    }
-
-    function updateNavBar() {
-      const navBar = document.getElementById("nav-bar");
-      if (!navBar) return;
-      if (gameState.currentLevel === 'summary') {
-        navBar.innerHTML = `<div class="nav-item active" style="max-width: 180px; margin: 0 auto; cursor: default; background-color: #ffffff; color: var(--primary-color); font-weight: bold; border: 2px solid var(--primary-color);">成績結算</div>`;
-      } else {
-        navBar.innerHTML = `
-          <div id="nav-1" class="nav-item" onclick="goToLevel(1)">第一關</div>
-          <div id="nav-2" class="nav-item" onclick="goToLevel(2)">第二關</div>
-          <div id="nav-3" class="nav-item" onclick="goToLevel(3)">第三關</div>
-        `;
-        const titles = ["第一關", "第二關", "第三關"];
-        for (let i = 1; i <= 3; i++) {
-          const navEl = document.getElementById(`nav-${i}`);
-          if (!navEl) continue;
-          const lvlData = gameState.levels[i];
-          navEl.textContent = titles[i - 1];
-          navEl.className = "nav-item";
-          if (gameState.currentLevel === i) navEl.classList.add("active");
-          if (lvlData && lvlData.submitted) navEl.classList.add("completed");
-        }
-      }
-    }
-
-    /* ==========================================
-       說明首頁 (Home Page Render)
-       ========================================== */
-    function renderHome(container) {
-      container.innerHTML = `
-        <div class="home-wrapper">
-          <div class="intro-back-wrap">
-            <button type="button" onclick="goToLevelSelect()" class="btn-sub-nav" style="flex: initial; padding: 6px 18px; background-color: #FFFFFF;">
-              ← 返回遊戲分類
-            </button>
-          </div>
-          <div class="home-header">
-            <h2 class="home-main-title">看時間回答遊戲</h2>
-            <div class="home-subtitle">透過生活時間題，動動腦、想一想！</div>
-          </div>
-          <div class="home-card">
-            <div class="home-icon-box">
-              <svg viewBox="0 0 100 100" class="home-icon-svg">
-                <circle cx="50" cy="50" r="38" fill="#ffffff" stroke="#4F7058" stroke-width="6"/>
-                <line x1="50" y1="50" x2="50" y2="26" stroke="#C85A5A" stroke-width="7" stroke-linecap="round"/>
-                <line x1="50" y1="50" x2="72" y2="50" stroke="#4A7A96" stroke-width="5" stroke-linecap="round"/>
-                <circle cx="50" cy="50" r="5" fill="#4F7058"/>
-              </svg>
-            </div>
-            <div class="home-card-content">
-              <span class="home-badge">第一關</span>
-              <div class="home-card-title">撥動時鐘</div>
-              <div class="home-card-desc">調整時鐘指針，讓時鐘顯示指定的時間。</div>
-            </div>
-          </div>
-          <div class="home-card">
-            <div class="home-icon-box">
-              <svg viewBox="0 0 100 100" class="home-icon-svg">
-                <circle cx="50" cy="46" r="22" fill="#FFD700" stroke="#E5C158" stroke-width="4"/>
-                <path d="M50 12 L50 20 M50 72 L50 80 M16 46 L24 46 M76 46 L84 46 M26 22 L32 28 M68 64 L74 70 M26 70 L32 64 M68 22 L74 28" stroke="#E5C158" stroke-width="4" stroke-linecap="round"/>
-              </svg>
-            </div>
-            <div class="home-card-content">
-              <span class="home-badge">第二關</span>
-              <div class="home-card-title">判斷天空</div>
-              <div class="home-card-desc">看看現在的時間，選出符合的天空圖片。</div>
-            </div>
-          </div>
-          <div class="home-card">
-            <div class="home-icon-box">
-              <svg viewBox="0 0 100 100" class="home-icon-svg">
-                <rect x="20" y="24" width="60" height="56" rx="10" fill="#ffffff" stroke="#4F7058" stroke-width="5"/>
-                <path d="M20 40 L80 40" stroke="#4F7058" stroke-width="4"/>
-                <line x1="36" y1="16" x2="36" y2="26" stroke="#4F7058" stroke-width="5" stroke-linecap="round"/>
-                <line x1="64" y1="16" x2="64" y2="26" stroke="#4F7058" stroke-width="5" stroke-linecap="round"/>
-                <circle cx="38" cy="54" r="4" fill="#4F7058"/>
-                <circle cx="62" cy="54" r="4" fill="#4F7058"/>
-                <circle cx="38" cy="68" r="4" fill="#4F7058"/>
-                <circle cx="62" cy="68" r="4" fill="#4F7058"/>
-              </svg>
-            </div>
-            <div class="home-card-content">
-              <span class="home-badge">第三關</span>
-              <div class="home-card-title">日常生活</div>
-              <div class="home-card-desc">根據時間和生活情境，選出適合的活動。</div>
-            </div>
-          </div>
-          <div class="home-reminder-box">💡 遊戲小提醒：仔細看題目，選好答案再完成作答。</div>
-          <div class="home-action-bar">
-            <button class="btn-start-game" onclick="startGame()">開始遊戲 ❯</button>
-          </div>
-        </div>
-      `;
-    }
-
-    /* ==========================================
-       三關獨立結算畫面渲染器
-       ========================================== */
-    function renderLevelSettlement(levelNum, container) {
-      const lvl = gameState.levels[levelNum];
-      const score = lvl.score;
-      const correctCount = score === 100 ? 1 : 0;
-      const wrongCount = score === 100 ? 0 : 1;
-      
-      const levelCN = levelNum === 1 ? '一' : (levelNum === 2 ? '二' : '三');
-      let stars = levelNum === 1 ? '⭐' : (levelNum === 2 ? '⭐⭐' : '⭐⭐⭐');
-      
-      let encouragement = score === 100 
-        ? '答得很好！真棒！您對時間概念非常敏銳！' 
-        : '沒關係！一起看看正確答案，多練習就會越來越熟悉！';
-      
-      let btnText = levelNum === 1 ? '前往第二關' : (levelNum === 2 ? '前往第三關' : '完成遊戲，查看總成績');
-      let btnAction = levelNum === 1 ? 'goToLevel(2)' : (levelNum === 2 ? 'goToLevel(3)' : 'showFinalSummary()');
-
-      container.innerHTML = `
-        <div class="settlement-card">
-          <h2 class="settlement-title">第${levelCN}關完成！</h2>
-          <div class="settlement-stars">${stars}</div>
-          <div class="settlement-score-pill">本關得分：<strong>${score}</strong> 分</div>
-          <div class="settlement-result-box">
-            <div class="settlement-result-title">本關答題結果</div>
-            <div class="settlement-tags-group">
-              <span class="tag-correct">答對：<strong>${correctCount}</strong> 題</span>
-              <span class="tag-wrong">未答對：<strong>${wrongCount}</strong> 題</span>
-            </div>
-          </div>
-          <div class="settlement-encouragement">${encouragement}</div>
-        </div>
-        <div style="display: flex; justify-content: center; margin-top: 8px;">
-          <button class="btn-settlement-next" style="width: 100%; max-width: 420px; height: 48px; background-color: var(--primary-color); color: #ffffff; font-size: clamp(1.15rem, 3.8vw, 1.3rem); font-weight: 800; border: none; border-radius: 30px; cursor: pointer; box-shadow: 0 4px 12px rgba(79, 112, 88, 0.25);" onclick="${btnAction}">${btnText}</button>
-        </div>
-      `;
-    }
-
-    /* ==========================================
-       獨立總成績畫面渲染器
-       ========================================== */
-    function renderFinalSummary(container) {
-      const s1 = gameState.levels[1].score || 0;
-      const s2 = gameState.levels[2].score || 0;
-      const s3 = gameState.levels[3].score || 0;
-      const avgScore = Math.round((s1 + s2 + s3) / 3);
-      const isPerfect = (s1 === 100 && s2 === 100 && s3 === 100);
-      
-      const confettiColors = ['#e91e63', '#4caf50', '#2196f3', '#ffeb3b', '#ff9800', '#9c27b0', '#00bcd4', '#ff5722'];
-      let confettiHTML = '';
-      for (let i = 0; i < 24; i++) {
-        const left = Math.floor((i / 24) * 92 + 4 + (Math.random() * 3 - 1.5));
-        const color = confettiColors[i % confettiColors.length];
-        const delay = (Math.random() * 2.5).toFixed(2);
-        const duration = (2.4 + Math.random() * 1.2).toFixed(2);
-        const isCircle = i % 3 === 0;
-        confettiHTML += `<span class="confetti-piece" style="left:${left}%; background:${color}; width:${isCircle ? '8px' : '7px'}; height:${isCircle ? '13px' : '9px'}; border-radius:${isCircle ? '50%' : '2px'}; animation-delay:${delay}s; animation-duration:${duration}s;"></span>`;
-      }
-      
-      playCheerSound();
-      
-      const actionButtonsHTML = `
-        <div class="summary-action-group">
-          <button type="button" class="btn-play-again" onclick="restartGame()">再玩一次</button>
-          <div class="sub-nav-row">
-            <button type="button" class="btn-sub-nav" onclick="goToLevelSelect()">回到遊戲分類</button>
-            <button type="button" class="btn-sub-nav" onclick="goToHome()">回首頁</button>
-          </div>
-        </div>
-      `;
-
-      if (isPerfect) {
-        const decorStarsSVG = `
-          <svg class="decor-stars" viewBox="0 0 40 40">
-            <path d="M20 2 L23 15 L36 18 L23 21 L20 34 L17 21 L4 18 L17 15 Z" fill="#FFB74D"/>
-            <path d="M32 24 L33.5 28.5 L38 29.5 L33.5 30.5 L32 35 L30.5 30.5 L26 29.5 L30.5 28.5 Z" fill="#FFE082"/>
-            <path d="M10 4 L11 7.5 L14.5 8.5 L11 9.5 L10 13 L9 9.5 L5.5 8.5 L9 7.5 Z" fill="#FFE082"/>
-          </svg>
-        `;
-        container.innerHTML = `
-          <div class="settlement-card">
-            <div class="confetti-container">${confettiHTML}</div>
-            <h2 class="settlement-title">太棒了！三關滿分！</h2>
-            <div class="perfect-graphic-group">
-              <div class="side-decor"><span class="perfect-clap-icon clap-left">👏</span>${decorStarsSVG}</div>
-              <svg class="perfect-trophy-svg" viewBox="0 0 100 100">
-                <defs>
-                  <linearGradient id="gold-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stop-color="#FFE082"/><stop offset="30%" stop-color="#FFD54F"/><stop offset="55%" stop-color="#FFB300"/><stop offset="85%" stop-color="#FF8F00"/><stop offset="100%" stop-color="#FF6F00"/>
-                  </linearGradient>
-                  <linearGradient id="base-grad" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stop-color="#8D6E63"/><stop offset="50%" stop-color="#5D4037"/><stop offset="100%" stop-color="#3E2723"/>
-                  </linearGradient>
-                  <linearGradient id="stem-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stop-color="#FFB300"/><stop offset="50%" stop-color="#FFE082"/><stop offset="100%" stop-color="#FF8F00"/>
-                  </linearGradient>
-                </defs>
-                <path d="M 24 22 C 8 22, 8 46, 26 48 M 76 22 C 92 22, 92 46, 74 48" fill="none" stroke="url(#gold-grad)" stroke-width="5" stroke-linecap="round"/>
-                <path d="M 22 18 L 78 18 L 70 54 C 66 68, 34 68, 30 54 Z" fill="url(#gold-grad)"/>
-                <ellipse cx="50" cy="18" rx="28" ry="5" fill="#FFE082"/>
-                <path d="M 32 22 L 40 22 C 37 38, 38 48, 36 56 C 34 54, 33 40, 32 22 Z" fill="#FFFFFF" opacity="0.45"/>
-                <rect x="43" y="66" width="14" height="12" fill="url(#stem-grad)"/>
-                <ellipse cx="50" cy="66" rx="10" ry="3" fill="#FFA000"/>
-                <path d="M 28 78 L 72 78 L 76 92 L 24 92 Z" fill="url(#base-grad)"/>
-                <rect x="24" y="78" width="52" height="4" fill="#A1887F"/>
-              </svg>
-              <div class="side-decor"><span class="perfect-clap-icon clap-right">👏</span>${decorStarsSVG}</div>
-            </div>
-            <div class="settlement-stars"><span class="star-item star-1">★</span><span class="star-item star-2">★</span><span class="star-item star-3">★</span></div>
-            <div class="settlement-score-pill">總平均成績：<strong>${avgScore}</strong> 分</div>
-            <div class="summary-breakdown-box">
-              <div class="summary-breakdown-row"><span>第一關（撥動時鐘）：</span><span class="summary-breakdown-score">100 分</span></div>
-              <div class="summary-breakdown-row"><span>第二關（判斷天空）：</span><span class="summary-breakdown-score">100 分</span></div>
-              <div class="summary-breakdown-row"><span>第三關（日常生活）：</span><span class="summary-breakdown-score">100 分</span></div>
-            </div>
-            <div><button class="btn-clap-sound" onclick="playCheerSound()">🎉 重新播放鼓掌聲</button></div>
-            <div class="settlement-encouragement">太厲害了！表現完全正確，給自己一個最棒的鼓勵！</div>
-          </div>
-          ${actionButtonsHTML}
-        `;
-      } else {
-        container.innerHTML = `
-          <div class="settlement-card">
-            <div class="confetti-container">${confettiHTML}</div>
-            <h2 class="settlement-title">今天辛苦了！完成三關練習！</h2>
-            <div class="settlement-stars"><span class="star-item star-1">★</span><span class="star-item star-2">★</span><span class="star-item star-3">★</span></div>
-            <div class="settlement-score-pill">總平均成績：<strong>${avgScore}</strong> 分</div>
-            <div class="summary-breakdown-box">
-              <div class="summary-breakdown-row"><span>第一關（撥動時鐘）：</span><span class="summary-breakdown-score">${s1} 分</span></div>
-              <div class="summary-breakdown-row"><span>第二關（判斷天空）：</span><span class="summary-breakdown-score">${s2} 分</span></div>
-              <div class="summary-breakdown-row"><span>第三關（日常生活）：</span><span class="summary-breakdown-score">${s3} 分</span></div>
-            </div>
-            <div><button class="btn-clap-sound" onclick="playCheerSound()">🎉 重新播放鼓掌聲</button></div>
-            <div class="settlement-encouragement">沒關係！多練習就會越來越熟悉，繼續加油！</div>
-          </div>
-          ${actionButtonsHTML}
-        `;
-      }
-    }
-
-    /* ==========================================
-       第一關：撥動時鐘 邏輯
-       ========================================== */
-    function setupLevel1Question() {
-      const hours = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-      const mins = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
+  function setupLevel1Question() {
+    const hours = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+    const mins = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
+    do {
       gameState.levels[1].targetHour = hours[Math.floor(Math.random() * hours.length)];
       gameState.levels[1].targetMin = mins[Math.floor(Math.random() * mins.length)];
-      gameState.levels[1].userHour = 12;
-      gameState.levels[1].userMin = 0;
+    } while (gameState.levels[1].targetHour === 12 && gameState.levels[1].targetMin === 0);
+    
+    gameState.levels[1].userHour = 12;
+    gameState.levels[1].userMin = 0;
+  }
+  function padZero(num) { return num < 10 ? '0' + num : '' + num; }
+  
+  function renderLevel1(container) {
+    const lvl = gameState.levels[1];
+    
+    if (lvl.submitted) {
+      renderLevelSettlement(1, container);
+      return;
     }
-    function padZero(num) { return num < 10 ? '0' + num : '' + num; }
-    function renderLevel1(container) {
-      const lvl = gameState.levels[1];
-      if (lvl.submitted) { renderLevelSettlement(1, container); return; }
-      const targetTimeString = `${padZero(lvl.targetHour)}:${padZero(lvl.targetMin)}`;
-      container.innerHTML = `
-        <h2 class="section-title">撥動時鐘</h2>
-        <div class="question-box"><div class="question-text">請將時鐘轉到 ${targetTimeString}</div><div class="hint-text">點擊數字、刻度或直接拖曳指針調整時間。</div></div>
-        <div class="clock-container">
-          <svg id="clock-svg" class="clock-svg" viewBox="0 0 300 300">
-            <circle cx="150" cy="150" r="135" class="clock-face"/>
-            ${generateClockTicksAndNumbers()}
-            <circle cx="150" cy="150" r="8" fill="#4F7058"/>
-            <line id="hour-hand" x1="150" y1="150" x2="150" y2="90" class="hand-hour" />
-            <line id="minute-hand" x1="150" y1="150" x2="150" y2="55" class="hand-minute" />
-          </svg>
-          <div class="hand-select-group">
-            <button class="btn-hand ${lvl.activeHand === 'hour' ? 'active' : ''}" onclick="selectHand('hour')">選擇時針（短針）</button>
-            <button class="btn-hand ${lvl.activeHand === 'minute' ? 'active' : ''}" onclick="selectHand('minute')">選擇分針（長針）</button>
-          </div>
-        </div>
-        <div class="action-bar"><button id="btn-submit-1" class="btn btn-submit" onclick="submitLevel1()">完成並查看結果</button></div>
-        <div class="fixed-disclaimer">「請完成本關，再按『下一關』查看本關分數。」<br>「評分僅供練習參考。」</div>
-      `;
-      updateClockHands();
-      bindClockEvents();
+
+    const targetTimeString = padZero(lvl.targetHour) + ':' + padZero(lvl.targetMin);
+
+    container.innerHTML = 
+      '<div class="question-box clock-question-box">' +
+        '<div class="question-text">' + t('lvl1.q_prefix') + targetTimeString + t('lvl1.q_suffix') + '</div>' +
+        '<div class="hint-text">' + t('lvl1.hint') + '</div>' +
+      '</div>' +
+      '<div class="clock-container">' +
+        '<svg id="clock-svg" class="clock-svg" viewBox="0 0 300 300">' +
+          '<circle cx="150" cy="150" r="135" class="clock-face"/>' +
+          generateClockTicksAndNumbers() +
+          '<circle cx="150" cy="150" r="8" fill="#4F7058"/>' +
+          '<line id="hour-hand" x1="150" y1="150" x2="150" y2="90" class="hand-hour" />' +
+          '<line id="minute-hand" x1="150" y1="150" x2="150" y2="55" class="hand-minute" />' +
+        '</svg>' +
+        '<div class="hand-select-group">' +
+          '<button class="btn-hand ' + (lvl.activeHand === 'hour' ? 'active' : '') + '" onclick="selectHand(\'hour\')">' + t('lvl1.select_hour') + '</button>' +
+          '<button class="btn-hand ' + (lvl.activeHand === 'minute' ? 'active' : '') + '" onclick="selectHand(\'minute\')">' + t('lvl1.select_minute') + '</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="action-bar clock-action-bar">' +
+        '<button id="btn-submit-1" class="btn btn-submit" onclick="submitLevel1()">' + t('btn.submit') + '</button>' +
+      '</div>';
+
+    updateClockHands();
+    bindClockEvents();
+  }
+
+  function generateClockTicksAndNumbers() {
+    let html = '';
+    for (let i = 1; i <= 12; i++) {
+      const rad = (i * 30 - 90) * (Math.PI / 180);
+      html += '<line x1="' + (150 + 125 * Math.cos(rad)) + '" y1="' + (150 + 125 * Math.sin(rad)) + '" x2="' + (150 + 135 * Math.cos(rad)) + '" y2="' + (150 + 135 * Math.sin(rad)) + '" stroke="#4F7058" stroke-width="3" stroke-linecap="round"/>';
+      html += '<text x="' + (150 + 102 * Math.cos(rad)) + '" y="' + (150 + 102 * Math.sin(rad)) + '" class="clock-number" onclick="clickClockNumber(' + i + ')">' + i + '</text>';
     }
-    function generateClockTicksAndNumbers() {
-      let html = '';
-      for (let i = 1; i <= 12; i++) {
-        const rad = (i * 30 - 90) * (Math.PI / 180);
-        html += `<line x1="${150 + 125 * Math.cos(rad)}" y1="${150 + 125 * Math.sin(rad)}" x2="${150 + 135 * Math.cos(rad)}" y2="${150 + 135 * Math.sin(rad)}" stroke="#4F7058" stroke-width="3" stroke-linecap="round"/>`;
-        html += `<text x="${150 + 102 * Math.cos(rad)}" y="${150 + 102 * Math.sin(rad)}" class="clock-number">${i}</text>`;
-      }
-      return html;
+    return html;
+  }
+
+  function clickClockNumber(num) {
+    if (gameState.levels[1].submitted) return;
+    const lvl = gameState.levels[1];
+    if (lvl.activeHand === 'minute') {
+      lvl.userMin = (num % 12) * 5;
+    } else {
+      lvl.userHour = num;
     }
-    function selectHand(hand) {
+    updateClockHands();
+    triggerSnapFeedback();
+  }
+
+  function selectHand(hand) {
+    if (gameState.levels[1].submitted) return;
+    gameState.levels[1].activeHand = hand;
+    renderLevel1(document.getElementById('game-container'));
+  }
+
+  function updateClockHands() {
+    const lvl = gameState.levels[1];
+    setHandAngle('hour-hand', (lvl.userHour % 12) * 30 + lvl.userMin * 0.5, 60);
+    setHandAngle('minute-hand', lvl.userMin * 6, 95);
+  }
+
+  function setHandAngle(id, angleDegree, length) {
+    const hand = document.getElementById(id);
+    if (!hand) return;
+    const rad = (angleDegree - 90) * (Math.PI / 180);
+    hand.setAttribute('x2', 150 + length * Math.cos(rad));
+    hand.setAttribute('y2', 150 + length * Math.sin(rad));
+  }
+
+  function bindClockEvents() {
+    const svg = document.getElementById('clock-svg');
+    if (!svg) return;
+    let isDragging = false;
+
+    const handlePointer = (e) => {
       if (gameState.levels[1].submitted) return;
-      gameState.levels[1].activeHand = hand;
-      renderLevel1(document.getElementById('game-container'));
-    }
-    function updateClockHands() {
+      const rect = svg.getBoundingClientRect();
+      let angle = Math.atan2(e.clientY - (rect.top + rect.height / 2), e.clientX - (rect.left + rect.width / 2)) * (180 / Math.PI) + 90;
+      if (angle < 0) angle += 360;
+      let tick = Math.round(angle / 30);
+      if (tick === 0 || tick === 12) tick = 12;
       const lvl = gameState.levels[1];
-      setHandAngle('hour-hand', (lvl.userHour % 12) * 30 + lvl.userMin * 0.5, 60);
-      setHandAngle('minute-hand', lvl.userMin * 6, 95);
-    }
-    function setHandAngle(id, angleDegree, length) {
-      const hand = document.getElementById(id);
-      if (!hand) return;
-      const rad = (angleDegree - 90) * (Math.PI / 180);
-      hand.setAttribute('x2', 150 + length * Math.cos(rad));
-      hand.setAttribute('y2', 150 + length * Math.sin(rad));
-    }
-    function bindClockEvents() {
-      const svg = document.getElementById('clock-svg');
-      if (!svg) return;
-      let isDragging = false;
-      const handlePointer = (e) => {
-        if (gameState.levels[1].submitted) return;
-        const rect = svg.getBoundingClientRect();
-        let angle = Math.atan2(e.clientY - (rect.top + rect.height / 2), e.clientX - (rect.left + rect.width / 2)) * (180 / Math.PI) + 90;
-        if (angle < 0) angle += 360;
-        let tick = Math.round(angle / 30);
-        if (tick === 0 || tick === 12) tick = 12;
-        const lvl = gameState.levels[1];
-        if (lvl.activeHand === 'minute') {
-          let targetMin = (tick % 12) * 5;
-          if (targetMin !== lvl.userMin) {
-            let diff = targetMin - lvl.userMin;
-            if (diff < -30) lvl.userHour = (lvl.userHour % 12) + 1;
-            else if (diff > 30) lvl.userHour = lvl.userHour - 1 < 1 ? 12 : lvl.userHour - 1;
-            lvl.userMin = targetMin;
-            updateClockHands();
-          }
-        } else {
-          if (tick !== lvl.userHour) {
-            lvl.userHour = tick;
-            updateClockHands();
-          }
+      
+      if (lvl.activeHand === 'minute') {
+        let targetMin = (tick % 12) * 5;
+        if (targetMin !== lvl.userMin) {
+          let diff = targetMin - lvl.userMin;
+          if (diff < -30) lvl.userHour = (lvl.userHour % 12) + 1;
+          else if (diff > 30) lvl.userHour = lvl.userHour - 1 < 1 ? 12 : lvl.userHour - 1;
+          lvl.userMin = targetMin;
+          updateClockHands();
         }
-      };
+      } else {
+        if (tick !== lvl.userHour) {
+          lvl.userHour = tick;
+          updateClockHands();
+        }
+      }
+    };
 
-      svg.addEventListener('pointerdown', (e) => {
-        isDragging = true;
+    svg.addEventListener('pointerdown', (e) => { 
+      isDragging = true; 
+      if (svg.setPointerCapture) {
         try { svg.setPointerCapture(e.pointerId); } catch(err) {}
-        handlePointer(e);
-      });
-      svg.addEventListener('pointermove', (e) => {
-        if (isDragging) handlePointer(e);
-      });
-      svg.addEventListener('pointerup', (e) => {
-        isDragging = false;
-        try { svg.releasePointerCapture(e.pointerId); } catch(err) {}
-      });
-      svg.addEventListener('pointercancel', (e) => {
-        isDragging = false;
-        try { svg.releasePointerCapture(e.pointerId); } catch(err) {}
-      });
-    }
-    function submitLevel1() {
-      const lvl = gameState.levels[1];
-      if (lvl.submitted) return;
-      lvl.submitted = true;
-      lvl.completed = true;
-      lvl.score = (lvl.userHour === lvl.targetHour && lvl.userMin === lvl.targetMin) ? 100 : 0;
-      renderLevel1(document.getElementById('game-container'));
-    }
-
-    /* ==========================================
-       第二關：判斷天空 邏輯 (完整題庫)
-       ========================================== */
-    const LEVEL2_QUESTIONS = [
-      {
-        timeStr: "早上 08:00",
-        correct: "A",
-        explanation: "早上 08:00 是太陽升起後明亮白天的時間。",
-        options: [
-          { key: "A", text: "出太陽", imgKey: "sky_sun" },
-          { key: "B", text: "有星星", imgKey: "sky_stars" },
-          { key: "C", text: "夕陽", imgKey: "sky_sunset" }
-        ]
-      },
-      {
-        timeStr: "下午 17:00",
-        correct: "C",
-        explanation: "下午 17:00 接近傍晚，天空常會出現美麗的夕陽。",
-        options: [
-          { key: "A", text: "出太陽", imgKey: "sky_sun" },
-          { key: "B", text: "有星星", imgKey: "sky_stars" },
-          { key: "C", text: "夕陽", imgKey: "sky_sunset" }
-        ]
-      },
-      {
-        timeStr: "晚上 22:00",
-        correct: "B",
-        explanation: "晚上 22:00 是深夜，天空呈深色並伴隨星星與月亮。",
-        options: [
-          { key: "A", text: "出太陽", imgKey: "sky_sun" },
-          { key: "B", text: "有星星", imgKey: "sky_stars" },
-          { key: "C", text: "夕陽", imgKey: "sky_sunset" }
-        ]
       }
-    ];
-    function setupLevel2Question() {
-      const q = LEVEL2_QUESTIONS[Math.floor(Math.random() * LEVEL2_QUESTIONS.length)];
-      gameState.levels[2].questionData = { ...q, options: shuffleArray(q.options) };
-    }
-    function renderLevel2(container) {
-      const lvl = gameState.levels[2];
-      if (lvl.submitted) { renderLevelSettlement(2, container); return; }
-      const q = lvl.questionData;
-      container.innerHTML = `
-        <h2 class="section-title">判斷天空</h2>
-        <div class="question-box"><div class="question-text">現在是${q.timeStr}，天空是什麼樣子？</div><div class="hint-text">請點擊下方最符合的天空情境卡片。</div></div>
-        <div class="options-grid">
-          ${q.options.map(opt => `
-            <div class="option-card ${lvl.selectedOption === opt.key ? 'selected' : ''}" onclick="selectOptionLevel2('${opt.key}')">
-              <div class="option-img-container"><img src="${getImgSrc(opt.imgKey)}" alt="${opt.text}" onerror="handleImgError(this)"/></div>
-              <div class="option-label">${opt.text}</div>
-            </div>
-          `).join('')}
-        </div>
-        <div class="action-bar"><button id="btn-submit-2" class="btn btn-submit" onclick="submitLevel2()">完成並查看結果</button></div>
-        <div class="fixed-disclaimer">「請完成本關，再按『下一關』查看本關分數。」<br>「評分僅供練習參考。」</div>
-      `;
-    }
-    function selectOptionLevel2(key) {
-      if (gameState.levels[2].submitted) return;
-      gameState.levels[2].selectedOption = key;
-      renderLevel2(document.getElementById('game-container'));
-    }
-    function submitLevel2() {
-      const lvl = gameState.levels[2];
-      if (lvl.submitted) return;
-      if (!lvl.selectedOption) { showCustomModal('再選一個答案喔！', '請先選擇一個答案喔！'); return; }
-      lvl.submitted = true;
-      lvl.completed = true;
-      lvl.score = lvl.selectedOption === lvl.questionData.correct ? 100 : 0;
-      renderLevel2(document.getElementById('game-container'));
-    }
-
-    /* ==========================================
-       第三關：日常生活 邏輯 (完整題庫)
-       ========================================== */
-    const LEVEL3_QUESTIONS = [
-      {
-        type: 1,
-        questionText: "現在是早上 08:00，通常是吃哪一餐？",
-        correct: "A",
-        options: [
-          { key: "A", text: "早餐", imgKey: "breakfast" },
-          { key: "B", text: "午餐", imgKey: "lunch" },
-          { key: "C", text: "晚餐", imgKey: "dinner" }
-        ]
-      },
-      {
-        type: 1,
-        questionText: "現在是中午 12:00，通常是吃哪一餐？",
-        correct: "B",
-        options: [
-          { key: "A", text: "早餐", imgKey: "breakfast" },
-          { key: "B", text: "午餐", imgKey: "lunch" },
-          { key: "C", text: "晚餐", imgKey: "dinner" }
-        ]
-      },
-      {
-        type: 1,
-        questionText: "現在是晚上 20:00，通常是吃哪一餐？",
-        correct: "C",
-        options: [
-          { key: "A", text: "早餐", imgKey: "breakfast" },
-          { key: "B", text: "午餐", imgKey: "lunch" },
-          { key: "C", text: "晚餐", imgKey: "dinner" }
-        ]
-      },
-      {
-        type: 2,
-        questionText: "現在是早上 07:00，出門前你會在更衣室做什麼？",
-        correct: "A",
-        options: [
-          { key: "A", text: "挑選今天要穿的夾克外套", imgKey: "jacket" },
-          { key: "B", text: "拿出掃帚掃地", imgKey: "sweep" },
-          { key: "C", text: "拿起澆水壺幫花澆水", imgKey: "water" }
-        ]
-      },
-      {
-        type: 3,
-        questionText: "現在是早上 08:00，家裡的燈光通常是？",
-        correct: "B",
-        options: [
-          { key: "A", text: "需要開燈", imgKey: "lights_on" },
-          { key: "B", text: "外面很亮，不用開燈", imgKey: "lights_off" },
-          { key: "C", text: "夕陽光照進來", imgKey: "sunset_room" }
-        ]
-      },
-      {
-        type: 3,
-        questionText: "現在是晚上 22:00，家里的燈光通常是？",
-        correct: "A",
-        options: [
-          { key: "A", text: "需要開燈", imgKey: "lights_on" },
-          { key: "B", text: "外面很亮，不用開燈", imgKey: "lights_off" },
-          { key: "C", text: "夕陽光照進來", imgKey: "sunset_room" }
-        ]
+      handlePointer(e); 
+    });
+    
+    svg.addEventListener('pointermove', (e) => { 
+      if (isDragging) handlePointer(e); 
+    });
+    
+    const endDrag = (e) => {
+      if (isDragging) {
+        isDragging = false;
+        if (svg.releasePointerCapture && e.pointerId) {
+          try { svg.releasePointerCapture(e.pointerId); } catch(err) {}
+        }
+        triggerSnapFeedback();
       }
-    ];
-    function setupLevel3Question() {
-      const q = LEVEL3_QUESTIONS[Math.floor(Math.random() * LEVEL3_QUESTIONS.length)];
-      gameState.levels[3].questionData = { ...q, options: shuffleArray(q.options) };
-    }
-    function renderLevel3(container) {
-      const lvl = gameState.levels[3];
-      if (lvl.submitted) { renderLevelSettlement(3, container); return; }
-      const q = lvl.questionData;
-      container.innerHTML = `
-        <h2 class="section-title">日常生活</h2>
-        <div class="question-box"><div class="question-text">${q.questionText}</div><div class="hint-text">請選擇最符合日常生活經驗的選項。</div></div>
-        <div class="options-grid">
-          ${q.options.map(opt => `
-            <div class="option-card ${lvl.selectedOption === opt.key ? 'selected' : ''}" onclick="selectOptionLevel3('${opt.key}')">
-              <div class="option-img-container"><img src="${getImgSrc(opt.imgKey)}" alt="${opt.text}" onerror="handleImgError(this)"/></div>
-              <div class="option-label">${opt.text}</div>
-            </div>
-          `).join('')}
-        </div>
-        <div class="action-bar"><button id="btn-submit-3" class="btn btn-submit" onclick="submitLevel3()">完成並查看結果</button></div>
-        <div class="fixed-disclaimer">「請完成本關，再按『下一關』查看本關分數。」<br>「評分僅供練習參考。」</div>
-      `;
-    }
-    function selectOptionLevel3(key) {
-      if (gameState.levels[3].submitted) return;
-      gameState.levels[3].selectedOption = key;
-      renderLevel3(document.getElementById('game-container'));
-    }
-    function submitLevel3() {
-      const lvl = gameState.levels[3];
-      if (lvl.submitted) return;
-      if (!lvl.selectedOption) { showCustomModal('再選一個答案喔！', '請先選擇一個答案喔！'); return; }
-      lvl.submitted = true;
-      lvl.completed = true;
-      lvl.score = lvl.selectedOption === lvl.questionData.correct ? 100 : 0;
-      renderLevel3(document.getElementById('game-container'));
+    };
+
+    svg.addEventListener('pointerup', endDrag);
+    svg.addEventListener('pointercancel', endDrag);
+  }
+
+  function submitLevel1() {
+    const lvl = gameState.levels[1];
+    if (lvl.submitted) return;
+    if (!lockAction(500)) return;
+
+    lvl.submitted = true;
+    lvl.completed = true;
+
+    let score = 0;
+    const hourCorrect = lvl.userHour === lvl.targetHour;
+    const minuteCorrect = lvl.userMin === lvl.targetMin;
+    if (hourCorrect) score += 50;
+    if (minuteCorrect) score += 50;
+    lvl.score = score;
+    lvl.reviewRecord = {
+      targetHour: lvl.targetHour,
+      targetMin: lvl.targetMin,
+      userHour: lvl.userHour,
+      userMin: lvl.userMin,
+      hourCorrect: hourCorrect,
+      minuteCorrect: minuteCorrect,
+      score: score
+    };
+    
+    gameState.maxUnlockedLevel = Math.max(gameState.maxUnlockedLevel, 2);
+    renderCurrentStage();
+  }
+
+  const LEVEL2_QUESTIONS = [
+    // 原有天空時段判斷：夜晚星空、晴朗白天、傍晚夕陽。
+    {
+      id: "sky-night",
+      timeKey: "time.night_10",
+      correct: "B",
+      explanationKey: "lvl2.explain.sky_night",
+      options: [
+        { key: "A", optKey: "opt.sky_sun", imgKey: "sky_sun" },
+        { key: "B", optKey: "opt.sky_stars", imgKey: "sky_stars" },
+        { key: "C", optKey: "opt.sky_sunset", imgKey: "sky_sunset" }
+      ]
+    },
+    {
+      id: "sky-noon",
+      timeKey: "time.noon_12",
+      correct: "A",
+      explanationKey: "lvl2.explain.sky_noon",
+      options: [
+        { key: "A", optKey: "opt.sky_sun", imgKey: "sky_sun" },
+        { key: "B", optKey: "opt.sky_stars", imgKey: "sky_stars" },
+        { key: "C", optKey: "opt.sky_sunset", imgKey: "sky_sunset" }
+      ]
+    },
+    {
+      id: "sky-sunset",
+      qKey: "lvl2.q.sunset",
+      correct: "C",
+      explanationKey: "lvl2.explain.sky_sunset",
+      options: [
+        { key: "A", optKey: "opt.sky_sun", imgKey: "sky_sun" },
+        { key: "B", optKey: "opt.sky_stars", imgKey: "sky_stars" },
+        { key: "C", optKey: "opt.sky_sunset", imgKey: "sky_sunset" }
+      ]
+    },
+
+  ];
+
+  function setupLevel2Question() {
+    const lvl = gameState.levels[2];
+    // 題庫只保留三道原有「時間＋天空」題，每次均勻隨機抽出一題。
+    const selectedQuestion = LEVEL2_QUESTIONS[Math.floor(Math.random() * LEVEL2_QUESTIONS.length)];
+    lvl.questionSet = selectedQuestion ? [{
+      ...selectedQuestion,
+      options: shuffleArray(selectedQuestion.options)
+    }] : [];
+    lvl.questionIndex = 0;
+    lvl.questionData = lvl.questionSet[0] || null;
+    lvl.questionResults = [null];
+    lvl.selectedOption = null;
+    lvl.score = 0;
+    lvl.submitted = false;
+    lvl.completed = false;
+  }
+
+  function renderLevel2(container) {
+    const lvl = gameState.levels[2];
+
+    if (lvl.submitted) {
+      renderLevelSettlement(2, container);
+      return;
     }
 
-    function goToLevel(targetLevel) {
-      if (targetLevel === gameState.currentLevel) return;
-      gameState.currentLevel = targetLevel;
-      renderCurrentStage();
+    if (!lvl.questionData && (!Array.isArray(lvl.questionSet) || lvl.questionSet.length !== 1)) {
+      setupLevel2Question();
     }
+
+    const q = lvl.questionData;
+    if (!q) return;
+    const questionHTML = getLevel2QuestionHTML(q);
+
+    // 第二關作答期間只顯示題目、選項及確認答案按鈕。
+    // 不顯示答對／答錯卡片、正確答案、解析或「閱讀解析」按鈕。
+    // 所有作答詳解只由 renderFinalSummary() 的總成績頁手動展開。
+    container.innerHTML =
+      '<div class="question-box">' +
+        '<div class="question-text">' + questionHTML + '</div>' +
+        '<div class="hint-text">' + t('lvl2.hint') + '</div>' +
+      '</div>' +
+      '<div class="options-grid">' +
+        q.options.map(function(opt) {
+          const optText = t(opt.optKey);
+          const cardClass = 'option-card' + (lvl.selectedOption === opt.key ? ' selected' : '');
+          return '<div class="' + cardClass + '" onclick="selectOptionLevel2(\'' + opt.key + '\')">' +
+            '<div class="option-img-container"><img src="' + getImgSrc(opt.imgKey) + '" alt="' + optText + '" onerror="handleImgError(this)"/></div>' +
+            '<div class="option-label">' + optText + '</div>' +
+          '</div>';
+        }).join('') +
+      '</div>' +
+      '<div class="action-bar"><button id="btn-submit-2" class="btn btn-submit" onclick="submitLevel2()">' + t('btn.check_answer') + '</button></div>';
+  }
+
+  function selectOptionLevel2(key) {
+    const lvl = gameState.levels[2];
+    if (lvl.submitted || (lvl.questionResults && lvl.questionResults[lvl.questionIndex])) return;
+    lvl.selectedOption = key;
+    renderLevel2(document.getElementById('game-container'));
+  }
+
+  function submitLevel2() {
+    const lvl = gameState.levels[2];
+    if (lvl.submitted) return;
+    if (!lvl.selectedOption) {
+      showCustomModal(t('modal.pick_title'), t('modal.pick_msg'));
+      return;
+    }
+    if (!lockAction(500)) return;
+
+    // 單題挑戰：同一題只保存一次，答對 100 分、答錯 0 分。
+    if (lvl.questionResults[0]) return;
+    const isCorrect = lvl.selectedOption === lvl.questionData.correct;
+    lvl.questionResults[0] = {
+      questionId: lvl.questionData.id,
+      questionData: { ...lvl.questionData, options: lvl.questionData.options.map(function(option) { return { ...option }; }) },
+      selectedOption: lvl.selectedOption,
+      correctOption: lvl.questionData.correct,
+      isCorrect: isCorrect,
+      score: isCorrect ? 100 : 0
+    };
+
+    lvl.score = isCorrect ? 100 : 0;
+    lvl.submitted = true;
+    lvl.completed = true;
+    gameState.maxUnlockedLevel = Math.max(gameState.maxUnlockedLevel, 3);
+
+    // 不在第二關作答畫面顯示解析；實際作答與解析資料只留待最終總成績頁查看。
+    renderCurrentStage();
+  }
+
+  const LEVEL3_QUESTIONS = [
+    {
+      qKey: "q3.1_1",
+      correct: "A",
+      explanationKey: "lvl3.explain.breakfast",
+      options: [
+        { key: "A", optKey: "opt.breakfast", imgKey: "breakfast" },
+        { key: "B", optKey: "opt.lunch", imgKey: "lunch" },
+        { key: "C", optKey: "opt.dinner", imgKey: "dinner" }
+      ]
+    },
+    {
+      qKey: "q3.1_2",
+      correct: "B",
+      explanationKey: "lvl3.explain.lunch",
+      options: [
+        { key: "A", optKey: "opt.breakfast", imgKey: "breakfast" },
+        { key: "B", optKey: "opt.lunch", imgKey: "lunch" },
+        { key: "C", optKey: "opt.dinner", imgKey: "dinner" }
+      ]
+    },
+    {
+      qKey: "q3.1_3",
+      correct: "C",
+      explanationKey: "lvl3.explain.dinner",
+      options: [
+        { key: "A", optKey: "opt.breakfast", imgKey: "breakfast" },
+        { key: "B", optKey: "opt.lunch", imgKey: "lunch" },
+        { key: "C", optKey: "opt.dinner", imgKey: "dinner" }
+      ]
+    },
+    {
+      qKey: "q3.2_1",
+      correct: "A",
+      explanationKey: "lvl3.explain.jacket",
+      options: [
+        { key: "A", optKey: "opt.jacket", imgKey: "jacket" },
+        { key: "B", optKey: "opt.sweep", imgKey: "sweep" },
+        { key: "C", optKey: "opt.water", imgKey: "water" }
+      ]
+    },
+    {
+      qKey: "q3.3_1",
+      correct: "B",
+      explanationKey: "lvl3.explain.lights_off",
+      options: [
+        { key: "A", optKey: "opt.lights_on", imgKey: "lights_on" },
+        { key: "B", optKey: "opt.lights_off", imgKey: "lights_off" },
+        { key: "C", optKey: "opt.sunset_room", imgKey: "sunset_room" }
+      ]
+    },
+    {
+      qKey: "q3.3_2",
+      correct: "A",
+      explanationKey: "lvl3.explain.lights_on",
+      options: [
+        { key: "A", optKey: "opt.lights_on", imgKey: "lights_on" },
+        { key: "B", optKey: "opt.lights_off", imgKey: "lights_off" },
+        { key: "C", optKey: "opt.sunset_room", imgKey: "sunset_room" }
+      ]
+    }
+  ];
+
+  function setupLevel3Question() {
+    const q = LEVEL3_QUESTIONS[Math.floor(Math.random() * LEVEL3_QUESTIONS.length)];
+    gameState.levels[3].questionData = { ...q, options: shuffleArray(q.options) };
+  }
+
+  function renderLevel3(container) {
+    const lvl = gameState.levels[3];
+    
+    if (lvl.submitted) {
+      renderLevelSettlement(3, container);
+      return;
+    }
+
+    const q = lvl.questionData;
+    const questionText = t(q.qKey);
+
+    container.innerHTML = 
+      '<div class="question-box">' +
+        '<div class="question-text">' + questionText + '</div>' +
+        '<div class="hint-text">' + t('lvl3.hint') + '</div>' +
+      '</div>' +
+      '<div class="options-grid">' +
+        q.options.map(function(opt) {
+          const optText = t(opt.optKey);
+          return '<div class="option-card ' + (lvl.selectedOption === opt.key ? 'selected' : '') + '" onclick="selectOptionLevel3(\'' + opt.key + '\')">' +
+            '<div class="option-img-container"><img src="' + getImgSrc(opt.imgKey) + '" alt="' + optText + '" onerror="handleImgError(this)"/></div>' +
+            '<div class="option-label">' + optText + '</div>' +
+          '</div>';
+        }).join('') +
+      '</div>' +
+      '<div class="action-bar">' +
+        '<button id="btn-submit-3" class="btn btn-submit" onclick="submitLevel3()">' + t('btn.submit') + '</button>' +
+      '</div>';
+  }
+
+  function selectOptionLevel3(key) {
+    if (gameState.levels[3].submitted) return;
+    gameState.levels[3].selectedOption = key;
+    renderLevel3(document.getElementById('game-container'));
+  }
+
+  function submitLevel3() {
+    const lvl = gameState.levels[3];
+    if (lvl.submitted) return;
+    if (!lvl.selectedOption) { showCustomModal(t('modal.pick_title'), t('modal.pick_msg')); return; }
+    if (!lockAction(500)) return;
+
+    const isCorrect = lvl.selectedOption === lvl.questionData.correct;
+    lvl.submitted = true;
+    lvl.completed = true;
+    lvl.score = isCorrect ? 100 : 0;
+    lvl.answerRecords = [{
+      questionData: { ...lvl.questionData, options: lvl.questionData.options.map(function(option) { return { ...option }; }) },
+      selectedOption: lvl.selectedOption,
+      correctOption: lvl.questionData.correct,
+      isCorrect: isCorrect,
+      score: lvl.score
+    }];
+    
+    renderCurrentStage();
+  }
+
+  function goToLevel(targetLevel) {
+    if (targetLevel === gameState.currentLevel) return;
+    
+    if (typeof targetLevel === 'number' && targetLevel > gameState.maxUnlockedLevel) {
+      return;
+    }
+
+    if (typeof targetLevel === 'number' && gameState.levels[targetLevel] && gameState.levels[targetLevel].submitted && targetLevel < gameState.currentLevel) {
+      handleCompletedLevelClick(targetLevel);
+      return;
+    }
+
+    if (!lockAction(400)) return;
+
+    // 每次正式進入第二關時重新抽取兩題；同一輪作答中不會重新抽題。
+    if (targetLevel === 2 && !gameState.levels[2].submitted) {
+      setupLevel2Question();
+    }
+
+    gameState.currentLevel = targetLevel;
+    renderCurrentStage();
+  }
   </script>
 </body>
 </html>
