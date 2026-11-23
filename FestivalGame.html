@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <base target="_top">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>節慶猜謎遊戲 - 高齡駕照輔助平台</title>
@@ -788,7 +787,7 @@
     }
   </style>
 </head>
-<body data-base-url="<?!= baseUrl ?>">
+<body>
 
   <header id="main-header">
     <div class="top-nav-bar" id="top-nav-bar">
@@ -808,52 +807,96 @@
   </main>
 
   <script>
-    function getValidBaseUrl() {
-      var baseUrl = document.body.getAttribute('data-base-url') || '';
-      if (baseUrl && baseUrl.indexOf('script.google.com') !== -1) {
-        return baseUrl.split('?')[0].split('#')[0];
-      }
-      if (document.referrer && document.referrer.indexOf('script.google.com') !== -1) {
-        return document.referrer.split('?')[0].split('#')[0];
-      }
-      try {
-        if (window.top && window.top.location && window.top.location.href && window.top.location.href.indexOf('script.google.com') !== -1) {
-          return window.top.location.href.split('?')[0].split('#')[0];
-        }
-      } catch(e) {}
-      return window.location.href.split('?')[0].split('#')[0];
+    // ==========================================
+    // GitHub Pages 靜態網站導頁設定
+    // 不再使用 Google Apps Script 的 baseUrl、page 參數或表單提交
+    // ==========================================
+
+    // 取得目前的語言與字體大小，供跨頁導覽時保留
+    function getCurrentDisplaySettings() {
+      return {
+        lang: (typeof currentLang !== 'undefined' && currentLang)
+          ? currentLang
+          : (localStorage.getItem('app_lang') || 'zh-TW'),
+        fontScale: (typeof currentFontScale !== 'undefined' && currentFontScale)
+          ? currentFontScale
+          : (localStorage.getItem('app_font_scale') || '100')
+      };
     }
 
+    // 取得網站根目錄；支援 GitHub Pages 專案型網址
+    // 例如：https://帳號.github.io/專案名稱/遊戲.html
+    function getAppRootUrl() {
+      var pathParts = window.location.pathname.split('/').filter(Boolean);
+      var isGitHubPagesHost = /(^|\.)github\.io$/i.test(window.location.hostname);
+      var rootPath = '/';
+
+      if (isGitHubPagesHost && pathParts.length > 0) {
+        // GitHub Pages 專案型網站的第一層路徑就是 repository 名稱
+        rootPath = '/' + pathParts[0] + '/';
+      }
+
+      return new URL(rootPath, window.location.origin);
+    }
+
+    // 導頁時保留目前語言及字體大小設定
+    function appendDisplaySettings(url) {
+      var settings = getCurrentDisplaySettings();
+      url.searchParams.set('lang', settings.lang);
+      url.searchParams.set('fontScale', settings.fontScale);
+      return url;
+    }
+
+    // 返回遊戲分類：優先返回進入本遊戲前的同網站頁面
+    // 若直接開啟遊戲、沒有可用的同站來源頁面，則回到平台首頁
+    function goToLevelSelect() {
+      try {
+        if (document.referrer) {
+          var previousPage = new URL(document.referrer);
+          var currentPage = new URL(window.location.href);
+
+          if (
+            previousPage.origin === currentPage.origin &&
+            previousPage.href !== currentPage.href
+          ) {
+            appendDisplaySettings(previousPage);
+            window.location.assign(previousPage.href);
+            return;
+          }
+        }
+      } catch (error) {
+        console.warn('無法返回上一個遊戲分類頁面，改回平台首頁：', error);
+      }
+
+      goToHome();
+    }
+
+    // 返回 GitHub Pages 專案首頁
+    function goToHome() {
+      var homeUrl = getAppRootUrl();
+      appendDisplaySettings(homeUrl);
+      window.location.assign(homeUrl.href);
+    }
+
+    // 保留舊函式名稱，避免其他遊戲程式仍呼叫 navigateTo 時發生錯誤
     function navigateTo(targetPage) {
-      var currentLangVal = (typeof currentLang !== 'undefined' && currentLang) ? currentLang : (localStorage.getItem('app_lang') || 'zh-TW');
-      var currentFontVal = (typeof currentFontScale !== 'undefined' && currentFontScale) ? currentFontScale : (localStorage.getItem('app_font_scale') || '100');
+      if (targetPage === 'level_select') {
+        goToLevelSelect();
+        return;
+      }
 
-      var baseUrl = getValidBaseUrl();
-      var form = document.createElement('form');
-      form.method = 'GET';
-      form.action = baseUrl;
-      form.target = '_top';
+      if (targetPage === 'home') {
+        goToHome();
+        return;
+      }
 
-      var pageInput = document.createElement('input');
-      pageInput.type = 'hidden'; pageInput.name = 'page'; pageInput.value = targetPage;
-      form.appendChild(pageInput);
-
-      var langInput = document.createElement('input');
-      langInput.type = 'hidden'; langInput.name = 'lang'; langInput.value = currentLangVal;
-      form.appendChild(langInput);
-
-      var fontInput = document.createElement('input');
-      fontInput.type = 'hidden'; fontInput.name = 'fontScale'; fontInput.value = currentFontVal;
-      form.appendChild(fontInput);
-
-      document.body.appendChild(form);
-      form.submit();
+      console.warn('未知的導頁目標：', targetPage);
     }
 
     window.navigateTo = navigateTo;
     window.navigateToPage = navigateTo;
-    window.goToLevelSelect = function() { navigateTo('level_select'); };
-    window.goToHome = function() { navigateTo('home'); };
+    window.goToLevelSelect = goToLevelSelect;
+    window.goToHome = goToHome;
 
     var i18nDict = {
       'zh-TW': {
