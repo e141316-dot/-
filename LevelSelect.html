@@ -269,7 +269,7 @@
 <div class="category-container">
   <header class="category-header">
     <div class="category-nav">
-      <button type="button" class="category-back-btn" onclick="navigateTo('home')" data-i18n="nav.backHome">← 返回首頁</button>
+      <button type="button" class="category-back-btn" onclick="goToPlatformHome()" data-i18n="nav.backHome">← 返回首頁</button>
     </div>
     <h1 class="category-title" data-i18n="cat.title">遊戲分類</h1>
     <p class="category-subtitle" data-i18n="cat.subtitle">依照自己的興趣，選擇想練習的遊戲。</p>
@@ -577,7 +577,31 @@
     return window.location.href.split('?')[0].split('#')[0];
   }
 
+  // GitHub Pages 靜態網站：返回首頁時直接開啟同一個專案資料夾中的 index.html
+  function goToPlatformHome() {
+    var homeUrl = new URL('index.html', window.location.href);
+
+    var lang = normalizeLang(currentLang);
+    var fontScale = currentFontScale || '100';
+
+    try {
+      lang = normalizeLang(localStorage.getItem('app_lang') || lang);
+      fontScale = localStorage.getItem('app_font_scale') || fontScale;
+    } catch(e) {}
+
+    homeUrl.searchParams.set('lang', lang);
+    homeUrl.searchParams.set('fontScale', fontScale);
+
+    window.location.assign(homeUrl.toString());
+  }
+
   function navigateTo(pageTarget) {
+    // 舊版 home 路由在 GitHub Pages 不存在，統一改為實際首頁檔案
+    if (pageTarget === 'home') {
+      goToPlatformHome();
+      return;
+    }
+
     var baseUrl = getValidBaseUrl();
     var form = document.createElement('form');
     form.method = 'GET';
@@ -613,7 +637,7 @@
 
   window.navigateTo = navigateTo;
   window.navigateToPage = navigateTo;
-  window.goToHome = function() { navigateTo('home'); };
+  window.goToHome = goToPlatformHome;
 
   window.addEventListener('scroll', handleScrollHintScroll, { passive: true });
   window.addEventListener('resize', updateScrollHint);
