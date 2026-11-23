@@ -485,17 +485,29 @@
     // GitHub Pages 靜態頁面導覽：不再使用 Apps Script 的 page 參數或表單提交。
     function navigateTo(pageTarget) {
       var pageFiles = {
+        'home': 'index.html',
         'level_select': 'LevelSelect.html',
-        'home': 'index.html'
+        'time_game': 'TimeGame.html',
+        'festival_game': 'FestivalGame.html',
+        'situation_game': 'SituationGame.html',
+        'semantic_game': 'SemanticGame.html',
+        'visual_game': 'VisualGame.html',
+        'attention_game': 'AttentionGame.html',
+        'final_exam': 'FinalExam.html'
       };
-      var targetFile = pageFiles[pageTarget] || pageTarget;
-      var targetUrl = new URL(targetFile, window.location.href);
+      var targetFile = pageFiles[pageTarget];
+      if (!targetFile) {
+        console.error('找不到對應的頁面：', pageTarget);
+        return;
+      }
 
-      // 保留語言與字體設定，讓分類頁沿用首頁的顯示偏好。
+      // 使用同一個 GitHub Pages 專案目錄中的 HTML 檔案，不再走 Apps Script page 參數。
+      var targetUrl = new URL(targetFile, window.location.href);
+      targetUrl.searchParams.delete('page');
       targetUrl.searchParams.set('lang', window.appDisplay.lang || 'zh-TW');
       targetUrl.searchParams.set('fontScale', window.appDisplay.fontScale || '100');
 
-      window.location.href = targetUrl.toString();
+      window.location.assign(targetUrl.toString());
     }
 
     window.navigateTo = navigateTo;
