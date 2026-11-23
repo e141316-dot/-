@@ -4083,6 +4083,20 @@ function getExamDisplayLanguageIndex() {
   return EXAM_DISPLAY_LANG === 'en' ? 0 : EXAM_DISPLAY_LANG === 'ja' ? 1 : EXAM_DISPLAY_LANG === 'ko' ? 2 : -1;
 }
 
+// 補齊縣市／行政區／測驗地點下拉選單會動態產生的提示文字。
+Object.assign(EXAM_TEXT_TRANSLATIONS, {
+  "請選擇行政區": [
+    "Select a district",
+    "行政区を選択してください",
+    "행정구역을 선택하세요"
+  ],
+  "請選擇測驗地點": [
+    "Select a test location",
+    "検査場所を選択してください",
+    "검사 장소를 선택하세요"
+  ]
+});
+
 function translateExamDisplayText(value) {
   var original = String(value == null ? '' : value);
   var trimmed = original.trim();
@@ -4624,20 +4638,48 @@ function getExamCardDisplayName(chineseName) {
       WEEKDAY_LOCALIZED_ALIASES[day].forEach(function(name) { WEEKDAY_ANSWER_ALIASES[day].push(name); });
     });
 
-    function normalizeWeekdayAnswer(value) {
-      var text = String(value == null ? '' : value).trim();
-      if (!text) return null;
-      text = text.replace(/[０-９]/g, function(ch) { return String(ch.charCodeAt(0) - 0xFF10); });
+    function normalizeWeekdayToken(value) {
+      var text = String(value == null ? '' : value);
+      // 統一全形字元與 Unicode 表示，並移除語音辨識／輸入法可能附帶的零寬字元。
+      try { if (typeof text.normalize === 'function') text = text.normalize('NFKC'); } catch (e) {}
+      text = text
+        .replace(/[\u200B-\u200D\uFEFF\u00AD]/g, '')
+        .trim()
+        .toLowerCase();
+      // 中文常見星期前綴與標點；英文縮寫的句點也會一併移除。
       text = text.replace(/^(星期|禮拜|礼拜|週|周)/, '');
-      text = text.replace(/[\s　,，。.!！?？、;；:：()（）「」『』\[\]【】]/g, '');
+      text = text.replace(/[\s　,，。.!！?？、;；:：()（）「」『』\[\]【】'"`]/g, '');
+      return text;
+    }
+
+    function normalizeWeekdayAnswer(value) {
+      var text = normalizeWeekdayToken(value);
+      if (!text) return null;
+
+      // 數字作答保留原本規則：1–6 為星期一至六，0／7 為星期日。
       var digits = {'0':7,'7':7,'1':1,'2':2,'3':3,'4':4,'5':5,'6':6};
       if (Object.prototype.hasOwnProperty.call(digits, text)) return digits[text];
+
       var dayNames = {'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'日':7,'天':7};
       if (Object.prototype.hasOwnProperty.call(dayNames, text)) return dayNames[text];
+
+      // 同時接受完整名稱及常用縮寫；比對時兩邊都先標準化，避免大小寫／不可見字元造成誤判。
+      var extraAliases = {
+        1: ['mon','monday','月曜日','月曜','월요일','월'],
+        2: ['tue','tues','tuesday','火曜日','火曜','화요일','화'],
+        3: ['wed','weds','wednesday','水曜日','水曜','수요일','수'],
+        4: ['thu','thur','thurs','thursday','木曜日','木曜','목요일','목'],
+        5: ['fri','friday','金曜日','金曜','금요일','금'],
+        6: ['sat','saturday','土曜日','土曜','토요일','토'],
+        7: ['sun','sunday','日曜日','日曜','일요일','일']
+      };
       var keys = Object.keys(WEEKDAY_ANSWER_ALIASES);
       for (var i = 0; i < keys.length; i++) {
         var day = Number(keys[i]);
-        if (WEEKDAY_ANSWER_ALIASES[day].indexOf(text) !== -1) return day;
+        var aliases = (WEEKDAY_ANSWER_ALIASES[day] || []).concat(extraAliases[day] || []);
+        for (var j = 0; j < aliases.length; j++) {
+          if (normalizeWeekdayToken(aliases[j]) === text) return day;
+        }
       }
       return null;
     }
@@ -5213,12 +5255,12 @@ function getTaiwaneseKey(text) {
 
       if (countySelect) countySelect.value = '';
       if (districtSelect) {
-        districtSelect.innerHTML = '<option value="">請先選擇縣市</option>';
+        setLocationSelectPlaceholder(districtSelect, '請先選擇縣市');
         districtSelect.value = '';
         districtSelect.disabled = true;
       }
       if (placeSelect) {
-        placeSelect.innerHTML = '<option value="">請先選擇行政區</option>';
+        setLocationSelectPlaceholder(placeSelect, '請先選擇行政區');
         placeSelect.value = '';
         placeSelect.disabled = true;
       }
@@ -5816,10 +5858,20 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       return { officialName: rawPlaceName, county: county, district: district, facilityType: matchedType || "公私立機構", autoAcceptAliases: autoAliases, genericKeywords: GENERIC_CATEGORY_TERMS };
     }
 
+    function setLocationSelectPlaceholder(select, sourceText) {
+      if (!select) return;
+      var option = document.createElement('option');
+      option.value = '';
+      option.textContent = translateExamDisplayText(sourceText);
+      option.selected = true;
+      select.innerHTML = '';
+      select.appendChild(option);
+    }
+
     function initCountyOptions() {
       var countySelect = document.getElementById('countySelect');
       if (!countySelect) return;
-      countySelect.innerHTML = '<option value="">請選擇縣市</option>';
+      setLocationSelectPlaceholder(countySelect, '請選擇縣市');
       Object.keys(LOCATION_EXAM_DATA).forEach(function(county) { var opt = document.createElement('option'); opt.value = county; opt.textContent = getExamLocationDisplayName(county, 'county'); countySelect.appendChild(opt); });
     }
 
@@ -5885,8 +5937,8 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       var districtSelect = document.getElementById('districtSelect');
       var placeSelect = document.getElementById('placeSelect');
       var search = document.getElementById('placeSearchInput');
-      districtSelect.innerHTML = '<option value="">請選擇行政區</option>';
-      placeSelect.innerHTML = '<option value="">請先選擇行政區</option>';
+      setLocationSelectPlaceholder(districtSelect, '請選擇行政區');
+      setLocationSelectPlaceholder(placeSelect, '請先選擇行政區');
       placeSelect.disabled = true; search.value = ''; search.disabled = true; search.style.display = 'none';
       defaultPlaceAliases = []; examState.defaultAliases = [];
       if (!countyVal || !LOCATION_EXAM_DATA[countyVal]) { districtSelect.disabled = true; updateAliasesUI([]); return; }
@@ -5905,7 +5957,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       var placeSelect = document.getElementById('placeSelect');
       search.value = '';
       defaultPlaceAliases = []; examState.defaultAliases = [];
-      if (!places) { placeSelect.disabled = true; search.disabled = true; search.style.display = 'none'; placeSelect.innerHTML = '<option value="">請先選擇行政區</option>'; updateAliasesUI([]); return; }
+      if (!places) { placeSelect.disabled = true; search.disabled = true; search.style.display = 'none'; setLocationSelectPlaceholder(placeSelect, '請先選擇行政區'); updateAliasesUI([]); return; }
       placeSelect.disabled = false; search.disabled = false;
       search.style.display = places.length >= 5 ? 'block' : 'none';
       renderPlaceOptions(places, '');
@@ -5914,10 +5966,10 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
 
     function renderPlaceOptions(placesArray, keyword) {
       var select = document.getElementById('placeSelect');
-      select.innerHTML = '<option value="">請選擇測驗地點</option>';
+      setLocationSelectPlaceholder(select, '請選擇測驗地點');
       var kw = (keyword || '').trim().toLowerCase(); var count = 0;
       placesArray.forEach(function(place) { var displayName = getExamLocationDisplayName(place, 'place'); var matchesOriginal = place.toLowerCase().indexOf(kw) !== -1; var matchesDisplay = displayName.toLowerCase().indexOf(kw) !== -1; if (!kw || matchesOriginal || matchesDisplay) { var opt = document.createElement('option'); opt.value = place; opt.textContent = displayName; select.appendChild(opt); count++; } });
-      if (!count) { var none = document.createElement('option'); none.value=''; none.innerText='找不到符合的地點'; select.appendChild(none); }
+      if (!count) { var none = document.createElement('option'); none.value=''; none.textContent=translateExamDisplayText('找不到符合的地點'); select.appendChild(none); }
     }
 
     function filterPlaceOptions() {
@@ -6598,6 +6650,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
 
       var normalizedWeekday = null;
       if (q.type === 'q4') {
+        // 星期答案統一由 normalizeWeekdayAnswer 正規化，支援中／英／日／韓完整名稱與常用縮寫。
         normalizedWeekday = normalizeWeekdayAnswer(ans);
         if (!Number.isInteger(normalizedWeekday) || normalizedWeekday < 1 || normalizedWeekday > 7) {
           showCustomAlert('請輸入星期名稱，例如：星期三或禮拜三。');
