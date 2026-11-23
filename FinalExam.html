@@ -1418,7 +1418,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
   margin:0!important;padding:8px 12px!important;border:2px solid var(--color-dark)!important;
   border-radius:10px!important;background:#FFFFFF!important;color:var(--color-dark)!important;font-size:18px!important;font-weight:900!important;
 }
-.alias-tag .remove-btn::before{content:"刪除"}
+.alias-tag .remove-btn::before{content:none}
 .alias-restore{margin-top:12px}
 
 /* 三關說明卡：純閱讀，不做成像按鈕的陰影卡 */
@@ -1502,7 +1502,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
 #step-p1 .type-btn.active{
   border:3px solid var(--color-green)!important;background:var(--senior-selected)!important;color:var(--color-dark)!important;
 }
-#step-p1 .type-btn.active::after{content:"✓ 已選擇";font-size:17px}
+html:lang(zh-TW) #step-p1 .type-btn.active::after{content:"✓ 已選擇";font-size:17px}
 #step-p1 #p1-input-group{margin:12px 0 0!important}
 #step-p1 #p1-input-label{display:none!important}
 #step-p1 .input-unit-wrap{display:flex;align-items:center;gap:10px;width:100%;min-width:0}
@@ -1580,7 +1580,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
   border:3px solid var(--color-green)!important;background:var(--senior-selected)!important;
   color:var(--color-dark)!important;font-weight:900!important
 }
-.choice-btn.active::after{
+html:lang(zh-TW) .choice-btn.active::after{
   content:"✓ 已選擇";display:inline-block;margin-left:10px;color:var(--color-dark);
   font-size:16px;font-weight:900
 }
@@ -2990,7 +2990,7 @@ body.text-only-mode .mode-status-chip {
           </div>
         </div>
         <p id="language-audio-status" class="audio-status" role="status" aria-live="polite"></p>
-        <button type="button" id="language-preview-repeat" class="language-preview-repeat" onclick="repeatLanguagePreview()"> 再聽一次試聽</button>
+        <button type="button" id="language-preview-repeat" class="language-preview-repeat" onclick="repeatLanguagePreview()">再聽一次試聽</button>
       </section>
       <div class="sticky-action-bar step-action">
         <button type="button" class="btn-primary" onclick="goToLocationSetup()">下一步：選擇練習地點 ›</button>
@@ -4088,7 +4088,18 @@ function translateExamDisplayText(value) {
   var trimmed = original.trim();
   if (!trimmed || EXAM_DISPLAY_LANG === 'zh-TW') return original;
   var index = getExamDisplayLanguageIndex();
+  // 優先使用完全相同的翻譯鍵；舊版少數鍵值前後帶有空白，補上 trim 後備查找，避免播放按鈕等介面文字漏翻。
   var mapped = EXAM_TEXT_TRANSLATIONS[trimmed];
+  if (!mapped) {
+    var translationKeys = Object.keys(EXAM_TEXT_TRANSLATIONS);
+    for (var translationKeyIndex = 0; translationKeyIndex < translationKeys.length; translationKeyIndex++) {
+      var candidateKey = translationKeys[translationKeyIndex];
+      if (candidateKey.trim() === trimmed && EXAM_TEXT_TRANSLATIONS[candidateKey]) {
+        mapped = EXAM_TEXT_TRANSLATIONS[candidateKey];
+        break;
+      }
+    }
+  }
   if (mapped && mapped[index]) return original.slice(0, original.indexOf(trimmed)) + mapped[index] + original.slice(original.indexOf(trimmed) + trimmed.length);
 
   var m;
@@ -4107,6 +4118,22 @@ function translateExamDisplayText(value) {
   }
   if ((m = trimmed.match(/^剩餘\s*(\d{2}:\d{2})$/))) {
     return index === 0 ? 'Time left: ' + m[1] : index === 1 ? '残り時間：' + m[1] : '남은 시간: ' + m[1];
+  }
+  if ((m = trimmed.match(/^(\d{1,2}:\d{2})\s*剩餘$/))) {
+    return index === 0 ? 'Time left: ' + m[1] : index === 1 ? '残り時間：' + m[1] : '남은 시간: ' + m[1];
+  }
+  if ((m = trimmed.match(/^目前語音：(.+)$/))) {
+    var voiceName = String(m[1] || '').trim();
+    var voiceTranslations = {
+      '國語': ['Mandarin', '標準中国語', '표준 중국어'],
+      '臺語': ['Taiwanese Hokkien', '台湾語（閩南語）', '대만 민난어'],
+      '客語': ['Hakka', '客家語', '하카어']
+    };
+    var voiceText = voiceTranslations[voiceName];
+    if (voiceText) return index === 0 ? 'Current voice: ' + voiceText[index] : index === 1 ? '現在の音声：' + voiceText[index] : '현재 음성: ' + voiceText[index];
+  }
+  if (trimmed === '目前作答方式：純文字') {
+    return index === 0 ? 'Response mode: Text only' : index === 1 ? '回答方式：テキストのみ' : '응답 방식: 텍스트 전용';
   }
   if ((m = trimmed.match(/^指定時間：(.+)$/))) {
     var clockTime = m[1];
@@ -4172,7 +4199,7 @@ function translateExamNode(node) {
   var tag = String(node.tagName || '').toUpperCase();
   if (tag === 'SCRIPT' || tag === 'STYLE' || node.hasAttribute('data-no-translate')) return;
   // 表單欄位的 placeholder / aria-label 也必須翻譯；但不能翻譯使用者輸入的 value。
-  ['placeholder', 'aria-label', 'title', 'alt'].forEach(function(attr) {
+  ['placeholder', 'aria-label', 'aria-valuetext', 'title', 'alt'].forEach(function(attr) {
     if (!node.hasAttribute(attr)) return;
     var oldValue = node.getAttribute(attr);
     var newValue = translateExamDisplayText(oldValue);
@@ -4223,7 +4250,7 @@ function initExamDisplayLanguage() {
         }
       });
     });
-    window.__examDisplayLanguageObserver.observe(document.body, {subtree:true, childList:true, characterData:true, attributes:true, attributeFilter:['placeholder','aria-label','title','alt']});
+    window.__examDisplayLanguageObserver.observe(document.body, {subtree:true, childList:true, characterData:true, attributes:true, attributeFilter:['placeholder','aria-label','aria-valuetext','title','alt']});
   }
 }
 
@@ -10491,7 +10518,12 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
     "全部清除月份數字": ["Clear all month digits", "月の数字をすべて消去", "월 숫자 모두 지우기"],
     "圖卡記憶": ["Picture Memory", "画像記憶", "그림 기억"],
     "時間、空間認知": ["Time and Spatial Orientation", "時間・空間の見当識", "시간·공간 지남력"],
-    "徒手繪畫時鐘": ["Clock Drawing", "時計描画", "시계 그리기"]
+    "徒手繪畫時鐘": ["Clock Drawing", "時計描画", "시계 그리기"],
+    "再聽一次試聽": ["Replay preview", "試聴をもう一度聞く", "미리 듣기 다시 재생"],
+    "再聽一次說明": ["Play the instructions again", "説明をもう一度聞く", "안내를 다시 듣기"],
+    "例如：14": ["Example: 14", "例：14", "예: 14"],
+    "請輸入月份": ["Enter the month", "月を入力してください", "월을 입력하세요"],
+    "（請先選擇測驗地點，系統會自動帶入預設別名）": ["(Select the testing location above to load the default aliases.)", "（先に検査場所を選択すると、既定の別名が自動入力されます）", "(위에서 검사 장소를 선택하면 기본 별칭이 자동으로 입력됩니다.)"]
   });
 
   var baseTranslate = window.translateExamDisplayText || translateExamDisplayText;
