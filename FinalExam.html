@@ -11163,5 +11163,94 @@ html:lang(ko) .choice-btn.active::after {
   applyDrawnPlaybackIcons();
 })();
 </script>
+
+<script id="runtime-language-preview-button-localization-fix">
+/*
+ * 修正語言選擇頁「再聽一次試聽」按鈕在語音模式切換後回復中文的問題。
+ * 原因：按鈕文字是靜態 HTML；語音狀態更新函式會重新顯示按鈕，
+ * 但不會同步依目前介面語言更新其文字。此補丁只更新按鈕標籤，
+ * 保留既有 SVG 喇叭圖示、click handler、音訊來源及顯示／隱藏行為。
+ */
+(function () {
+  'use strict';
+
+  var BUTTON_ID = 'language-preview-repeat';
+  var LABELS = {
+    'zh-TW': '再聽一次試聽',
+    'en': 'Replay preview',
+    'ja': '試聴をもう一度聞く',
+    'ko': '미리 듣기 다시 재생'
+  };
+
+  function getDisplayLanguage() {
+    var raw = '';
+    try {
+      raw = (typeof EXAM_DISPLAY_LANG !== 'undefined' && EXAM_DISPLAY_LANG) ||
+        (document.documentElement && document.documentElement.lang) || '';
+    } catch (e) {
+      raw = (document.documentElement && document.documentElement.lang) || '';
+    }
+    raw = String(raw).toLowerCase().replace(/_/g, '-');
+    if (raw === 'en' || raw.indexOf('en-') === 0) return 'en';
+    if (raw === 'ja' || raw.indexOf('ja-') === 0) return 'ja';
+    if (raw === 'ko' || raw.indexOf('ko-') === 0) return 'ko';
+    return 'zh-TW';
+  }
+
+  function updateLanguagePreviewButton() {
+    var button = document.getElementById(BUTTON_ID);
+    if (!button) return;
+
+    var language = getDisplayLanguage();
+    var labelText = LABELS[language] || LABELS['zh-TW'];
+    var label = button.querySelector('[data-language-preview-label]');
+
+    if (!label) {
+      // Remove only direct text nodes. Keep the hand-drawn SVG speaker icon intact.
+      Array.prototype.slice.call(button.childNodes).forEach(function (node) {
+        if (node.nodeType === 3) node.parentNode.removeChild(node);
+      });
+      label = document.createElement('span');
+      label.setAttribute('data-language-preview-label', 'true');
+      button.appendChild(label);
+    }
+
+    if (label.textContent !== labelText) label.textContent = labelText;
+    button.setAttribute('aria-label', labelText);
+    button.setAttribute('title', labelText);
+    button.setAttribute('data-language-label', language);
+  }
+
+  // Expose a narrow updater for existing language/status flows.
+  window.updateLanguagePreviewButtonLabel = updateLanguagePreviewButton;
+
+  // Re-run after the page-wide language translator so this dynamic control cannot revert.
+  var originalApplyLanguage = window.applyExamDisplayLanguage;
+  if (typeof originalApplyLanguage === 'function') {
+    window.applyExamDisplayLanguage = function () {
+      var result = originalApplyLanguage.apply(this, arguments);
+      updateLanguagePreviewButton();
+      return result;
+    };
+  }
+
+  // Re-run after switching the spoken-answer mode; this wrapper does not change the voice mode.
+  var originalSetLanguage = window.setLanguage;
+  if (typeof originalSetLanguage === 'function') {
+    window.setLanguage = function () {
+      var result = originalSetLanguage.apply(this, arguments);
+      updateLanguagePreviewButton();
+      return result;
+    };
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', updateLanguagePreviewButton, { once: true });
+  } else {
+    updateLanguagePreviewButton();
+  }
+})();
+</script>
+
 </body>
 </html>
