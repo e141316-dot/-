@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
+  <base target="_self">
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>翻卡牌配對 - 認知訓練遊戲</title>
-  
+
   <!-- 資源預連：加速字型與 Google Drive 圖片載入 -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,141 +13,71 @@
 
   <style>
     /* ==========================================================================
-       1. 視覺規範與 CSS 變數系統
+       1. 全局視覺規範與奶油白柔和綠色系主題（強化老花眼閱讀對比度）
        ========================================================================== */
     :root {
-      --bg-main: #FCFBF7;         /* 主背景色：柔和奶黃灰 */
+      --page-bg: #FCFBF7;         /* 奶油米白背景 */
       --card-bg: #FFFFFF;         /* 卡片底色：純白 */
-      --border-color: #E4E9DF;    /* 卡片與元素邊框：淡灰綠色 */
-      --sub-bg: #EAF0E7;          /* 淡綠灰色底色 */
-      
-      --text-title: #35473C;      /* 主要標題：深綠黑 */
-      --text-main: #35473C;       /* 一般內文 */
-      --text-green: #4F7058;      /* 強調綠色 */
-      --text-sub: #718075;        /* 補充說明：灰綠色 */
-      --text-white: #FFFFFF;      
-      
-      --red-brown: #A64B3C;       /* 未滿分／錯誤辨識：柔和紅棕色 */
-      --red-brown-bg: #F8E8E4;    /* 淡紅棕背景 */
-      --gray-green: #718075;      /* 零分／中性提示：柔和灰綠色 */
-      
-      --btn-primary: #4A6B53;     /* 主要按鈕：深綠色 */
-      --btn-primary-hover: #3E5A45;
-      
-      --shadow-soft: 0 4px 16px rgba(79, 112, 88, 0.06);
-      --font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+      --primary-color: #4F7058;   /* 主要綠色（鼠尾草綠） */
+      --primary-dark: #2C3E33;    /* 主要文字 / 深綠色（加深提升對比） */
+      --primary-light: #EAF0E7;   /* 淡綠色背景 */
+      --text-muted: #45584C;      /* 次要說明文字（加深灰綠色以利老花眼閱讀） */
+      --border-color: #DCE3D6;    /* 淡灰綠邊框 */
+      --shadow: 0 4px 12px rgba(44, 62, 51, 0.07);
+      --font-scale: 1;
+      --base-font-size: 16px;
     }
+
+    body.font-scale-90 { --font-scale: 0.9; }
+    body.font-scale-100 { --font-scale: 1.0; }
+    body.font-scale-115 { --font-scale: 1.15; }
+    body.font-scale-130 { --font-scale: 1.3; }
 
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
+      font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-tap-highlight-color: transparent;
       user-select: none;
       -webkit-user-select: none;
     }
 
+    html[lang="ko"] body,
+    html[lang="ko"] * {
+      font-family: "Noto Sans KR", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+    }
+    html[lang="ja"] body,
+    html[lang="ja"] * {
+      font-family: "Noto Sans JP", "Yu Gothic", "Meiryo", sans-serif;
+    }
+
+    html, body {
+      background-color: var(--page-bg);
+    }
+
     body {
-      background-color: var(--bg-main);
-      color: var(--text-main);
-      font-family: var(--font-family);
-      min-height: 100vh;
+      background-color: var(--page-bg);
+      color: var(--primary-dark);
       display: flex;
       justify-content: center;
       align-items: flex-start;
-      padding: 20px 16px;
+      min-height: 100vh;
+      padding: 16px 12px calc(40px + env(safe-area-inset-bottom, 0px)) 12px;
       position: relative;
       overflow-x: hidden;
-    }
-
-    /* 鎖定關卡提示對話框 */
-    .info-overlay-modal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background-color: rgba(0, 0, 0, 0.45);
-      backdrop-filter: blur(2px);
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      z-index: 10000;
-      padding: 36px 20px 20px 20px;
-      opacity: 0;
-      visibility: hidden;
-      pointer-events: none;
-      transition: opacity 0.25s ease, visibility 0.25s ease;
-    }
-
-    .info-overlay-modal.active {
-      opacity: 1;
-      visibility: visible;
-      pointer-events: auto;
-    }
-
-    .info-dialog-card {
-      background-color: #FAF9F4;
-      border: 2.5px solid #4F7058;
-      border-radius: 28px;
-      padding: 32px 28px 26px 28px;
-      width: 100%;
-      max-width: 440px;
-      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
-      text-align: center;
-      transform: translateY(-20px) scale(0.95);
-      transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
-
-    .info-overlay-modal.active .info-dialog-card {
-      transform: translateY(0) scale(1);
-    }
-
-    .info-dialog-title {
-      font-size: 1.85rem;
-      font-weight: 900;
-      color: #35473C;
-      margin-bottom: 16px;
-      letter-spacing: 0.8px;
-    }
-
-    .info-dialog-msg {
-      font-size: 1.18rem;
-      font-weight: 700;
-      color: #55665B;
-      line-height: 1.6;
-      margin-bottom: 28px;
-      padding: 0 8px;
-      letter-spacing: 0.3px;
-    }
-
-    .btn-info-confirm {
-      background-color: #4F7058;
-      color: #FFFFFF;
-      border: none;
-      font-size: 1.2rem;
-      font-weight: 800;
-      padding: 12px 48px;
-      border-radius: 50px;
-      cursor: pointer;
-      box-shadow: 0 4px 12px rgba(79, 112, 88, 0.2);
-      transition: background-color 0.2s ease, transform 0.1s ease;
-    }
-
-    .btn-info-confirm:hover {
-      background-color: #3E5A45;
-    }
-
-    .btn-info-confirm:active {
-      transform: scale(0.96);
+      font-size: calc(var(--base-font-size) * var(--font-scale));
+      line-height: 1.5;
     }
 
     .app-container {
       width: 100%;
-      max-width: 720px;
+      max-width: 820px;
       margin: 0 auto;
+      background-color: var(--page-bg);
       display: flex;
       flex-direction: column;
-      align-items: center;
+      min-height: 88vh;
       position: relative;
       z-index: 2;
     }
@@ -154,7 +85,7 @@
     .screen {
       width: 100%;
       display: none;
-      animation: fadeIn 0.3s ease-in-out forwards;
+      animation: pageFadeIn 0.3s ease-in-out forwards;
     }
 
     .screen.active {
@@ -163,426 +94,687 @@
       align-items: center;
     }
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(6px); }
-      to { opacity: 1; transform: translateY(0); }
+    @keyframes pageFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
     }
 
-    .header-nav {
+    /* 通用頂部導航按鈕 */
+    .btn-back-nav {
+      background-color: var(--primary-light);
+      color: var(--primary-dark);
+      border: 1.5px solid var(--primary-color);
+      padding: 7px 16px;
+      font-size: calc(15px * var(--font-scale));
+      font-weight: 800;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      text-decoration: none;
+      touch-action: manipulation;
+    }
+
+    .btn-back-nav:hover {
+      background-color: #DCE8DA;
+    }
+
+    /* ==========================================================================
+       2. 第一層：等級選擇頁面
+       ========================================================================== */
+    .intro-screen {
       width: 100%;
-      display: flex;
+      padding: 12px 18px 28px;
       flex-direction: column;
       align-items: center;
-      gap: 12px;
-      margin-bottom: 16px;
+      gap: 16px;
+      background-color: var(--page-bg);
+      flex: 1;
     }
 
-    .btn-back-wrap {
+    .intro-top-bar {
       width: 100%;
       display: flex;
       justify-content: flex-start;
     }
 
-    .btn-back {
-      background-color: transparent;
-      border: 1.5px solid var(--border-color);
-      color: var(--text-main);
-      font-size: 1rem;
-      font-weight: 700;
-      padding: 8px 18px;
-      border-radius: 50px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      text-decoration: none;
-      transition: all 0.2s ease;
-    }
-
-    .btn-back:hover {
-      background-color: #F0F4EC;
-      color: var(--text-green);
-    }
-
-    .header-title-wrap {
+    .intro-title-area {
+      width: 100%;
       text-align: center;
-      width: 100%;
-    }
-
-    .page-title {
-      font-size: 2rem;
-      font-weight: 900;
-      color: var(--text-green);
-      letter-spacing: 1px;
-    }
-
-    .page-subtitle {
-      font-size: 1rem;
-      color: var(--text-sub);
-      margin-top: 6px;
-      font-weight: 600;
-      line-height: 1.4;
-    }
-
-    .divider {
-      width: 100%;
-      height: 1px;
-      background-color: var(--border-color);
-      margin: 8px 0 24px 0;
-    }
-
-    /* 等級選擇畫面 */
-    .level-list {
-      width: 100%;
+      margin-top: 2px;
+      margin-bottom: 0;
       display: flex;
       flex-direction: column;
-      gap: 20px;
-    }
-
-    .level-card {
-      background-color: var(--card-bg);
-      border: 1.5px solid var(--border-color);
-      border-radius: 20px;
-      padding: 24px;
-      box-shadow: var(--shadow-soft);
-      display: flex;
       align-items: center;
-      position: relative;
-      cursor: pointer;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
 
-    .level-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(79, 112, 88, 0.1);
-    }
-
-    .level-card.locked {
-      background-color: #FAFBF9;
-      opacity: 0.85;
-    }
-
-    .level-num-box {
-      width: 90px;
-      height: 90px;
-      background-color: var(--sub-bg);
-      border-radius: 16px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-size: 3.2rem;
-      font-weight: 900;
-      color: var(--text-green);
-      flex-shrink: 0;
-      margin-right: 20px;
-    }
-
-    .level-card.locked .level-num-box {
-      color: #A3B0A7;
-    }
-
-    .level-info {
-      flex-grow: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      padding-right: 170px;
-    }
-
-    .level-title {
-      font-size: 1.4rem;
+    .intro-main-title {
+      font-size: calc(32px * var(--font-scale));
       font-weight: 800;
-      color: var(--text-green);
-      margin-bottom: 4px;
+      color: var(--primary-dark);
+      letter-spacing: 2px;
+      line-height: 1.2;
+      margin: 0;
     }
 
-    .level-card.locked .level-title {
-      color: #A3B0A7;
-    }
-
-    .level-desc {
-      font-size: 0.95rem;
-      color: var(--text-main);
-      font-weight: 600;
-      line-height: 1.4;
-    }
-
-    .level-card.locked .level-desc {
-      color: #929E96;
-    }
-
-    .level-badge {
-      position: absolute;
-      top: 24px;
-      right: 24px;
-      background-color: var(--sub-bg);
-      color: var(--text-green);
-      font-size: 0.88rem;
+    .intro-sub-tip {
+      font-size: calc(17.5px * var(--font-scale));
       font-weight: 700;
-      padding: 5px 14px;
-      border-radius: 50px;
+      color: var(--text-muted);
+      margin-top: 10px;
+      text-align: center;
+      line-height: 1.45;
     }
 
-    .level-card.locked .level-badge {
-      background-color: #E8ECE6;
-      color: #929E96;
+    .level-cards-container {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
     }
 
-    .btn-select-level {
-      position: absolute;
-      bottom: 24px;
-      right: 24px;
-      background-color: var(--btn-primary);
-      color: var(--text-white);
-      border: none;
-      font-size: 1rem;
-      font-weight: 700;
-      padding: 9px 18px;
-      border-radius: 50px;
-      cursor: pointer;
+    .level-entry-card {
+      width: 100%;
+      background-color: #FFFFFF;
+      border-radius: 20px;
+      padding: 18px 20px;
       display: flex;
       align-items: center;
-      gap: 6px;
-      box-shadow: 0 4px 10px rgba(79, 112, 88, 0.2);
+      gap: 18px;
+      box-shadow: var(--shadow);
+      cursor: pointer;
+      position: relative;
+      touch-action: manipulation;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
     }
 
-    .btn-select-level:hover {
-      background-color: var(--btn-primary-hover);
+    .level-entry-card:active {
+      transform: scale(0.97);
     }
 
-    .btn-select-level.disabled {
-      background-color: #CBD2C9 !important;
-      color: #8C9890 !important;
+    @media (hover: hover) {
+      .level-entry-card:hover {
+        border-color: var(--primary-color);
+        box-shadow: 0 6px 16px rgba(79, 112, 88, 0.15);
+      }
+    }
+
+    .level-entry-card.level-locked {
+      background-color: #F8FAF7 !important;
+      border-color: #D8E0D7 !important;
+      cursor: pointer;
       box-shadow: none !important;
     }
 
-    .lock-overlay {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 64px;
-      height: 64px;
-      background-color: rgba(234, 240, 231, 0.95);
-      border: 2px solid var(--border-color);
-      border-radius: 50%;
+    .level-entry-card.level-locked:active {
+      transform: none;
+    }
+
+    .level-entry-card.level-locked .level-num-box {
+      background-color: #E2E8E1 !important;
+      color: #6B7E70 !important;
+      border: none !important;
+    }
+
+    .level-entry-card.level-locked .level-rank { color: #546658 !important; }
+    .level-entry-card.level-locked .level-name { color: #617466 !important; }
+    .level-entry-card.level-locked .level-desc { color: #5D7062 !important; }
+
+    @keyframes shakeCard {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-6px); }
+      40%, 80% { transform: translateX(6px); }
+    }
+
+    .level-entry-card.shake,
+    .theme-card.shake {
+      animation: shakeCard 0.35s ease-in-out;
+    }
+
+    .level-num-box {
+      width: 68px;
+      height: 68px;
+      min-width: 68px;
+      border-radius: 16px;
+      font-size: calc(34px * var(--font-scale));
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.04);
+      flex-shrink: 0;
+      pointer-events: none;
+    }
+
+    .level-card-info {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      pointer-events: none;
+    }
+
+    .level-card-header {
+      width: 100%;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .level-card-title {
+      font-size: calc(21px * var(--font-scale));
+      font-weight: 800;
+      margin: 0;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .level-rank { color: var(--primary-dark); }
+    .level-name { color: var(--primary-color); }
+
+    .level-desc {
+      font-size: calc(16.5px * var(--font-scale));
+      color: var(--primary-dark);
+      font-weight: 700;
+      line-height: 1.45;
+      margin: 2px 0 0 0;
+    }
+
+    .level-card-footer {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 6px;
+    }
+
+    .btn-level-start {
+      background-color: var(--primary-color);
+      color: #FFFFFF;
+      border: none;
+      padding: 8px 22px;
+      font-size: calc(15.5px * var(--font-scale));
+      font-weight: 700;
+      border-radius: 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    .btn-level-locked {
+      background-color: #E6EBE5;
+      color: #2C3E33;
+      border: 1.5px solid #BAC9BB;
+      padding: 7px 18px;
+      font-size: calc(14.5px * var(--font-scale));
+      font-weight: 700;
+      border-radius: 20px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    .inline-lock-icon {
+      width: 14px;
+      height: 14px;
+      flex: 0 0 14px;
+      display: block;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .difficulty-tag {
+      flex-shrink: 0;
+      font-size: calc(14px * var(--font-scale));
+      font-weight: 800;
+      padding: 3px 12px;
+      border-radius: 12px;
+      white-space: nowrap;
+    }
+
+    .level-1-card { border: 2px solid var(--border-color); }
+    .level-1-card .level-num-box {
+      background-color: var(--primary-light);
+      color: var(--primary-color);
+      border: 1.5px solid #D2E0CE;
+    }
+    .tag-easy {
+      background-color: var(--primary-light);
+      color: var(--primary-dark);
+      border: 1px solid #C5D8C1;
+    }
+
+    .level-2-card { border: 2px solid #C0D0C1; }
+    .level-2-card .level-num-box {
+      background-color: #78947D;
+      color: #FFFFFF;
+    }
+    .tag-medium {
+      background-color: #D8E4D5;
+      color: var(--primary-dark);
+      border: 1px solid #A8C2A5;
+    }
+
+    .level-3-card { border: 2px solid var(--primary-color); }
+    .level-3-card .level-num-box {
+      background-color: var(--primary-dark);
+      color: #FFFFFF;
+    }
+    .tag-hard {
+      background-color: #D2E0D1;
+      color: var(--primary-dark);
+      border: 1px solid #9EB89D;
+    }
+
+    /* ==========================================================================
+       3. 第二層：生活主題選擇頁面（放大圖片視覺比例、加深說明文字對比）
+       ========================================================================== */
+    .category-screen {
+      padding: 18px 16px 28px;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      background-color: var(--page-bg);
+      flex: 1;
+    }
+
+    .category-header-bar {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-bottom: 14px;
+      border-bottom: 2px solid var(--border-color);
+      position: relative;
+    }
+
+    .category-header-top {
+      width: 100%;
       display: flex;
       justify-content: center;
       align-items: center;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-      z-index: 5;
+      position: relative;
+      min-height: 42px;
     }
 
-    .lock-overlay svg {
-      width: 30px;
-      height: 30px;
-      fill: var(--text-green);
+    .btn-back-tier {
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 2;
     }
 
-    .theme-card .lock-overlay {
-      top: 14px !important;
-      right: 14px !important;
-      left: auto !important;
-      bottom: auto !important;
-      transform: none !important;
-      width: 38px !important;
-      height: 38px !important;
-      background-color: #EAF0E7 !important;
-      border: 1.5px solid var(--border-color) !important;
-      border-radius: 50% !important;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08) !important;
-      z-index: 5 !important;
-    }
-
-    .theme-card .lock-overlay svg {
-      width: 20px !important;
-      height: 20px !important;
-      fill: var(--text-green) !important;
-    }
-
-    .level-card .lock-overlay {
-      top: 18px !important;
-      right: 18px !important;
-      left: auto !important;
-      bottom: auto !important;
-      transform: none !important;
-      width: 38px !important;
-      height: 38px !important;
-      background-color: #EAF0E7 !important;
-      border: 1.5px solid var(--border-color) !important;
-      border-radius: 50% !important;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08) !important;
-      z-index: 5 !important;
-    }
-
-    .level-card .lock-overlay svg {
-      width: 20px !important;
-      height: 20px !important;
-      fill: var(--text-green) !important;
-    }
-
-    .level-card.locked .level-badge {
-      top: 22px !important;
-      right: 64px !important;
-    }
-
-    .reset-bar {
-      margin-top: 24px;
+    .selected-tier-title {
+      font-size: calc(28px * var(--font-scale));
+      font-weight: 800;
+      color: var(--primary-color);
+      margin: 0;
       text-align: center;
+      line-height: 1.2;
     }
 
-    .btn-reset-data {
-      background: transparent;
-      border: none;
-      color: var(--text-sub);
-      font-size: 0.88rem;
-      cursor: pointer;
-      text-decoration: underline;
+    .category-tip-text {
+      font-size: calc(18px * var(--font-scale));
+      font-weight: 700;
+      color: var(--text-muted);
+      text-align: center;
+      margin-top: 10px;
+      line-height: 1.45;
     }
 
-    /* 主題選擇畫面 */
     .theme-grid {
       width: 100%;
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 20px;
+      gap: 16px;
     }
 
     .theme-card {
-      background-color: var(--card-bg);
-      border: 1.5px solid var(--border-color);
+      background-color: #FFFFFF;
+      border: 2px solid var(--border-color);
       border-radius: 20px;
-      padding: 20px;
-      box-shadow: var(--shadow-soft);
+      padding: 16px 18px;
       display: flex;
+      flex-direction: row;
       align-items: center;
       gap: 16px;
-      position: relative;
+      box-shadow: var(--shadow);
       cursor: pointer;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      position: relative;
+      touch-action: manipulation;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
     }
 
-    .theme-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(79, 112, 88, 0.1);
+    .theme-card:active,
+    .theme-card.is-pressed {
+      transform: scale(0.97);
+    }
+
+    @media (hover: hover) {
+      .theme-card:hover {
+        border-color: var(--primary-color);
+        box-shadow: 0 6px 16px rgba(79, 112, 88, 0.15);
+      }
+    }
+
+    .theme-card:focus-visible {
+      outline: 3px solid rgba(79, 112, 88, 0.28);
+      outline-offset: 2px;
     }
 
     .theme-card.theme-locked {
-      background-color: #FAFBF9;
-      opacity: 0.85;
+      background-color: #F8FAF7 !important;
+      border-color: #D8E0D7 !important;
+      box-shadow: none !important;
     }
 
+    .theme-card.theme-locked:active {
+      transform: none;
+    }
+
+    .theme-card.theme-locked .theme-img-box,
+    .theme-card.theme-locked .theme-content {
+      opacity: 0.72;
+    }
+
+    .lock-overlay {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 36px;
+      height: 36px;
+      background-color: var(--primary-light);
+      border: 1.5px solid var(--border-color);
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+      z-index: 5;
+      pointer-events: none;
+    }
+
+    .lock-overlay svg {
+      width: 18px;
+      height: 18px;
+      fill: var(--primary-color);
+    }
+
+    .theme-completion-badge {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 6;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 26px;
+      padding: 4px 10px;
+      border-radius: 14px;
+      border: 1px solid #C5D8C1;
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      font-size: calc(13px * var(--font-scale));
+      line-height: 1.2;
+      font-weight: 800;
+      max-width: calc(100% - 20px);
+      white-space: normal;
+      text-align: right;
+      pointer-events: none;
+    }
+
+    .theme-completion-badge[hidden] {
+      display: none !important;
+    }
+
+    .theme-card.has-completion .theme-content {
+      padding-top: 28px;
+    }
+
+    /* 提高圖片在卡片裡的實際視覺比例，方便長輩直覺辨認 */
     .theme-img-box {
-      width: 100px;
-      height: 100px;
-      background-color: var(--sub-bg);
+      width: 104px;
+      height: 104px;
+      min-width: 104px;
+      background-color: #FFFFFF;
       border-radius: 16px;
+      border: 1.5px solid var(--border-color);
+      padding: 3px;
       display: flex;
       justify-content: center;
       align-items: center;
       flex-shrink: 0;
-      padding: 8px;
       overflow: hidden;
+      pointer-events: none;
     }
 
     .theme-img-box img {
-      width: 100%;
-      height: 100%;
+      width: 94%;
+      height: 94%;
       object-fit: contain;
-      border-radius: 8px;
     }
 
     .theme-content {
-      flex-grow: 1;
+      flex: 1;
+      min-width: 0;
       display: flex;
       flex-direction: column;
       align-items: flex-start;
+      text-align: left;
       gap: 6px;
+      pointer-events: none;
     }
 
     .theme-name {
-      font-size: 1.5rem;
+      font-size: calc(24px * var(--font-scale));
       font-weight: 800;
-      color: var(--text-main);
+      color: var(--primary-dark);
+      margin: 0;
+      line-height: 1.2;
     }
 
     .theme-desc {
-      font-size: 0.88rem;
-      color: var(--text-sub);
+      font-size: calc(16.5px * var(--font-scale));
+      color: var(--text-muted);
+      font-weight: 700;
       line-height: 1.4;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      min-height: 2.5em;
+      margin: 0;
     }
 
     .btn-start-theme {
-      background-color: var(--btn-primary);
-      color: var(--text-white);
+      background-color: var(--primary-color);
+      color: #FFFFFF;
       border: none;
-      font-size: 0.95rem;
+      padding: 8px 20px;
+      font-size: calc(15.5px * var(--font-scale));
       font-weight: 700;
-      padding: 8px 18px;
-      border-radius: 50px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
+      border-radius: 20px;
       margin-top: 4px;
+      align-self: flex-start;
+      display: inline-block;
+      pointer-events: none;
     }
 
     .btn-start-theme.disabled {
       background-color: #CBD2C9 !important;
-      color: #8C9890 !important;
+      color: #4A5B50 !important;
     }
 
-    /* 遊戲區域 */
-    .game-status-bar {
-      width: 100%;
-      background-color: var(--card-bg);
-      border: 1.5px solid var(--border-color);
-      border-radius: 20px;
-      padding: 14px 20px;
+    /* ==========================================================================
+       4. 第三層：正式遊戲畫面（含溫和成功/失敗提示列與玩法說明按鈕）
+       ========================================================================== */
+    .game-screen {
+      padding: 0 12px 24px 12px;
+      flex: 1;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      position: relative;
+    }
+
+    .game-header-banner {
+      background-color: transparent;
+      padding: 0;
       display: flex;
       flex-direction: column;
       align-items: center;
+      gap: 12px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .game-top-nav-row {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       gap: 8px;
-      margin-bottom: 24px;
-      box-shadow: var(--shadow-soft);
+      margin-bottom: 2px;
+    }
+
+    .btn-how-to-play {
+      background-color: #FFFFFF;
+      color: var(--primary-dark);
+      border: 1.5px solid var(--primary-color);
+      padding: 7px 14px;
+      font-size: calc(15px * var(--font-scale));
+      font-weight: 800;
+      border-radius: 20px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: background-color 0.2s ease;
+    }
+
+    .btn-how-to-play:hover {
+      background-color: var(--primary-light);
+    }
+
+    .game-header-title {
+      font-size: calc(24px * var(--font-scale));
+      font-weight: 800;
+      color: var(--primary-color);
+      letter-spacing: 1px;
+      margin: 0;
       text-align: center;
     }
 
-    .status-row-top {
-      font-size: 1.25rem;
-      font-weight: 800;
-      color: var(--text-green);
+    .level-nav-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
     }
 
-    .status-row-bottom {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 24px;
-      font-size: 1.1rem;
+    .level-nav-btn {
+      flex: 1;
+      min-width: 0;
+      padding: 10px 8px;
+      border-radius: 25px;
+      font-size: calc(16px * var(--font-scale));
       font-weight: 700;
-      color: var(--text-main);
+      border: none;
+      text-align: center;
+      transition: all 0.2s ease;
+      background-color: var(--primary-light);
+      color: var(--primary-color);
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .level-nav-btn.active {
+      background-color: var(--primary-color);
+      color: #FFFFFF;
+      box-shadow: 0 3px 8px rgba(79, 112, 88, 0.2);
+    }
+
+    .question-banner {
       width: 100%;
+      background-color: #FFFFFF;
+      border: 1.5px solid var(--border-color);
+      padding: 12px 18px;
+      border-radius: 16px;
+      text-align: center;
+      box-shadow: var(--shadow);
+    }
+
+    .game-status-inline {
+      width: 100%;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
       flex-wrap: wrap;
+      gap: 10px;
+      color: var(--primary-dark);
+      font-size: calc(18.5px * var(--font-scale));
+      font-weight: 800;
+      line-height: 1.4;
+    }
+
+    .game-status-separator {
+      color: #8E9E91;
+      font-weight: 600;
     }
 
     .status-value {
-      color: var(--text-green);
-      font-size: 1.25rem;
+      color: var(--primary-color);
+      font-size: calc(20px * var(--font-scale));
       font-weight: 900;
     }
 
+    /* 溫和的即時操作回饋橫幅 */
+    .game-feedback-banner {
+      width: 100%;
+      padding: 10px 16px;
+      border-radius: 14px;
+      font-size: calc(16.5px * var(--font-scale));
+      font-weight: 700;
+      text-align: center;
+      line-height: 1.45;
+      background-color: #F4F7F2;
+      border: 1.5px solid #D5E2D2;
+      color: var(--primary-dark);
+      transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+    }
+
+    .game-feedback-banner.feedback-success {
+      background-color: #E2F0D9;
+      border-color: #A8CFA0;
+      color: #1F4A1C;
+    }
+
+    .game-feedback-banner.feedback-mismatch {
+      background-color: #FDF5E6;
+      border-color: #E6CFA3;
+      color: #5C4318;
+    }
+
+    /* 翻卡牌網格與翻轉動畫 */
     .cards-grid {
       width: 100%;
       display: grid;
       gap: 16px;
       justify-content: center;
-      margin: 0 auto 24px auto;
+      margin: 4px auto 20px auto;
     }
 
     .cards-grid.cards-4 {
@@ -609,7 +801,7 @@
       position: relative;
       transform-style: preserve-3d;
       transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      border-radius: 18px;
+      border-radius: 16px;
     }
 
     .card-item.flipped .card-inner {
@@ -621,16 +813,17 @@
       width: 100%;
       height: 100%;
       backface-visibility: hidden;
-      border-radius: 18px;
+      border-radius: 16px;
       border: 2px solid var(--border-color);
       display: flex;
       justify-content: center;
       align-items: center;
-      box-shadow: var(--shadow-soft);
+      box-shadow: var(--shadow);
+      overflow: hidden;
     }
 
     .card-back {
-      background-color: var(--sub-bg);
+      background-color: var(--primary-light);
       background-image: radial-gradient(#C3D8C8 18%, transparent 19%), radial-gradient(#C3D8C8 18%, transparent 19%);
       background-size: 20px 20px;
       background-position: 0 0, 10px 10px;
@@ -639,7 +832,7 @@
     .card-back-icon {
       width: 52px;
       height: 52px;
-      background-color: rgba(255, 255, 255, 0.65);
+      background-color: rgba(255, 255, 255, 0.78);
       border-radius: 50%;
       display: flex;
       justify-content: center;
@@ -647,384 +840,648 @@
     }
 
     .card-back-icon span {
-      font-size: 2.1rem;
+      font-size: calc(30px * var(--font-scale));
       font-weight: 900;
-      color: var(--text-green);
+      color: var(--primary-color);
       line-height: 1;
     }
 
     .card-front {
       background-color: var(--card-bg);
       transform: rotateY(180deg);
-      padding: 10px;
+      padding: 7px 5px 9px;
+      gap: 3px;
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
+      min-width: 0;
+      overflow: hidden;
     }
 
     .card-front img {
+      display: block;
       width: 78%;
-      height: 78%;
+      max-width: 78%;
+      height: auto;
+      max-height: 66%;
+      flex: 1 1 auto;
+      min-width: 0;
+      min-height: 0;
       object-fit: contain;
       border-radius: 8px;
     }
 
     .card-label {
-      font-size: 0.95rem;
-      font-weight: 800;
-      color: var(--text-green);
-      margin-top: 4px;
-    }
-
-    .card-item.matched .card-inner .card-front {
-      border: 3px solid #84B593;
-      background-color: #F4F8F4;
-    }
-
-    /* 獨立關卡結算畫面 */
-    .stage-clear-view {
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      flex: 0 1 auto;
+      box-sizing: border-box;
       width: 100%;
-      max-width: 580px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      padding: 20px 10px;
-    }
-
-    .stage-clear-title {
-      font-size: 2.2rem;
+      max-width: 100%;
+      min-width: 0;
+      max-height: 2.3em;
+      padding: 0 3px 1px;
+      color: var(--primary-color);
+      font-size: 23px;
       font-weight: 900;
-      color: var(--text-title);
-      margin-bottom: 12px;
+      line-height: 1.15;
+      letter-spacing: 0;
+      text-align: center;
+      white-space: normal;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
-    .stars-row {
+    /* 繁體中文維持原本的大字呈現 */
+    html[lang="zh-TW"] .card-label {
+      font-size: 23px;
+      word-break: keep-all;
+      overflow-wrap: break-word;
+    }
+
+    /* 英文：依字數縮放，保留完整單字 */
+    html[lang="en"] .card-label {
+      font-size: clamp(13px, 3.2vw, 16.5px);
+      word-break: normal;
+      overflow-wrap: break-word;
+    }
+    html[lang="en"] .card-label.is-medium-label {
+      font-size: clamp(12px, 2.9vw, 14.5px);
+    }
+    html[lang="en"] .card-label.is-long-label {
+      font-size: clamp(11px, 2.6vw, 13px);
+    }
+
+    /* 日文：允許長片假名安全折成兩行 */
+    html[lang="ja"] .card-label {
+      font-size: clamp(13.5px, 3.4vw, 18px);
+      word-break: break-word;
+      overflow-wrap: anywhere;
+    }
+    html[lang="ja"] .card-label.is-medium-label {
+      font-size: clamp(12px, 3vw, 15px);
+    }
+    html[lang="ja"] .card-label.is-long-label {
+      font-size: clamp(11px, 2.7vw, 13px);
+    }
+
+    /* 韓文：保持音節完整，不任意拆字 */
+    html[lang="ko"] .card-label {
+      font-size: clamp(15px, 3.8vw, 19.5px);
+      word-break: keep-all;
+      overflow-wrap: break-word;
+    }
+    html[lang="ko"] .card-label.is-medium-label,
+    html[lang="ko"] .card-label.is-long-label {
+      font-size: clamp(12.5px, 3.1vw, 15.5px);
+    }
+
+    /* 正在等待配對：中綠色明顯外框 */
+    .card-item.flipped:not(.matched) .card-inner .card-front {
+      border: 3px solid #6E9B77;
+      background-color: #F4F8F2;
+    }
+
+    /* 已配對成功：深綠色外框與淡綠底色 */
+    .card-item.matched .card-inner .card-front {
+      border: 3.5px solid #2C4735;
+      background-color: #DFECE0;
+      box-shadow: inset 0 0 0 1px rgba(44, 71, 53, 0.12), 0 4px 12px rgba(53, 71, 60, 0.10);
+    }
+
+    /* ==========================================================================
+       5. 星星評等與獎盃特效
+       ========================================================================== */
+    .settlement-stars {
       display: flex;
       justify-content: center;
       align-items: center;
       gap: 12px;
-      margin: 8px 0 20px 0;
-      min-height: 56px;
+      margin: 10px 0;
+      position: relative;
     }
 
-    .star-icon {
-      width: 54px;
-      height: 54px;
-      fill: #F59E0B;
-      filter: drop-shadow(0 3px 6px rgba(245, 158, 11, 0.35));
-      opacity: 0;
-      transform: scale(0.2);
-      animation: starPopIn 0.45s ease-out forwards;
-    }
-
-    @keyframes starPopIn {
-      0% { opacity: 0; transform: scale(0.2); }
-      70% { transform: scale(1.25); }
-      100% { opacity: 1; transform: scale(1); }
-    }
-
-    .stage-score-pill {
-      border-radius: 50px;
-      padding: 10px 28px;
-      font-size: 1.3rem;
-      font-weight: 900;
-      margin-bottom: 20px;
+    .rating-star-item {
       display: inline-block;
+      opacity: 0;
+      transform: translateY(-50px) scale(0.6);
+      line-height: 0;
     }
 
-    .score-pill-full {
-      background-color: #EAF0E7;
-      color: var(--text-title);
+    .rating-star-item.gold {
+      animation: ratingStarDrop 0.65s cubic-bezier(0.25, 1, 0.5, 1) forwards,
+                 ratingStarSparkle 2.6s ease-in-out 0.65s infinite alternate;
     }
 
-    .score-pill-not-full {
-      background-color: var(--red-brown-bg);
-      color: var(--red-brown);
+    .rating-star-item.grey {
+      animation: ratingStarDrop 0.65s cubic-bezier(0.25, 1, 0.5, 1) forwards;
     }
 
-    .score-pill-zero {
-      background-color: #EAF0E7;
-      color: var(--gray-green);
+    .rating-star-item .star-svg-icon {
+      width: clamp(40px, 9.5vw, 50px);
+      height: clamp(40px, 9.5vw, 50px);
+      display: block;
+      filter: drop-shadow(0 3px 6px rgba(245, 158, 11, 0.35));
     }
 
-    .stage-encouragement {
-      font-size: 1.1rem;
-      color: var(--text-title);
-      font-weight: 700;
-      line-height: 1.6;
-      margin-bottom: 24px;
-      padding: 12px 20px;
-      background-color: #EAF0E7;
-      border-radius: 16px;
+    .rating-star-item.grey .star-svg-icon {
+      filter: none;
+    }
+
+    @keyframes ratingStarDrop {
+      0% { opacity: 0; transform: translateY(-50px) scale(0.6); }
+      70% { opacity: 1; transform: translateY(5px) scale(1.12); }
+      85% { transform: translateY(-2px) scale(0.98); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @keyframes ratingStarSparkle {
+      0% { filter: drop-shadow(0 3px 6px rgba(245, 158, 11, 0.35)); transform: scale(1); }
+      50% { filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.8)) drop-shadow(0 0 20px rgba(251, 191, 36, 0.6)); transform: scale(1.05); }
+      100% { filter: drop-shadow(0 3px 6px rgba(245, 158, 11, 0.35)); transform: scale(1); }
+    }
+
+    .perfect-graphic-group {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin: 2px 0;
+      position: relative;
+    }
+
+    .side-decor {
+      position: relative;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .decor-stars {
+      position: absolute;
+      width: 36px;
+      height: 36px;
+      opacity: 0;
+      transform: scale(0);
+      animation: decorStarsFadeIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.2s forwards;
+      filter: drop-shadow(0 2px 4px rgba(255, 179, 0, 0.4));
+    }
+
+    @keyframes decorStarsFadeIn {
+      0% { opacity: 0; transform: scale(0) rotate(-20deg); }
+      70% { opacity: 1; transform: scale(1.2) rotate(10deg); }
+      100% { opacity: 1; transform: scale(1) rotate(0deg); }
+    }
+
+    .perfect-trophy-svg {
+      width: clamp(58px, 16vw, 76px);
+      height: clamp(58px, 16vw, 76px);
+      filter: drop-shadow(0 4px 10px rgba(255, 179, 0, 0.45));
+      animation: trophyPopIn 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards,
+                 trophyFloat 3s ease-in-out 0.7s infinite alternate;
+    }
+
+    @keyframes trophyPopIn {
+      0% { transform: translateY(-30px) scale(0.2); opacity: 0; }
+      60% { transform: translateY(4px) scale(1.15); opacity: 1; }
+      80% { transform: translateY(-2px) scale(0.95); }
+      100% { transform: translateY(0) scale(1); opacity: 1; }
+    }
+
+    @keyframes trophyFloat {
+      0% { transform: translateY(0) rotate(0deg); }
+      100% { transform: translateY(-5px) rotate(3deg); }
+    }
+
+    /* ==========================================================================
+       6. 第四層：單關結算畫面（加入星星規則說明與自動保存提示）
+       ========================================================================== */
+    .stage-clear-screen {
+      padding: 0 12px 32px 12px;
+      flex: 1;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .settlement-card {
       width: 100%;
-    }
-
-    .stage-detail-box {
-      width: 100%;
-      background-color: #F4F8F4;
-      border: 1px solid var(--border-color);
-      border-radius: 20px;
-      padding: 20px 24px;
-      margin-bottom: 28px;
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 10px 0 28px;
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      align-items: center;
+      text-align: center;
     }
 
-    .detail-row {
+    .settlement-title {
+      font-size: calc(28.8px * var(--font-scale));
+      font-weight: 800;
+      color: #2D3B32;
+      margin-bottom: 6px;
+      line-height: 1.25;
+    }
+
+    .settlement-score-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background-color: #E2F0D9;
+      color: #234D20;
+      padding: 6px 20px;
+      border-radius: 20px;
+      font-size: calc(16.5px * var(--font-scale));
+      font-weight: 800;
+      margin: 6px auto;
+    }
+
+    .settlement-score-pill > svg,
+    .result-pill > svg,
+    .result-detail-score > svg {
+      width: 22px;
+      height: 22px;
+      flex: 0 0 22px;
+    }
+
+    .star-rule-hint {
+      width: 100%;
+      max-width: 440px;
+      background-color: #F4F7F2;
+      border: 1px solid #D5E2D2;
+      color: var(--primary-dark);
+      font-size: calc(15px * var(--font-scale));
+      font-weight: 700;
+      line-height: 1.5;
+      padding: 8px 14px;
+      border-radius: 12px;
+      margin: 6px auto 4px auto;
+      text-align: center;
+    }
+
+    .sublevel-encouragement {
+      font-size: calc(18.4px * var(--font-scale));
+      font-weight: 700;
+      color: #2D3B32;
+      margin: 10px 0 14px 0;
+      line-height: 1.5;
+      max-width: 480px;
+      text-align: center;
+    }
+
+    /* 保留統計卡上下排列 */
+    .sublevel-breakdown-box {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+      max-width: 360px;
+      margin: 0 auto 12px auto;
+    }
+
+    .breakdown-card {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 1.15rem;
+      padding: 14px 22px;
+      border-radius: 14px;
+      font-size: calc(17.6px * var(--font-scale));
+      font-weight: 700;
+    }
+
+    .breakdown-card.correct {
+      background-color: #E2F0D9;
+      color: #234D20;
+    }
+
+    .breakdown-card.wrong {
+      background-color: #EAECEB;
+      color: #2C3E33;
+    }
+
+    .breakdown-card span.count {
+      font-size: calc(19.2px * var(--font-scale));
       font-weight: 800;
-      color: var(--text-title);
-      padding-bottom: 10px;
-      border-bottom: 1px dashed var(--border-color);
     }
 
-    .detail-row:last-child {
-      border-bottom: none;
-      padding-bottom: 0;
+    .stage-saved-badge {
+      font-size: calc(15px * var(--font-scale));
+      font-weight: 800;
+      color: var(--primary-color);
+      margin-top: 2px;
     }
 
-    .detail-val-green {
-      color: var(--text-green);
-      font-weight: 900;
-    }
-
-    .detail-val-red {
-      color: var(--red-brown);
-      font-weight: 900;
-    }
-
-    .detail-val-gray {
-      color: var(--gray-green);
-      font-weight: 900;
-    }
-
-    .btn-stage-next {
+    .summary-actions-group {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
       width: 100%;
-      background-color: var(--btn-primary);
-      color: var(--text-white);
-      border: none;
-      font-size: 1.3rem;
-      font-weight: 900;
-      padding: 16px;
-      border-radius: 50px;
+      max-width: 520px;
+      margin: 16px auto 0 auto;
+    }
+
+    .summary-full-btn {
+      grid-column: 1 / -1;
+      width: 100%;
+      background-color: var(--primary-color);
+      color: #FFFFFF;
+      border: 2px solid var(--primary-color);
+      padding: 13px 16px;
+      font-size: calc(18px * var(--font-scale));
+      font-weight: 800;
+      border-radius: 28px;
       cursor: pointer;
+      box-shadow: 0 4px 10px rgba(79, 112, 88, 0.2);
+      transition: all 0.2s ease;
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 8px;
-      box-shadow: 0 4px 14px rgba(79, 112, 88, 0.25);
     }
 
-    .btn-stage-next:hover {
-      background-color: var(--btn-primary-hover);
+    .summary-full-btn:hover {
+      background-color: var(--primary-dark);
+      border-color: var(--primary-dark);
+      transform: translateY(-2px);
     }
 
-    /* 三關總結算畫面 */
+    /* ==========================================================================
+       7. 第五層：三關總結算畫面（充足底部安全距離，避免按鈕被截斷）
+       ========================================================================== */
+    .result-screen {
+      padding: 0 12px 56px 12px;
+      flex: 1;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
+
+    .result-header-banner {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      margin: 0 auto 8px;
+    }
+
+    .result-header-title {
+      margin: 10px 0 2px;
+      font-size: calc(32px * var(--font-scale));
+      font-weight: 900;
+      color: #2E4032;
+      line-height: 1.25;
+      text-align: center;
+    }
+
     .result-view {
       width: 100%;
-      max-width: 580px;
+      max-width: 620px;
+      padding: 14px 0 36px;
+      margin: 0 auto;
       display: flex;
       flex-direction: column;
       align-items: center;
       text-align: center;
-      padding: 20px 10px;
+      position: relative;
+      z-index: 2;
     }
 
     .result-main-title {
-      font-size: 2.2rem;
-      font-weight: 900;
-      color: var(--text-title);
-      margin-bottom: 16px;
-    }
-
-    .celebration-container {
-      position: relative;
-      width: 100%;
-      height: 85px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      margin-top: 10px;
-      margin-bottom: 10px;
-    }
-
-    .trophy-permanent {
-      font-size: 3.6rem;
-      line-height: 1;
-      display: inline-block;
-      animation: trophyPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.12));
-    }
-
-    @keyframes trophyPop {
-      0% { transform: scale(0); opacity: 0; }
-      70% { transform: scale(1.2); }
-      100% { transform: scale(1); opacity: 1; }
-    }
-
-    .sparkle-svg-side {
-      position: absolute;
-      top: 10px;
-      width: 36px;
-      height: 36px;
-      fill: #F59E0B;
-      animation: sparklePulse 1.6s infinite ease-in-out;
-    }
-
-    .sparkle-svg-side.left {
-      left: calc(50% - 88px);
-    }
-
-    .sparkle-svg-side.right {
-      right: calc(50% - 88px);
-    }
-
-    @keyframes sparklePulse {
-      0%, 100% { transform: scale(0.85); opacity: 0.7; }
-      50% { transform: scale(1.15); opacity: 1; }
-    }
-
-    .result-stars-row {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      margin-bottom: 16px;
-    }
-
-    .result-stars-row .star-icon {
-      width: 48px;
-      height: 48px;
+      font-size: calc(26px * var(--font-scale));
+      font-weight: 800;
+      color: #2B3D30;
+      margin-bottom: 6px;
+      line-height: 1.25;
     }
 
     .result-pill {
-      border-radius: 50px;
-      padding: 10px 28px;
-      font-size: 1.2rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background-color: #EBF1EA;
+      color: #2B3D30;
+      padding: 8px 26px;
+      border-radius: 30px;
+      font-size: calc(18px * var(--font-scale));
       font-weight: 800;
-      margin-bottom: 8px;
-      display: inline-block;
+      margin: 2px 0 10px 0;
+    }
+
+    .best-record-note {
+      font-size: calc(15.5px * var(--font-scale));
+      font-weight: 800;
+      color: var(--primary-color);
+      margin: 0 0 10px 0;
+    }
+
+    .result-encouragement {
+      color: #2D3B32;
+      font-size: calc(19.5px * var(--font-scale));
+      font-weight: 800;
+      line-height: 1.6;
+      margin: 4px auto 12px auto;
+      max-width: 520px;
+      text-align: center;
+      white-space: pre-line;
+      list-style: none;
+    }
+
+    .result-encouragement::before {
+      content: none !important;
     }
 
     .result-unlock-pill {
-      background-color: #DDF0E0;
-      border-radius: 50px;
-      padding: 10px 28px;
-      font-size: 1.15rem;
-      font-weight: 900;
-      color: var(--text-green);
-      margin-bottom: 16px;
-      display: inline-block;
-    }
-
-    .btn-replay-applause {
-      background-color: #FFF3D6;
-      border: 1.5px solid #F59E0B;
-      color: #D97706;
-      font-size: 1rem;
+      background-color: #E2F0D9;
+      color: #234D20;
+      border: 1.5px solid #B7D8AE;
+      border-radius: 18px;
+      padding: 10px 24px;
+      font-size: calc(19px * var(--font-scale));
       font-weight: 800;
-      padding: 8px 20px;
-      border-radius: 50px;
-      cursor: pointer;
-      margin-bottom: 20px;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      transition: all 0.2s ease;
-      box-shadow: 0 2px 8px rgba(245, 158, 11, 0.15);
-    }
-
-    .btn-replay-applause:hover {
-      background-color: #FDE68A;
-      transform: translateY(-2px);
+      line-height: 1.45;
+      margin: 2px auto 10px auto;
+      display: inline-block;
+      box-shadow: 0 2px 8px rgba(79, 112, 88, 0.08);
     }
 
     .stage-scores-breakdown-box {
+      position: relative;
       width: 100%;
-      background-color: #F4F8F4;
-      border: 1px solid var(--border-color);
-      border-radius: 20px;
-      padding: 16px 24px;
-      margin-bottom: 24px;
+      max-width: 620px;
+      background-color: var(--primary-light);
+      border-radius: 14px;
+      padding: 12px 24px;
+      margin: 10px auto 10px auto;
+      text-align: left;
+    }
+
+    .stage-scores-breakdown-box .detail-row {
       display: flex;
-      flex-direction: column;
-      gap: 12px;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1.5px dashed #D0DACF;
+      font-size: calc(17px * var(--font-scale));
+      font-weight: 800;
+      color: #000000;
+      gap: 10px;
+    }
+
+    .stage-scores-breakdown-box .detail-row:last-child {
+      border-bottom: none;
+    }
+
+    .result-detail-score {
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 6px;
+      color: #2B3D30;
+      font-size: calc(18px * var(--font-scale));
+      font-weight: 800;
+      white-space: nowrap;
     }
 
     .table-clap-icon {
-      font-size: 2.8rem;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      font-size: clamp(3rem, 8vw, 4rem);
       line-height: 1;
-      display: inline-block;
       opacity: 0;
-      transform-origin: center center;
+      z-index: 10;
       pointer-events: none;
+      filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.22)) drop-shadow(0 0 16px rgba(255, 184, 0, 0.6));
     }
 
     .table-clap-icon.animate-clap {
-      animation: clapAndDisappear 2.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+      animation: breakdownClapAnim 3.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
     }
 
-    @keyframes clapAndDisappear {
-      0% { opacity: 0; transform: scale(0.3) rotate(-15deg); }
-      15% { opacity: 1; transform: scale(1.4) rotate(12deg); }
-      30% { transform: scale(0.95) rotate(-10deg); }
-      45% { transform: scale(1.35) rotate(10deg); }
-      60% { transform: scale(0.95) rotate(-5deg); }
-      75% { opacity: 1; transform: scale(1.2) rotate(5deg); }
-      100% { opacity: 0; transform: scale(0.2) rotate(0deg); }
+    @keyframes breakdownClapAnim {
+      0% { opacity: 0; transform: translate(-50%, -50%) scale(0) rotate(-20deg); }
+      18% { opacity: 1; transform: translate(-50%, -50%) scale(1.35) rotate(0deg); }
+      32% { transform: translate(-50%, -50%) scale(0.95) rotate(-12deg); }
+      48% { transform: translate(-50%, -50%) scale(1.3) rotate(10deg); }
+      64% { transform: translate(-50%, -50%) scale(1.0) rotate(-6deg); }
+      78% { opacity: 1; transform: translate(-50%, -50%) scale(1.15) rotate(0deg); }
+      100% { opacity: 0; transform: translate(-50%, -50%) scale(0.3) translateY(-25px); }
+    }
+
+    .btn-replay-applause {
+      background-color: #FFFFFF;
+      border: 2px solid var(--primary-color);
+      color: #2B3D30;
+      padding: 8px 20px;
+      border-radius: 22px;
+      font-size: calc(16px * var(--font-scale));
+      font-weight: 800;
+      cursor: pointer;
+      margin: 8px 0 14px 0;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background-color 0.2s ease;
+    }
+
+    .btn-replay-applause:hover {
+      background-color: var(--primary-light);
     }
 
     .result-action-buttons {
-      width: 100%;
       display: flex;
       flex-direction: column;
-      gap: 12px;
-    }
-
-    .btn-restart-primary {
-      width: 100%;
-      background-color: var(--btn-primary);
-      color: var(--text-white);
-      border: none;
-      font-size: 1.25rem;
-      font-weight: 900;
-      padding: 16px;
-      border-radius: 50px;
-      cursor: pointer;
-      box-shadow: 0 4px 14px rgba(79, 112, 88, 0.25);
-    }
-
-    .btn-restart-primary:hover {
-      background-color: var(--btn-primary-hover);
-    }
-
-    .result-secondary-row {
-      display: flex;
+      align-items: center;
       gap: 12px;
       width: 100%;
+      max-width: 540px;
+      margin: 6px auto 12px auto;
     }
 
-    .btn-secondary-half {
-      flex: 1;
-      background-color: #EAF0E7;
-      border: 1.5px solid var(--border-color);
-      color: var(--text-main);
-      font-size: 1.05rem;
+    .btn-next-step-primary {
+      width: 100%;
+      max-width: 460px;
+      min-height: 58px;
+      padding: 13px 24px;
+      background-color: var(--primary-color);
+      color: #FFFFFF;
+      font-size: calc(20px * var(--font-scale));
       font-weight: 800;
-      padding: 14px;
-      border-radius: 50px;
+      border: none;
+      border-radius: 30px;
       cursor: pointer;
+      box-shadow: 0 4px 14px rgba(79, 112, 88, 0.28);
+      transition: all 0.18s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      line-height: 1.35;
     }
 
-    .btn-secondary-half:hover {
-      background-color: #E2EAE0;
+    .btn-next-step-primary:hover {
+      background-color: #2B3D30;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(79, 112, 88, 0.38);
     }
 
+    .result-safety-note {
+      width: 100%;
+      max-width: 480px;
+      background-color: #F4F7F2;
+      border: 1px solid #D5E2D2;
+      color: #2C3E33;
+      font-size: calc(15.5px * var(--font-scale));
+      font-weight: 700;
+      line-height: 1.5;
+      padding: 9px 16px;
+      border-radius: 14px;
+      text-align: center;
+    }
+
+    .result-secondary-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      width: 100%;
+      margin-top: 2px;
+    }
+
+    .btn-secondary-option {
+      width: 100%;
+      min-height: 50px;
+      background-color: #FFFFFF;
+      border: 2px solid var(--primary-color);
+      color: #2B3D30;
+      font-size: calc(16px * var(--font-scale));
+      font-weight: 800;
+      border-radius: 25px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+      padding: 8px 12px;
+    }
+
+    .btn-secondary-option:hover {
+      background-color: var(--primary-light);
+      border-color: var(--primary-dark);
+      transform: translateY(-1px);
+      box-shadow: 0 3px 8px rgba(79, 112, 88, 0.15);
+    }
+
+    /* 彩帶特效 */
     .global-confetti-container {
       position: fixed;
       top: 0;
@@ -1039,179 +1496,657 @@
 
     .confetti-piece {
       position: absolute;
-      border-radius: 2px;
-      opacity: 0.9;
-      animation: confettiFall 3.2s linear infinite;
+      top: -20px;
+      opacity: 0;
+      animation: confettiFall 2.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
     }
 
     @keyframes confettiFall {
-      0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
-      100% { transform: translateY(105vh) rotate(720deg); opacity: 0; }
+      0% { transform: translateY(0) rotate(0deg) scaleX(1); opacity: 0.95; }
+      75% { opacity: 0.85; }
+      100% { transform: translateY(100vh) rotate(720deg) scaleX(0.5); opacity: 0; }
     }
 
+    /* ==========================================================================
+       8. 提醒視窗、玩法教學視窗、防呆確認視窗與新挑戰開放視窗
+       ========================================================================== */
+    .info-overlay-modal,
     .unlock-overlay-modal {
       position: fixed;
       top: 0;
       left: 0;
       width: 100vw;
       height: 100vh;
-      background-color: rgba(0, 0, 0, 0.4);
+      background-color: rgba(0, 0, 0, 0.48);
       backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
       display: flex;
       justify-content: center;
-      align-items: center;
-      z-index: 9999;
-      padding: 20px;
+      align-items: flex-start;
+      z-index: 10000;
+      padding: 28px 12px;
+      overflow-y: auto;
       opacity: 0;
       visibility: hidden;
       pointer-events: none;
-      transition: opacity 0.3s ease, visibility 0.3s ease;
+      transition: opacity 0.25s ease, visibility 0.25s ease;
     }
 
+    .info-overlay-modal.active,
     .unlock-overlay-modal.active {
       opacity: 1;
       visibility: visible;
       pointer-events: auto;
     }
 
-    .unlock-dialog-card {
-      background-color: #FFFFFF;
-      border: 3px solid #4F7058;
+    .info-dialog-card {
+      background-color: var(--page-bg);
+      border: 2.5px solid var(--primary-color);
       border-radius: 28px;
-      padding: 32px 24px;
-      width: 100%;
-      max-width: 420px;
-      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+      padding: 30px 24px 24px 24px;
+      width: calc(100% - 24px);
+      max-width: 460px;
       text-align: center;
-      transform: scale(0.85);
-      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.22);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transform: scale(0.92);
+      transition: transform 0.25s ease-out;
+    }
+
+    .info-overlay-modal.active .info-dialog-card {
+      transform: scale(1);
+    }
+
+    .info-dialog-title {
+      font-size: calc(25px * var(--font-scale));
+      font-weight: 900;
+      letter-spacing: 0.6px;
+      color: var(--primary-dark);
+      margin: 0 0 14px 0;
+    }
+
+    .info-dialog-msg {
+      font-size: calc(18px * var(--font-scale));
+      font-weight: 700;
+      line-height: 1.65;
+      letter-spacing: 0.3px;
+      color: #36483D;
+      padding: 0 6px;
+      margin: 0 0 22px 0;
+      white-space: pre-line;
+    }
+
+    .tutorial-steps-list {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 22px;
+      text-align: left;
+    }
+
+    .tutorial-step-item {
+      background-color: #FFFFFF;
+      border: 1.5px solid var(--border-color);
+      border-radius: 14px;
+      padding: 11px 14px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: calc(17px * var(--font-scale));
+      font-weight: 700;
+      color: var(--primary-dark);
+      line-height: 1.45;
+    }
+
+    .tutorial-step-badge {
+      width: 28px;
+      height: 28px;
+      min-width: 28px;
+      border-radius: 50%;
+      background-color: var(--primary-color);
+      color: #FFFFFF;
+      font-size: calc(15px * var(--font-scale));
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 1px;
+    }
+
+    .btn-info-confirm {
+      background-color: var(--primary-color);
+      color: #FFFFFF;
+      border: none;
+      padding: 12px 36px;
+      font-size: calc(19px * var(--font-scale));
+      font-weight: 800;
+      border-radius: 25px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(79, 112, 88, 0.2);
+      transition: background-color 0.2s ease;
+    }
+
+    .btn-info-confirm:hover {
+      background-color: var(--primary-dark);
+    }
+
+    .confirm-modal-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .btn-modal-keep {
+      width: 100%;
+      background-color: var(--primary-color);
+      color: #FFFFFF;
+      border: none;
+      padding: 12px 20px;
+      font-size: calc(18px * var(--font-scale));
+      font-weight: 800;
+      border-radius: 25px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(79, 112, 88, 0.2);
+      transition: background-color 0.2s ease;
+    }
+
+    .btn-modal-keep:hover {
+      background-color: var(--primary-dark);
+    }
+
+    .btn-modal-restart-ok {
+      width: 100%;
+      background-color: #FFFFFF;
+      color: var(--primary-dark);
+      border: 2px solid var(--primary-color);
+      padding: 10px 20px;
+      font-size: calc(17px * var(--font-scale));
+      font-weight: 800;
+      border-radius: 25px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    .btn-modal-restart-ok:hover {
+      background-color: var(--primary-light);
+    }
+
+    /* 新挑戰開放彈窗（附明確「繼續」按鈕） */
+    .unlock-dialog-card {
+      background-color: var(--page-bg);
+      border: 3px solid var(--primary-color);
+      border-radius: 24px;
+      padding: 28px 24px 24px 24px;
+      width: calc(100% - 32px);
+      max-width: 410px;
+      text-align: center;
+      box-shadow: 0 12px 32px rgba(53, 71, 60, 0.22);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
       position: relative;
+      overflow: hidden;
+      transform: scale(0.8);
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
     .unlock-overlay-modal.active .unlock-dialog-card {
       transform: scale(1);
     }
 
-    .unlock-halo-wrapper {
+    .unlock-icon-wrapper {
       position: relative;
-      width: 100px;
-      height: 100px;
-      margin: 0 auto 18px auto;
+      width: 92px;
+      height: 92px;
       display: flex;
-      justify-content: center;
       align-items: center;
+      justify-content: center;
+      margin: 2px 0;
     }
 
-    .unlock-halo-bg {
+    .unlock-glow-circle {
       position: absolute;
-      width: 100px;
-      height: 100px;
-      background-color: #EAF0E7;
+      width: 84px;
+      height: 84px;
       border-radius: 50%;
-      z-index: 1;
+      background: radial-gradient(circle, rgba(251, 192, 45, 0.45) 0%, rgba(79, 112, 88, 0.25) 60%, rgba(252, 251, 247, 0) 100%);
+      transform: scale(0.5);
+      opacity: 0.2;
     }
 
-    .unlock-icon-circle {
-      position: relative;
+    .unlock-overlay-modal.active .unlock-glow-circle {
+      animation: glowExpand 1.2s ease-out 0.3s forwards;
+    }
+
+    @keyframes glowExpand {
+      0% { transform: scale(0.5); opacity: 0.2; }
+      50% { transform: scale(1.6); opacity: 0.85; }
+      100% { transform: scale(1.35); opacity: 0.6; }
+    }
+
+    .padlock-svg {
+      width: 50px;
+      height: 68px;
       z-index: 2;
-      width: 64px;
-      height: 64px;
-      background-color: #FFFFFF;
-      border-radius: 50%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      box-shadow: 0 4px 10px rgba(79, 112, 88, 0.15);
+      overflow: visible;
     }
 
-    .unlock-icon-circle svg {
-      width: 32px;
-      height: 32px;
-      fill: #4F7058;
+    .shackle-path {
+      transform-origin: 17px 11px;
+    }
+
+    .unlock-overlay-modal.active .shackle-path {
+      animation: shackleOpen 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.45s forwards;
+    }
+
+    @keyframes shackleOpen {
+      0% { transform: translateY(0) rotate(0deg); }
+      100% { transform: translateY(-5px) rotate(-22deg); }
+    }
+
+    .sparkle-star {
+      position: absolute;
+      color: #FBC02D;
+      font-size: 1.2rem;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    .unlock-overlay-modal.active .sparkle-star.s1 { top: 2px; left: 8px; animation: sparklePop 0.8s ease 0.65s forwards; }
+    .unlock-overlay-modal.active .sparkle-star.s2 { top: 6px; right: 10px; animation: sparklePop 0.8s ease 0.8s forwards; }
+    .unlock-overlay-modal.active .sparkle-star.s3 { bottom: 4px; left: 12px; animation: sparklePop 0.8s ease 0.9s forwards; }
+    .unlock-overlay-modal.active .sparkle-star.s4 { bottom: 8px; right: 8px; animation: sparklePop 0.8s ease 0.75s forwards; }
+
+    @keyframes sparklePop {
+      0% { opacity: 0; transform: scale(0.2) rotate(0deg); }
+      50% { opacity: 1; transform: scale(1.3) rotate(45deg); }
+      100% { opacity: 0.8; transform: scale(1) rotate(90deg); }
     }
 
     .unlock-dialog-title {
-      font-size: 1.8rem;
+      font-size: calc(23px * var(--font-scale));
       font-weight: 900;
-      color: #35473C;
-      margin-bottom: 16px;
+      color: var(--primary-dark);
+      margin: 0;
     }
 
     .unlock-message-pill {
-      background-color: #EAF0E7;
-      border-radius: 50px;
-      padding: 12px 20px;
-      font-size: 1.15rem;
+      background-color: #E2F0D9;
+      color: #234D20;
+      border: 1.5px solid #B7D8AE;
+      padding: 9px 20px;
+      border-radius: 20px;
+      font-size: calc(18px * var(--font-scale));
       font-weight: 800;
-      color: #4F7058;
-      margin-bottom: 24px;
       display: inline-block;
-      width: 100%;
+      margin: 2px 0 0 0;
     }
 
-    .btn-unlock-confirm {
-      background-color: #4F7058;
+    .unlock-sub-text {
+      font-size: calc(16px * var(--font-scale));
+      font-weight: 700;
+      color: #36483D;
+      margin: 2px 0 6px 0;
+      line-height: 1.45;
+    }
+
+    .btn-unlock-continue {
+      width: 100%;
+      background-color: var(--primary-color);
       color: #FFFFFF;
       border: none;
-      font-size: 1.15rem;
+      padding: 12px 24px;
+      font-size: calc(18.5px * var(--font-scale));
       font-weight: 800;
-      padding: 12px;
-      border-radius: 50px;
-      width: 100%;
+      border-radius: 25px;
       cursor: pointer;
-      box-shadow: 0 4px 12px rgba(79, 112, 88, 0.25);
+      box-shadow: 0 4px 10px rgba(79, 112, 88, 0.22);
+      transition: background-color 0.2s ease;
+      margin-top: 2px;
     }
 
-    .btn-unlock-confirm:hover {
-      background-color: #3E5A45;
+    .btn-unlock-continue:hover {
+      background-color: var(--primary-dark);
     }
 
-    @media (max-width: 680px) {
+    /* ==========================================================================
+       9. 響應式微調（手機與平板）
+       ========================================================================== */
+    @media (max-width: 640px) {
       .theme-grid {
         grid-template-columns: 1fr;
       }
-      .level-card {
-        padding: 18px;
+      .theme-card {
+        padding: 14px 16px;
+        gap: 14px;
       }
-      .level-num-box {
-        width: 64px;
-        height: 64px;
-        font-size: 2.2rem;
-        margin-right: 14px;
-      }
-      .level-info {
-        padding-right: 125px;
-      }
-      .level-desc {
-        font-size: 0.88rem;
-      }
-      .page-title {
-        font-size: 1.65rem;
+      .theme-img-box {
+        width: 88px;
+        height: 88px;
+        min-width: 88px;
       }
       .cards-grid.cards-6 {
-        grid-template-columns: repeat(3, 105px);
+        grid-template-columns: repeat(3, minmax(0, 1fr));
       }
       .cards-grid.cards-8 {
-        grid-template-columns: repeat(4, 90px);
+        grid-template-columns: repeat(4, minmax(0, 1fr));
       }
-      .result-secondary-row {
+      .stage-scores-breakdown-box {
+        padding: 12px 16px;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .intro-screen {
+        align-items: stretch;
+        gap: 14px;
+        padding: 12px 14px 24px;
+      }
+      .intro-top-bar {
+        min-height: 42px;
+        align-items: center;
+      }
+      #btn-back-main-cat {
+        min-height: 40px;
+        padding: 6px 12px;
+        font-size: calc(14px * var(--font-scale));
+      }
+      .intro-main-title {
+        font-size: calc(28px * var(--font-scale));
+        line-height: 1.25;
+      }
+
+      .category-header-top {
+        display: flex;
         flex-direction: column;
+        align-items: stretch;
+        justify-content: center;
+        gap: 8px;
+        min-height: 0;
       }
-      .status-row-bottom {
-        gap: 16px;
-        font-size: 1rem;
+      .btn-back-tier {
+        position: static !important;
+        inset: auto !important;
+        transform: none !important;
+        align-self: flex-start;
+        white-space: nowrap;
       }
+      .selected-tier-title {
+        width: 100%;
+        text-align: center;
+      }
+
+      .btn-next-step-primary {
+        font-size: calc(18px * var(--font-scale));
+        min-height: 54px;
+      }
+
+      .btn-secondary-option {
+        font-size: calc(15px * var(--font-scale));
+        min-height: 48px;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .cards-grid.cards-8 {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+      html[lang="zh-TW"] .card-label {
+        font-size: clamp(18px, 5.4vw, 22px);
+      }
+      .game-status-inline {
+        gap: 6px;
+        font-size: calc(16px * var(--font-scale));
+      }
+    }
+
+    /* 遊戲進行中：卡片區自適應視窗高度，避免上下滑動畫面 */
+    body.is-playing-game {
+      height: 100vh !important;
+      height: 100svh !important;
+      min-height: 0 !important;
+      padding: 8px 12px !important;
+      overflow: hidden !important;
+      align-items: stretch !important;
+    }
+    body.is-playing-game .app-container {
+      height: calc(100vh - 16px) !important;
+      height: calc(100svh - 16px) !important;
+      min-height: 0 !important;
+      max-height: calc(100vh - 16px) !important;
+      max-height: calc(100svh - 16px) !important;
+    }
+    body.is-playing-game #screen-game {
+      height: 100%;
+      min-height: 0;
+      padding: 0 8px 4px;
+      gap: clamp(5px, 1.1vh, 10px);
+      overflow: hidden;
+    }
+    body.is-playing-game #screen-game .game-header-banner {
+      /* 標題區固定依內容自然展開，不參與卡片區的高度壓縮 */
+      flex: 0 0 auto !important;
+      flex-shrink: 0 !important;
+      min-height: max-content;
+      gap: clamp(6px, 1vh, 12px);
+    }
+    body.is-playing-game #screen-game .game-top-nav-row {
+      flex: 0 0 auto !important;
+      min-height: 42px;
+      margin-bottom: 0;
+    }
+    body.is-playing-game #screen-game .game-header-title {
+      /* 恢復原本 24px × 字體縮放比例，不再依視窗高度縮小 */
+      flex: 0 0 auto !important;
+      flex-shrink: 0 !important;
+      display: block;
+      width: 100%;
+      min-height: 1.3em;
+      padding: 2px 0;
+      font-size: calc(24px * var(--font-scale)) !important;
+      line-height: 1.3 !important;
+      white-space: normal;
+      overflow: visible;
+    }
+    body.is-playing-game #screen-game .level-nav-bar {
+      flex: 0 0 auto !important;
+      flex-shrink: 0 !important;
+      min-height: 38px;
+    }
+    body.is-playing-game #screen-game .level-nav-btn {
+      padding: clamp(5px, 0.9vh, 9px) 6px;
+      font-size: clamp(13px, 1.9vh, 16px);
+    }
+    body.is-playing-game #screen-game .question-banner,
+    body.is-playing-game #screen-game .game-feedback-banner {
+      flex: 0 0 auto;
+      margin: 0;
+      padding-top: clamp(5px, 0.8vh, 8px);
+      padding-bottom: clamp(5px, 0.8vh, 8px);
+    }
+    body.is-playing-game #screen-game .cards-grid {
+      flex: 1 1 0;
+      min-height: 0;
+      width: 100%;
+      max-height: none;
+      margin: 0 auto;
+      gap: clamp(7px, 1.6vw, 14px);
+      align-content: center;
+      justify-content: center;
+      grid-auto-rows: auto;
+      grid-template-rows: repeat(2, auto) !important;
+      justify-items: center;
+    }
+    body.is-playing-game #screen-game .cards-grid.cards-4 {
+      max-width: 620px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    body.is-playing-game #screen-game .cards-grid.cards-6 {
+      max-width: 690px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    body.is-playing-game #screen-game .cards-grid.cards-8 {
+      max-width: 780px;
+      grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    }
+    body.is-playing-game #screen-game .card-item {
+      width: 100%;
+      height: auto;
+      min-height: 0;
+      aspect-ratio: 1 / 1;
+      max-height: 100%;
+      align-self: center;
+    }
+    body.is-playing-game #screen-game .card-inner {
+      width: 100%;
+      height: 100%;
+    }
+    body.is-playing-game #screen-game .card-front {
+      padding: clamp(4px, 0.8vh, 8px) 4px;
+    }
+    body.is-playing-game #screen-game .card-front img {
+      width: 78%;
+      max-width: 78%;
+      max-height: 66%;
+    }
+    body.is-playing-game #screen-game .card-label {
+      line-height: 1.12;
+      max-height: 2.3em;
+    }
+    @media (max-width: 520px) {
+      body.is-playing-game { padding: 5px 6px !important; }
+      body.is-playing-game .app-container {
+        height: calc(100svh - 10px) !important;
+        max-height: calc(100svh - 10px) !important;
+      }
+      body.is-playing-game #screen-game { padding-left: 2px; padding-right: 2px; }
+      body.is-playing-game #screen-game .game-top-nav-row button {
+        padding: 6px 9px;
+        font-size: 13px;
+      }
+      body.is-playing-game #screen-game .cards-grid { gap: 7px; }
+      body.is-playing-game #screen-game .cards-grid.cards-8 {
+        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+        grid-template-rows: repeat(2, auto) !important;
+      }
+    }
+    @media (max-height: 620px) {
+      body.is-playing-game { padding-top: 3px !important; padding-bottom: 3px !important; }
+      body.is-playing-game .app-container { height: calc(100svh - 6px) !important; }
+      body.is-playing-game #screen-game { gap: 4px; }
+      body.is-playing-game #screen-game .game-header-banner { gap: 3px; }
+      body.is-playing-game #screen-game .game-header-title {
+        font-size: calc(24px * var(--font-scale)) !important;
+        line-height: 1.3 !important;
+      }
+      body.is-playing-game #screen-game .level-nav-btn { padding-top: 4px; padding-bottom: 4px; }
+      body.is-playing-game #screen-game .question-banner,
+      body.is-playing-game #screen-game .game-feedback-banner { padding-top: 4px; padding-bottom: 4px; }
+    }
+
+
+    /* 最終修正：卡片尺寸由 JS 依遊戲區實際可用寬高計算，確保正方形與列距 */
+    body.is-playing-game #screen-game .cards-grid {
+      grid-auto-flow: row;
+      grid-auto-rows: var(--flipcard-card-size, 120px) !important;
+      align-content: center !important;
+      justify-content: center !important;
+      align-items: center !important;
+      justify-items: center !important;
+      row-gap: clamp(8px, 1.4vh, 14px) !important;
+      column-gap: clamp(8px, 1.4vw, 14px) !important;
+    }
+    body.is-playing-game #screen-game .cards-grid.cards-4 {
+      grid-template-columns: repeat(2, var(--flipcard-card-size, 120px)) !important;
+      grid-template-rows: repeat(2, var(--flipcard-card-size, 120px)) !important;
+    }
+    body.is-playing-game #screen-game .cards-grid.cards-6 {
+      grid-template-columns: repeat(3, var(--flipcard-card-size, 120px)) !important;
+      grid-template-rows: repeat(2, var(--flipcard-card-size, 120px)) !important;
+    }
+    body.is-playing-game #screen-game .cards-grid.cards-8 {
+      grid-template-columns: repeat(4, var(--flipcard-card-size, 120px)) !important;
+      grid-template-rows: repeat(2, var(--flipcard-card-size, 120px)) !important;
+    }
+    body.is-playing-game #screen-game .cards-grid .card-item {
+      box-sizing: border-box !important;
+      width: var(--flipcard-card-size, 120px) !important;
+      height: var(--flipcard-card-size, 120px) !important;
+      min-width: 0 !important;
+      min-height: 0 !important;
+      max-width: var(--flipcard-card-size, 120px) !important;
+      max-height: var(--flipcard-card-size, 120px) !important;
+      aspect-ratio: 1 / 1 !important;
+      justify-self: center !important;
+      align-self: center !important;
+      overflow: hidden;
+    }
+    body.is-playing-game #screen-game .cards-grid .card-inner {
+      width: 100% !important;
+      height: 100% !important;
     }
   </style>
 </head>
-<body>
+<body data-base-url="<?!= baseUrl ?>">
 
   <!-- 鎖定提示對話框 -->
-  <div class="info-overlay-modal" id="info-modal">
+  <div class="info-overlay-modal" id="info-modal" onclick="if(event.target === this) closeInfoModal()">
     <div class="info-dialog-card">
-      <div class="info-dialog-title" id="info-modal-title">再完成一個小目標！</div>
-      <div class="info-dialog-msg" id="info-modal-msg">請先完成等級一的三關挑戰，並且平均獲得 100 分，就能解鎖等級二，繼續挑戰喔！</div>
-      <button class="btn-info-confirm" onclick="closeInfoModal()">我知道了</button>
+      <div class="info-dialog-title" id="info-modal-title">尚未開放喔！</div>
+      <div class="info-dialog-msg" id="info-modal-msg">完成前一個等級（三關平均 90 分以上），就能開啟新的挑戰！</div>
+      <button type="button" class="btn-info-confirm" id="lbl-btn-info-confirm" onclick="closeInfoModal()">我知道了</button>
+    </div>
+  </div>
+
+  <!-- 第一次進入遊戲：簡單玩法說明視窗 -->
+  <div class="info-overlay-modal" id="tutorial-modal" onclick="if(event.target === this) closeTutorialModal()">
+    <div class="info-dialog-card">
+      <div class="info-dialog-title" id="lbl-tutorial-title">怎麼玩？</div>
+      <div class="tutorial-steps-list">
+        <div class="tutorial-step-item">
+          <span class="tutorial-step-badge">1</span>
+          <span id="lbl-tutorial-step-1">點一下第一張卡片，再點一下另一張卡片。</span>
+        </div>
+        <div class="tutorial-step-item">
+          <span class="tutorial-step-badge">2</span>
+          <span id="lbl-tutorial-step-2">找到兩張一樣的圖片，就配對成功！成功的卡片會一直翻開。</span>
+        </div>
+        <div class="tutorial-step-item">
+          <span class="tutorial-step-badge">3</span>
+          <span id="lbl-tutorial-step-3">如果圖片不同，會停留 2 秒，接著自動翻回去。</span>
+        </div>
+      </div>
+      <button type="button" class="btn-info-confirm" id="lbl-btn-tutorial-start" onclick="closeTutorialModal()">我知道了，開始玩</button>
+    </div>
+  </div>
+
+  <!-- 離開進行中關卡防呆確認視窗 -->
+  <div class="info-overlay-modal" id="confirm-exit-modal" onclick="if(event.target === this) closeExitConfirmModal()">
+    <div class="info-dialog-card">
+      <div class="info-dialog-title" id="exit-confirm-title">確定要離開嗎？</div>
+      <div class="info-dialog-msg" id="exit-confirm-msg">確定要返回遊戲分類嗎？目前這一關尚未完成。</div>
+      <div class="confirm-modal-actions">
+        <button type="button" class="btn-modal-keep" id="lbl-btn-exit-stay" onclick="closeExitConfirmModal()">繼續練習</button>
+        <button type="button" class="btn-modal-restart-ok" id="lbl-btn-exit-leave" onclick="confirmPendingExit()">確定返回</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 重新挑戰三關防呆確認對話框 -->
+  <div class="info-overlay-modal" id="confirm-restart-modal" onclick="if(event.target === this) closeRestartConfirmModal()">
+    <div class="info-dialog-card">
+      <div class="info-dialog-title" id="lbl-restart-confirm-title">確定要重新挑戰三關嗎？</div>
+      <div class="info-dialog-msg" id="lbl-restart-confirm-msg">重新挑戰會從第一關重新計算本輪分數，但您原本的最佳成績紀錄與已開放的新挑戰都會安全保留，不會覆蓋或消失喔！</div>
+      <div class="confirm-modal-actions">
+        <button type="button" class="btn-modal-keep" id="lbl-btn-restart-keep" onclick="closeRestartConfirmModal()">先不要，保留目前畫面</button>
+        <button type="button" class="btn-modal-restart-ok" id="lbl-btn-restart-ok" onclick="confirmRestartGame()">確定重新挑戰三關</button>
+      </div>
     </div>
   </div>
 
@@ -1221,276 +2156,311 @@
   <div class="app-container">
 
     <!-- 畫面 1：等級選擇畫面 -->
-    <div id="screen-level-select" class="screen active">
-      <div class="header-nav">
-        <div class="btn-back-wrap">
-          <a href="index.html" class="btn-back">
-            ❮ 返回遊戲分類
-          </a>
-        </div>
-        <div class="header-title-wrap">
-          <div class="page-title">翻卡牌配對</div>
-          <div class="page-subtitle">每個主題獨立計算，連續完成 3 關且平均達 100 分，即可解鎖該主題下一級！</div>
-        </div>
+    <div id="screen-level-select" class="screen active intro-screen">
+      <div class="intro-top-bar">
+        <button type="button" class="btn-back-nav" id="btn-back-main-cat" onclick="requestExitToCategory()">
+          ← <span id="lbl-btn-back-cat">返回遊戲分類</span>
+        </button>
       </div>
 
-      <div class="divider"></div>
+      <div class="intro-title-area">
+        <h2 class="intro-main-title" id="lbl-level-select-title">翻卡牌配對</h2>
+        <p class="intro-sub-tip" id="lbl-level-select-subtitle">完成本等級的三關挑戰，平均達 90 分以上，就能開放下一等級！</p>
+      </div>
 
-      <div class="level-list">
+      <div class="level-cards-container" id="level-cards-container">
         <!-- 等級一 -->
-        <div class="level-card" id="level-card-1" onclick="clickLevelCard(1)">
+        <div class="level-entry-card level-1-card" id="level-card-1" onclick="clickLevelCard(1)">
           <div class="level-num-box">1</div>
-          <div class="level-info">
-            <div class="level-title">等級一 入門</div>
-            <div class="level-desc">4 張卡牌中找出 2 張配對卡牌</div>
+          <div class="level-card-info">
+            <div class="level-card-header">
+              <h3 class="level-card-title" id="lbl-level-1-title">
+                <span class="level-rank" id="lbl-level-1-rank">等級一</span>
+                <span class="level-name" id="lbl-level-1-name">入門</span>
+              </h3>
+              <span class="difficulty-tag tag-easy" id="lbl-level-1-badge">難度低</span>
+            </div>
+            <p class="level-desc" id="lbl-level-1-desc">翻開 4 張卡牌，4 次內配出 2 組即滿分</p>
+            <div class="level-card-footer">
+              <span class="btn-level-start" id="lbl-btn-select-1">選擇此等級 ❯</span>
+            </div>
           </div>
-          <div class="level-badge">難度低</div>
-          <button class="btn-select-level" onclick="event.stopPropagation(); clickLevelCard(1);">
-            選擇此等級 ❯
-          </button>
         </div>
 
         <!-- 等級二 -->
-        <div class="level-card locked" id="level-card-2" onclick="clickLevelCard(2)">
+        <div class="level-entry-card level-2-card level-locked" id="level-card-2" onclick="clickLevelCard(2)">
           <div class="level-num-box">2</div>
-          <div class="level-info">
-            <div class="level-title">等級二 進階</div>
-            <div class="level-desc">6 張卡牌中找出 3 張配對卡牌</div>
+          <div class="level-card-info">
+            <div class="level-card-header">
+              <h3 class="level-card-title" id="lbl-level-2-title">
+                <span class="level-rank" id="lbl-level-2-rank">等級二</span>
+                <span class="level-name" id="lbl-level-2-name">進階</span>
+              </h3>
+              <span class="difficulty-tag tag-medium" id="level-badge-2">難度中</span>
+            </div>
+            <p class="level-desc" id="lbl-level-2-desc">翻開 6 張卡牌，5 次內配出 3 組即滿分</p>
+            <div class="level-card-footer">
+              <span class="btn-level-locked disabled" id="btn-level-2">
+                <svg class="inline-lock-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="5" y="10" width="14" height="11" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"></path></svg><span>尚未開放</span>
+              </span>
+            </div>
           </div>
-          <div class="level-badge" id="level-badge-2">尚未解鎖</div>
-          
-          <div class="lock-overlay" id="lock-icon-2">
-            <svg viewBox="0 0 24 24">
-              <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
-            </svg>
-          </div>
-
-          <button class="btn-select-level disabled" id="btn-level-2" onclick="event.stopPropagation(); clickLevelCard(2);">
-            尚未解鎖
-          </button>
         </div>
 
         <!-- 等級三 -->
-        <div class="level-card locked" id="level-card-3" onclick="clickLevelCard(3)">
+        <div class="level-entry-card level-3-card level-locked" id="level-card-3" onclick="clickLevelCard(3)">
           <div class="level-num-box">3</div>
-          <div class="level-info">
-            <div class="level-title">等級三 挑戰</div>
-            <div class="level-desc">8 張卡牌中找出 4 張配對卡牌</div>
+          <div class="level-card-info">
+            <div class="level-card-header">
+              <h3 class="level-card-title" id="lbl-level-3-title">
+                <span class="level-rank" id="lbl-level-3-rank">等級三</span>
+                <span class="level-name" id="lbl-level-3-name">挑戰</span>
+              </h3>
+              <span class="difficulty-tag tag-hard" id="level-badge-3">難度高</span>
+            </div>
+            <p class="level-desc" id="lbl-level-3-desc">翻開 8 張卡牌，6 次內配出 4 組即滿分</p>
+            <div class="level-card-footer">
+              <span class="btn-level-locked disabled" id="btn-level-3">
+                <svg class="inline-lock-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="5" y="10" width="14" height="11" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"></path></svg><span>尚未開放</span>
+              </span>
+            </div>
           </div>
-          <div class="level-badge" id="level-badge-3">尚未解鎖</div>
-
-          <div class="lock-overlay" id="lock-icon-3">
-            <svg viewBox="0 0 24 24">
-              <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
-            </svg>
-          </div>
-
-          <button class="btn-select-level disabled" id="btn-level-3" onclick="event.stopPropagation(); clickLevelCard(3);">
-            尚未解鎖
-          </button>
         </div>
-      </div>
-
-      <div class="reset-bar">
-        <button class="btn-reset-data" onclick="resetAllProgress()">↺ 重置為全新初始狀態</button>
       </div>
     </div>
 
-    <!-- 畫面 2：主題選擇畫面 -->
-    <div id="screen-theme-select" class="screen">
-      <div class="header-nav">
-        <div class="btn-back-wrap">
-          <button class="btn-back" onclick="showScreen('screen-level-select')">
+    <!-- 畫面 2：生活主題選擇畫面 -->
+    <div id="screen-theme-select" class="screen category-screen">
+      <div class="category-header-bar">
+        <div class="category-header-top">
+          <button type="button" class="btn-back-nav btn-back-tier" id="lbl-btn-back-level" onclick="showScreen('screen-level-select')">
             ❮ 返回等級選擇
           </button>
+          <h2 class="selected-tier-title" id="theme-page-title">等級一｜入門</h2>
         </div>
-        <div class="header-title-wrap">
-          <div class="page-title" id="theme-page-title">等級一｜入門</div>
-          <div class="page-subtitle">請選擇您想練習的主題</div>
-        </div>
+        <p class="category-tip-text" id="lbl-theme-subtitle">請選擇您想練習的生活主題</p>
       </div>
-
-      <div class="divider"></div>
 
       <div class="theme-grid">
         <!-- 食 -->
-        <div class="theme-card" id="theme-card-food" onclick="clickThemeCard('food')">
+        <div class="theme-card" id="theme-card-food" role="button" tabindex="0" onclick="clickThemeCard('food')" onkeydown="handleThemeCardKeydown(event, 'food')">
           <div class="lock-overlay" id="lock-icon-theme-food" style="display: none;">
             <svg viewBox="0 0 24 24">
               <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
             </svg>
           </div>
+          <div class="theme-completion-badge" id="theme-completion-food" hidden aria-live="polite"></div>
           <div class="theme-img-box">
             <img referrerpolicy="no-referrer" src="https://lh3.googleusercontent.com/d/1BXVj4PdjwlOV6_8fTOlscrnso4dUQAH0" alt="食" onerror="this.onerror=null; this.src='https://drive.google.com/thumbnail?id=1BXVj4PdjwlOV6_8fTOlscrnso4dUQAH0&sz=w500';" />
           </div>
           <div class="theme-content">
-            <div class="theme-name">食</div>
-            <div class="theme-desc">水果、蔬菜、肉類、海鮮、點心</div>
-            <button class="btn-start-theme" id="btn-theme-food">
-              開始遊戲 ❯
-            </button>
+            <div class="theme-name" id="lbl-theme-food-title">食</div>
+            <div class="theme-desc" id="lbl-theme-food-desc">常見食物與食材</div>
+            <span class="btn-start-theme" id="btn-theme-food" aria-hidden="true">
+              開始練習 ❯
+            </span>
           </div>
         </div>
 
         <!-- 衣 -->
-        <div class="theme-card" id="theme-card-clothing" onclick="clickThemeCard('clothing')">
+        <div class="theme-card" id="theme-card-clothing" role="button" tabindex="0" onclick="clickThemeCard('clothing')" onkeydown="handleThemeCardKeydown(event, 'clothing')">
           <div class="lock-overlay" id="lock-icon-theme-clothing" style="display: none;">
             <svg viewBox="0 0 24 24">
               <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
             </svg>
           </div>
+          <div class="theme-completion-badge" id="theme-completion-clothing" hidden aria-live="polite"></div>
           <div class="theme-img-box">
             <img referrerpolicy="no-referrer" src="https://lh3.googleusercontent.com/d/1jKfyf3X6zPQhYAZISLkFzgzQF9x8T2dr" alt="衣" onerror="this.onerror=null; this.src='https://drive.google.com/thumbnail?id=1jKfyf3X6zPQhYAZISLkFzgzQF9x8T2dr&sz=w500';" />
           </div>
           <div class="theme-content">
-            <div class="theme-name">衣</div>
-            <div class="theme-desc">上衣、褲子、鞋襪、帽子、配件</div>
-            <button class="btn-start-theme" id="btn-theme-clothing">
-              開始遊戲 ❯
-            </button>
+            <div class="theme-name" id="lbl-theme-clothing-title">衣</div>
+            <div class="theme-desc" id="lbl-theme-clothing-desc">日常服飾與配件</div>
+            <span class="btn-start-theme" id="btn-theme-clothing" aria-hidden="true">
+              開始練習 ❯
+            </span>
           </div>
         </div>
 
         <!-- 住 -->
-        <div class="theme-card" id="theme-card-housing" onclick="clickThemeCard('housing')">
+        <div class="theme-card" id="theme-card-housing" role="button" tabindex="0" onclick="clickThemeCard('housing')" onkeydown="handleThemeCardKeydown(event, 'housing')">
           <div class="lock-overlay" id="lock-icon-theme-housing" style="display: none;">
             <svg viewBox="0 0 24 24">
               <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
             </svg>
           </div>
+          <div class="theme-completion-badge" id="theme-completion-housing" hidden aria-live="polite"></div>
           <div class="theme-img-box">
             <img referrerpolicy="no-referrer" src="https://lh3.googleusercontent.com/d/1DrmSxzeO_q9KTYc2q_qFwBFbRW6YGidR" alt="住" onerror="this.onerror=null; this.src='https://drive.google.com/thumbnail?id=1DrmSxzeO_q9KTYc2q_qFwBFbRW6YGidR&sz=w500';" />
           </div>
           <div class="theme-content">
-            <div class="theme-name">住</div>
-            <div class="theme-desc">家具、廚房用品、浴室用品、家電</div>
-            <button class="btn-start-theme" id="btn-theme-housing">
-              開始遊戲 ❯
-            </button>
+            <div class="theme-name" id="lbl-theme-housing-title">住</div>
+            <div class="theme-desc" id="lbl-theme-housing-desc">居家用品與家電</div>
+            <span class="btn-start-theme" id="btn-theme-housing" aria-hidden="true">
+              開始練習 ❯
+            </span>
           </div>
         </div>
 
         <!-- 行 -->
-        <div class="theme-card" id="theme-card-transport" onclick="clickThemeCard('transport')">
+        <div class="theme-card" id="theme-card-transport" role="button" tabindex="0" onclick="clickThemeCard('transport')" onkeydown="handleThemeCardKeydown(event, 'transport')">
           <div class="lock-overlay" id="lock-icon-theme-transport" style="display: none;">
             <svg viewBox="0 0 24 24">
               <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
             </svg>
           </div>
+          <div class="theme-completion-badge" id="theme-completion-transport" hidden aria-live="polite"></div>
           <div class="theme-img-box">
             <img referrerpolicy="no-referrer" src="https://lh3.googleusercontent.com/d/1iUmkewOuUQn_GqJ7PxdSwFYdtoG3OkLX" alt="行" onerror="this.onerror=null; this.src='https://drive.google.com/thumbnail?id=1iUmkewOuUQn_GqJ7PxdSwFYdtoG3OkLX&sz=w500';" />
           </div>
           <div class="theme-content">
-            <div class="theme-name">行</div>
-            <div class="theme-desc">汽車、公車、火車、機車等交通工具</div>
-            <button class="btn-start-theme" id="btn-theme-transport">
-              開始遊戲 ❯
-            </button>
+            <div class="theme-name" id="lbl-theme-transport-title">行</div>
+            <div class="theme-desc" id="lbl-theme-transport-desc">交通工具與號誌</div>
+            <span class="btn-start-theme" id="btn-theme-transport" aria-hidden="true">
+              開始練習 ❯
+            </span>
           </div>
         </div>
       </div>
     </div>
 
     <!-- 畫面 3：遊戲區域 -->
-    <div id="screen-game" class="screen">
-      <div class="header-nav">
-        <div class="btn-back-wrap">
-          <button class="btn-back" onclick="exitGameToThemeSelect()">
+    <div id="screen-game" class="screen game-screen">
+      <div class="game-header-banner">
+        <div class="game-top-nav-row">
+          <button type="button" class="btn-back-nav" id="lbl-btn-back-theme" onclick="requestExitGameToThemeSelect()">
             ❮ 返回主題選擇
           </button>
+          <button type="button" class="btn-how-to-play" id="lbl-btn-how-to-play" onclick="openTutorialModal()">
+            ？玩法說明
+          </button>
         </div>
-        <div class="header-title-wrap">
-          <div class="page-title" id="game-title">等級一｜食</div>
+        <h2 class="game-header-title" id="game-title">食 | 等級一</h2>
+        <div class="level-nav-bar" role="list" aria-label="關卡進度">
+          <div class="level-nav-btn" id="stage-progress-1" role="listitem">關卡一</div>
+          <div class="level-nav-btn" id="stage-progress-2" role="listitem">關卡二</div>
+          <div class="level-nav-btn" id="stage-progress-3" role="listitem">關卡三</div>
         </div>
       </div>
 
-      <div class="game-status-bar">
-        <div class="status-row-top" id="stage-count-text">第 1／3 關</div>
-        <div class="status-row-bottom">
-          <span>已配對 <span class="status-value" id="matched-count">0</span>／<span id="total-pairs">2</span> 組</span>
-          <span>嘗試 <span class="status-value" id="attempts-count">0</span> 次</span>
+      <div class="question-banner" aria-label="遊戲進度">
+        <div class="game-status-inline">
+          <span id="lbl-status-matched">已配對 <span class="status-value" id="matched-count">0</span>／<span id="total-pairs">2</span> 組</span>
+          <span class="game-status-separator" aria-hidden="true">｜</span>
+          <span id="lbl-status-attempts">嘗試 <span class="status-value" id="attempts-count">0</span> 次</span>
         </div>
+      </div>
+
+      <div class="game-feedback-banner" id="game-feedback-banner" aria-live="polite">
+        點選兩張相同的圖片，就能成功配對喔！
       </div>
 
       <div class="cards-grid" id="cards-grid"></div>
     </div>
 
     <!-- 畫面 4：單關結算畫面 -->
-    <div id="screen-stage-clear" class="screen">
-      <div class="stage-clear-view">
-        <div class="stage-clear-title" id="stage-clear-title-text">第一關完成！</div>
+    <div id="screen-stage-clear" class="screen stage-clear-screen">
+      <div class="game-header-banner">
+        <div class="game-top-nav-row">
+          <button type="button" class="btn-back-nav" id="lbl-btn-back-theme-stage-clear" onclick="requestExitGameToThemeSelect()">
+            ❮ 返回主題選擇
+          </button>
+        </div>
+        <h2 class="game-header-title" id="stage-clear-game-title">食 | 等級一</h2>
+        <div class="level-nav-bar" role="list" aria-label="關卡進度">
+          <div class="level-nav-btn" id="stage-clear-progress-1" role="listitem">關卡一</div>
+          <div class="level-nav-btn" id="stage-clear-progress-2" role="listitem">關卡二</div>
+          <div class="level-nav-btn" id="stage-clear-progress-3" role="listitem">關卡三</div>
+        </div>
+      </div>
 
-        <div class="stars-row" id="stage-stars-row"></div>
-        <div class="stage-score-pill" id="stage-clear-score-pill">本關得分：100 分</div>
+      <div class="settlement-card">
+        <div class="settlement-title" id="stage-clear-title-text">關卡一 完成！</div>
 
-        <div class="stage-encouragement" id="stage-clear-encouragement">
-          做得很好！本關成功配對 2／2 組。持續練習，下一次挑戰一定能拿到滿分喔！
+        <div class="settlement-stars" id="stage-stars-row"></div>
+        <div class="settlement-score-pill" id="stage-clear-score-pill">本關得分：100 分</div>
+
+        <div class="star-rule-hint" id="stage-star-rule-hint">星星依本關得分評定。</div>
+
+        <div class="sublevel-encouragement" id="stage-clear-encouragement">
+          太棒了！完美完成配對！
         </div>
 
-        <div class="stage-detail-box">
-          <div class="detail-row">
-            <span>成功配對</span>
-            <span class="detail-val-green" id="detail-matched-val">2 ／ 2 組</span>
+        <div class="sublevel-breakdown-box">
+          <div class="breakdown-card correct">
+            <span id="lbl-detail-matched-title">成功配對</span>
+            <span class="count" id="detail-matched-val">2 ／ 2 組</span>
           </div>
-          <div class="detail-row">
-            <span>錯誤配對</span>
-            <span class="detail-val-red" id="detail-wrong-val">0 次</span>
+          <div class="breakdown-card wrong">
+            <span id="lbl-detail-attempts-title">嘗試次數</span>
+            <span class="count" id="detail-attempts-val">2 次</span>
           </div>
         </div>
 
-        <button class="btn-stage-next" id="btn-proceed-stage" onclick="proceedNextStage()">
-          前往第二關 ➔
-        </button>
+        <div class="stage-saved-badge" id="lbl-stage-saved-badge">✓ 成績已保存，可以安心繼續！</div>
+
+        <div class="summary-actions-group">
+          <button type="button" class="summary-full-btn" id="btn-proceed-stage" onclick="proceedNextStage()">
+            前往第二關 ➔
+          </button>
+        </div>
       </div>
     </div>
 
-    <!-- 畫面 5：三關總結算畫面 -->
-    <div id="screen-result" class="screen">
+    <!-- 畫面 5：三關總結算畫面（上方橫幅僅顯示「總成績」） -->
+    <div id="screen-result" class="screen result-screen">
+      <div class="result-header-banner">
+        <h2 class="result-header-title" id="result-game-title">食 | 等級一</h2>
+        <div class="level-nav-bar" role="region" aria-label="總成績">
+          <div class="level-nav-btn active" id="lbl-result-nav-title">總成績</div>
+        </div>
+      </div>
+
       <div class="result-view">
-        <div class="result-main-title" id="result-main-title">太棒了！三關滿分！</div>
+        <div class="result-main-title" id="result-main-title">恭喜！三關全部滿分！</div>
 
-        <div class="celebration-container">
-          <svg class="sparkle-svg-side left" viewBox="0 0 24 24">
-            <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z"/>
-          </svg>
-          <span class="trophy-permanent">🏆</span>
-          <svg class="sparkle-svg-side right" viewBox="0 0 24 24">
-            <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z"/>
-          </svg>
-        </div>
+        <div class="celebration-container" id="result-celebration" aria-hidden="true"></div>
 
-        <div class="result-stars-row">
-          <svg class="star-icon" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
-          <svg class="star-icon" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
-          <svg class="star-icon" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
-        </div>
+        <div class="settlement-stars" id="result-stars-row" aria-label="總成績星星評等"></div>
 
         <div class="result-pill" id="res-avg-score-pill">總平均成績：100 分</div>
-        <div class="result-unlock-pill" id="res-unlock-pill">已成功解鎖【食｜等級二】！</div>
 
-        <button class="btn-replay-applause" onclick="triggerApplauseAndClaps()">👏 重新播放掌聲</button>
+        <div class="best-record-note" id="res-best-record-note" hidden></div>
 
-        <div class="stage-scores-breakdown-box">
+        <div class="result-unlock-pill" id="res-unlock-pill">已開放新挑戰：【食｜等級二】！</div>
+
+        <div class="result-encouragement" id="result-encouragement"></div>
+
+        <div class="stage-scores-breakdown-box" id="stage-scores-breakdown-box">
+          <div class="table-clap-icon" id="table-clap-icon" aria-hidden="true">👏</div>
           <div class="detail-row">
-            <span>第一關</span>
-            <span class="detail-val-green" id="res-score-1">100 分</span>
+            <span id="lbl-res-stage-1">第一關</span>
+            <span class="result-detail-score" id="res-score-1">100 分</span>
           </div>
           <div class="detail-row">
-            <span>第二關</span>
-            <span class="table-clap-icon" id="table-clap-icon">👏</span>
-            <span class="detail-val-green" id="res-score-2">100 分</span>
+            <span id="lbl-res-stage-2">第二關</span>
+            <span class="result-detail-score" id="res-score-2">100 分</span>
           </div>
           <div class="detail-row">
-            <span>第三關</span>
-            <span class="detail-val-green" id="res-score-3">100 分</span>
+            <span id="lbl-res-stage-3">第三關</span>
+            <span class="result-detail-score" id="res-score-3">100 分</span>
           </div>
         </div>
 
+        <button type="button" class="btn-replay-applause" id="lbl-btn-replay-applause" onclick="triggerApplauseAndClaps()">👏 重新播放掌聲</button>
+
         <div class="result-action-buttons">
-          <button class="btn-restart-primary" onclick="restartGame()">重新挑戰</button>
-          <div class="result-secondary-row">
-            <button class="btn-secondary-half" onclick="exitGameToThemeSelect()">選擇其他主題</button>
-            <button class="btn-secondary-half" onclick="showScreen('screen-level-select')">回到等級選擇</button>
+          <button type="button" class="btn-next-step-primary" id="btn-next-step" onclick="handleNextStepAction()">
+            下一步：挑戰【食｜等級二】 ➔
+          </button>
+
+          <div class="result-safety-note" id="lbl-result-safety-note">安心提示：您的成績和已開放的關卡都已保存，重新開啟網頁也不會消失喔！</div>
+
+          <div class="result-secondary-grid">
+            <button type="button" class="btn-secondary-option" id="lbl-btn-restart" onclick="openRestartConfirmModal()">重新挑戰三關</button>
+            <button type="button" class="btn-secondary-option" id="lbl-btn-other-theme" onclick="exitGameToThemeSelect()">選擇其他主題</button>
+            <button type="button" class="btn-secondary-option" id="lbl-btn-back-level-select" onclick="showScreen('screen-level-select')">回到等級選擇</button>
+            <button type="button" class="btn-secondary-option" id="lbl-btn-back-home" onclick="postNavigate('home')">回首頁</button>
           </div>
         </div>
       </div>
@@ -1498,33 +2468,747 @@
 
   </div>
 
-  <!-- 解鎖彈窗 -->
-  <div class="unlock-overlay-modal" id="unlock-modal">
+  <!-- 新挑戰開放彈窗（附明確「繼續」按鈕，讓長輩知道下一步） -->
+  <div class="unlock-overlay-modal" id="unlock-modal" onclick="if(event.target === this) closeUnlockModal()">
     <div class="unlock-dialog-card">
-      <div class="unlock-halo-wrapper">
-        <div class="unlock-halo-bg"></div>
-        <div class="unlock-icon-circle">
-          <svg viewBox="0 0 24 24">
-            <path d="M12 17c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm6-9h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6h1.9c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm0 12H6V10h12v10z"/>
-          </svg>
-        </div>
+      <div class="unlock-icon-wrapper">
+        <div class="unlock-glow-circle"></div>
+        <svg class="padlock-svg" viewBox="0 -8 24 32" fill="none" stroke="#35473C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path class="shackle-path" d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          <rect x="4" y="11" width="16" height="10" rx="2" fill="#EAF0E7" stroke="#35473C"></rect>
+          <circle cx="12" cy="15" r="1" fill="#35473C"></circle>
+          <path d="M12 16v2"></path>
+        </svg>
+        <span class="sparkle-star s1">✦</span>
+        <span class="sparkle-star s2">✦</span>
+        <span class="sparkle-star s3">✦</span>
+        <span class="sparkle-star s4">✦</span>
       </div>
 
-      <div class="unlock-dialog-title">突破新等級！</div>
-      <div class="unlock-message-pill" id="unlock-message-text">已成功解鎖【食｜等級二】！</div>
-
-      <button class="btn-unlock-confirm" onclick="closeUnlockModal()">太棒了，繼續挑戰</button>
+      <div class="unlock-dialog-title" id="lbl-unlock-dialog-title">太棒了！已開放新挑戰！</div>
+      <div class="unlock-message-pill" id="unlock-message-text">已開放新挑戰：【食｜等級二】！</div>
+      <div class="unlock-sub-text" id="lbl-unlock-sub-text">現在可以繼續挑戰新的練習內容囉！</div>
+      <button type="button" class="btn-unlock-continue" id="lbl-btn-unlock-continue" onclick="closeUnlockModal()">繼續查看總成績 ➔</button>
     </div>
   </div>
 
   <script>
-    // 安全跳轉至主頁 index.html
-    function goToMainCategory() {
-      window.location.href = "index.html";
+    /* ==========================================
+       1. 多語言 (i18n) 字典配置模組
+       ========================================== */
+    var i18nDict = {
+      'zh-TW': {
+        'game.title': '翻卡牌配對',
+        'nav.back_category': '返回遊戲分類',
+        'nav.home': '回首頁',
+        'level.subtitle': '完成本等級的三關挑戰，平均達 90 分以上，就能開放下一等級！',
+        'level.1.rank': '等級一',
+        'level.1.name': '入門',
+        'level.1.title': '等級一｜入門',
+        'level.1.desc': '翻開 4 張卡牌，4 次內配出 2 組即滿分',
+        'level.1.badge': '難度低',
+        'level.2.rank': '等級二',
+        'level.2.name': '進階',
+        'level.2.title': '等級二｜進階',
+        'level.2.desc': '翻開 6 張卡牌，5 次內配出 3 組即滿分',
+        'level.2.badge': '難度中',
+        'level.3.rank': '等級三',
+        'level.3.name': '挑戰',
+        'level.3.title': '等級三｜挑戰',
+        'level.3.desc': '翻開 8 張卡牌，6 次內配出 4 組即滿分',
+        'level.3.badge': '難度高',
+        'btn.select_level': '選擇此等級 ❯',
+        'badge.locked': '尚未開放',
+
+        'theme.subtitle': '請選擇您想練習的生活主題',
+        'btn.back_level': '❮ 返回等級選擇',
+        'theme.food.title': '食',
+        'theme.food.desc': '常見食物與食材',
+        'theme.completed': '✓ 已完成',
+        'theme.completed_best': '✓ 已完成｜最佳 {score} 分',
+        'theme.clothing.title': '衣',
+        'theme.clothing.desc': '日常服飾與配件',
+        'theme.housing.title': '住',
+        'theme.housing.desc': '居家用品與家電',
+        'theme.transport.title': '行',
+        'theme.transport.desc': '交通工具與號誌',
+        'btn.start_game': '開始練習 ❯',
+
+        'btn.back_theme': '❮ 返回主題選擇',
+        'btn.how_to_play': '？玩法說明',
+        'status.stage': '第 {stage}／3 關',
+        'status.matched': '已配對 {matched}／{total} 組',
+        'status.attempts': '嘗試 {attempts} 次',
+        'progress.stage.1': '關卡一',
+        'progress.stage.2': '關卡二',
+        'progress.stage.3': '關卡三',
+
+        'tutorial.title': '怎麼玩？',
+        'tutorial.step_1': '點一下第一張卡片，再點一下另一張卡片。',
+        'tutorial.step_2': '找到兩張一樣的圖片，就配對成功！成功的卡片會一直翻開。',
+        'tutorial.step_3': '如果圖片不同，會停留 2 秒，接著自動翻回去。',
+        'tutorial.btn_start': '我知道了，開始玩',
+
+        'feedback.default': '點選兩張相同的圖片，就能成功配對喔！',
+        'feedback.first_flipped': '已翻開第一張卡片，請再點選另一張卡片進行配對！',
+        'feedback.match_success': '配對成功！太棒了，相同的卡片會保持翻開喔！',
+        'feedback.match_fail': '這兩張不一樣喔，先記住圖片位置，2 秒後會蓋起來再試一次！',
+
+        'exit_confirm.category_title': '確定要返回遊戲分類嗎？',
+        'exit_confirm.category_msg': '確定要返回遊戲分類嗎？目前這一關尚未完成。',
+        'exit_confirm.theme_title': '確定要返回主題選擇嗎？',
+        'exit_confirm.theme_msg': '確定要返回主題選擇嗎？目前這一關尚未完成，先前已完成的關卡成績會為您保留。',
+        'exit_confirm.stay': '繼續練習',
+        'exit_confirm.leave': '確定返回',
+
+        'stage_clear.title': '關卡{stageChinese} 完成！',
+        'stage_clear.score_full': '本關得分：100 分',
+        'stage_clear.score_partial': '本關得分：{score} 分',
+        'stage_clear.score_zero': '本關尚未得分',
+        'stage_clear.star_rule': '星星依本關得分評定。',
+        'stage_clear.encouragement_full': '太棒了！完美完成配對！',
+        'stage_clear.encouragement': '做得很好！順利完成配對！',
+        'stage_clear.saved_badge': '✓ 成績已保存，可以安心繼續！',
+        'detail.matched_title': '成功配對',
+        'detail.attempts_title': '嘗試次數',
+        'detail.matched_val': '{matched} ／ {total} 組',
+        'detail.attempts_val': '{count} 次',
+        'btn.next_stage': '前往第{stageChinese}關 ➔',
+        'btn.view_results': '前往總成績 ➔',
+
+        'result.nav_title': '總成績',
+        'result.perfect': '恭喜！三關全部滿分！',
+        'result.completed': '太棒了！已完成三關練習！',
+        'result.encouragement_full': '太棒了！您已順利完成所有配對挑戰。\n請給自己一個大大的鼓勵！',
+        'result.encouragement_unlocked': '現在可以繼續挑戰新的關卡囉！請給自己一個大大的鼓勵！',
+        'result.best_note': '★ 本主題等級歷史最佳平均：{best} 分（已為您安全保留）',
+        'result.score_unit': ' 分',
+        'result.unplayed_score': '尚未得分',
+        'medal.gold_comment': '太棒了！完美完成本關！',
+        'medal.silver_comment': '挑戰成功！反應非常敏捷！',
+        'medal.bronze_comment': '表現不錯！持續練習會越來越熟練！',
+        'medal.unplayed_comment': '一步一步練習就好，繼續加油！',
+        'result.avg_score_full': '總平均成績：100 分',
+        'result.avg_score_partial': '總平均成績：{score} 分',
+        'result.avg_score_zero': '總平均成績：尚未得分',
+        'result.unlocked_msg': '已開放新挑戰：【{theme}｜{level}】！',
+        'btn.next_step_level': '下一步：挑戰【{theme}｜{level}】 ➔',
+        'btn.next_step_themes': '下一步：選擇其他主題練習 ➔',
+        'result.safety_note': '安心提示：您的成績和已開放的關卡都已保存，重新開啟網頁也不會消失喔！',
+        'btn.replay_applause': '👏 重新播放掌聲',
+        'stage.1.name': '第一關',
+        'stage.2.name': '第二關',
+        'stage.3.name': '第三關',
+        'btn.replay': '重新挑戰三關',
+        'btn.other_theme': '選擇其他主題',
+        'btn.back_level_select': '回到等級選擇',
+
+        'restart_confirm.title': '確定要重新挑戰三關嗎？',
+        'restart_confirm.msg': '重新挑戰會從第一關重新計算本輪分數，但您原本的最佳成績紀錄與已開放的新挑戰都會安全保留，不會覆蓋或消失喔！',
+        'restart_confirm.keep': '先不要，保留目前畫面',
+        'restart_confirm.ok': '確定重新挑戰三關',
+
+        'modal.know': '我知道了',
+        'modal.lock_title_1': '尚未開放喔！',
+        'modal.lock_msg_1': '完成前一個等級（三關平均 90 分以上），就能開啟新的挑戰！',
+        'modal.lock_title_2': '尚未開放喔！',
+        'modal.lock_msg_2': '完成前一個等級（三關平均 90 分以上），就能開啟新的挑戰！',
+
+        'unlock.title': '太棒了！已開放新挑戰！',
+        'unlock.sub': '現在可以繼續挑戰新的練習內容囉！',
+        'unlock.btn_continue': '繼續查看總成績 ➔',
+        'level.name.1': '等級一',
+        'level.name.2': '等級二',
+        'level.name.3': '等級三'
+      },
+      'en': {
+        'game.title': 'Card Flip Match',
+        'nav.back_category': 'Back to Game Categories',
+        'nav.home': 'Home',
+        'level.subtitle': 'Complete all 3 stages in this level with an average score of 90 or higher to open the next level!',
+        'level.1.rank': 'Level 1',
+        'level.1.name': 'Beginner',
+        'level.1.title': 'Level 1 | Beginner',
+        'level.1.desc': 'Flip 4 cards and match 2 pairs in 4 attempts for a perfect score',
+        'level.1.badge': 'Easy',
+        'level.2.rank': 'Level 2',
+        'level.2.name': 'Intermediate',
+        'level.2.title': 'Level 2 | Intermediate',
+        'level.2.desc': 'Flip 6 cards and match 3 pairs in 5 attempts for a perfect score',
+        'level.2.badge': 'Medium',
+        'level.3.rank': 'Level 3',
+        'level.3.name': 'Advanced',
+        'level.3.title': 'Level 3 | Advanced',
+        'level.3.desc': 'Flip 8 cards and match 4 pairs in 6 attempts for a perfect score',
+        'level.3.badge': 'Hard',
+        'btn.select_level': 'Select Level ❯',
+        'badge.locked': 'Not Yet Open',
+
+        'theme.subtitle': 'Please select a daily life topic to practice',
+        'btn.back_level': '❮ Back to Levels',
+        'theme.food.title': 'Food',
+        'theme.food.desc': 'Food & ingredients',
+        'theme.completed': '✓ Completed',
+        'theme.completed_best': '✓ Done | Best: {score}',
+        'theme.clothing.title': 'Clothing',
+        'theme.clothing.desc': 'Clothes & accessories',
+        'theme.housing.title': 'Housing',
+        'theme.housing.desc': 'Home items & appliances',
+        'theme.transport.title': 'Transport',
+        'theme.transport.desc': 'Transport & signs',
+        'btn.start_game': 'Start Practice ❯',
+
+        'btn.back_theme': '❮ Back to Topics',
+        'btn.how_to_play': '? How to Play',
+        'status.stage': 'Stage {stage} / 3',
+        'status.matched': 'Matched {matched} / {total} pairs',
+        'status.attempts': 'Attempts: {attempts}',
+        'progress.stage.1': 'Stage 1',
+        'progress.stage.2': 'Stage 2',
+        'progress.stage.3': 'Stage 3',
+
+        'tutorial.title': 'How to Play',
+        'tutorial.step_1': 'Tap the first card, then tap another card.',
+        'tutorial.step_2': 'Find two matching pictures! Tap two identical pictures to match them. Matched cards stay face-up.',
+        'tutorial.step_3': 'If the pictures do not match, they will stay visible for 2 seconds so you can remember their spots before flipping back.',
+        'tutorial.btn_start': 'Got It, Start Practice',
+
+        'feedback.default': 'Tap two matching pictures to make a pair!',
+        'feedback.first_flipped': 'First card flipped! Now tap another card to find its match.',
+        'feedback.match_success': 'Great match! Matching cards stay face-up.',
+        'feedback.match_fail': 'Not a match—remember their positions! They will flip back in 2 seconds.',
+
+        'exit_confirm.category_title': 'Return to Game Categories?',
+        'exit_confirm.category_msg': 'Are you sure you want to return to Game Categories? The current stage is not finished yet.',
+        'exit_confirm.theme_title': 'Return to Topic Select?',
+        'exit_confirm.theme_msg': 'Are you sure you want to return to Topic Select? The current stage is not finished yet, though completed stages are saved.',
+        'exit_confirm.stay': 'Continue Practice',
+        'exit_confirm.leave': 'Confirm Return',
+
+        'stage_clear.title': 'Stage {stage} Cleared!',
+        'stage_clear.score_full': 'Stage Score: 100',
+        'stage_clear.score_partial': 'Stage Score: {score}',
+        'stage_clear.score_zero': 'Stage not scored yet',
+        'stage_clear.star_rule': 'Star Guide: Finish within {base} attempts for 3 gold stars; extra attempts earn 2 or 1 encouraging stars!',
+        'stage_clear.encouragement_full': 'Fantastic! Great memory—you earned a perfect score!',
+        'stage_clear.encouragement': 'Great job! You completed all matches!',
+        'stage_clear.saved_badge': '✓ Stage score automatically saved. Feel free to continue!',
+        'detail.matched_title': 'Matched Pairs',
+        'detail.attempts_title': 'Total Attempts',
+        'detail.matched_val': '{matched} / {total} pairs',
+        'detail.attempts_val': '{count} times',
+        'btn.next_stage': 'Proceed to Stage {stage} ➔',
+        'btn.view_results': 'View Overall Results ➔',
+
+        'result.nav_title': 'Overall Score',
+        'result.perfect': 'Congratulations! Perfect scores in all three stages!',
+        'result.completed': 'Well done! You completed all three practice stages!',
+        'result.encouragement_full': 'Excellent work! You completed every matching challenge.\nGive yourself a big pat on the back!',
+        'result.encouragement_unlocked': 'You can now continue to the new challenge! Give yourself a big cheer!',
+        'result.best_note': '★ Best Average Record for This Topic & Level: {best} pts (Safely Kept)',
+        'result.score_unit': ' pts',
+        'result.unplayed_score': 'Not scored yet',
+        'medal.gold_comment': 'Excellent! You completed this stage perfectly!',
+        'medal.silver_comment': 'Challenge completed! Your response was very quick!',
+        'medal.bronze_comment': 'Good effort! Keep practicing and you will become more skilled!',
+        'medal.unplayed_comment': 'Take it one step at a time. Keep going!',
+        'result.avg_score_full': 'Average Score: 100',
+        'result.avg_score_partial': 'Average Score: {score}',
+        'result.avg_score_zero': 'Average Score: Not scored yet',
+        'result.unlocked_msg': 'New Challenge Open: [{theme} | {level}]!',
+        'btn.next_step_level': 'Next Step: Challenge [{theme} | {level}] ➔',
+        'btn.next_step_themes': 'Next Step: Choose Another Topic ➔',
+        'result.safety_note': 'Rest assured: Your completed records, best scores, and opened levels are safely saved even if you leave or reopen the page.',
+        'btn.replay_applause': '👏 Replay Applause',
+        'stage.1.name': 'Stage 1',
+        'stage.2.name': 'Stage 2',
+        'stage.3.name': 'Stage 3',
+        'btn.replay': 'Replay All 3 Stages',
+        'btn.other_theme': 'Select Other Topic',
+        'btn.back_level_select': 'Back to Level Select',
+
+        'restart_confirm.title': 'Replay All 3 Stages?',
+        'restart_confirm.msg': 'Replaying restarts scoring from Stage 1, while your best score records and opened challenges stay safely preserved.',
+        'restart_confirm.keep': 'No, Keep Current Screen',
+        'restart_confirm.ok': 'Yes, Replay All 3 Stages',
+
+        'modal.know': 'Got it',
+        'modal.lock_title_1': 'Not Yet Open!',
+        'modal.lock_msg_1': 'Complete the previous level (average 90+ across 3 stages) to open this new challenge!',
+        'modal.lock_title_2': 'Not Yet Open!',
+        'modal.lock_msg_2': 'Complete the previous level (average 90+ across 3 stages) to open this new challenge!',
+
+        'unlock.title': 'Awesome! New Challenge Open!',
+        'unlock.sub': 'You can now continue practicing the new content!',
+        'unlock.btn_continue': 'Continue to Overall Results ➔',
+        'level.name.1': 'Level 1',
+        'level.name.2': 'Level 2',
+        'level.name.3': 'Level 3'
+      },
+      'ja': {
+        'game.title': 'カードめくりペアマッチ',
+        'nav.back_category': 'ゲーム分類へ戻る',
+        'nav.home': 'ホーム',
+        'level.subtitle': 'このレベルの3ステージをクリアし、平均90点以上で次のレベルが開放されます！',
+        'level.1.rank': 'レベル1',
+        'level.1.name': '初級',
+        'level.1.title': 'レベル1｜初級',
+        'level.1.desc': '4枚のカードをめくり、4回以内に2ペアをそろえると満点',
+        'level.1.badge': 'かんたん',
+        'level.2.rank': 'レベル2',
+        'level.2.name': '中級',
+        'level.2.title': 'レベル2｜中級',
+        'level.2.desc': '6枚のカードをめくり、5回以内に3ペアをそろえると満点',
+        'level.2.badge': 'ふつう',
+        'level.3.rank': 'レベル3',
+        'level.3.name': '上級',
+        'level.3.title': 'レベル3｜上級',
+        'level.3.desc': '8枚のカードをめくり、6回以内に4ペアをそろえると満点',
+        'level.3.badge': 'むずかしい',
+        'btn.select_level': 'このレベルを選択 ❯',
+        'badge.locked': '準備中',
+
+        'theme.subtitle': '練習したい生活テーマを選択してください',
+        'btn.back_level': '❮ レベル選択へ戻る',
+        'theme.food.title': '食べ物',
+        'theme.food.desc': '食べ物と食材',
+        'theme.completed': '✓ 完了',
+        'theme.completed_best': '✓ 完了｜最高 {score} 点',
+        'theme.clothing.title': '衣類',
+        'theme.clothing.desc': '衣類と小物',
+        'theme.housing.title': '住まい',
+        'theme.housing.desc': '家庭用品と家電',
+        'theme.transport.title': '交通',
+        'theme.transport.desc': '交通手段と標識',
+        'btn.start_game': '練習開始 ❯',
+
+        'btn.back_theme': '❮ テーマ選択へ戻る',
+        'btn.how_to_play': '？遊び方',
+        'status.stage': '第 {stage} / 3 ステージ',
+        'status.matched': 'ペア完了 {matched} / {total}',
+        'status.attempts': '試行回数: {attempts}',
+        'progress.stage.1': 'ステージ1',
+        'progress.stage.2': 'ステージ2',
+        'progress.stage.3': 'ステージ3',
+
+        'tutorial.title': '遊び方ガイド',
+        'tutorial.step_1': '1枚目のカードをタッチし、次にもう1枚のカードをタッチします。',
+        'tutorial.step_2': '同じ絵のカードを2枚見つけましょう！そろったカードは開いたままになります。',
+        'tutorial.step_3': '違う絵の場合は2秒間そのまま表示されますので、場所を覚えてからもう一度挑戦しましょう！',
+        'tutorial.btn_start': 'わかりました、練習を始める',
+
+        'feedback.default': '同じ絵のカードを2枚選んでペアを作りましょう！',
+        'feedback.first_flipped': '1枚目をめくりました。もう1枚選んでみましょう！',
+        'feedback.match_success': 'ペア成功！すごいですね、カードは開いたままになります！',
+        'feedback.match_fail': '違う絵でした。場所を覚えましょう、2秒後に裏返ります！',
+
+        'exit_confirm.category_title': 'ゲーム分類へ戻りますか？',
+        'exit_confirm.category_msg': 'ゲーム分類へ戻りますか？現在のステージはまだ完了していません。',
+        'exit_confirm.theme_title': 'テーマ選択へ戻りますか？',
+        'exit_confirm.theme_msg': 'テーマ選択へ戻りますか？現在のステージはまだ完了していません（クリア済みの成績は保存されています）。',
+        'exit_confirm.stay': '練習を続ける',
+        'exit_confirm.leave': '戻る',
+
+        'stage_clear.title': '第{stage}ステージクリア！',
+        'stage_clear.score_full': '今回のスコア：100 点',
+        'stage_clear.score_partial': '今回のスコア：{score} 点',
+        'stage_clear.score_zero': '今回のステージは未採点です',
+        'stage_clear.star_rule': '星の目安：{base}回以内のクリアで金星3つ！回数が多くても応援の星がもらえます。',
+        'stage_clear.encouragement_full': '素晴らしい！完璧にペアをそろえました！',
+        'stage_clear.encouragement': 'よくできました！すべてのペアを完成できました！',
+        'stage_clear.saved_badge': '✓ このステージの成績は自動保存されました！',
+        'detail.matched_title': '成功ペア',
+        'detail.attempts_title': '挑戦回数',
+        'detail.matched_val': '{matched} / {total} ペア',
+        'detail.attempts_val': '{count} 回',
+        'btn.next_stage': '第{stage}ステージへ ➔',
+        'btn.view_results': '総合結果を見る ➔',
+
+        'result.nav_title': '総合成績',
+        'result.perfect': 'おめでとうございます！3ステージすべて満点です！',
+        'result.completed': 'お疲れさまでした！3ステージの練習が完了しました！',
+        'result.encouragement_full': 'すばらしい！すべてのペアを正しく完成できました。\n自分をたくさん褒めてあげましょう！',
+        'result.encouragement_unlocked': '新しいステージに進めます！自分をたくさん褒めてあげましょう！',
+        'result.best_note': '★ このテーマ・レベルの最高平均記録：{best} 点（安全に保存済み）',
+        'result.score_unit': ' 点',
+        'result.unplayed_score': '未採点',
+        'medal.gold_comment': 'すばらしい！このステージを完璧にクリアしました！',
+        'medal.silver_comment': 'チャレンジ成功！とても素早い反応です！',
+        'medal.bronze_comment': 'よくできました！練習するほど上達します！',
+        'medal.unplayed_comment': '一歩ずつ練習しましょう。引き続き頑張りましょう！',
+        'result.avg_score_full': '総合平均スコア：100 点',
+        'result.avg_score_partial': '総合平均スコア：{score} 点',
+        'result.avg_score_zero': '総合平均スコア：未採点',
+        'result.unlocked_msg': '新しいチャレンジ開放：【{theme}｜{level}】！',
+        'btn.next_step_level': '次へ：【{theme}｜{level}】に挑戦 ➔',
+        'btn.next_step_themes': '次へ：ほかのテーマを練習する ➔',
+        'result.safety_note': '安心ガイド：クリア記録・最高成績・開放済みのレベルは自動保存されています。ページを閉じても消えません。',
+        'btn.replay_applause': '👏 拍手を再再生',
+        'stage.1.name': '第1ステージ',
+        'stage.2.name': '第2ステージ',
+        'stage.3.name': '第3ステージ',
+        'btn.replay': '3ステージ再挑戦',
+        'btn.other_theme': 'ほかのテーマを選ぶ',
+        'btn.back_level_select': 'レベル選択へ戻る',
+
+        'restart_confirm.title': '3ステージすべてに再挑戦しますか？',
+        'restart_confirm.msg': '再挑戦すると第1ステージから採点し直しますが、これまでの最高記録や開放されたチャレンジは消えずに残ります。',
+        'restart_confirm.keep': 'やめて今の画面を残す',
+        'restart_confirm.ok': '3ステージ再挑戦する',
+
+        'modal.know': 'わかりました',
+        'modal.lock_title_1': 'まだ開放されていません！',
+        'modal.lock_msg_1': '前のレベルをクリア（3ステージ平均90点以上）すると、新しいチャレンジが開放されます！',
+        'modal.lock_title_2': 'まだ開放されていません！',
+        'modal.lock_msg_2': '前のレベルをクリア（3ステージ平均90点以上）すると、新しいチャレンジが開放されます！',
+
+        'unlock.title': 'すごい！新しいチャレンジ開放！',
+        'unlock.sub': '新しい練習内容に続けて挑戦できます！',
+        'unlock.btn_continue': '続けて総合成績を見る ➔',
+        'level.name.1': 'レベル1',
+        'level.name.2': 'レベル2',
+        'level.name.3': 'レベル3'
+      },
+      'ko': {
+        'game.title': '카드 뒤집기 맞추기',
+        'nav.back_category': '게임 카테고리로',
+        'nav.home': '홈으로',
+        'level.subtitle': '이 레벨의 3단계를 완료해 평균 90점 이상을 받으면 다음 레벨이 열립니다!',
+        'level.1.rank': '레벨 1',
+        'level.1.name': '입문',
+        'level.1.title': '레벨 1｜입문',
+        'level.1.desc': '카드 4장을 뒤집어 4회 이내에 2쌍을 맞추면 만점',
+        'level.1.badge': '쉬움',
+        'level.2.rank': '레벨 2',
+        'level.2.name': '중급',
+        'level.2.title': '레벨 2｜중급',
+        'level.2.desc': '카드 6장을 뒤집어 5회 이내에 3쌍을 맞추면 만점',
+        'level.2.badge': '보통',
+        'level.3.rank': '레벨 3',
+        'level.3.name': '고급',
+        'level.3.title': '레벨 3｜고급',
+        'level.3.desc': '카드 8장을 뒤집어 6회 이내에 4쌍을 맞추면 만점',
+        'level.3.badge': '어려움',
+        'btn.select_level': '이 레벨 선택 ❯',
+        'badge.locked': '준비 중',
+
+        'theme.subtitle': '연습하고 싶은 생활 주제를 선택하세요',
+        'btn.back_level': '❮ 레벨 선택으로',
+        'theme.food.title': '음식',
+        'theme.food.desc': '음식과 식재료',
+        'theme.completed': '✓ 완료',
+        'theme.completed_best': '✓ 완료｜최고 {score}점',
+        'theme.clothing.title': '의류',
+        'theme.clothing.desc': '의류와 액세서리',
+        'theme.housing.title': '생활용품',
+        'theme.housing.desc': '생활용품과 가전',
+        'theme.transport.title': '교통',
+        'theme.transport.desc': '교통수단과 표지',
+        'btn.start_game': '연습 시작 ❯',
+
+        'btn.back_theme': '❮ 주제 선택으로',
+        'btn.how_to_play': '? 놀이 방법',
+        'status.stage': '제 {stage} / 3 단계',
+        'status.matched': '맞춘 쌍 {matched} / {total}',
+        'status.attempts': '시도: {attempts}회',
+        'progress.stage.1': '1단계',
+        'progress.stage.2': '2단계',
+        'progress.stage.3': '3단계',
+
+        'tutorial.title': '어떻게 하나요?',
+        'tutorial.step_1': '첫 번째 카드를 누른 뒤 다른 카드를 눌러 보세요.',
+        'tutorial.step_2': '같은 그림 두 장을 찾으면 짝 맞추기 성공! 맞춘 카드는 앞면이 열린 채 유지됩니다.',
+        'tutorial.step_3': '그림이 다르면 위치를 기억하실 수 있도록 2초 동안 보여드린 뒤 다시 덮입니다.',
+        'tutorial.btn_start': '알겠어요, 연습 시작',
+
+        'feedback.default': '같은 그림 카드 두 장을 눌러 짝을 맞춰 보세요!',
+        'feedback.first_flipped': '첫 번째 카드를 열었습니다. 다른 카드를 눌러 보세요!',
+        'feedback.match_success': '짝 맞추기 성공! 맞춘 카드는 계속 열려 있어요!',
+        'feedback.match_fail': '서로 다른 그림이에요. 위치를 기억하세요, 2초 뒤 다시 덮입니다!',
+
+        'exit_confirm.category_title': '게임 카테고리로 돌아갈까요?',
+        'exit_confirm.category_msg': '게임 카테고리로 돌아가시겠습니까? 현재 단계가 아직 완료되지 않았습니다.',
+        'exit_confirm.theme_title': '주제 선택으로 돌아갈까요?',
+        'exit_confirm.theme_msg': '주제 선택으로 돌아가시겠습니까? 현재 단계가 완료되지 않았으며, 이전 단계 성적은 저장되어 있습니다.',
+        'exit_confirm.stay': '계속 연습하기',
+        'exit_confirm.leave': '돌아가기',
+
+        'stage_clear.title': '제 {stage} 단계 완료!',
+        'stage_clear.score_full': '이번 단계 점수: 100 점',
+        'stage_clear.score_partial': '이번 단계 점수: {score} 점',
+        'stage_clear.score_zero': '이번 단계는 아직 채점되지 않았습니다',
+        'stage_clear.star_rule': '별점 안내: {base}회 이내 완료 시 금별 3개! 시도가 늘어나도 응원 별을 드립니다.',
+        'stage_clear.encouragement_full': '정말 잘했어요! 완벽하게 짝을 맞췄습니다!',
+        'stage_clear.encouragement': '잘하셨어요! 모든 짝을 완성했습니다!',
+        'stage_clear.saved_badge': '✓ 이번 단계 성적이 자동 저장되었습니다!',
+        'detail.matched_title': '성공한 쌍',
+        'detail.attempts_title': '총 시도 횟수',
+        'detail.matched_val': '{matched} / {total} 쌍',
+        'detail.attempts_val': '{count} 회',
+        'btn.next_stage': '제 {stage} 단계로 ➔',
+        'btn.view_results': '총 결과 보기 ➔',
+
+        'result.nav_title': '총 성적',
+        'result.perfect': '축하합니다! 세 단계 모두 만점입니다!',
+        'result.completed': '수고하셨습니다! 세 단계 연습을 모두 완료했습니다!',
+        'result.encouragement_full': '정말 잘하셨어요! 모든 짝을 정확하게 맞혔습니다.\n스스로에게 큰 칭찬을 보내 주세요!',
+        'result.encouragement_unlocked': '이제 새로운 단계에 계속 도전할 수 있어요! 스스로에게 큰 칭찬을 보내 주세요!',
+        'result.best_note': '★ 이 주제·레벨 최고 평균 기록: {best} 점 (안전하게 보관됨)',
+        'result.score_unit': ' 점',
+        'result.unplayed_score': '아직 점수가 없습니다',
+        'medal.gold_comment': '훌륭합니다! 이번 단계를 완벽하게 완료했습니다!',
+        'medal.silver_comment': '도전에 성공했습니다! 반응이 매우 빠릅니다!',
+        'medal.bronze_comment': '잘하셨습니다! 계속 연습하면 더 능숙해집니다!',
+        'medal.unplayed_comment': '한 단계씩 천천히 연습해 보세요. 계속 힘내세요!',
+        'result.avg_score_full': '총 평균 점수: 100 점',
+        'result.avg_score_partial': '총 평균 점수: {score} 점',
+        'result.avg_score_zero': '총 평균 점수: 아직 점수가 없습니다',
+        'result.unlocked_msg': '새 도전 오픈: 【{theme}｜{level}】!',
+        'btn.next_step_level': '다음 단계: 【{theme}｜{level}】 도전 ➔',
+        'btn.next_step_themes': '다음 단계: 다른 주제 연습하기 ➔',
+        'result.safety_note': '안심 안내: 완료 기록, 최고 성적, 열린 단계는 자동 저장되어 페이지를 다시 열어도 사라지지 않습니다.',
+        'btn.replay_applause': '👏 박수 소리 다시 듣기',
+        'stage.1.name': '제 1 단계',
+        'stage.2.name': '제 2 단계',
+        'stage.3.name': '제 3 단계',
+        'btn.replay': '3단계 다시 도전',
+        'btn.other_theme': '다른 주제 선택',
+        'btn.back_level_select': '레벨 선택으로',
+
+        'restart_confirm.title': '3단계를 모두 다시 도전하시겠어요?',
+        'restart_confirm.msg': '다시 도전하면 1단계부터 새로 채점되지만, 기존 최고 성적 기록과 열린 새 도전은 덮어쓰지 않고 그대로 유지됩니다.',
+        'restart_confirm.keep': '아니요, 현재 화면 유지',
+        'restart_confirm.ok': '네, 3단계 다시 도전',
+
+        'modal.know': '확인',
+        'modal.lock_title_1': '아직 열리지 않았어요!',
+        'modal.lock_msg_1': '이전 레벨(3단계 평균 90점 이상)을 완료하면 새로운 도전을 시작할 수 있어요!',
+        'modal.lock_title_2': '아직 열리지 않았어요!',
+        'modal.lock_msg_2': '이전 레벨(3단계 평균 90점 이상)을 완료하면 새로운 도전을 시작할 수 있어요!',
+
+        'unlock.title': '최고예요! 새 도전 오픈!',
+        'unlock.sub': '이제 새로운 연습 내용을 계속 도전할 수 있어요!',
+        'unlock.btn_continue': '계속해서 총 성적 보기 ➔',
+        'level.name.1': '레벨 1',
+        'level.name.2': '레벨 2',
+        'level.name.3': '레벨 3'
+      }
+    };
+
+    /* 卡牌品名多語言對照表 */
+    var gameContentI18n = {
+      'en': {
+        '滷肉飯': 'Braised Pork Rice', '水餃': 'Dumplings', '饅頭': 'Steamed Bun', '荷包蛋': 'Fried Egg',
+        '草仔粿': 'Herbal Rice Cake', '雞蛋糕': 'Egg Cake', '鳳梨酥': 'Pineapple Cake', '臭豆腐': 'Stinky Tofu',
+        '地瓜': 'Sweet Potato', '白飯': 'Steamed Rice',
+        '襯衫': 'Shirt', '半身裙': 'Skirt', '手錶': 'Watch', '皮帶': 'Belt', '牛仔褲': 'Jeans',
+        '連帽衣': 'Hoodie', '休閒鞋': 'Sneakers', '襪子': 'Socks', '墨鏡': 'Sunglasses', '手鍊': 'Bracelet',
+        '沙發': 'Sofa', '垃圾桶': 'Trash Can', '餐桌': 'Dining Table', '椅子': 'Chair', '拖鞋': 'Slippers',
+        '掃把': 'Broom', '椅墊': 'Cushion', '電風扇': 'Electric Fan', '電視': 'Television', '衣櫃': 'Wardrobe',
+        '公車': 'Bus', '遊覽車': 'Coach Bus', '機車': 'Scooter', '火車': 'Train', '腳踏車': 'Bicycle',
+        '汽車': 'Car', '飛機': 'Airplane', '高鐵': 'High-Speed Rail', '計程車': 'Taxi', '捷運': 'Metro'
+      },
+      'ko': {
+        '滷肉飯': '루러우판', '水餃': '물만두', '饅頭': '꽃빵', '荷包蛋': '달걀프라이',
+        '草仔粿': '쑥떡', '雞蛋糕': '계란빵', '鳳梨酥': '펑리수', '臭豆腐': '취두부',
+        '地瓜': '고구마', '白飯': '흰쌀밥',
+        '襯衫': '셔츠', '半身裙': '치마', '手錶': '손목시계', '皮帶': '벨트', '牛仔褲': '청바지',
+        '連帽衣': '후드티', '休閒鞋': '운동화', '襪子': '양말', '墨鏡': '선글라스', '手鍊': '팔찌',
+        '沙發': '소파', '垃圾桶': '쓰레기통', '餐桌': '식탁', '椅子': '의자', '拖鞋': '슬리퍼',
+        '掃把': '빗자루', '椅墊': '방석', '電風扇': '선풍기', '電視': '텔레비전', '衣櫃': '옷장',
+        '公車': '버스', '遊覽車': '관광버스', '機車': '오토바이', '火車': '기차', '腳踏車': '자전거',
+        '汽車': '자동차', '飛機': '비행기', '高鐵': '고속철도', '計程車': '택시', '捷運': '지하철'
+      },
+      'ja': {
+        '滷肉飯': 'ルーローハン', '水餃': '水餃子', '饅頭': 'マントウ', '荷包蛋': '目玉焼き',
+        '草仔粿': '草餅', '雞蛋糕': 'ベビーカステラ', '鳳梨酥': 'パイナップルケーキ', '臭豆腐': '臭豆腐',
+        '地瓜': 'さつまいも', '白飯': '白ごはん',
+        '襯衫': 'シャツ', '半身裙': 'スカート', '手錶': '腕時計', '皮帶': 'ベルト', '牛仔褲': 'ジーンズ',
+        '連帽衣': 'パーカー', '休閒鞋': 'スニーカー', '襪子': '靴下', '墨鏡': 'サングラス', '手鍊': 'ブレスレット',
+        '沙發': 'ソファ', '垃圾桶': 'ごみ箱', '餐桌': 'ダイニングテーブル', '椅子': 'いす', '拖鞋': 'スリッパ',
+        '掃把': 'ほうき', '椅墊': 'クッション', '電風扇': '扇風機', '電視': 'テレビ', '衣櫃': 'クローゼット',
+        '公車': 'バス', '遊覽車': '観光バス', '機車': 'バイク', '火車': '列車', '腳踏車': '自転車',
+        '汽車': '自動車', '飛機': '飛行機', '高鐵': '高速鉄道', '計程車': 'タクシー', '捷運': '地下鉄'
+      }
+    };
+
+    function translateCardName(zhName) {
+      if (currentLang === 'zh-TW') return zhName;
+      var dict = gameContentI18n[currentLang];
+      return (dict && dict[zhName]) ? dict[zhName] : zhName;
     }
 
-    function goBackToPreviousLayer() {
-      goToMainCategory();
+    /* ==========================================
+       2. 持久化儲存 (localStorage) 安全封裝模組
+       ========================================== */
+    const STORAGE_KEY = 'flipcard_senior_progress_v1';
+    const TUTORIAL_SEEN_KEY = 'flipcard_senior_tutorial_seen_v1';
+    let memoryFallbackStorage = {};
+
+    function safeGetStorage(key) {
+      try {
+        return window.localStorage.getItem(key);
+      } catch (e) {
+        return memoryFallbackStorage[key] || null;
+      }
+    }
+
+    function safeSetStorage(key, val) {
+      try {
+        window.localStorage.setItem(key, val);
+      } catch (e) {
+        memoryFallbackStorage[key] = val;
+      }
+    }
+
+    var currentLang = 'zh-TW';
+    var currentFontScale = '100';
+
+    function initDisplaySettings() {
+      var urlParams = new URLSearchParams(window.location.search);
+      var requestedLang = urlParams.get('lang') || safeGetStorage('app_lang') || 'zh-TW';
+      var langAliases = {
+        'zh': 'zh-TW', 'zh-TW': 'zh-TW',
+        'ko-KR': 'ko', 'ko_KR': 'ko',
+        'ja-JP': 'ja', 'ja_JP': 'ja'
+      };
+      requestedLang = langAliases[requestedLang] || requestedLang;
+      currentLang = i18nDict[requestedLang] ? requestedLang : 'zh-TW';
+
+      var requestedFontScale = urlParams.get('fontScale') || safeGetStorage('app_font_scale') || '100';
+      currentFontScale = ['90', '100', '115', '130'].includes(requestedFontScale) ? requestedFontScale : '100';
+
+      document.documentElement.lang = currentLang;
+      document.body.classList.remove('font-scale-90', 'font-scale-100', 'font-scale-115', 'font-scale-130');
+      document.body.classList.add('font-scale-' + currentFontScale);
+    }
+
+    function t(key, vars) {
+      var dict = i18nDict[currentLang] || i18nDict['zh-TW'];
+      var text = dict[key] || i18nDict['zh-TW'][key] || key;
+      if (vars) {
+        for (var k in vars) {
+          text = text.replace(new RegExp('\\{' + k + '\\}', 'g'), vars[k]);
+        }
+      }
+      return text;
+    }
+
+    function applyStaticI18n() {
+      const setT = function(id, k) {
+        const el = document.getElementById(id);
+        if (el) el.textContent = t(k);
+      };
+
+      setT('lbl-btn-back-cat', 'nav.back_category');
+      setT('lbl-level-select-title', 'game.title');
+      setT('lbl-level-select-subtitle', 'level.subtitle');
+
+      setT('lbl-level-1-rank', 'level.1.rank');
+      setT('lbl-level-1-name', 'level.1.name');
+      setT('lbl-level-1-desc', 'level.1.desc');
+      setT('lbl-level-1-badge', 'level.1.badge');
+      setT('lbl-btn-select-1', 'btn.select_level');
+
+      setT('lbl-level-2-rank', 'level.2.rank');
+      setT('lbl-level-2-name', 'level.2.name');
+      setT('lbl-level-2-desc', 'level.2.desc');
+
+      setT('lbl-level-3-rank', 'level.3.rank');
+      setT('lbl-level-3-name', 'level.3.name');
+      setT('lbl-level-3-desc', 'level.3.desc');
+
+      setT('lbl-btn-back-level', 'btn.back_level');
+      setT('lbl-theme-subtitle', 'theme.subtitle');
+
+      setT('lbl-theme-food-title', 'theme.food.title');
+      setT('lbl-theme-food-desc', 'theme.food.desc');
+      setT('btn-theme-food', 'btn.start_game');
+
+      setT('lbl-theme-clothing-title', 'theme.clothing.title');
+      setT('lbl-theme-clothing-desc', 'theme.clothing.desc');
+      setT('btn-theme-clothing', 'btn.start_game');
+
+      setT('lbl-theme-housing-title', 'theme.housing.title');
+      setT('lbl-theme-housing-desc', 'theme.housing.desc');
+      setT('btn-theme-housing', 'btn.start_game');
+
+      setT('lbl-theme-transport-title', 'theme.transport.title');
+      setT('lbl-theme-transport-desc', 'theme.transport.desc');
+      setT('btn-theme-transport', 'btn.start_game');
+
+      setT('lbl-btn-back-theme', 'btn.back_theme');
+      setT('lbl-btn-back-theme-stage-clear', 'btn.back_theme');
+      setT('lbl-btn-how-to-play', 'btn.how_to_play');
+
+      setT('lbl-tutorial-title', 'tutorial.title');
+      setT('lbl-tutorial-step-1', 'tutorial.step_1');
+      setT('lbl-tutorial-step-2', 'tutorial.step_2');
+      setT('lbl-tutorial-step-3', 'tutorial.step_3');
+      setT('lbl-btn-tutorial-start', 'tutorial.btn_start');
+
+      setT('lbl-btn-exit-stay', 'exit_confirm.stay');
+      setT('lbl-btn-exit-leave', 'exit_confirm.leave');
+
+      setT('lbl-detail-matched-title', 'detail.matched_title');
+      setT('lbl-detail-attempts-title', 'detail.attempts_title');
+      setT('lbl-stage-saved-badge', 'stage_clear.saved_badge');
+
+      setT('lbl-result-nav-title', 'result.nav_title');
+      setT('lbl-btn-replay-applause', 'btn.replay_applause');
+      setT('lbl-result-safety-note', 'result.safety_note');
+      setT('lbl-res-stage-1', 'stage.1.name');
+      setT('lbl-res-stage-2', 'stage.2.name');
+      setT('lbl-res-stage-3', 'stage.3.name');
+      setT('lbl-btn-restart', 'btn.replay');
+      setT('lbl-btn-other-theme', 'btn.other_theme');
+      setT('lbl-btn-back-level-select', 'btn.back_level_select');
+      setT('lbl-btn-back-home', 'nav.home');
+
+      setT('lbl-restart-confirm-title', 'restart_confirm.title');
+      setT('lbl-restart-confirm-msg', 'restart_confirm.msg');
+      setT('lbl-btn-restart-keep', 'restart_confirm.keep');
+      setT('lbl-btn-restart-ok', 'restart_confirm.ok');
+
+      setT('lbl-btn-info-confirm', 'modal.know');
+      setT('lbl-unlock-dialog-title', 'unlock.title');
+      setT('lbl-unlock-sub-text', 'unlock.sub');
+      setT('lbl-btn-unlock-continue', 'unlock.btn_continue');
+    }
+
+    function getBaseUrl() {
+      var baseUrl = document.body.getAttribute('data-base-url');
+      if (!baseUrl || baseUrl.indexOf('http') !== 0) {
+        try {
+          baseUrl = window.top.location.href.split('?')[0].split('#')[0];
+        } catch(e) {
+          baseUrl = window.location.href.split('?')[0].split('#')[0];
+        }
+      }
+      return baseUrl;
+    }
+
+    function postNavigate(pageName) {
+      var baseUrl = getBaseUrl();
+      var form = document.createElement('form');
+      form.method = 'GET';
+      form.action = baseUrl;
+      form.target = '_top';
+
+      var pageInput = document.createElement('input');
+      pageInput.type = 'hidden'; pageInput.name = 'page'; pageInput.value = pageName;
+      form.appendChild(pageInput);
+
+      var langInput = document.createElement('input');
+      langInput.type = 'hidden'; langInput.name = 'lang'; langInput.value = currentLang;
+      form.appendChild(langInput);
+
+      var fontInput = document.createElement('input');
+      fontInput.type = 'hidden'; fontInput.name = 'fontScale'; fontInput.value = currentFontScale;
+      form.appendChild(fontInput);
+
+      document.body.appendChild(form);
+      form.submit();
     }
 
     /* 資料集 */
@@ -1579,19 +3263,27 @@
       ]
     };
 
-    const THEME_NAMES = { food: "食", clothing: "衣", housing: "住", transport: "行" };
     const BASE_ATTEMPTS = { 1: 4, 2: 5, 3: 6 };
+    const MISMATCH_DISPLAY_MS = 2000; /* 統一設定錯誤配對停留 2 秒，不因等級而改變 */
 
-    /* 解鎖狀態與控制 */
+    /* 持久化儲存結構：分主題與等級保存，且不因重新挑戰覆蓋原本最佳成績 */
     const DEFAULT_UNLOCKS = { food: 1, clothing: 1, housing: 1, transport: 1 };
     let themeUnlockProgress = { ...DEFAULT_UNLOCKS };
-    let levelUsedItemNames = new Set(); 
+    let savedRecords = {
+      food: {},
+      clothing: {},
+      housing: {},
+      transport: {}
+    };
+    let levelUsedItemNames = new Set();
 
     let currentLevel = 1;
     let currentTheme = 'food';
 
     let currentStage = 1;
     let stageScores = [0, 0, 0];
+    let hasUnfinishedSession = false;
+    let pendingExitAction = null;
 
     let cards = [];
     let flippedCards = [];
@@ -1599,6 +3291,94 @@
     let totalPairs = 2;
     let attemptCount = 0;
     let isBoardLocked = false;
+
+    function loadPersistedProgress() {
+      try {
+        const raw = safeGetStorage(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && parsed.unlocks) {
+            ['food', 'clothing', 'housing', 'transport'].forEach(function(k) {
+              const savedLvl = Number(parsed.unlocks[k]);
+              if (savedLvl >= 1 && savedLvl <= 3) {
+                themeUnlockProgress[k] = Math.max(themeUnlockProgress[k] || 1, savedLvl);
+              }
+            });
+          }
+          if (parsed && parsed.records) {
+            ['food', 'clothing', 'housing', 'transport'].forEach(function(k) {
+              if (parsed.records[k] && typeof parsed.records[k] === 'object') {
+                savedRecords[k] = parsed.records[k];
+              }
+            });
+          }
+        }
+      } catch (e) {
+        console.warn('Could not load saved progress:', e);
+      }
+    }
+
+    function persistAllProgress() {
+      try {
+        safeSetStorage(STORAGE_KEY, JSON.stringify({
+          unlocks: themeUnlockProgress,
+          records: savedRecords
+        }));
+      } catch (e) {
+        console.warn('Could not save progress:', e);
+      }
+    }
+
+    function saveSingleStageScoreToStorage(themeKey, levelNum, stageIdx, score) {
+      if (!savedRecords[themeKey]) savedRecords[themeKey] = {};
+      if (!savedRecords[themeKey][levelNum]) {
+        savedRecords[themeKey][levelNum] = {
+          lastStages: [0, 0, 0],
+          bestStages: [0, 0, 0],
+          bestAvg: 0,
+          completed: false
+        };
+      }
+      const rec = savedRecords[themeKey][levelNum];
+      rec.lastStages[stageIdx] = score;
+      if (score > (rec.bestStages[stageIdx] || 0)) {
+        rec.bestStages[stageIdx] = score;
+      }
+      persistAllProgress();
+    }
+
+    function saveOverallResultToStorage(themeKey, levelNum, currentThreeScores, avgScore) {
+      if (!savedRecords[themeKey]) savedRecords[themeKey] = {};
+      if (!savedRecords[themeKey][levelNum]) {
+        savedRecords[themeKey][levelNum] = {
+          lastStages: [0, 0, 0],
+          bestStages: [0, 0, 0],
+          bestAvg: 0,
+          completed: false
+        };
+      }
+      const rec = savedRecords[themeKey][levelNum];
+      rec.lastStages = [...currentThreeScores];
+      for (let i = 0; i < 3; i++) {
+        if (currentThreeScores[i] > (rec.bestStages[i] || 0)) {
+          rec.bestStages[i] = currentThreeScores[i];
+        }
+      }
+      /* 不直接覆蓋原本最佳成績：僅在新平均更高時更新 bestAvg */
+      if (avgScore > (rec.bestAvg || 0)) {
+        rec.bestAvg = avgScore;
+      }
+      rec.completed = true;
+      persistAllProgress();
+    }
+
+    function saveUnlockProgress(themeKey, newLevel) {
+      const currentUnlocked = themeUnlockProgress[themeKey] || 1;
+      if (newLevel > currentUnlocked && newLevel <= 3) {
+        themeUnlockProgress[themeKey] = newLevel;
+        persistAllProgress();
+      }
+    }
 
     let applauseAudio = null;
     function getApplauseAudio() {
@@ -1615,26 +3395,39 @@
 
     let isAudioUnlocked = false;
 
-    function bindCardClickEvents() {
-      const card1 = document.getElementById('level-card-1');
-      const btn1 = document.querySelector('#level-card-1 .btn-select-level');
-      if (card1) card1.onclick = function(e) { e.stopPropagation(); clickLevelCard(1); };
-      if (btn1) btn1.onclick = function(e) { e.stopPropagation(); clickLevelCard(1); };
+    function triggerCardShake(el) {
+      if (!el) return;
+      el.classList.remove('shake');
+      void el.offsetWidth;
+      el.classList.add('shake');
+    }
 
-      const card2 = document.getElementById('level-card-2');
-      const btn2 = document.getElementById('btn-level-2');
-      if (card2) card2.onclick = function(e) { e.stopPropagation(); clickLevelCard(2); };
-      if (btn2) btn2.onclick = function(e) { e.stopPropagation(); clickLevelCard(2); };
+    function bindThemeCardTouchFeedback() {
+      const themeCards = Array.from(document.querySelectorAll('.theme-card'));
+      const clearPressedCards = function() {
+        themeCards.forEach(function(card) { card.classList.remove('is-pressed'); });
+      };
 
-      const card3 = document.getElementById('level-card-3');
-      const btn3 = document.getElementById('btn-level-3');
-      if (card3) card3.onclick = function(e) { e.stopPropagation(); clickLevelCard(3); };
-      if (btn3) btn3.onclick = function(e) { e.stopPropagation(); clickLevelCard(3); };
+      themeCards.forEach(function(card) {
+        card.addEventListener('pointerdown', function() {
+          if (!card.classList.contains('theme-locked')) {
+            card.classList.add('is-pressed');
+          }
+        }, { passive: true });
+        card.addEventListener('pointerleave', function() {
+          card.classList.remove('is-pressed');
+        }, { passive: true });
+      });
+
+      window.addEventListener('pointerup', clearPressedCards, { passive: true });
+      window.addEventListener('pointercancel', clearPressedCards, { passive: true });
     }
 
     function initApp() {
-      bindCardClickEvents();
-      loadUnlockProgress();
+      initDisplaySettings();
+      applyStaticI18n();
+      bindThemeCardTouchFeedback();
+      loadPersistedProgress();
       resetCurrentSessionState();
       showScreen('screen-level-select');
     }
@@ -1655,55 +3448,111 @@
       document.getElementById('info-modal').classList.remove('active');
     }
 
+    /* 玩法說明視窗控制（第一次進入自動顯示，之後可點擊按鈕重看） */
+    function openTutorialModal() {
+      document.getElementById('tutorial-modal').classList.add('active');
+    }
+
+    function closeTutorialModal() {
+      safeSetStorage(TUTORIAL_SEEN_KEY, '1');
+      document.getElementById('tutorial-modal').classList.remove('active');
+    }
+
+    function maybeShowFirstTimeTutorial() {
+      if (safeGetStorage(TUTORIAL_SEEN_KEY) !== '1') {
+        openTutorialModal();
+      }
+    }
+
+    /* 離開進行中關卡防呆確認控制 */
+    function openExitConfirmModal(title, msg, actionCallback) {
+      pendingExitAction = actionCallback;
+      document.getElementById('exit-confirm-title').textContent = title;
+      document.getElementById('exit-confirm-msg').textContent = msg;
+      document.getElementById('confirm-exit-modal').classList.add('active');
+    }
+
+    function closeExitConfirmModal() {
+      pendingExitAction = null;
+      document.getElementById('confirm-exit-modal').classList.remove('active');
+    }
+
+    function confirmPendingExit() {
+      const action = pendingExitAction;
+      closeExitConfirmModal();
+      if (typeof action === 'function') {
+        action();
+      }
+    }
+
+    function requestExitToCategory() {
+      if (hasUnfinishedSession) {
+        openExitConfirmModal(
+          t('exit_confirm.category_title'),
+          t('exit_confirm.category_msg'),
+          function() {
+            hasUnfinishedSession = false;
+            postNavigate('level_select');
+          }
+        );
+      } else {
+        postNavigate('level_select');
+      }
+    }
+
+    function requestExitGameToThemeSelect() {
+      const activeScreen = document.querySelector('.screen.active');
+      const isInProgressStage = activeScreen && activeScreen.id === 'screen-game' && matchedPairs < totalPairs;
+      if (isInProgressStage) {
+        openExitConfirmModal(
+          t('exit_confirm.theme_title'),
+          t('exit_confirm.theme_msg'),
+          function() {
+            exitGameToThemeSelect();
+          }
+        );
+      } else {
+        exitGameToThemeSelect();
+      }
+    }
+
+    /* 重新挑戰三關防呆確認視窗控制 */
+    function openRestartConfirmModal() {
+      document.getElementById('confirm-restart-modal').classList.add('active');
+    }
+
+    function closeRestartConfirmModal() {
+      document.getElementById('confirm-restart-modal').classList.remove('active');
+    }
+
+    function confirmRestartGame() {
+      closeRestartConfirmModal();
+      restartGame();
+    }
+
     function unlockAudioForMobile() {
       if (isAudioUnlocked) return;
       try {
         const ctx = getAudioContext();
         if (ctx && ctx.state === 'suspended') {
-          ctx.resume().catch(() => {});
+          ctx.resume().catch(function() {});
         }
         const a = getApplauseAudio();
         if (a) {
           const p = a.play();
           if (p && p.then) {
-            p.then(() => {
+            p.then(function() {
               a.pause();
               a.currentTime = 0;
               isAudioUnlocked = true;
-            }).catch(() => {});
+            }).catch(function() {});
           }
         }
-      } catch(e) {
-        console.warn('Audio unlock warning:', e);
-      }
+      } catch(e) {}
     }
 
     window.addEventListener('click', unlockAudioForMobile);
     window.addEventListener('touchstart', unlockAudioForMobile);
-
-    function loadUnlockProgress() {
-      try {
-        localStorage.clear();
-      } catch (e) {}
-      themeUnlockProgress = { ...DEFAULT_UNLOCKS };
-    }
-
-    function saveUnlockProgress(themeKey, newLevel) {
-      const currentUnlocked = themeUnlockProgress[themeKey] || 1;
-      if (newLevel > currentUnlocked && newLevel <= 3) {
-        themeUnlockProgress[themeKey] = newLevel;
-      }
-    }
-
-    function resetAllProgress() {
-      try {
-        localStorage.clear();
-      } catch (e) {}
-      themeUnlockProgress = { ...DEFAULT_UNLOCKS };
-      updateLevelSelectUI();
-      updateThemeSelectUI();
-      showInfoModal('重置完成', '遊戲進度已重置為初始狀態！所有主題均已開放等級一入門。');
-    }
 
     function resetCurrentSessionState() {
       currentStage = 1;
@@ -1713,31 +3562,36 @@
       flippedCards = [];
       cards = [];
       isBoardLocked = false;
+      hasUnfinishedSession = false;
       levelUsedItemNames.clear();
+      closeUnlockModal();
+      closeRestartConfirmModal();
+      closeExitConfirmModal();
       stopConfetti();
     }
 
     function updateLevelSelectUI() {
       const maxUnlocked = Math.max(...Object.values(themeUnlockProgress));
+      const lockedButtonLabel = '<svg class="inline-lock-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="5" y="10" width="14" height="11" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"></path></svg><span>' + t('badge.locked') + '</span>';
 
       for (let lvl = 2; lvl <= 3; lvl++) {
         const cardEl = document.getElementById('level-card-' + lvl);
         const badgeEl = document.getElementById('level-badge-' + lvl);
-        const lockIcon = document.getElementById('lock-icon-' + lvl);
         const btnEl = document.getElementById('btn-level-' + lvl);
+        if (!cardEl || !badgeEl || !btnEl) continue;
 
-        if (lvl <= maxUnlocked) {
-          cardEl.classList.remove('locked');
-          badgeEl.textContent = lvl === 2 ? "難度中" : "難度高";
-          if (lockIcon) lockIcon.style.display = 'none';
-          btnEl.classList.remove('disabled');
-          btnEl.innerHTML = '選擇此等級 ❯';
+        const isUnlocked = lvl <= maxUnlocked;
+        cardEl.classList.toggle('level-locked', !isUnlocked);
+        badgeEl.textContent = t('level.' + lvl + '.badge');
+
+        if (isUnlocked) {
+          btnEl.classList.remove('disabled', 'btn-level-locked');
+          btnEl.classList.add('btn-level-start');
+          btnEl.innerHTML = t('btn.select_level');
         } else {
-          cardEl.classList.add('locked');
-          badgeEl.textContent = '尚未解鎖';
-          if (lockIcon) lockIcon.style.display = 'flex';
-          btnEl.classList.add('disabled');
-          btnEl.innerHTML = '尚未解鎖';
+          btnEl.classList.remove('btn-level-start');
+          btnEl.classList.add('disabled', 'btn-level-locked');
+          btnEl.innerHTML = lockedButtonLabel;
         }
       }
     }
@@ -1745,32 +3599,103 @@
     function updateThemeSelectUI() {
       const themeKeys = ['food', 'clothing', 'housing', 'transport'];
 
-      themeKeys.forEach(tKey => {
+      themeKeys.forEach(function(tKey) {
         const cardEl = document.getElementById('theme-card-' + tKey);
         const btnEl = document.getElementById('btn-theme-' + tKey);
         const lockIcon = document.getElementById('lock-icon-theme-' + tKey);
+        const completionBadge = document.getElementById('theme-completion-' + tKey);
         const unlockedLvl = themeUnlockProgress[tKey] || 1;
+        const levelRec = savedRecords[tKey] && savedRecords[tKey][currentLevel];
+        const isCompleted = !!(levelRec && levelRec.completed);
 
         if (currentLevel <= unlockedLvl) {
           cardEl.classList.remove('theme-locked');
           if (lockIcon) lockIcon.style.display = 'none';
           btnEl.classList.remove('disabled');
-          btnEl.innerHTML = '開始遊戲 ❯';
+          btnEl.textContent = t('btn.start_game');
         } else {
           cardEl.classList.add('theme-locked');
           if (lockIcon) lockIcon.style.display = 'flex';
           btnEl.classList.add('disabled');
-          btnEl.innerHTML = '尚未解鎖';
+          btnEl.textContent = t('badge.locked');
+        }
+
+        cardEl.classList.toggle('has-completion', isCompleted);
+        if (completionBadge) {
+          completionBadge.hidden = !isCompleted;
+          if (isCompleted) {
+            completionBadge.textContent = (levelRec.bestAvg > 0)
+              ? t('theme.completed_best', { score: levelRec.bestAvg })
+              : t('theme.completed');
+          } else {
+            completionBadge.textContent = '';
+          }
         }
       });
     }
 
+    /*
+     * 依卡片區真正可用的寬、高計算正方形邊長。
+     * 4 張 = 2x2、6 張 = 3x2、8 張 = 4x2；每列高度等於卡片邊長，
+     * 不再讓欄寬與列高各自伸縮，避免卡片變扁或上下兩排互相覆蓋。
+     */
+    function fitCardsGridToViewport() {
+      const grid = document.getElementById('cards-grid');
+      if (!grid || !document.body.classList.contains('is-playing-game')) return;
+
+      const totalCards = grid.classList.contains('cards-8') ? 8
+        : (grid.classList.contains('cards-6') ? 6 : 4);
+      const columns = totalCards === 4 ? 2 : (totalCards === 6 ? 3 : 4);
+      const rows = 2;
+      const gridWidth = grid.clientWidth;
+      const gridHeight = grid.clientHeight;
+      if (!gridWidth || !gridHeight) return;
+
+      const computed = window.getComputedStyle(grid);
+      const columnGap = parseFloat(computed.columnGap) || 0;
+      const rowGap = parseFloat(computed.rowGap) || 0;
+      const widthPerCard = (gridWidth - columnGap * (columns - 1)) / columns;
+      const heightPerCard = (gridHeight - rowGap * (rows - 1)) / rows;
+      const cardSize = Math.floor(Math.min(widthPerCard, heightPerCard));
+      if (!Number.isFinite(cardSize) || cardSize < 1) return;
+
+      grid.style.setProperty('--flipcard-card-size', cardSize + 'px');
+      grid.style.gridTemplateColumns = 'repeat(' + columns + ', ' + cardSize + 'px)';
+      grid.style.gridTemplateRows = 'repeat(' + rows + ', ' + cardSize + 'px)';
+      grid.style.gridAutoRows = cardSize + 'px';
+
+      grid.querySelectorAll('.card-item').forEach(function(cardEl) {
+        cardEl.style.width = cardSize + 'px';
+        cardEl.style.height = cardSize + 'px';
+      });
+    }
+
+    function scheduleCardsGridFit() {
+      if (typeof window.requestAnimationFrame === 'function') {
+        window.requestAnimationFrame(function() {
+          window.requestAnimationFrame(fitCardsGridToViewport);
+        });
+      } else {
+        window.setTimeout(fitCardsGridToViewport, 60);
+      }
+    }
+
+    window.addEventListener('resize', scheduleCardsGridFit, { passive: true });
+    window.addEventListener('orientationchange', function() {
+      window.setTimeout(scheduleCardsGridFit, 100);
+    }, { passive: true });
+
     function showScreen(screenId) {
-      if (screenId !== 'screen-stage-clear' && screenId !== 'screen-result') {
+      if (screenId !== 'screen-result') {
         stopConfetti();
       }
-      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
       document.getElementById(screenId).classList.add('active');
+      document.body.classList.toggle('is-playing-game', screenId === 'screen-game');
+      window.scrollTo(0, 0);
+      if (screenId === 'screen-game') {
+        scheduleCardsGridFit();
+      }
 
       if (screenId === 'screen-level-select') {
         updateLevelSelectUI();
@@ -1780,51 +3705,44 @@
     }
 
     function clickLevelCard(lvl) {
-      try {
-        const maxUnlocked = Math.max(...Object.values(themeUnlockProgress || {food:1}));
-        if (lvl > maxUnlocked) {
-          if (lvl === 2) {
-            showInfoModal(
-              '再完成一個小目標！',
-              '請先完成等級一的三關挑戰，並且平均獲得 100 分，就能解鎖等級二，繼續挑戰喔！'
-            );
-          } else {
-            showInfoModal(
-              '再邁出一大步！',
-              '請先完成等級二的三關挑戰，並且平均獲得 100 分，就能解鎖等級三，繼續挑戰喔！'
-            );
-          }
+      const maxUnlocked = Math.max(...Object.values(themeUnlockProgress || { food: 1 }));
+      if (lvl > maxUnlocked) {
+        triggerCardShake(document.getElementById('level-card-' + lvl));
+        if (lvl === 2) {
+          showInfoModal(t('modal.lock_title_1'), t('modal.lock_msg_1'));
         } else {
-          selectLevel(lvl);
+          showInfoModal(t('modal.lock_title_2'), t('modal.lock_msg_2'));
         }
-      } catch(e) {
-        console.error("clickLevelCard error:", e);
+      } else {
         selectLevel(lvl);
       }
     }
 
     function selectLevel(lvl) {
       currentLevel = lvl;
-      document.getElementById('theme-page-title').textContent = lvl === 1 ? '等級一｜入門' : (lvl === 2 ? '等級二｜進階' : '等級三｜挑戰');
+      document.getElementById('theme-page-title').textContent = t('level.' + lvl + '.title');
       showScreen('screen-theme-select');
     }
 
     function clickThemeCard(themeKey) {
       const unlockedForThisTheme = themeUnlockProgress[themeKey] || 1;
       if (currentLevel > unlockedForThisTheme) {
+        triggerCardShake(document.getElementById('theme-card-' + themeKey));
         if (currentLevel === 2) {
-          showInfoModal(
-            '再完成一個小目標！',
-            '請先完成等級一的三關挑戰，並且平均獲得 100 分，就能解鎖等級二，繼續挑戰喔！'
-          );
+          showInfoModal(t('modal.lock_title_1'), t('modal.lock_msg_1'));
         } else {
-          showInfoModal(
-            '再邁出一大步！',
-            '請先完成等級二的三關挑戰，並且平均獲得 100 分，就能解鎖等級三，繼續挑戰喔！'
-          );
+          showInfoModal(t('modal.lock_title_2'), t('modal.lock_msg_2'));
         }
       } else {
         startGame(themeKey);
+      }
+    }
+
+    function handleThemeCardKeydown(event, themeKey) {
+      if (event.target !== event.currentTarget) return;
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        clickThemeCard(themeKey);
       }
     }
 
@@ -1836,12 +3754,27 @@
     function startGame(themeKey) {
       currentTheme = themeKey;
       resetCurrentSessionState();
+      hasUnfinishedSession = true;
       startStage(currentStage);
       showScreen('screen-game');
+      maybeShowFirstTimeTutorial();
+    }
+
+    function setGameFeedback(type, messageKey) {
+      const banner = document.getElementById('game-feedback-banner');
+      if (!banner) return;
+      banner.classList.remove('feedback-success', 'feedback-mismatch');
+      if (type === 'success') {
+        banner.classList.add('feedback-success');
+      } else if (type === 'mismatch') {
+        banner.classList.add('feedback-mismatch');
+      }
+      banner.textContent = t(messageKey);
     }
 
     function startStage(stageNum) {
       currentStage = stageNum;
+      hasUnfinishedSession = true;
 
       if (currentLevel === 1) totalPairs = 2;
       else if (currentLevel === 2) totalPairs = 3;
@@ -1852,15 +3785,50 @@
       flippedCards = [];
       isBoardLocked = false;
 
-      const levelText = currentLevel === 1 ? '等級一' : currentLevel === 2 ? '等級二' : '等級三';
-      document.getElementById('game-title').textContent = levelText + '｜' + THEME_NAMES[currentTheme];
+      const levelName = t('level.name.' + currentLevel);
+      const themeText = t('theme.' + currentTheme + '.title');
+      const combinedTitle = themeText + ' | ' + levelName;
+      document.getElementById('game-title').textContent = combinedTitle;
+      document.getElementById('stage-clear-game-title').textContent = combinedTitle;
+      document.getElementById('result-game-title').textContent = combinedTitle;
 
-      document.getElementById('stage-count-text').textContent = '第 ' + currentStage + '／3 關';
-      document.getElementById('matched-count').textContent = '0';
-      document.getElementById('total-pairs').textContent = totalPairs;
-      document.getElementById('attempts-count').textContent = '0';
-
+      setGameFeedback('default', 'feedback.default');
+      updateStageProgressUI();
+      updateGameStatusUI();
       buildCardsGrid();
+    }
+
+    function updateStageProgressUI() {
+      [1, 2, 3].forEach(function(stageNumber) {
+        const isCurrentStage = Number(currentStage) === stageNumber;
+        const stageLabel = t('progress.stage.' + stageNumber);
+        const pills = [
+          document.getElementById('stage-progress-' + stageNumber),
+          document.getElementById('stage-clear-progress-' + stageNumber)
+        ];
+
+        pills.forEach(function(pill) {
+          if (!pill) return;
+          pill.textContent = stageLabel;
+          pill.classList.toggle('active', isCurrentStage);
+
+          if (isCurrentStage) {
+            pill.setAttribute('aria-current', 'step');
+          } else {
+            pill.removeAttribute('aria-current');
+          }
+        });
+      });
+    }
+
+    function updateGameStatusUI() {
+      document.getElementById('lbl-status-matched').innerHTML = t('status.matched', {
+        matched: '<span class="status-value" id="matched-count">' + matchedPairs + '</span>',
+        total: totalPairs
+      });
+      document.getElementById('lbl-status-attempts').innerHTML = t('status.attempts', {
+        attempts: '<span class="status-value" id="attempts-count">' + attemptCount + '</span>'
+      });
     }
 
     function buildCardsGrid() {
@@ -1872,8 +3840,8 @@
       gridContainer.classList.add('cards-' + totalCards);
 
       const allThemeItems = [...ITEMS_DATA[currentTheme]];
-      
-      let unusedItems = allThemeItems.filter(item => !levelUsedItemNames.has(item.name));
+
+      let unusedItems = allThemeItems.filter(function(item) { return !levelUsedItemNames.has(item.name); });
       let selectedItems = [];
 
       if (unusedItems.length >= totalPairs) {
@@ -1882,44 +3850,63 @@
       } else {
         selectedItems = [...unusedItems];
         let needed = totalPairs - selectedItems.length;
-        let selectedNames = new Set(selectedItems.map(i => i.name));
-        
-        let recycledPool = allThemeItems.filter(item => !selectedNames.has(item.name));
+        let selectedNames = new Set(selectedItems.map(function(i) { return i.name; }));
+
+        let recycledPool = allThemeItems.filter(function(item) { return !selectedNames.has(item.name); });
         shuffleArray(recycledPool);
-        
+
         selectedItems = selectedItems.concat(recycledPool.slice(0, needed));
         levelUsedItemNames.clear();
       }
 
-      selectedItems.forEach(item => levelUsedItemNames.add(item.name));
+      selectedItems.forEach(function(item) { levelUsedItemNames.add(item.name); });
 
       cards = [];
-      selectedItems.forEach((item, index) => {
+      selectedItems.forEach(function(item, index) {
         cards.push({ id: index, name: item.name, img: item.img });
         cards.push({ id: index, name: item.name, img: item.img });
       });
 
       shuffleArray(cards);
 
-      cards.forEach((card, idx) => {
+      cards.forEach(function(card, idx) {
         const cardEl = document.createElement('div');
         cardEl.className = 'card-item';
         cardEl.dataset.index = idx;
-        cardEl.onclick = () => handleCardClick(idx);
+        cardEl.onclick = function() { handleCardClick(idx); };
 
         const driveId = extractDriveId(card.img);
+        const displayName = translateCardName(card.name);
+        const displayNameLength = Array.from(displayName).length;
+        let cardLabelClass = 'card-label';
+
+        if (currentLang !== 'zh-TW') {
+          const isEnglish = currentLang === 'en';
+          const longLabelThreshold = isEnglish ? 12 : 7;
+          const mediumLabelThreshold = isEnglish ? 7 : 4;
+
+          if (displayNameLength >= longLabelThreshold) {
+            cardLabelClass += ' is-long-label';
+          }
+          if (displayNameLength >= mediumLabelThreshold) {
+            cardLabelClass += ' is-medium-label';
+          }
+        }
 
         cardEl.innerHTML = '<div class="card-inner">' +
           '<div class="card-face card-back">' +
             '<div class="card-back-icon"><span>？</span></div>' +
           '</div>' +
           '<div class="card-face card-front">' +
-            '<img referrerpolicy="no-referrer" src="' + card.img + '" alt="' + card.name + '" onerror="this.onerror=null; this.src=\'https://drive.google.com/thumbnail?id=' + driveId + '&sz=w500\';" />' +
-            '<div class="card-label">' + card.name + '</div>' +
+            '<img referrerpolicy="no-referrer" src="' + card.img + '" alt="' + displayName + '" onerror="this.onerror=null; this.src=\'https://drive.google.com/thumbnail?id=' + driveId + '&sz=w500\';" />' +
+            '<div class="' + cardLabelClass + '">' + displayName + '</div>' +
           '</div>' +
         '</div>';
         gridContainer.appendChild(cardEl);
       });
+
+      /* 新卡片建立完成後再量測一次；雙 RAF 等待 Grid 完成排版 */
+      scheduleCardsGridFit();
     }
 
     function extractDriveId(url) {
@@ -1938,40 +3925,50 @@
       }
 
       clickedCardEl.classList.add('flipped');
-      flippedCards.push({ index, card: cards[index], el: clickedCardEl });
+      flippedCards.push({ index: index, card: cards[index], el: clickedCardEl });
 
-      if (flippedCards.length === 2) {
+      if (flippedCards.length === 1) {
+        setGameFeedback('default', 'feedback.first_flipped');
+      } else if (flippedCards.length === 2) {
         attemptCount++;
-        document.getElementById('attempts-count').textContent = attemptCount;
+        const attEl = document.getElementById('attempts-count');
+        if (attEl) attEl.textContent = attemptCount;
         checkMatch();
       }
     }
 
     function checkMatch() {
       isBoardLocked = true;
-      const [card1, card2] = flippedCards;
+      const card1 = flippedCards[0];
+      const card2 = flippedCards[1];
 
       if (card1.card.id === card2.card.id) {
-        setTimeout(() => {
+        setGameFeedback('success', 'feedback.match_success');
+        playGentleMatchSound();
+        setTimeout(function() {
           card1.el.classList.add('matched');
           card2.el.classList.add('matched');
 
           matchedPairs++;
-          document.getElementById('matched-count').textContent = matchedPairs;
+          const matchEl = document.getElementById('matched-count');
+          if (matchEl) matchEl.textContent = matchedPairs;
           flippedCards = [];
           isBoardLocked = false;
 
           if (matchedPairs === totalPairs) {
             handleStageComplete();
           }
-        }, 400);
+        }, 420);
       } else {
-        setTimeout(() => {
+        setGameFeedback('mismatch', 'feedback.match_fail');
+        playGentleMismatchSound();
+        setTimeout(function() {
           card1.el.classList.remove('flipped');
           card2.el.classList.remove('flipped');
           flippedCards = [];
           isBoardLocked = false;
-        }, 1000);
+          setGameFeedback('default', 'feedback.default');
+        }, MISMATCH_DISPLAY_MS);
       }
     }
 
@@ -1986,52 +3983,145 @@
       const stageScore = calculateStageScore();
       stageScores[currentStage - 1] = stageScore;
 
-      setTimeout(() => {
+      /* 每完成一關就立即保存分數至 localStorage */
+      saveSingleStageScoreToStorage(currentTheme, currentLevel, currentStage - 1, stageScore);
+
+      if (currentStage === 3) {
+        hasUnfinishedSession = false;
+      }
+
+      setTimeout(function() {
         showStageClearScreen(currentStage, stageScore);
       }, 500);
     }
 
-    function showStageClearScreen(stageNum, score) {
-      const stageNames = ["第一關", "第二關", "第三關"];
-      document.getElementById('stage-clear-title-text').textContent = stageNames[stageNum - 1] + '完成！';
-
-      const starsRow = document.getElementById('stage-stars-row');
-      starsRow.innerHTML = '';
-      for (let i = 0; i < stageNum; i++) {
-        const starSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        starSvg.setAttribute('viewBox', '0 0 24 24');
-        starSvg.setAttribute('class', 'star-icon');
-        starSvg.style.animationDelay = (i * 0.25) + 's';
-        starSvg.innerHTML = '<path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>';
-        starsRow.appendChild(starSvg);
+    function getScoreMedalInfo(score) {
+      if (score >= 90) {
+        return {
+          svg: '<svg viewBox="0 0 32 32" width="22" height="22" aria-hidden="true" focusable="false"><circle cx="16" cy="16" r="15" fill="#D98A2B"/><path d="M16 6l3.1 6.3 6.9 1-5 4.9 1.2 6.8-6.2-3.3-6.2 3.3 1.2-6.8-5-4.9 6.9-1z" fill="#FFFFFF"/></svg>',
+          comment: t('medal.gold_comment'),
+          stars: 3
+        };
       }
+      if (score >= 60) {
+        return {
+          svg: '<svg viewBox="0 0 32 32" width="22" height="22" aria-hidden="true" focusable="false"><circle cx="16" cy="16" r="15" fill="#788B7C"/><path d="M16 6l3.1 6.3 6.9 1-5 4.9 1.2 6.8-6.2-3.3-6.2 3.3 1.2-6.8-5-4.9 6.9-1z" fill="#FFFFFF"/></svg>',
+          comment: t('medal.silver_comment'),
+          stars: 2
+        };
+      }
+      if (score >= 1) {
+        return {
+          svg: '<svg viewBox="0 0 32 32" width="22" height="22" aria-hidden="true" focusable="false"><circle cx="16" cy="16" r="15" fill="#B36239"/><path d="M16 6l3.1 6.3 6.9 1-5 4.9 1.2 6.8-6.2-3.3-6.2 3.3 1.2-6.8-5-4.9 6.9-1z" fill="#FFFFFF"/></svg>',
+          comment: t('medal.bronze_comment'),
+          stars: 1
+        };
+      }
+      return {
+        svg: '<svg viewBox="0 0 32 32" width="22" height="22" aria-hidden="true" focusable="false"><circle cx="16" cy="16" r="15" fill="#5F8575"/><path d="M16 22.5s-5.8-3.8-5.8-7.7c0-2.1 1.7-3.8 3.8-3.8 1.3 0 2.4.6 3 1.6.6-1 1.7-1.6 3-1.6 2.1 0 3.8 1.7 3.8 3.8 0 3.9-5.8 7.7-5.8 7.7z" fill="#FFFFFF"/></svg>',
+        comment: t('medal.unplayed_comment'),
+        stars: 1
+      };
+    }
+
+    function renderScoreStars(goldCount, prefix) {
+      let html = '';
+      const delays = ['0.1s, 0.8s', '0.25s, 1.0s', '0.4s, 1.2s'];
+      for (let i = 1; i <= 3; i++) {
+        const isGold = i <= goldCount;
+        const fillId = prefix + 'StarGoldGrad' + i;
+        const greyId = prefix + 'StarGreyGrad' + i;
+        const animationDelay = isGold ? delays[i - 1] : [0.1, 0.25, 0.4][i - 1] + 's';
+        html +=
+          '<span class="rating-star-item ' + (isGold ? 'gold' : 'grey') + '" style="animation-delay:' + animationDelay + ';">' +
+            '<svg class="star-svg-icon" viewBox="0 0 50 50" aria-hidden="true">' +
+              '<defs>' +
+                '<linearGradient id="' + fillId + '" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#FFC107"/><stop offset="100%" stop-color="#FF8F00"/></linearGradient>' +
+                '<linearGradient id="' + greyId + '" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#E0E0E0"/><stop offset="100%" stop-color="#BDBDBD"/></linearGradient>' +
+              '</defs>' +
+              '<path d="M25 3.2 L31.8 17 L47 19.2 L36 29.9 L38.6 45 L25 37.8 L11.4 45 L14 29.9 L3 19.2 L18.2 17 Z" fill="url(#' + (isGold ? fillId : greyId) + ')"/>' +
+            '</svg>' +
+          '</span>';
+      }
+      return html;
+    }
+
+    function buildPerfectTrophyGraphic() {
+      const decorStarsSVG =
+        '<svg class="decor-stars" viewBox="0 0 40 40" aria-hidden="true">' +
+          '<path d="M20 2 L23 15 L36 18 L23 21 L20 34 L17 21 L4 18 L17 15 Z" fill="#FFB74D"/>' +
+          '<path d="M32 24 L33.5 28.5 L38 29.5 L33.5 30.5 L32 35 L30.5 30.5 L26 29.5 L30.5 28.5 Z" fill="#FFE082"/>' +
+          '<path d="M10 4 L11 7.5 L14.5 8.5 L11 9.5 L10 13 L9 9.5 L5.5 8.5 L9 7.5 Z" fill="#FFE082"/>' +
+        '</svg>';
+      return '<div class="perfect-graphic-group">' +
+        '<div class="side-decor">' + decorStarsSVG + '</div>' +
+        '<svg class="perfect-trophy-svg" viewBox="0 0 100 100" aria-hidden="true">' +
+          '<defs>' +
+            '<linearGradient id="flipcardGoldGrad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#FFE082"/><stop offset="30%" stop-color="#FFD54F"/><stop offset="55%" stop-color="#FFB300"/><stop offset="85%" stop-color="#FF8F00"/><stop offset="100%" stop-color="#FF6F00"/></linearGradient>' +
+            '<linearGradient id="flipcardBaseGrad" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#8D6E63"/><stop offset="50%" stop-color="#5D4037"/><stop offset="100%" stop-color="#3E2723"/></linearGradient>' +
+            '<linearGradient id="flipcardStemGrad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#FFB300"/><stop offset="50%" stop-color="#FFE082"/><stop offset="100%" stop-color="#FF8F00"/></linearGradient>' +
+          '</defs>' +
+          '<path d="M24 22 C8 22,8 46,26 48 M76 22 C92 22,92 46,74 48" fill="none" stroke="url(#flipcardGoldGrad)" stroke-width="5" stroke-linecap="round"/>' +
+          '<path d="M22 18 L78 18 L70 54 C66 68,34 68,30 54 Z" fill="url(#flipcardGoldGrad)"/>' +
+          '<ellipse cx="50" cy="18" rx="28" ry="5" fill="#FFE082"/>' +
+          '<path d="M32 22 L40 22 C37 38,38 48,36 56 C34 54,33 40,32 22 Z" fill="#FFFFFF" opacity="0.45"/>' +
+          '<rect x="43" y="66" width="14" height="12" fill="url(#flipcardStemGrad)"/>' +
+          '<ellipse cx="50" cy="66" rx="10" ry="3" fill="#FFA000"/>' +
+          '<path d="M28 78 L72 78 L76 92 L24 92 Z" fill="url(#flipcardBaseGrad)"/>' +
+          '<rect x="24" y="78" width="52" height="4" fill="#A1887F"/>' +
+        '</svg>' +
+        '<div class="side-decor">' + decorStarsSVG + '</div>' +
+      '</div>';
+    }
+
+    function showStageClearScreen(stageNum, score) {
+      document.getElementById('stage-clear-title-text').textContent = t('stage_clear.title', {
+        stage: stageNum,
+        stageChinese: ['一', '二', '三'][stageNum - 1] || stageNum
+      });
+
+      const levelName = t('level.name.' + currentLevel);
+      const themeText = t('theme.' + currentTheme + '.title');
+      document.getElementById('stage-clear-game-title').textContent = themeText + ' | ' + levelName;
+      updateStageProgressUI();
+
+      const medal = getScoreMedalInfo(score);
+      const stageGoldStars = score >= 90 ? 3 : (score >= 60 ? 2 : 1);
+      document.getElementById('stage-stars-row').innerHTML = renderScoreStars(stageGoldStars, 'stage');
 
       const scorePill = document.getElementById('stage-clear-score-pill');
+      let scoreText;
       if (score === 100) {
-        scorePill.className = 'stage-score-pill score-pill-full';
-        scorePill.textContent = '本關得分：100 分';
+        scoreText = t('stage_clear.score_full');
       } else if (score > 0) {
-        scorePill.className = 'stage-score-pill score-pill-not-full';
-        scorePill.textContent = '本關得分：' + score + ' 分';
+        scoreText = t('stage_clear.score_partial', { score: score });
       } else {
-        scorePill.className = 'stage-score-pill score-pill-zero';
-        scorePill.textContent = '本題尚未得分';
+        scoreText = t('stage_clear.score_zero');
+      }
+      scorePill.innerHTML = medal.svg + '<span>' + scoreText + '</span>';
+
+      /* 星星獎勵規則說明 */
+      const starRuleEl = document.getElementById('stage-star-rule-hint');
+      if (starRuleEl) {
+        starRuleEl.textContent = t('stage_clear.star_rule', { base: BASE_ATTEMPTS[currentLevel] });
       }
 
-      document.getElementById('stage-clear-encouragement').textContent = 
-        '做得很好！本關成功配對 ' + matchedPairs + '／' + totalPairs + ' 組。持續練習，下一次挑戰一定能拿到滿分喔！';
+      const encouragement = score === 100
+        ? t('stage_clear.encouragement_full')
+        : t('stage_clear.encouragement');
+      document.getElementById('stage-clear-encouragement').textContent = encouragement;
 
-      const wrongCount = Math.max(0, attemptCount - totalPairs);
-      document.getElementById('detail-matched-val').textContent = matchedPairs + ' ／ ' + totalPairs + ' 組';
-      document.getElementById('detail-wrong-val').textContent = wrongCount + ' 次';
+      document.getElementById('detail-matched-val').textContent = t('detail.matched_val', { matched: matchedPairs, total: totalPairs });
+      document.getElementById('detail-attempts-val').textContent = t('detail.attempts_val', { count: attemptCount });
 
       const btnNext = document.getElementById('btn-proceed-stage');
-      if (stageNum === 1) {
-        btnNext.textContent = '前往第二關 ➔';
-      } else if (stageNum === 2) {
-        btnNext.textContent = '前往第三關 ➔';
+      if (stageNum < 3) {
+        btnNext.textContent = t('btn.next_stage', {
+          stage: stageNum + 1,
+          stageChinese: ['一', '二', '三'][stageNum] || (stageNum + 1)
+        });
       } else {
-        btnNext.textContent = '前往總成績 ➔';
+        btnNext.textContent = t('btn.view_results');
       }
 
       showScreen('screen-stage-clear');
@@ -2048,64 +4138,140 @@
     }
 
     function setScoreElementStyle(el, score) {
-      el.textContent = score + ' 分';
-      if (score === 100) {
-        el.className = 'detail-val-green';
-      } else if (score > 0) {
-        el.className = 'detail-val-red';
+      const unit = t('result.score_unit');
+      const scoreText = score === 0 ? t('result.unplayed_score') : String(score) + unit;
+      const medal = getScoreMedalInfo(score);
+      el.className = 'result-detail-score';
+      el.innerHTML = medal.svg + '<span>' + scoreText + '</span>';
+    }
+
+    /* 明確的「下一步」主操作按鈕邏輯 */
+    function handleNextStepAction() {
+      const unlockedLvl = themeUnlockProgress[currentTheme] || 1;
+      const nextLevel = currentLevel + 1;
+      if (nextLevel <= 3 && unlockedLvl >= nextLevel) {
+        currentLevel = nextLevel;
+        startGame(currentTheme);
       } else {
-        el.className = 'detail-val-gray';
+        exitGameToThemeSelect();
       }
     }
 
     function handleOverallResults() {
-      const sum = stageScores.reduce((a, b) => a + b, 0);
+      hasUnfinishedSession = false;
+      const sum = stageScores.reduce(function(a, b) { return a + b; }, 0);
       const avgScore = Math.round(sum / 3);
+
+      /* 保存三關總成績與最佳紀錄（不直接覆蓋原本最佳成績） */
+      saveOverallResultToStorage(currentTheme, currentLevel, stageScores, avgScore);
+      updateThemeSelectUI();
 
       const currentUnlocked = themeUnlockProgress[currentTheme] || 1;
       const nextLevel = currentLevel + 1;
-      const isEligibleForUnlock = (avgScore === 100) && (currentLevel === currentUnlocked) && (nextLevel <= 3);
-
-      document.getElementById('result-main-title').textContent = (avgScore === 100) ? '太棒了！三關滿分！' : '挑戰完成！';
-      
-      const resPill = document.getElementById('res-avg-score-pill');
-      if (avgScore === 100) {
-        resPill.className = 'result-pill score-pill-full';
-        resPill.textContent = '總平均成績：100 分';
-      } else if (avgScore > 0) {
-        resPill.className = 'result-pill score-pill-not-full';
-        resPill.textContent = '總平均成績：' + avgScore + ' 分';
-      } else {
-        resPill.className = 'result-pill score-pill-zero';
-        resPill.textContent = '總平均成績：0 分';
-      }
-      
-      const unlockPill = document.getElementById('res-unlock-pill');
+      const isEligibleForUnlock = (avgScore >= 90) && (currentLevel === currentUnlocked) && (nextLevel <= 3);
       if (isEligibleForUnlock) {
-        unlockPill.style.display = 'inline-block';
-        unlockPill.textContent = '已成功解鎖【' + THEME_NAMES[currentTheme] + '｜等級' + (nextLevel === 2 ? '二' : '三') + '】！';
         saveUnlockProgress(currentTheme, nextLevel);
+      }
+
+      const canProceedNextLevel = (nextLevel <= 3) && ((themeUnlockProgress[currentTheme] || 1) >= nextLevel);
+      const isPerfectRun = stageScores[0] === 100 && stageScores[1] === 100 && stageScores[2] === 100;
+      const finalMedal = getScoreMedalInfo(avgScore);
+
+      const levelName = t('level.name.' + currentLevel);
+      const themeText = t('theme.' + currentTheme + '.title');
+      document.getElementById('result-game-title').textContent = themeText + ' | ' + levelName;
+
+      document.getElementById('result-main-title').textContent = isPerfectRun
+        ? t('result.perfect')
+        : t('result.completed');
+
+      const celebration = document.getElementById('result-celebration');
+      if (celebration) {
+        celebration.innerHTML = isPerfectRun ? buildPerfectTrophyGraphic() : '';
+        celebration.style.display = isPerfectRun ? 'flex' : 'none';
+      }
+
+      const resultStars = document.getElementById('result-stars-row');
+      if (resultStars) {
+        resultStars.innerHTML = renderScoreStars(finalMedal.stars, 'overall');
+      }
+
+      const resPill = document.getElementById('res-avg-score-pill');
+      let averageScoreText;
+      if (avgScore === 100) {
+        averageScoreText = t('result.avg_score_full');
+      } else if (avgScore > 0) {
+        averageScoreText = t('result.avg_score_partial', { score: avgScore });
+      } else {
+        averageScoreText = t('result.avg_score_zero');
+      }
+      resPill.innerHTML = finalMedal.svg + '<span>' + averageScoreText + '</span>';
+
+      /* 顯示歷史最佳平均成績保護提示 */
+      const bestNoteEl = document.getElementById('res-best-record-note');
+      const levelRec = savedRecords[currentTheme] && savedRecords[currentTheme][currentLevel];
+      if (bestNoteEl && levelRec && levelRec.bestAvg > 0) {
+        bestNoteEl.hidden = false;
+        bestNoteEl.textContent = t('result.best_note', { best: levelRec.bestAvg });
+      } else if (bestNoteEl) {
+        bestNoteEl.hidden = true;
+      }
+
+      /* 減少重複解鎖訊息：僅在橫幅顯示一次新挑戰開放訊息 */
+      const unlockPill = document.getElementById('res-unlock-pill');
+      if (canProceedNextLevel) {
+        unlockPill.style.display = 'inline-block';
+        unlockPill.textContent = t('result.unlocked_msg', {
+          theme: themeText,
+          level: t('level.name.' + nextLevel)
+        });
       } else {
         unlockPill.style.display = 'none';
+      }
+
+      const resultEncouragement = document.getElementById('result-encouragement');
+      if (resultEncouragement) {
+        if (canProceedNextLevel) {
+          resultEncouragement.textContent = t('result.encouragement_unlocked');
+        } else if (isPerfectRun) {
+          resultEncouragement.textContent = t('result.encouragement_full');
+        } else {
+          resultEncouragement.textContent = finalMedal.comment;
+        }
+      }
+
+      /* 設定明確的下一步按鈕文案 */
+      const btnNextStep = document.getElementById('btn-next-step');
+      if (btnNextStep) {
+        if (canProceedNextLevel) {
+          btnNextStep.textContent = t('btn.next_step_level', {
+            theme: themeText,
+            level: t('level.name.' + nextLevel)
+          });
+        } else {
+          btnNextStep.textContent = t('btn.next_step_themes');
+        }
       }
 
       setScoreElementStyle(document.getElementById('res-score-1'), stageScores[0]);
       setScoreElementStyle(document.getElementById('res-score-2'), stageScores[1]);
       setScoreElementStyle(document.getElementById('res-score-3'), stageScores[2]);
 
+      const clapEl = document.getElementById('table-clap-icon');
+      if (clapEl) clapEl.classList.remove('animate-clap');
+
       showScreen('screen-result');
-
-      startConfetti();
-      if (avgScore === 100) {
+      if (isPerfectRun || avgScore >= 90) {
+        startConfetti();
         triggerApplauseAndClaps();
-
-        if (isEligibleForUnlock) {
-          setTimeout(() => {
-            showUnlockModal(nextLevel);
-          }, 600);
-        }
       } else {
         playSuccessSound();
+      }
+
+      if (isEligibleForUnlock) {
+        setTimeout(function() {
+          showUnlockModal(nextLevel);
+        }, 600);
       }
     }
 
@@ -2123,18 +4289,21 @@
       }
     }
 
+    /* 解鎖視窗附明確「繼續」按鈕，由長輩確認後關閉 */
     function showUnlockModal(nextLvl) {
       const modal = document.getElementById('unlock-modal');
       const msgText = document.getElementById('unlock-message-text');
-      const nextLevelText = nextLvl === 2 ? '等級二' : '等級三';
 
-      msgText.textContent = '已成功解鎖【' + THEME_NAMES[currentTheme] + '｜' + nextLevelText + '】！';
+      msgText.textContent = t('result.unlocked_msg', {
+        theme: t('theme.' + currentTheme + '.title'),
+        level: t('level.name.' + nextLvl)
+      });
       modal.classList.add('active');
     }
 
     function closeUnlockModal() {
       const modal = document.getElementById('unlock-modal');
-      modal.classList.remove('active');
+      if (modal) modal.classList.remove('active');
     }
 
     function restartGame() {
@@ -2148,17 +4317,22 @@
       container.innerHTML = '';
       container.style.display = 'block';
 
-      const colors = ['#4A6B53', '#84B593', '#F59E0B', '#EAF0E7', '#FBBF24', '#3B82F6', '#E74C3C', '#EC4899'];
-      for (let i = 0; i < 50; i++) {
+      const colors = ['#e91e63', '#4caf50', '#2196f3', '#ffeb3b', '#ff9800', '#9c27b0', '#00bcd4', '#ff5722'];
+      for (let i = 0; i < 24; i++) {
         const piece = document.createElement('div');
+        const left = Math.floor((i / 24) * 92 + 4 + (Math.random() * 3 - 1.5));
+        const delay = (Math.random() * 2.5).toFixed(2);
+        const duration = (2.4 + Math.random() * 1.2).toFixed(2);
+        const isCircle = i % 3 === 0;
         piece.className = 'confetti-piece';
-        piece.style.left = (Math.random() * 100) + 'vw';
+        piece.style.left = left + '%';
         piece.style.top = '-20px';
-        piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-        piece.style.width = (Math.random() * 10 + 6) + 'px';
-        piece.style.height = (Math.random() * 14 + 8) + 'px';
-        piece.style.animationDelay = (Math.random() * 2) + 's';
-        piece.style.animationDuration = (Math.random() * 1.5 + 2) + 's';
+        piece.style.backgroundColor = colors[i % colors.length];
+        piece.style.width = isCircle ? '8px' : '7px';
+        piece.style.height = isCircle ? '13px' : '9px';
+        piece.style.borderRadius = isCircle ? '50%' : '2px';
+        piece.style.animationDelay = delay + 's';
+        piece.style.animationDuration = duration + 's';
         container.appendChild(piece);
       }
     }
@@ -2171,7 +4345,7 @@
       }
     }
 
-    /* 音效系統 */
+    /* 音效系統（含溫和配對成功/失敗音效） */
     let audioCtx = null;
     function getAudioContext() {
       if (!audioCtx) {
@@ -2180,11 +4354,49 @@
           if (AudioCtxClass) {
             audioCtx = new AudioCtxClass();
           }
-        } catch (e) {
-          console.warn('AudioContext initialization error:', e);
-        }
+        } catch (e) {}
       }
       return audioCtx;
+    }
+
+    function playGentleMatchSound() {
+      try {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        if (ctx.state === 'suspended') ctx.resume();
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(523.25, now);
+        osc.frequency.setValueAtTime(659.25, now + 0.08);
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.linearRampToValueAtTime(0.01, now + 0.22);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(now + 0.22);
+      } catch (e) {}
+    }
+
+    function playGentleMismatchSound() {
+      try {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        if (ctx.state === 'suspended') ctx.resume();
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(330, now);
+        osc.frequency.setValueAtTime(293.66, now + 0.1);
+        gain.gain.setValueAtTime(0.1, now);
+        gain.gain.linearRampToValueAtTime(0.01, now + 0.22);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(now + 0.22);
+      } catch (e) {}
     }
 
     function playSuccessSound() {
@@ -2210,14 +4422,14 @@
     function playApplauseSound() {
       const ctx = getAudioContext();
       if (ctx && ctx.state === 'suspended') {
-        ctx.resume().catch(() => {});
+        ctx.resume().catch(function() {});
       }
 
-      if(getApplauseAudio()) getApplauseAudio().currentTime = 0;
+      if (getApplauseAudio()) getApplauseAudio().currentTime = 0;
       const playPromise = getApplauseAudio() && getApplauseAudio().play();
 
       if (playPromise !== undefined) {
-        playPromise.catch(error => {
+        playPromise.catch(function() {
           playWebAudioApplauseFallback();
         });
       }
@@ -2266,15 +4478,25 @@
       }
     }
 
-    window.goToMainCategory = goToMainCategory;
-    window.goBackToPreviousLayer = goBackToPreviousLayer;
+    /* 掛載至全域 window */
+    window.postNavigate = postNavigate;
+    window.requestExitToCategory = requestExitToCategory;
+    window.requestExitGameToThemeSelect = requestExitGameToThemeSelect;
+    window.closeExitConfirmModal = closeExitConfirmModal;
+    window.confirmPendingExit = confirmPendingExit;
+    window.openTutorialModal = openTutorialModal;
+    window.closeTutorialModal = closeTutorialModal;
     window.clickLevelCard = clickLevelCard;
     window.selectLevel = selectLevel;
     window.clickThemeCard = clickThemeCard;
+    window.handleThemeCardKeydown = handleThemeCardKeydown;
     window.exitGameToThemeSelect = exitGameToThemeSelect;
     window.showScreen = showScreen;
     window.closeInfoModal = closeInfoModal;
-    window.resetAllProgress = resetAllProgress;
+    window.openRestartConfirmModal = openRestartConfirmModal;
+    window.closeRestartConfirmModal = closeRestartConfirmModal;
+    window.confirmRestartGame = confirmRestartGame;
+    window.handleNextStepAction = handleNextStepAction;
     window.proceedNextStage = proceedNextStage;
     window.restartGame = restartGame;
     window.triggerApplauseAndClaps = triggerApplauseAndClaps;
