@@ -2093,7 +2093,7 @@
     }
   </style>
 </head>
-<body data-base-url="<?!= baseUrl ?>">
+<body>
 
   <!-- 鎖定提示對話框 -->
   <div class="info-overlay-modal" id="info-modal" onclick="if(event.target === this) closeInfoModal()">
@@ -3176,39 +3176,39 @@
       setT('lbl-btn-unlock-continue', 'unlock.btn_continue');
     }
 
-    function getBaseUrl() {
-      var baseUrl = document.body.getAttribute('data-base-url');
-      if (!baseUrl || baseUrl.indexOf('http') !== 0) {
-        try {
-          baseUrl = window.top.location.href.split('?')[0].split('#')[0];
-        } catch(e) {
-          baseUrl = window.location.href.split('?')[0].split('#')[0];
-        }
-      }
-      return baseUrl;
-    }
-
+    /*
+     * GitHub Pages 靜態頁面導向：
+     * - home：回到網站首頁 index.html
+     * - level_select：回到遊戲分類／等級選擇頁 LevelSelect.html
+     *
+     * 不再使用 Google Apps Script 的 page 參數或動態表單提交。
+     * 語言與字體大小會透過網址參數及 localStorage 一併保留。
+     */
     function postNavigate(pageName) {
-      var baseUrl = getBaseUrl();
-      var form = document.createElement('form');
-      form.method = 'GET';
-      form.action = baseUrl;
-      form.target = '_top';
+      var routeMap = {
+        home: 'index.html',
+        level_select: 'LevelSelect.html'
+      };
 
-      var pageInput = document.createElement('input');
-      pageInput.type = 'hidden'; pageInput.name = 'page'; pageInput.value = pageName;
-      form.appendChild(pageInput);
+      var targetFile = routeMap[String(pageName || '').trim()];
+      if (!targetFile) {
+        console.error('未知的導向頁面：', pageName);
+        return;
+      }
 
-      var langInput = document.createElement('input');
-      langInput.type = 'hidden'; langInput.name = 'lang'; langInput.value = currentLang;
-      form.appendChild(langInput);
+      // 保存目前顯示設定，避免返回其他頁面後語言或字體大小重置。
+      safeSetStorage('app_lang', currentLang);
+      safeSetStorage('app_font_scale', currentFontScale);
 
-      var fontInput = document.createElement('input');
-      fontInput.type = 'hidden'; fontInput.name = 'fontScale'; fontInput.value = currentFontScale;
-      form.appendChild(fontInput);
+      // 使用目前 HTML 所在資料夾的相對路徑，適用於 GitHub Pages。
+      var targetUrl = new URL(targetFile, window.location.href);
+      targetUrl.search = '';
+      targetUrl.hash = '';
+      targetUrl.searchParams.set('lang', currentLang);
+      targetUrl.searchParams.set('fontScale', currentFontScale);
 
-      document.body.appendChild(form);
-      form.submit();
+      // 直接導頁，不再建立表單，也不需要連點兩次。
+      window.location.assign(targetUrl.toString());
     }
 
     /* 資料集 */
