@@ -2871,7 +2871,10 @@ body[data-step="step-p1"] #test-status-sub {
                   throw new Error('後臺回應不是有效 JSON（HTTP ' + response.status + '）。');
                 }
                 if (!response.ok || (data && data.__transportError)) {
-                  throw new Error(String(data && data.message || ('後臺連線失敗（HTTP ' + response.status + '）。')));
+                  var bridgeError = new Error(String(data && data.message || ('後臺連線失敗（HTTP ' + response.status + '）。')));
+                  bridgeError.errorCode = String(data && data.errorCode || 'BACKEND_TRANSPORT_ERROR');
+                  bridgeError.httpStatus = response.status;
+                  throw bridgeError;
                 }
                 return data;
               });
@@ -6172,14 +6175,27 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
           settled = true;
           resolve(!!success);
         }
-        function fail() {
+        function fail(errorInfo) {
+          var info = errorInfo || {};
+          var code = String(info.errorCode || info.code || '');
+          var message = String(info.message || (typeof errorInfo === 'string' ? errorInfo : '') || '後端沒有回傳成功結果。');
+          var detail = (code ? code + '：' : '') + message;
+          window.lastLocationAliasSyncError = { errorCode: code, message: message, detail: detail, at: new Date().toISOString() };
+          console.warn('地點別名同步失敗：' + detail, errorInfo || '');
           if (activeLocationRecordId === locationId) {
-            setAliasSyncStatus(translateExamDisplayText('儲存失敗，請再試一次。'), 'error');
+            setAliasSyncStatus(
+              translateExamDisplayText('儲存失敗，請再試一次。') + '（' + detail.slice(0, 180) + '）',
+              'error'
+            );
           }
           finish(false);
         }
-        if (!locationId || !window.google || !google.script || !google.script.run) {
-          fail();
+        if (!locationId) {
+          fail({ errorCode: 'MISSING_LOCATION_ID', message: '沒有取得要儲存的地點識別碼。' });
+          return;
+        }
+        if (!window.google || !google.script || !google.script.run) {
+          fail({ errorCode: 'BACKEND_BRIDGE_MISSING', message: '找不到後端通訊橋接，請確認頁面已載入最新版本。' });
           return;
         }
         // 以草稿綁定的 locationId 查正式地點資料，不讀取目前下拉選單。
@@ -6193,7 +6209,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
           }
         }
         if (!record || record.id !== locationId) {
-          fail();
+          fail({ errorCode: 'LOCATION_RECORD_NOT_FOUND', message: '前端地點清單找不到這筆草稿對應的正式地點資料。' });
           return;
         }
         var request = {
@@ -6213,7 +6229,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
             .withSuccessHandler(function(response) {
               var payload = response && response.result ? response.result : response;
               if (!payload || payload.success !== true) {
-                fail();
+                fail(payload || { errorCode: 'EMPTY_BACKEND_RESULT', message: '後端回傳內容為空，未確認寫入成功。' });
                 return;
               }
               if (resetToDefault) {
@@ -6243,11 +6259,11 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
                   setAliasSyncStatus(translateExamDisplayText('✓ 已儲存'), 'success', 2000);
                 }
               }
+              window.lastLocationAliasSyncError = null;
               finish(true);
             })
             .withFailureHandler(function(error) {
-              console.warn('地點別名同步失敗：', error);
-              fail();
+              fail(error || { errorCode: 'BACKEND_CALL_FAILED', message: '後端呼叫失敗，沒有完成儲存。' });
             });
           if (action === 'deleteExamLocationAliasOverride') {
             runner.deleteExamLocationAliasOverride(locationId);
@@ -6255,8 +6271,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
             runner.saveExamLocationAliasOverrides(request);
           }
         } catch (error) {
-          console.warn('地點別名同步呼叫失敗：', error);
-          fail();
+          fail(error || { errorCode: 'BACKEND_CALL_EXCEPTION', message: '呼叫後端時發生例外。' });
         }
       });
     }
@@ -6746,6 +6761,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
     var aliasSaveInFlight = null;
     function saveAliasGroupsToBackend() {
       if (aliasSaveInFlight) return aliasSaveInFlight;
+      window.lastLocationAliasSyncError = null;
       // 優先儲存最近修改的未同步草稿；選單切換造成 activeLocationRecordId 短暫清空時仍能找到原地點。
       var pendingLocationId = findMostRecentPendingLocationAliasId();
       var locationId = pendingLocationId || lastEditedLocationAliasId || activeLocationRecordId;
@@ -6773,9 +6789,10 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       aliasSaveInFlight = syncLocationAliasGroupsToBackend(locationId, groups, resetToDefault).then(function(success) {
         return !!success;
       }, function(error) {
+        var message = String(error && error.message || error || '儲存流程發生未知錯誤。');
         console.warn('地點別名儲存流程失敗：', error);
         if (activeLocationRecordId === locationId) {
-          setAliasSyncStatus(translateExamDisplayText('儲存失敗，請再試一次。'), 'error');
+          setAliasSyncStatus(translateExamDisplayText('儲存失敗，請再試一次。') + '（' + message.slice(0, 180) + '）', 'error');
         }
         return false;
       });
@@ -13579,7 +13596,8 @@ html:lang(ko) .choice-btn.active::after {
     save.addEventListener('click', function () {
       if (save.disabled) return;
       if (typeof window.saveCurrentLocationAliasGroups !== 'function') {
-        error.textContent = t('儲存失敗，請再試一次。');
+        var detail = window.lastLocationAliasSyncError && window.lastLocationAliasSyncError.detail;
+        error.textContent = t('儲存失敗，請再試一次。') + (detail ? '（' + detail.slice(0, 180) + '）' : '');
         return;
       }
       setBusy(true);
@@ -13593,7 +13611,8 @@ html:lang(ko) .choice-btn.active::after {
         if (typeof continueAction === 'function') continueAction();
       }).catch(function (saveError) {
         console.warn('未儲存別名確認視窗中的儲存失敗：', saveError);
-        error.textContent = t('儲存失敗，請再試一次。');
+        var detail = window.lastLocationAliasSyncError && window.lastLocationAliasSyncError.detail;
+        error.textContent = t('儲存失敗，請再試一次。') + (detail ? '（' + detail.slice(0, 180) + '）' : '');
         setBusy(false);
       });
     });
