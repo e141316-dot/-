@@ -9551,35 +9551,28 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
     setStatusChip();
   };
 
-  // Location validation stays coupled to the original three-level location data and aliases.
+  // Compatibility helper for legacy header/startup calls.
+  // Important: staff mode is allowed to advance once into the setup panel.
+  // The location fields become mandatory only after staffSetupActive is true.
   function setLocationActionState(){
     var btn=byId('step-location')&&byId('step-location').querySelector('.sticky-action-bar .btn-primary');
     if(!btn)return;
-    var staff=examState.locationModeSelected && !examState.isHomePractice && examState.examMode==='staff';
+    var selected=!!examState.locationModeSelected;
+    var home=selected && (examState.practiceMode==='self' || examState.isHomePractice);
+    var staff=selected && !home && examState.practiceMode==='assisted' && examState.examMode==='staff';
+    var setupActive=staff && !!examState.staffSetupActive;
     var complete=!!(byId('countySelect')&&byId('countySelect').value&&byId('districtSelect')&&byId('districtSelect').value&&byId('placeSelect')&&byId('placeSelect').value);
-    var disabled=staff&&!complete;
+    var disabled=!selected || (setupActive && !complete);
     btn.disabled=disabled;
-    btn.textContent=disabled?'請先完成上方測驗地點選擇':'確認選擇，前往測驗介紹 ›';
+    btn.textContent=!selected?'請先選擇練習方式'
+      :home?'開始自助練習 ›'
+      :setupActive?(complete?'確認設定並開始第一關 ›':'請先完成上方測驗地點選擇')
+      :'下一步：設定練習資訊 ›';
   }
   window.setLocationActionState=setLocationActionState;
-  var oldSelectPracticeMode=window.selectPracticeMode;
-  window.selectPracticeMode=function(mode){
-    oldSelectPracticeMode(mode);
-    if(mode==='staff'){
-      var panel=byId('staff-mode-settings'); if(panel)panel.open=false;
-    }
-    setLocationActionState();
-  };
-  ['countySelect','districtSelect','placeSelect'].forEach(function(id){
-    var el=byId(id); if(el)el.addEventListener('change',function(){setTimeout(setLocationActionState,0);});
-  });
-  var oldStartOfficialExam=window.startOfficialExam;
-  window.startOfficialExam=function(){
-    setLocationActionState();
-    var btn=byId('step-location')&&byId('step-location').querySelector('.sticky-action-bar .btn-primary');
-    if(btn&&btn.disabled)return;
-    oldStartOfficialExam();
-  };
+  // The newer practice-mode controller below owns card selection, dependent
+  // selector synchronization and the single next-step path. Do not wrap
+  // window.selectPracticeMode or window.startOfficialExam again here.
 
   // Add an accessible replay control to the location instructions.
   var locationGuide=byId('step-location')&&byId('step-location').querySelector('.guide-content');
@@ -13588,13 +13581,6 @@ html:lang(ko) .choice-btn.active::after {
     return { mode: home ? 'home' : staff ? 'staff' : '', home: home, staff: staff };
   }
 
-  function hasCompleteStaffLocation() {
-    var county = byId('countySelect');
-    var district = byId('districtSelect');
-    var place = byId('placeSelect');
-    return !!(county && county.value && district && district.value && place && place.value);
-  }
-
   if (typeof EXAM_TEXT_TRANSLATIONS !== 'undefined') {
     EXAM_TEXT_TRANSLATIONS['下一步：選擇練習方式 ›'] = [
       'Next: Choose a practice method ›',
@@ -13825,50 +13811,9 @@ html:lang(ko) .choice-btn.active::after {
   window.setLocationActionState = setLocationActionState;
   window.syncPracticeModeUI = syncPracticeModeUI;
 
-  // 自助練習一按直達第一關說明；專人協助第一次按鈕進入既有設定區，完成後才確認。
-  var originalStartOfficialExam = window.startOfficialExam;
-  if (typeof originalStartOfficialExam === 'function') {
-    window.startOfficialExam = function () {
-      var state = getModeState();
-
-      if (!state.mode) {
-        if (typeof window.showCustomAlert === 'function') {
-          window.showCustomAlert('請先選擇「我在家裡練習」或「在監理站、醫院或由專人協助」。');
-        }
-        setLocationActionState();
-        return;
-      }
-
-      var appState = getExamState();
-      if (state.staff && appState && !appState.staffSetupActive) {
-        appState.staffSetupActive = true;
-        syncPracticeModeUI();
-        window.scrollTo(0, 0);
-        return;
-      }
-
-      syncPracticeModeUI();
-      if (state.staff && !hasCompleteStaffLocation()) {
-        var fields = byId('location-fields');
-        var nextField = ['countySelect', 'districtSelect', 'placeSelect']
-          .map(byId).find(function (field) { return field && !field.value && !field.disabled; });
-        if (fields && typeof fields.scrollIntoView === 'function') {
-          fields.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-        if (nextField) {
-          window.setTimeout(function () {
-            try { nextField.focus({ preventScroll: true }); }
-            catch (e) { nextField.focus(); }
-          }, 220);
-        }
-        setLocationActionState();
-        return;
-      }
-
-      return originalStartOfficialExam.apply(this, arguments);
-    };
-  }
-
+  // Do not wrap startOfficialExam here. The core function is the single
+  // practice-flow controller; only the unsaved-alias guard below may intercept
+  // its final transition before it calls the original function.
   // 第一關說明頁只有一份；返回時自助回到入口，專人協助回到原本設定頁。
   var originalHandleTopBack = window.handleTopBack;
   if (typeof originalHandleTopBack === 'function') {
