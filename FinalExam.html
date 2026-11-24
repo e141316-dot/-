@@ -5409,11 +5409,8 @@ function getTaiwaneseKey(text) {
         showStep('step-lang');
       }
       else if (step === 'step-p1-intro') {
-        // 返回共用入口，讓使用者可在自助與專人協助之間重新選擇。
-        examState.staffSetupActive = false;
-        showStep('step-location');
-        updateLocationModeVisibility();
-        if (typeof window.syncPracticeModeUI === 'function') window.syncPracticeModeUI();
+        // 第一關個別說明的上一頁是三關總說明；保留已確認的練習方式與測驗設定。
+        showStep('step-intro');
       }
       else if (step === 'step-p2-intro') showStep('step-p1-intro');
       else if (step === 'step-p3-intro') showStep('step-p2-intro');
@@ -5863,7 +5860,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
         'step-lang': ['返回練習選單', false],
         'step-location': [examState.staffSetupActive ? '返回練習方式' : '返回語言設定', true],
         'step-intro': ['返回練習方式', true],
-        'step-p1-intro': ['返回練習方式', true],
+        'step-p1-intro': ['返回三關總說明', true],
         'step-p2-intro': ['返回第一關說明', true],
         'step-p3-intro': ['返回第二關說明', true],
         'step-p3': ['返回第三關說明', true]
@@ -7347,9 +7344,8 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
         examState.isHomePractice = true;
         examState.staffSetupActive = false;
         examState.locationConfirmed = true;
-        examState.examIntroViewed = true;
-        // 自助練習略過工作人員地點設定與三關總覽，直接進入共用第一關說明頁。
-        startP1Intro();
+        // 自助練習與專人協助共用既有三關總說明頁，再由總說明頁進入第一關個別說明。
+        goToExamIntro();
         return;
       }
 
@@ -7381,9 +7377,8 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       examState.acceptableAnswers = getCurrentAliasTags();
       saveLocationPreference();
       examState.locationConfirmed = true;
-      examState.examIntroViewed = true;
-      // 專人協助設定完成後，同樣進入唯一一份第一關說明頁。
-      startP1Intro();
+      // 地點設定完成後先進入共用三關總說明頁，第一關個別說明仍由總說明頁按鈕開啟。
+      goToExamIntro();
     }
 
     function startP1Intro() {
