@@ -10718,18 +10718,32 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
   var p1ActionArea = null;
   var p1LayoutResizeObserver = null;
 
-  // 僅在「答案輸入區」內建立左右排列：題目卡、作答方式選項、外層作答卡及確認按鈕完全不移動。
-  // 只移動既有的 #p1-answer-control；鍵盤在同一個輸入區內成為右側欄位。
+  // 輸入框保留在原本作答卡內；寬螢幕開啟鍵盤時，才把既有鍵盤欄移至頁面右側空白欄。
+  // 不移動題目卡、作答方式選項、答案輸入控制或確認按鈕，也不改變輸入區原本預留的欄寬。
   function ensureP1ResponsiveLayout() {
     var inputGroup = byId('p1-input-group');
     var inputControl = byId('p1-answer-control');
-    if (!inputGroup || !inputControl) return null;
-    if (p1Layout && p1Layout.isConnected) return p1Layout;
+    var wrapper = document.querySelector('.exam-wrapper');
+    if (!inputGroup || !inputControl || !wrapper) return null;
+    if (p1Layout && p1Layout.isConnected) {
+      p1MainColumn = p1Layout.querySelector('.p1-answer-input-column');
+      p1KeypadColumn = p1Layout.querySelector('.p1-keypad-column') ||
+        wrapper.querySelector(':scope > .p1-keypad-column');
+      if (!p1KeypadColumn) {
+        p1KeypadColumn = document.createElement('aside');
+        p1KeypadColumn.className = 'p1-keypad-column';
+        p1KeypadColumn.setAttribute('aria-label', '自訂數字鍵盤區');
+        p1KeypadColumn.hidden = true;
+        p1Layout.appendChild(p1KeypadColumn);
+      }
+      return p1Layout;
+    }
 
     p1Layout = inputGroup.querySelector('.p1-answer-keypad-layout');
     if (p1Layout) {
       p1MainColumn = p1Layout.querySelector('.p1-answer-input-column');
-      p1KeypadColumn = p1Layout.querySelector('.p1-keypad-column');
+      p1KeypadColumn = p1Layout.querySelector('.p1-keypad-column') ||
+        wrapper.querySelector(':scope > .p1-keypad-column');
       return p1Layout;
     }
 
@@ -10745,7 +10759,7 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
     p1KeypadColumn.setAttribute('aria-label', '自訂數字鍵盤區');
     p1KeypadColumn.hidden = true;
 
-    // 保留輸入控制原有的單位、輸入框、提示及錯誤訊息；不移動題目、選項、外框或確認按鈕。
+    // 只包住原本答案控制；左側輸入控制維持原本欄寬，鍵盤欄可按裝置寬度移至外側。
     inputGroup.insertBefore(p1Layout, inputControl);
     p1MainColumn.appendChild(inputControl);
     p1Layout.appendChild(p1MainColumn);
@@ -10755,11 +10769,58 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
     return p1Layout;
   }
 
+  function canUseRightKeypadRail(wrapper) {
+    if (!wrapper || window.innerWidth < 1100) return false;
+    var rect = wrapper.getBoundingClientRect();
+    // 右側欄需要 260px 鍵盤、24px 間距，以及至少 16px 的視窗邊界。
+    return (document.documentElement.clientWidth - rect.left) >= 1020;
+  }
+
+  function alignRightKeypadRail() {
+    var wrapper = document.querySelector('.exam-wrapper');
+    var step = byId('step-p1');
+    var inputControl = byId('p1-answer-control');
+    if (!wrapper || !step || !inputControl || !p1KeypadColumn ||
+        p1KeypadColumn.parentNode !== wrapper || !wrapper.classList.contains('has-p1-keypad-workspace')) return;
+    var offset = inputControl.getBoundingClientRect().top - step.getBoundingClientRect().top;
+    p1KeypadColumn.style.marginTop = Math.max(0, Math.round(offset)) + 'px';
+  }
+
   function syncResponsiveLayoutMode() {
     if (!p1Layout || !p1Layout.isConnected) return;
+    var wrapper = document.querySelector('.exam-wrapper');
     var isOpen = !!(panel && !panel.hidden);
+    var useRightRail = isOpen && canUseRightKeypadRail(wrapper);
+
     p1Layout.classList.toggle('has-visible-keypad', isOpen);
-    if (p1KeypadColumn) p1KeypadColumn.hidden = !isOpen;
+    if (p1KeypadColumn) {
+      if (useRightRail) {
+        // 先記錄原本 wrapper 左緣，再只向右延伸工作區；左側測驗卡寬度與位置不變。
+        if (!wrapper.classList.contains('has-p1-keypad-workspace')) {
+          var originalLeft = wrapper.getBoundingClientRect().left + (window.scrollX || 0);
+          wrapper.style.width = '1004px';
+          wrapper.style.maxWidth = 'none';
+          wrapper.style.marginLeft = Math.max(0, Math.round(originalLeft)) + 'px';
+          wrapper.style.marginRight = 'auto';
+          wrapper.classList.add('has-p1-keypad-workspace');
+        }
+        if (p1KeypadColumn.parentNode !== wrapper) wrapper.appendChild(p1KeypadColumn);
+        p1KeypadColumn.style.marginTop = '';
+        if (window.requestAnimationFrame) window.requestAnimationFrame(alignRightKeypadRail);
+        else alignRightKeypadRail();
+      } else {
+        if (wrapper) {
+          wrapper.classList.remove('has-p1-keypad-workspace');
+          wrapper.style.width = '';
+          wrapper.style.maxWidth = '';
+          wrapper.style.marginLeft = '';
+          wrapper.style.marginRight = '';
+        }
+        if (p1KeypadColumn.parentNode !== p1Layout) p1Layout.appendChild(p1KeypadColumn);
+        p1KeypadColumn.style.marginTop = '';
+      }
+      p1KeypadColumn.hidden = !isOpen;
+    }
   }
 
   function isNativeKeypadDevice() {
@@ -13984,6 +14045,52 @@ html:lang(ko) .choice-btn.active::after {
   });
 })();
 </script>
+
+
+
+<style id="p1-keypad-right-blank-area-layout">
+/* 寬螢幕：保持第一關原本左側卡片寬度與位置，只將自訂鍵盤移入頁面右側空白欄。 */
+@media (min-width:1100px) {
+  .exam-wrapper.has-p1-keypad-workspace {
+    display:grid !important;
+    grid-template-columns:minmax(0,688px) 260px !important;
+    grid-template-rows:auto auto !important;
+    column-gap:24px !important;
+    row-gap:0 !important;
+    align-items:start !important;
+    box-sizing:border-box !important;
+    width:1004px !important;
+    max-width:none !important;
+  }
+  .exam-wrapper.has-p1-keypad-workspace > .header-area {
+    grid-column:1 !important;
+    grid-row:1 !important;
+    width:100% !important;
+    max-width:688px !important;
+  }
+  .exam-wrapper.has-p1-keypad-workspace > #step-p1 {
+    grid-column:1 !important;
+    grid-row:2 !important;
+    width:100% !important;
+    max-width:688px !important;
+    min-width:0 !important;
+  }
+  .exam-wrapper.has-p1-keypad-workspace > .p1-keypad-column {
+    grid-column:2 !important;
+    grid-row:2 !important;
+    align-self:start !important;
+    width:260px !important;
+    min-width:260px !important;
+    max-width:260px !important;
+    box-sizing:border-box !important;
+  }
+  /* 保留原本輸入欄寬：鍵盤移出後，左側第二欄仍保留原本的鍵盤預留寬度。 */
+  #step-p1 .p1-answer-keypad-layout.has-visible-keypad {
+    grid-template-columns:minmax(0,1fr) 260px !important;
+    column-gap:16px !important;
+  }
+}
+</style>
 
 </body>
 </html>
