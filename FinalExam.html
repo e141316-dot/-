@@ -1533,6 +1533,10 @@ html:lang(zh-TW) #step-p1 .type-btn.active::after{content:"✓ 已選擇";font-s
 #step-p1 .submit-hint{margin:0}
 #step-p1 .submit-hint::before{content:"ⓘ "}
 
+
+#step-p1 .submit-hint{margin:0}
+#step-p1 .submit-hint::before{content:"ⓘ "}
+
 /* 其他表單與測驗操作區仍採正常文件流，不固定在螢幕底部 */
 #step-p2-sop5 .p2-recall-container{padding-bottom:0!important}
 #step-p2-sop5 .sticky-action-bar{margin-top:22px!important}
@@ -1627,7 +1631,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
 #step-intro .exam-rule-reminder{font-size:18px!important;color:#231D0D!important}
 #step-p1 .weekday-intro,#step-p1 .submit-hint,#step-p1 .number-pad-help,
 #step-p1 .lunar-month-note{font-size:18px!important;color:var(--color-dark)!important}
-#step-p1 .p1-action-area .btn-primary{min-height:68px!important}
+
 #step-lang .language-reminder,#step-lang .audio-status,
 #step-location .audio-status,#step-intro .audio-status,
 #step-p1-intro .audio-status,#step-p1 .audio-status{font-size:18px!important;color:var(--color-dark)!important}
@@ -1645,7 +1649,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
 #step-p3-intro .step-action .btn-primary{min-height:64px!important}
 #step-intro .step-audio-actions .repeat-audio-btn,
 #step-intro .step-audio-actions .btn-primary{min-height:64px!important}
-#step-p1 .p1-action-area{position:static!important}
+
 @media(max-width:480px){
   #step-intro .info-card-standard,
   #step-p2-intro .p2-intro-steps span,
@@ -1653,6 +1657,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
 }
 
 
+#step-p1 .p1-action-area{position:static!important}
 /* 中文長句在卡片內自然斷行；不使用禁止中文換行的舊規則 */
 #step-lang *,#step-location *,#step-intro *,#step-p1-intro *,
 #step-p1 *,#step-p2-intro *,#step-p3-intro *{
@@ -10929,67 +10934,41 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
   var lastNativePreference = null;
   var suppressNextFocusOpen = false;
   var p1Layout = null;
-  var p1MainColumn = null;
   var p1KeypadColumn = null;
-  var p1ActionArea = null;
 
   // 輸入框及數字鍵盤維持左右獨立欄位；確認按鈕留在原本 #step-p1 文件流位置。
   // 題目卡、選項、答案輸入控制及原始按鍵事件均不重建、不改尺寸。
+  // Keep the original Stage 1 DOM and document flow intact.
+  // The keypad is an absolutely positioned sibling on wide screens, or a
+  // temporary in-flow accessory immediately after the input on narrow screens.
   function ensureP1ResponsiveLayout() {
+    var step = byId('step-p1');
     var inputGroup = byId('p1-input-group');
     var inputControl = byId('p1-answer-control');
-    var wrapper = document.querySelector('.exam-wrapper');
-    p1ActionArea = p1ActionArea || byId('p1-standard-action');
-    if (!inputGroup || !inputControl || !wrapper) return null;
-    if (p1Layout && p1Layout.isConnected) {
-      p1MainColumn = p1Layout.querySelector('.p1-answer-input-column');
-      p1KeypadColumn = p1Layout.querySelector('.p1-keypad-column') ||
-        wrapper.querySelector(':scope > .p1-keypad-column');
-      if (!p1KeypadColumn) {
-        p1KeypadColumn = document.createElement('aside');
-        p1KeypadColumn.className = 'p1-keypad-column';
-        p1KeypadColumn.setAttribute('aria-label', '自訂數字鍵盤區');
-        p1KeypadColumn.hidden = true;
-        p1Layout.appendChild(p1KeypadColumn);
-      }
-      return p1Layout;
+    if (!step || !inputGroup || !inputControl) return null;
+
+    p1Layout = step;
+    if (!p1KeypadColumn || !p1KeypadColumn.isConnected) {
+      p1KeypadColumn = step.querySelector(':scope > .p1-keypad-column') ||
+        inputGroup.querySelector('.p1-keypad-column') ||
+        document.querySelector('.exam-wrapper > .p1-keypad-column');
     }
-
-    p1Layout = inputGroup.querySelector('.p1-answer-keypad-layout');
-    if (p1Layout) {
-      p1MainColumn = p1Layout.querySelector('.p1-answer-input-column');
-      p1KeypadColumn = p1Layout.querySelector('.p1-keypad-column') ||
-        wrapper.querySelector(':scope > .p1-keypad-column');
-      return p1Layout;
+    if (!p1KeypadColumn) {
+      p1KeypadColumn = document.createElement('aside');
+      p1KeypadColumn.className = 'p1-keypad-column';
+      p1KeypadColumn.setAttribute('aria-label', '自訂數字鍵盤區');
+      p1KeypadColumn.hidden = true;
     }
-
-    p1Layout = document.createElement('div');
-    p1Layout.className = 'p1-answer-keypad-layout';
-    p1Layout.setAttribute('data-keypad-layout', 'answer-input-only');
-
-    p1MainColumn = document.createElement('div');
-    p1MainColumn.className = 'p1-answer-input-column';
-
-    p1KeypadColumn = document.createElement('aside');
-    p1KeypadColumn.className = 'p1-keypad-column';
-    p1KeypadColumn.setAttribute('aria-label', '自訂數字鍵盤區');
-    p1KeypadColumn.hidden = true;
-
-    // 只包住原本答案控制；左側輸入控制維持原本欄寬，鍵盤欄可按裝置寬度移至外側。
-    inputGroup.insertBefore(p1Layout, inputControl);
-    p1MainColumn.appendChild(inputControl);
-    p1Layout.appendChild(p1MainColumn);
-    p1Layout.appendChild(p1KeypadColumn);
-
-    syncResponsiveLayoutMode();
     return p1Layout;
   }
 
-  function canUseRightKeypadRail(wrapper) {
-    if (!wrapper || window.innerWidth < 1100) return false;
-    var rect = wrapper.getBoundingClientRect();
-    // Right rail requires 260px for the keypad, 24px gap, plus a small viewport margin.
-    return (document.documentElement.clientWidth - rect.left) >= 1020;
+  function canUseRightKeypadRail(step) {
+    if (!step || window.innerWidth < 1100) return false;
+    var rect = step.getBoundingClientRect();
+    var rightSpace = document.documentElement.clientWidth - rect.right;
+    // 260px keypad + 24px gap + 8px viewport safety margin.
+    // Use the available right-side whitespace without expanding the exam wrapper.
+    return rightSpace >= 292;
   }
 
   var p1RailAlignmentFrame = 0;
@@ -11000,25 +10979,22 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
       !step.hidden && step.style.display !== 'none');
   }
 
-  // Align only after a question/mode/layout change. Never track focus, input value,
-  // scroll position, or every resize-observer notification.
+  // Re-align only after the question/mode changes or when the page first opens.
+  // The keypad remains anchored to #step-p1 during scrolling, focus, typing and close/open.
   function alignRightKeypadRail() {
-    var wrapper = document.querySelector('.exam-wrapper');
     var step = byId('step-p1');
-    var answerInput = byId('p1-answer-input');
-    if (!wrapper || !step || !answerInput || !p1KeypadColumn ||
-        p1KeypadColumn.parentNode !== wrapper || !wrapper.classList.contains('has-p1-keypad-workspace')) return;
+    var target = byId('p1-answer-control') || byId('p1-answer-input');
+    if (!step || !target || !p1KeypadColumn ||
+        p1KeypadColumn.parentNode !== step ||
+        !p1KeypadColumn.classList.contains('p1-keypad-rail-absolute')) return;
 
-    var target = answerInput.getClientRects && answerInput.getClientRects().length
-      ? answerInput : byId('p1-answer-control');
-    if (!target) return;
     var targetRect = target.getBoundingClientRect();
     var stepRect = step.getBoundingClientRect();
     var offset = Math.max(0, Math.round(targetRect.top - stepRect.top));
-    var nextMargin = offset + 'px';
-    var currentMargin = parseFloat(p1KeypadColumn.style.marginTop || 'NaN');
-    if (!Number.isFinite(currentMargin) || Math.abs(currentMargin - offset) > 1) {
-      p1KeypadColumn.style.marginTop = nextMargin;
+    var nextTop = offset + 'px';
+    var currentTop = parseFloat(p1KeypadColumn.style.top || 'NaN');
+    if (!Number.isFinite(currentTop) || Math.abs(currentTop - offset) > 1) {
+      p1KeypadColumn.style.top = nextTop;
     }
   }
 
@@ -11030,72 +11006,42 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
         alignRightKeypadRail();
       });
     } else {
-      window.setTimeout(function () { p1RailAlignmentFrame = 0; alignRightKeypadRail(); }, 32);
+      window.setTimeout(function () {
+        p1RailAlignmentFrame = 0;
+        alignRightKeypadRail();
+      }, 32);
     }
   }
 
-  // The desktop rail is established when Stage 1 is entered, not when the input
-  // receives focus. Opening/closing the keypad therefore never reparents nodes,
-  // resizes the wrapper, or changes the left answer column.
   function syncResponsiveLayoutMode() {
-    if (!p1Layout || !p1Layout.isConnected) return false;
-    var wrapper = document.querySelector('.exam-wrapper');
+    if (!p1Layout || !p1Layout.isConnected || !p1KeypadColumn) return false;
+
     var step = byId('step-p1');
-    if (!wrapper || !p1KeypadColumn) return false;
+    var inputGroup = byId('p1-input-group');
+    var inputControl = byId('p1-answer-control');
+    if (!step || !inputGroup || !inputControl) return false;
 
     var isOpen = !!(panel && !panel.hidden);
-    var useRightRail = isP1StepActive() && canUseRightKeypadRail(wrapper);
-    p1ActionArea = p1ActionArea || byId('p1-standard-action');
+    var useRightRail = isP1StepActive() && canUseRightKeypadRail(step);
     var changed = false;
 
     if (useRightRail) {
-      if (!wrapper.classList.contains('has-p1-keypad-workspace')) {
-        // Preserve the left edge; extend only the available right-hand workspace.
-        var originalLeft = wrapper.getBoundingClientRect().left + (window.scrollX || 0);
-        wrapper.style.width = '1004px';
-        wrapper.style.maxWidth = 'none';
-        wrapper.style.marginLeft = Math.max(0, Math.round(originalLeft)) + 'px';
-        wrapper.style.marginRight = 'auto';
-        wrapper.classList.add('has-p1-keypad-workspace');
+      if (p1KeypadColumn.parentNode !== step) {
+        step.appendChild(p1KeypadColumn);
         changed = true;
       }
-      if (p1KeypadColumn.parentNode !== wrapper) {
-        wrapper.appendChild(p1KeypadColumn);
-        changed = true;
-      }
-      // 確認本題按鈕維持在 #step-p1 原本位置，不受右側鍵盤高度影響。
-      // 若舊版執行期間曾移出，立即還原到原本作答流程的容器。
-      if (p1ActionArea && step && p1ActionArea.parentNode !== step) {
-        step.appendChild(p1ActionArea);
-        changed = true;
-      }
-      // Keep the right grid track reserved for the whole Stage 1 view. The panel
-      // itself is hidden/shown; the rail never appears/disappears on focus.
-      p1KeypadColumn.hidden = false;
-      p1KeypadColumn.style.marginTop = p1KeypadColumn.style.marginTop || '0px';
-      p1Layout.classList.remove('has-visible-keypad');
+      p1KeypadColumn.classList.add('p1-keypad-rail-absolute');
+      p1KeypadColumn.hidden = !isOpen;
       if (changed) scheduleRightKeypadAlignment();
     } else {
-      if (wrapper.classList.contains('has-p1-keypad-workspace')) {
-        wrapper.classList.remove('has-p1-keypad-workspace');
-        wrapper.style.width = '';
-        wrapper.style.maxWidth = '';
-        wrapper.style.marginLeft = '';
-        wrapper.style.marginRight = '';
+      if (p1KeypadColumn.parentNode !== inputGroup ||
+          p1KeypadColumn.previousElementSibling !== inputControl) {
+        inputGroup.insertBefore(p1KeypadColumn, inputControl.nextSibling);
         changed = true;
       }
-      if (p1KeypadColumn.parentNode !== p1Layout) {
-        p1Layout.appendChild(p1KeypadColumn);
-        changed = true;
-      }
-      // 平板／手機或離開第一關時，確認按鈕回到原本 #step-p1 的文件流位置。
-      if (p1ActionArea && step && p1ActionArea.parentNode !== step) {
-        step.appendChild(p1ActionArea);
-        changed = true;
-      }
+      p1KeypadColumn.classList.remove('p1-keypad-rail-absolute');
+      p1KeypadColumn.style.top = '';
       p1KeypadColumn.hidden = !isOpen;
-      p1KeypadColumn.style.marginTop = '';
-      p1Layout.classList.toggle('has-visible-keypad', isOpen);
     }
     return changed;
   }
@@ -13163,159 +13109,7 @@ html:lang(ko) .choice-btn.active::after {
 
 
 <!-- 自訂數字鍵盤只與最下方答案輸入區並排；題目、選項、外框與確認按鈕維持原本完整版面。 -->
-<style id="final-floating-keypad-layout-fix-styles">
-#p1-number-pad-floating-panel[hidden],
-#step-p1 .p1-keypad-column[hidden] { display:none !important; }
-#step-p1 .p1-answer-keypad-layout {
-  display:grid;
-  grid-template-columns:minmax(0,1fr);
-  gap:16px;
-  align-items:start;
-  width:100%;
-  min-width:0;
-  box-sizing:border-box;
-  overflow:visible;
-}
-#step-p1 .p1-answer-input-column {
-  display:block;
-  min-width:0;
-  width:100%;
-}
-#step-p1 .p1-keypad-column {
-  display:block;
-  min-width:0;
-  width:100%;
-  align-self:start;
-}
-/* 輸入框維持加入鍵盤前的完整欄寬；內嵌鍵盤只在下方排列。
-   有足夠桌面空間時，鍵盤由 JS 移至 exam-wrapper 的獨立右欄，不占用此輸入欄寬。 */
-#step-p1 .p1-answer-keypad-layout.has-visible-keypad {
-  grid-template-columns:minmax(0,1fr) !important;
-  column-gap:0 !important;
-  row-gap:16px !important;
-}
-#p1-number-pad-floating-panel {
-  position:static !important;
-  inset:auto !important;
-  left:auto !important;
-  top:auto !important;
-  right:auto !important;
-  bottom:auto !important;
-  transform:none !important;
-  z-index:auto !important;
-  display:block;
-  box-sizing:border-box;
-  width:100% !important;
-  min-width:0;
-  max-width:100% !important;
-  height:auto !important;
-  min-height:0;
-  max-height:none !important;
-  overflow:visible !important;
-  overflow-y:visible !important;
-  overflow-x:visible !important;
-  overscroll-behavior:auto;
-  -webkit-overflow-scrolling:auto;
-  padding:12px;
-  margin:0;
-  background:#FFFFFF;
-  border:2px solid #26392D;
-  border-radius:16px;
-  box-shadow:0 6px 18px rgba(24,40,29,.10);
-  visibility:visible;
-}
-#p1-number-pad-floating-panel .number-pad-float-header {
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  margin:0 0 10px;
-  color:#17271B;
-  font-size:18px;
-  font-weight:900;
-  line-height:1.5;
-}
-#p1-number-pad-floating-panel .number-pad-float-close {
-  flex:0 0 auto;
-  min-width:64px;
-  min-height:48px;
-  padding:8px 12px;
-  border:2px solid #26392D;
-  border-radius:10px;
-  background:#F0F5ED;
-  color:#17271B;
-  font-family:inherit;
-  font-size:16px;
-  font-weight:900;
-  cursor:pointer;
-  white-space:nowrap;
-  touch-action:manipulation;
-}
-#p1-number-pad-floating-panel .number-pad-grid {
-  display:grid !important;
-  grid-template-columns:repeat(3,minmax(0,1fr)) !important;
-  gap:8px !important;
-  margin:0 !important;
-  width:100% !important;
-}
-#p1-number-pad-floating-panel .number-key {
-  min-width:0;
-  min-height:56px !important;
-  padding:7px !important;
-  border:2px solid #26392D !important;
-  border-radius:10px !important;
-  background:#FFFFFF !important;
-  color:#17271B !important;
-  font-family:inherit !important;
-  font-size:23px !important;
-  font-weight:900 !important;
-  line-height:1.3 !important;
-  cursor:pointer;
-  touch-action:manipulation;
-}
-#p1-number-pad-floating-panel .number-key:active,
-#p1-number-pad-floating-panel .number-pad-action:active { background:#EAF0E7 !important; }
-#p1-number-pad-floating-panel .number-pad-actions {
-  display:grid !important;
-  grid-template-columns:1fr 1fr !important;
-  gap:8px !important;
-  margin:10px 0 0 !important;
-  width:100% !important;
-}
-#p1-number-pad-floating-panel .number-pad-action {
-  min-width:0;
-  min-height:54px !important;
-  padding:7px !important;
-  border:2px solid #26392D !important;
-  border-radius:10px !important;
-  background:#F2F2EA !important;
-  color:#17271B !important;
-  font-family:inherit !important;
-  font-size:16px !important;
-  font-weight:900 !important;
-  line-height:1.4 !important;
-  white-space:normal !important;
-  cursor:pointer;
-  touch-action:manipulation;
-}
-#p1-number-pad-floating-panel .number-pad-feedback {
-  margin:8px 0 0 !important;
-  padding:8px 10px !important;
-  border:2px solid #26392D !important;
-  border-radius:9px !important;
-  background:#F0F5ED !important;
-  color:#17271B !important;
-  font-size:16px !important;
-  font-weight:800 !important;
-  line-height:1.5 !important;
-}
-#p1-number-pad-floating-panel button:focus-visible { outline:3px solid #17271B; outline-offset:2px; }
-@media (max-width:480px) {
-  #p1-number-pad-floating-panel { padding:10px !important; border-radius:14px !important; }
-  #p1-number-pad-floating-panel .number-key { min-height:52px !important; font-size:22px !important; }
-  #p1-number-pad-floating-panel .number-pad-action { min-height:52px !important; font-size:15px !important; }
-}
-</style>
+
 <!-- Duplicate keypad controller removed: the original controller above is now the sole owner of the floating panel. -->
 
 
@@ -14353,125 +14147,74 @@ html:lang(ko) .choice-btn.active::after {
 
 
 
-<style id="p1-keypad-stability-fixes">
-/* 數字鍵盤只在第一關進出／裝置斷點改變時調整欄位；展開、輸入、收起時不做位移動畫。 */
-.exam-wrapper.has-p1-keypad-workspace,
-.exam-wrapper.has-p1-keypad-workspace > .p1-keypad-column,
+
+
+
+
+
+
+
+
+
+
+<style id="p1-keypad-aside-only-layout">
+/* 第一關保留原本測驗文件流：右側鍵盤為獨立附加工具，不參與左側排版。 */
+#step-p1 { position:relative; overflow:visible !important; }
+#step-p1 .p1-keypad-column[hidden] { display:none !important; }
+#step-p1 > .p1-keypad-column.p1-keypad-rail-absolute {
+  position:absolute !important;
+  left:calc(100% + 24px) !important;
+  top:0;
+  width:260px !important;
+  min-width:260px !important;
+  max-width:260px !important;
+  margin:0 !important;
+  padding:0 !important;
+  align-self:start !important;
+  box-sizing:border-box !important;
+  z-index:30 !important;
+  overflow:visible !important;
+  transition:none !important;
+  animation:none !important;
+  transform:none !important;
+  overflow-anchor:none !important;
+}
+/* 平板／手機沒有足夠右側空間時，鍵盤才在答案輸入控制下方正常流動。 */
+#step-p1 .p1-keypad-column:not(.p1-keypad-rail-absolute) {
+  position:static !important;
+  display:block;
+  width:min(260px, 100%) !important;
+  min-width:0 !important;
+  max-width:260px !important;
+  margin:12px 0 0 !important;
+  padding:0 !important;
+  box-sizing:border-box !important;
+  transition:none !important;
+  animation:none !important;
+  transform:none !important;
+}
 #p1-number-pad-floating-panel {
-  transition: none !important;
-  animation: none !important;
-  transform: none !important;
-}
-#p1-number-pad-floating-panel {
-  scroll-margin: 0 !important;
-  overflow-anchor: none !important;
-}
-.exam-wrapper.has-p1-keypad-workspace > .p1-keypad-column {
-  align-self: start !important;
-  min-width: 260px !important;
-  width: 260px !important;
-  box-sizing: border-box !important;
-  overflow-anchor: none !important;
-}
-#step-p1 .p1-answer-keypad-layout,
-#step-p1 .p1-answer-input-column,
-#step-p1 #p1-answer-control {
-  overflow-anchor: none !important;
-}
-</style>
-
-<style id="p1-keypad-right-blank-area-layout">
-/* 寬螢幕：保持第一關原本左側卡片寬度與位置，只將自訂鍵盤移入頁面右側空白欄。 */
-@media (min-width:1100px) {
-  .exam-wrapper.has-p1-keypad-workspace {
-    display:grid !important;
-    grid-template-columns:minmax(0,688px) 260px !important;
-    grid-template-rows:auto auto !important;
-    column-gap:24px !important;
-    row-gap:0 !important;
-    align-items:start !important;
-    box-sizing:border-box !important;
-    width:1004px !important;
-    max-width:none !important;
-  }
-  .exam-wrapper.has-p1-keypad-workspace > .header-area {
-    grid-column:1 !important;
-    grid-row:1 !important;
-    width:100% !important;
-    max-width:688px !important;
-  }
-  .exam-wrapper.has-p1-keypad-workspace > #step-p1 {
-    grid-column:1 !important;
-    grid-row:2 !important;
-    width:100% !important;
-    max-width:688px !important;
-    min-width:0 !important;
-  }
-  .exam-wrapper.has-p1-keypad-workspace > .p1-keypad-column {
-    grid-column:2 !important;
-    grid-row:2 !important;
-    align-self:start !important;
-    width:260px !important;
-    min-width:260px !important;
-    max-width:260px !important;
-    box-sizing:border-box !important;
-  }
-  /* 鍵盤已是 exam-wrapper 的獨立右欄；左側答案區不得再預留 260px，
-     否則會在左側欄內重複切欄，讓年份輸入框被壓縮。 */
-  #step-p1 .p1-answer-keypad-layout,
-  #step-p1 .p1-answer-keypad-layout.has-visible-keypad {
-    grid-template-columns:minmax(0,1fr) !important;
-    column-gap:0 !important;
-    width:100% !important;
-  }
-  #step-p1 .p1-answer-input-column,
-  #step-p1 .p1-answer-input-column > #p1-answer-control {
-    display:block !important;
-    width:100% !important;
-    max-width:none !important;
-    min-width:0 !important;
-  }
+  position:static !important;
+  inset:auto !important;
+  left:auto !important;
+  top:auto !important;
+  right:auto !important;
+  bottom:auto !important;
+  transform:none !important;
+  z-index:auto !important;
+  display:block;
+  box-sizing:border-box;
+  width:100% !important;
+  min-width:0 !important;
+  max-width:100% !important;
+  height:auto !important;
+  min-height:0 !important;
+  max-height:none !important;
+  margin:0 !important;
+  overflow:visible !important;
+  overflow-anchor:none !important;
 }
 </style>
-
-<style id="p1-preserve-original-confirm-button-position">
-/* 最終版面：只把數字鍵盤放到答案區右側；確認本題始終留在 #step-p1 原本的文件流位置。 */
-@media (min-width:1100px) {
-  .exam-wrapper.has-p1-keypad-workspace {
-    grid-template-rows:auto auto !important;
-    align-items:start !important;
-  }
-  .exam-wrapper.has-p1-keypad-workspace > #step-p1 {
-    grid-column:1 !important;
-    grid-row:2 !important;
-    align-self:start !important;
-  }
-  .exam-wrapper.has-p1-keypad-workspace > .p1-keypad-column {
-    grid-column:2 !important;
-    grid-row:2 !important;
-    align-self:start !important;
-  }
-  /* 防止舊版殘留的第三列／跨欄規則影響確認按鈕。 */
-  #step-p1 #p1-standard-action {
-    position:static !important;
-    grid-column:auto !important;
-    grid-row:auto !important;
-    width:100% !important;
-    max-width:100% !important;
-    margin:22px 0 0 !important;
-    padding:0 !important;
-    background:transparent !important;
-    box-shadow:none !important;
-  }
-  #step-p1 #p1-standard-action #p1-submit-btn {
-    width:100% !important;
-    min-height:68px !important;
-  }
-}
-</style>
-
-
-
 
 </body>
 </html>
