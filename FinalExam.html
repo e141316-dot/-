@@ -11019,9 +11019,21 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
     var stepRect = step.getBoundingClientRect();
     // 24px 是 CSS 實際間距；在瀏覽器縮放下會自然跟隨相同比例。
     var left = Math.round(stepRect.right + 24);
-    var top = Math.round(targetRect.top);
+
+    // 優先與答案輸入區上緣對齊；若鍵盤完整高度會超出視窗，
+    // 僅將右側鍵盤向上移到視窗內，不縮小按鍵、不製造鍵盤內部捲軸。
+    var idealTop = targetRect.top;
+    var viewportHeight = Math.max(0, window.innerHeight || document.documentElement.clientHeight || 0);
+    var panelRect = p1KeypadColumn.getBoundingClientRect();
+    var panelHeight = Math.max(panelRect.height || 0, p1KeypadColumn.scrollHeight || 0);
+    var viewportMargin = 12;
+    var maxTop = viewportHeight - panelHeight - viewportMargin;
+    var top = maxTop >= viewportMargin
+      ? Math.min(Math.max(viewportMargin, idealTop), maxTop)
+      : viewportMargin;
+
     p1KeypadColumn.style.setProperty('--p1-keypad-fixed-left', left + 'px');
-    p1KeypadColumn.style.setProperty('--p1-keypad-fixed-top', top + 'px');
+    p1KeypadColumn.style.setProperty('--p1-keypad-fixed-top', Math.round(top) + 'px');
   }
 
   function scheduleRightKeypadAlignment() {
@@ -14206,9 +14218,11 @@ html:lang(ko) .choice-btn.active::after {
   align-self:start !important;
   box-sizing:border-box !important;
   z-index:30 !important;
-  max-height:max(120px, calc(100vh - var(--p1-keypad-fixed-top, 0px) - 12px)) !important;
-  overflow-x:hidden !important;
-  overflow-y:auto !important;
+  height:auto !important;
+  max-height:none !important;
+  overflow:visible !important;
+  overflow-x:visible !important;
+  overflow-y:visible !important;
   overscroll-behavior:contain;
   transition:none !important;
   animation:none !important;
