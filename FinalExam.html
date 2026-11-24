@@ -6302,6 +6302,18 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
                 sharedLocationAliasOverridesReady = true;
                 if (lastEditedLocationAliasId === locationId) lastEditedLocationAliasId = '';
                 if (activeLocationRecordId === locationId) {
+                  // 成功回應後再次確認目前地點已無未儲存差異，避免成功提示後仍被離開保護誤判。
+                  if (hasPendingLocationAliasChangesInternal(locationId)) {
+                    var savedEntry = getLocationAliasLocalStore()[locationId];
+                    if (savedEntry) {
+                      savedEntry.baseAliasGroups = cloneAliasGroups(groups);
+                      savedEntry.aliasGroups = cloneAliasGroups(groups);
+                      savedEntry.synced = true;
+                      savedEntry.resetToDefault = false;
+                      savedEntry.updatedAt = new Date().toISOString();
+                      writeLocationAliasLocalStore();
+                    }
+                  }
                   setAliasSyncStatus(translateExamDisplayText('✓ 已儲存'), 'success', 2000);
                 }
               }
@@ -6561,8 +6573,15 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       }
     }
 
+    function resolveLocationAliasDraftId(locationId) {
+      // 未指定地點時，優先檢查目前正在編輯的地點。
+      // 不可先取「最近一筆草稿」：localStorage 可能留有其他地點的舊草稿，
+      // 即使目前地點已成功儲存，仍會因此錯誤跳出離開確認視窗。
+      return locationId || activeLocationRecordId || lastEditedLocationAliasId || findMostRecentPendingLocationAliasId();
+    }
+
     function hasPendingLocationAliasChangesInternal(locationId) {
-      var id = locationId || findMostRecentPendingLocationAliasId() || activeLocationRecordId;
+      var id = resolveLocationAliasDraftId(locationId);
       if (!id) return false;
       var entry = getLocationAliasLocalStore()[id];
       if (!entry || entry.synced !== false) return false;
@@ -6574,7 +6593,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
     }
 
     function discardPendingLocationAliasChangesInternal(locationId) {
-      var id = locationId || findMostRecentPendingLocationAliasId() || activeLocationRecordId;
+      var id = resolveLocationAliasDraftId(locationId);
       if (!id) return false;
       var store = getLocationAliasLocalStore();
       var entry = store[id];
