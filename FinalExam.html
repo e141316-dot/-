@@ -10932,7 +10932,6 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
   var p1MainColumn = null;
   var p1KeypadColumn = null;
   var p1ActionArea = null;
-  var p1LayoutResizeObserver = null;
 
   // 輸入框保留在原本作答卡內；寬螢幕開啟鍵盤時，才把既有鍵盤欄移至頁面右側空白欄。
   // 不移動題目卡、作答方式選項、答案輸入控制或確認按鈕，也不改變輸入區原本預留的欄寬。
@@ -10988,30 +10987,36 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
   function canUseRightKeypadRail(wrapper) {
     if (!wrapper || window.innerWidth < 1100) return false;
     var rect = wrapper.getBoundingClientRect();
-    // 右側欄需要 260px 鍵盤、24px 間距，以及至少 16px 的視窗邊界。
+    // Right rail requires 260px for the keypad, 24px gap, plus a small viewport margin.
     return (document.documentElement.clientWidth - rect.left) >= 1020;
   }
 
   var p1RailAlignmentFrame = 0;
-  var p1RailMutationObserver = null;
 
+  function isP1StepActive() {
+    var step = byId('step-p1');
+    return !!(step && document.body.getAttribute('data-step') === 'step-p1' &&
+      !step.hidden && step.style.display !== 'none');
+  }
+
+  // Align only after a question/mode/layout change. Never track focus, input value,
+  // scroll position, or every resize-observer notification.
   function alignRightKeypadRail() {
     var wrapper = document.querySelector('.exam-wrapper');
     var step = byId('step-p1');
-    var inputControl = byId('p1-answer-control');
     var answerInput = byId('p1-answer-input');
-    if (!wrapper || !step || !inputControl || !p1KeypadColumn ||
+    if (!wrapper || !step || !answerInput || !p1KeypadColumn ||
         p1KeypadColumn.parentNode !== wrapper || !wrapper.classList.contains('has-p1-keypad-workspace')) return;
 
-    // 以目前題目真正可見的輸入框上緣定位鍵盤，不以整組答案控制容器或題目卡頂端定位。
-    // 年份、月份、日期共用同一個 #p1-answer-input，因此每次換題／切換日曆後都會自動對齊新位置。
-    var target = answerInput && answerInput.getClientRects && answerInput.getClientRects().length
-      ? answerInput : inputControl;
+    var target = answerInput.getClientRects && answerInput.getClientRects().length
+      ? answerInput : byId('p1-answer-control');
+    if (!target) return;
     var targetRect = target.getBoundingClientRect();
     var stepRect = step.getBoundingClientRect();
     var offset = Math.max(0, Math.round(targetRect.top - stepRect.top));
     var nextMargin = offset + 'px';
-    if (p1KeypadColumn.style.marginTop !== nextMargin) {
+    var currentMargin = parseFloat(p1KeypadColumn.style.marginTop || 'NaN');
+    if (!Number.isFinite(currentMargin) || Math.abs(currentMargin - offset) > 1) {
       p1KeypadColumn.style.marginTop = nextMargin;
     }
   }
@@ -11020,80 +11025,66 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
     if (p1RailAlignmentFrame) return;
     if (window.requestAnimationFrame) {
       p1RailAlignmentFrame = window.requestAnimationFrame(function () {
-        p1RailAlignmentFrame = window.requestAnimationFrame(function () {
-          p1RailAlignmentFrame = 0;
-          alignRightKeypadRail();
-        });
+        p1RailAlignmentFrame = 0;
+        alignRightKeypadRail();
       });
     } else {
       window.setTimeout(function () { p1RailAlignmentFrame = 0; alignRightKeypadRail(); }, 32);
     }
   }
 
-  function observeAnswerLayoutForKeypadAlignment() {
-    var step = byId('step-p1');
-    var group = byId('p1-input-group');
-    var control = byId('p1-answer-control');
-    var answerInput = byId('p1-answer-input');
-
-    // 問題標題、國曆／農曆選項及欄位高度變動時，重新對齊右側鍵盤；不改動左側欄位寬高。
-    if (window.ResizeObserver && !p1LayoutResizeObserver) {
-      p1LayoutResizeObserver = new ResizeObserver(function () {
-        if (panel && !panel.hidden) scheduleRightKeypadAlignment();
-      });
-      [step, group, control, answerInput].forEach(function (element) {
-        if (element) p1LayoutResizeObserver.observe(element);
-      });
-    }
-
-    // 日期切換國曆／農曆時會更新標籤與欄位顯示；監看第一關內容改變，確保鍵盤跟隨目前輸入框。
-    if (window.MutationObserver && step && !p1RailMutationObserver) {
-      p1RailMutationObserver = new MutationObserver(function () {
-        if (panel && !panel.hidden) scheduleRightKeypadAlignment();
-      });
-      p1RailMutationObserver.observe(step, {
-        childList: true,
-        subtree: true,
-        attributes: true,
-        attributeFilter: ['style', 'class', 'hidden']
-      });
-    }
-  }
-
+  // The desktop rail is established when Stage 1 is entered, not when the input
+  // receives focus. Opening/closing the keypad therefore never reparents nodes,
+  // resizes the wrapper, or changes the left answer column.
   function syncResponsiveLayoutMode() {
-    if (!p1Layout || !p1Layout.isConnected) return;
+    if (!p1Layout || !p1Layout.isConnected) return false;
     var wrapper = document.querySelector('.exam-wrapper');
-    var isOpen = !!(panel && !panel.hidden);
-    var useRightRail = isOpen && canUseRightKeypadRail(wrapper);
+    var step = byId('step-p1');
+    if (!wrapper || !p1KeypadColumn) return false;
 
-    p1Layout.classList.toggle('has-visible-keypad', isOpen && !useRightRail);
-    if (p1KeypadColumn) {
-      if (useRightRail) {
-        // 先記錄原本 wrapper 左緣，再只向右延伸工作區；左側測驗卡寬度與位置不變。
-        if (!wrapper.classList.contains('has-p1-keypad-workspace')) {
-          var originalLeft = wrapper.getBoundingClientRect().left + (window.scrollX || 0);
-          wrapper.style.width = '1004px';
-          wrapper.style.maxWidth = 'none';
-          wrapper.style.marginLeft = Math.max(0, Math.round(originalLeft)) + 'px';
-          wrapper.style.marginRight = 'auto';
-          wrapper.classList.add('has-p1-keypad-workspace');
-        }
-        if (p1KeypadColumn.parentNode !== wrapper) wrapper.appendChild(p1KeypadColumn);
-        p1KeypadColumn.style.marginTop = '';
-        scheduleRightKeypadAlignment();
-      } else {
-        if (wrapper) {
-          wrapper.classList.remove('has-p1-keypad-workspace');
-          wrapper.style.width = '';
-          wrapper.style.maxWidth = '';
-          wrapper.style.marginLeft = '';
-          wrapper.style.marginRight = '';
-        }
-        if (p1KeypadColumn.parentNode !== p1Layout) p1Layout.appendChild(p1KeypadColumn);
-        p1KeypadColumn.style.marginTop = '';
+    var isOpen = !!(panel && !panel.hidden);
+    var useRightRail = isP1StepActive() && canUseRightKeypadRail(wrapper);
+    var changed = false;
+
+    if (useRightRail) {
+      if (!wrapper.classList.contains('has-p1-keypad-workspace')) {
+        // Preserve the left edge; extend only the available right-hand workspace.
+        var originalLeft = wrapper.getBoundingClientRect().left + (window.scrollX || 0);
+        wrapper.style.width = '1004px';
+        wrapper.style.maxWidth = 'none';
+        wrapper.style.marginLeft = Math.max(0, Math.round(originalLeft)) + 'px';
+        wrapper.style.marginRight = 'auto';
+        wrapper.classList.add('has-p1-keypad-workspace');
+        changed = true;
+      }
+      if (p1KeypadColumn.parentNode !== wrapper) {
+        wrapper.appendChild(p1KeypadColumn);
+        changed = true;
+      }
+      // Keep the right grid track reserved for the whole Stage 1 view. The panel
+      // itself is hidden/shown; the rail never appears/disappears on focus.
+      p1KeypadColumn.hidden = false;
+      p1KeypadColumn.style.marginTop = p1KeypadColumn.style.marginTop || '0px';
+      p1Layout.classList.remove('has-visible-keypad');
+      if (changed) scheduleRightKeypadAlignment();
+    } else {
+      if (wrapper.classList.contains('has-p1-keypad-workspace')) {
+        wrapper.classList.remove('has-p1-keypad-workspace');
+        wrapper.style.width = '';
+        wrapper.style.maxWidth = '';
+        wrapper.style.marginLeft = '';
+        wrapper.style.marginRight = '';
+        changed = true;
+      }
+      if (p1KeypadColumn.parentNode !== p1Layout) {
+        p1Layout.appendChild(p1KeypadColumn);
+        changed = true;
       }
       p1KeypadColumn.hidden = !isOpen;
+      p1KeypadColumn.style.marginTop = '';
+      p1Layout.classList.toggle('has-visible-keypad', isOpen);
     }
+    return changed;
   }
 
   function isNativeKeypadDevice() {
@@ -11361,26 +11352,17 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
     });
   }
 
-  function positionPanel() {
-    // 鍵盤不再依輸入框座標定位；它是 Grid 的正常文件流子項目。
-    if (!panel || panel.hidden) return;
-    syncResponsiveLayoutMode();
-    window.requestAnimationFrame(function () {
-      if (!panel || panel.hidden) return;
-      var rect = panel.getBoundingClientRect();
-      var vv = window.visualViewport;
-      var visibleBottom = vv ? (vv.offsetTop + vv.height) : window.innerHeight;
-      // 只在鍵盤超出可視範圍時自然捲動，不使用固定或浮動定位。
-      if (rect.bottom > visibleBottom - 12) {
-        try { panel.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
-        catch (e) { panel.scrollIntoView(false); }
-      }
-    });
-  }
-
   function openPanel() {
     var config = getNumericConfig();
     if (isNativeKeypadDevice() || !config) return;
+
+    // Focus and click often fire in the same interaction. Do not rebuild/reflow
+    // the keypad a second time if it is already open.
+    if (panel && !panel.hidden) {
+      input.setAttribute('aria-expanded', 'true');
+      return;
+    }
+
     if (!ensureP1ResponsiveLayout()) return;
     ensureOriginalPadNodes(config);
     buildPanelContent();
@@ -11388,22 +11370,24 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
       console.error('[數字鍵盤] 未找到原始數字按鍵節點，請檢查第一關渲染器。');
       return;
     }
+
     updatePanelLanguage();
     panel.hidden = false;
     panel.style.display = '';
     panel.style.position = 'static';
-    panel.style.left = '';
-    panel.style.top = '';
-    panel.style.right = '';
+    panel.style.left = 'auto';
+    panel.style.top = 'auto';
+    panel.style.right = 'auto';
     panel.style.transform = 'none';
     panel.style.zIndex = 'auto';
     panel.style.maxHeight = 'none';
     panel.style.overflowY = 'visible';
     panel.style.overflowX = 'visible';
     input.setAttribute('aria-expanded', 'true');
+
+    // On desktop this is an idempotent no-op: the right rail was established
+    // on entry to Stage 1. On narrower screens it reveals the below-input rail.
     syncResponsiveLayoutMode();
-    positionPanel();
-    if (window.requestAnimationFrame) window.requestAnimationFrame(function () { if (panel && !panel.hidden) positionPanel(); });
   }
 
   function syncAnswerState() {
@@ -11580,6 +11564,8 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
         return;
       }
       configureCurrentInput();
+      syncResponsiveLayoutMode();
+      if (isP1StepActive()) scheduleRightKeypadAlignment();
     }, 0);
   }
 
@@ -11694,6 +11680,9 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
     window.showStep = function (id) {
       if (id !== 'step-p1') closePanel(false);
       var result = originalShowStep.apply(this, arguments);
+      // Establish the right rail once when Stage 1 becomes visible; restore the
+      // normal page wrapper only when leaving Stage 1.
+      syncResponsiveLayoutMode();
       if (id === 'step-p1') scheduleKeypadReconcile();
       return result;
     };
@@ -11732,10 +11721,6 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
       syncResponsiveLayoutMode();
     }, 100);
   });
-  window.addEventListener('scroll', function () { if (panel && !panel.hidden) syncResponsiveLayoutMode(); }, true);
-
-  // 依據目前輸入框實際位置同步右側鍵盤；題目 1 年份、題目 2 月份、題目 3 日期共用此定位機制。
-  observeAnswerLayoutForKeypadAlignment();
 
   // 初始狀態只綁定欄位事件；不主動聚焦輸入框。
   bindInputOnce();
@@ -14354,6 +14339,33 @@ html:lang(ko) .choice-btn.active::after {
 </script>
 
 
+
+<style id="p1-keypad-stability-fixes">
+/* 數字鍵盤只在第一關進出／裝置斷點改變時調整欄位；展開、輸入、收起時不做位移動畫。 */
+.exam-wrapper.has-p1-keypad-workspace,
+.exam-wrapper.has-p1-keypad-workspace > .p1-keypad-column,
+#p1-number-pad-floating-panel {
+  transition: none !important;
+  animation: none !important;
+  transform: none !important;
+}
+#p1-number-pad-floating-panel {
+  scroll-margin: 0 !important;
+  overflow-anchor: none !important;
+}
+.exam-wrapper.has-p1-keypad-workspace > .p1-keypad-column {
+  align-self: start !important;
+  min-width: 260px !important;
+  width: 260px !important;
+  box-sizing: border-box !important;
+  overflow-anchor: none !important;
+}
+#step-p1 .p1-answer-keypad-layout,
+#step-p1 .p1-answer-input-column,
+#step-p1 #p1-answer-control {
+  overflow-anchor: none !important;
+}
+</style>
 
 <style id="p1-keypad-right-blank-area-layout">
 /* 寬螢幕：保持第一關原本左側卡片寬度與位置，只將自訂鍵盤移入頁面右側空白欄。 */
