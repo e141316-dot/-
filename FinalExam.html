@@ -3935,6 +3935,8 @@ function renderStageProgressBanner(banner,stageNumber,name){
     var defaultPlaceAliases = [];
     var defaultPlaceAliasGroups = [];
     var activeLocationRecordId = '';
+    // 保留最近編輯的地點 ID；即使縣市／行政區下拉選單重設，也能儲存原地點草稿。
+    var lastEditedLocationAliasId = '';
     var sharedLocationAliasOverrides = {};
     var sharedLocationAliasOverridesReady = false;
     var sharedLocationAliasOverridesLoading = false;
@@ -6124,14 +6126,42 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       var baseline = existing && existing.synced === false && Array.isArray(existing.baseAliasGroups)
         ? cloneAliasGroups(existing.baseAliasGroups)
         : getSavedAliasBaselineGroups(locationId);
+      var catalogRecord = buildLocationCatalog().find(function(record) { return record.id === locationId; }) || null;
+      var locationMeta = existing && existing.locationMeta ? existing.locationMeta : (catalogRecord ? {
+        county: catalogRecord.county,
+        district: catalogRecord.district,
+        placeName: catalogRecord.placeName
+      } : null);
+      lastEditedLocationAliasId = locationId;
       store[locationId] = {
         aliasGroups: cloneAliasGroups(groups),
         baseAliasGroups: baseline,
+        locationMeta: locationMeta,
         synced: false,
         resetToDefault: !!resetToDefault,
         updatedAt: new Date().toISOString()
       };
       return writeLocationAliasLocalStore();
+    }
+
+    // 找出最近一筆真正尚未同步的地點草稿；不得依賴可能已被下拉選單重設的 activeLocationRecordId。
+    function findMostRecentPendingLocationAliasId() {
+      var store = getLocationAliasLocalStore();
+      var pendingIds = Object.keys(store).filter(function(id) {
+        var entry = store[id];
+        if (!entry || entry.synced !== false) return false;
+        if (entry.resetToDefault) return true;
+        var baseline = Array.isArray(entry.baseAliasGroups)
+          ? entry.baseAliasGroups
+          : getSavedAliasBaselineGroups(id);
+        return !aliasGroupsEqual(entry.aliasGroups || [], baseline);
+      });
+      pendingIds.sort(function(a, b) {
+        var aTime = Date.parse((store[a] && store[a].updatedAt) || '') || 0;
+        var bTime = Date.parse((store[b] && store[b].updatedAt) || '') || 0;
+        return bTime - aTime;
+      });
+      return pendingIds[0] || '';
     }
 
     function syncLocationAliasGroupsToBackend(locationId, groups, resetToDefault) {
@@ -6152,14 +6182,16 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
           fail();
           return;
         }
-        var countySelect = document.getElementById('countySelect');
-        var districtSelect = document.getElementById('districtSelect');
-        var placeSelect = document.getElementById('placeSelect');
-        var record = getLocationCatalogRecord(
-          countySelect && countySelect.value,
-          districtSelect && districtSelect.value,
-          placeSelect && placeSelect.value
-        );
+        // 以草稿綁定的 locationId 查正式地點資料，不讀取目前下拉選單。
+        // 使用者切換縣市／行政區時，選單可能已短暫清空，不能因此拿新選單資料儲存舊地點草稿。
+        var record = buildLocationCatalog().find(function(item) { return item.id === locationId; }) || null;
+        if (!record) {
+          var pendingStore = getLocationAliasLocalStore();
+          var pendingMeta = pendingStore[locationId] && pendingStore[locationId].locationMeta;
+          if (pendingMeta) {
+            record = getLocationCatalogRecord(pendingMeta.county, pendingMeta.district, pendingMeta.placeName);
+          }
+        }
         if (!record || record.id !== locationId) {
           fail();
           return;
@@ -6189,6 +6221,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
                 delete getLocationAliasLocalStore()[locationId];
                 writeLocationAliasLocalStore();
                 sharedLocationAliasOverridesReady = true;
+                if (lastEditedLocationAliasId === locationId) lastEditedLocationAliasId = '';
                 if (activeLocationRecordId === locationId) {
                   updateAliasGroupsUI(cloneAliasGroups(LOCATION_ALIAS_DEFAULTS[locationId] || []), locationId, false);
                   setAliasSyncStatus(translateExamDisplayText('✓ 已儲存'), 'success', 2000);
@@ -6205,6 +6238,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
                 };
                 writeLocationAliasLocalStore();
                 sharedLocationAliasOverridesReady = true;
+                if (lastEditedLocationAliasId === locationId) lastEditedLocationAliasId = '';
                 if (activeLocationRecordId === locationId) {
                   setAliasSyncStatus(translateExamDisplayText('✓ 已儲存'), 'success', 2000);
                 }
@@ -6467,7 +6501,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
     }
 
     function hasPendingLocationAliasChangesInternal(locationId) {
-      var id = locationId || activeLocationRecordId;
+      var id = locationId || findMostRecentPendingLocationAliasId() || activeLocationRecordId;
       if (!id) return false;
       var entry = getLocationAliasLocalStore()[id];
       if (!entry || entry.synced !== false) return false;
@@ -6479,7 +6513,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
     }
 
     function discardPendingLocationAliasChangesInternal(locationId) {
-      var id = locationId || activeLocationRecordId;
+      var id = locationId || findMostRecentPendingLocationAliasId() || activeLocationRecordId;
       if (!id) return false;
       var store = getLocationAliasLocalStore();
       var entry = store[id];
@@ -6712,18 +6746,22 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
     var aliasSaveInFlight = null;
     function saveAliasGroupsToBackend() {
       if (aliasSaveInFlight) return aliasSaveInFlight;
-      if (!activeLocationRecordId) {
+      // 優先儲存最近修改的未同步草稿；選單切換造成 activeLocationRecordId 短暫清空時仍能找到原地點。
+      var pendingLocationId = findMostRecentPendingLocationAliasId();
+      var locationId = pendingLocationId || lastEditedLocationAliasId || activeLocationRecordId;
+      if (!locationId) {
         showCustomAlert(translateExamDisplayText('請先選擇測驗地點，再管理該地點的名稱。'));
         return Promise.resolve(false);
       }
-      var locationId = activeLocationRecordId;
-      var groups = getCurrentAliasGroups();
+      var pendingEntry = getLocationAliasLocalStore()[locationId];
+      var groups = pendingEntry && pendingEntry.synced === false && Array.isArray(pendingEntry.aliasGroups)
+        ? cloneAliasGroups(pendingEntry.aliasGroups)
+        : (locationId === activeLocationRecordId ? getCurrentAliasGroups() : []);
       var validation = validateAliasGroups(groups);
       if (!validation.ok) {
         showCustomAlert(translateExamDisplayText(validation.message));
         return Promise.resolve(false);
       }
-      var pendingEntry = getLocationAliasLocalStore()[locationId];
       // 若先前的「恢復系統預設名稱」同步失敗，從離開確認視窗再次選擇儲存時仍應執行刪除覆寫紀錄。
       var resetToDefault = !!(pendingEntry && pendingEntry.synced === false && pendingEntry.resetToDefault === true);
       saveLocationAliasDraft(locationId, groups, resetToDefault);
