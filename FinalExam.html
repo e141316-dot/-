@@ -10992,14 +10992,72 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
     return (document.documentElement.clientWidth - rect.left) >= 1020;
   }
 
+  var p1RailAlignmentFrame = 0;
+  var p1RailMutationObserver = null;
+
   function alignRightKeypadRail() {
     var wrapper = document.querySelector('.exam-wrapper');
     var step = byId('step-p1');
     var inputControl = byId('p1-answer-control');
+    var answerInput = byId('p1-answer-input');
     if (!wrapper || !step || !inputControl || !p1KeypadColumn ||
         p1KeypadColumn.parentNode !== wrapper || !wrapper.classList.contains('has-p1-keypad-workspace')) return;
-    var offset = inputControl.getBoundingClientRect().top - step.getBoundingClientRect().top;
-    p1KeypadColumn.style.marginTop = Math.max(0, Math.round(offset)) + 'px';
+
+    // 以目前題目真正可見的輸入框上緣定位鍵盤，不以整組答案控制容器或題目卡頂端定位。
+    // 年份、月份、日期共用同一個 #p1-answer-input，因此每次換題／切換日曆後都會自動對齊新位置。
+    var target = answerInput && answerInput.getClientRects && answerInput.getClientRects().length
+      ? answerInput : inputControl;
+    var targetRect = target.getBoundingClientRect();
+    var stepRect = step.getBoundingClientRect();
+    var offset = Math.max(0, Math.round(targetRect.top - stepRect.top));
+    var nextMargin = offset + 'px';
+    if (p1KeypadColumn.style.marginTop !== nextMargin) {
+      p1KeypadColumn.style.marginTop = nextMargin;
+    }
+  }
+
+  function scheduleRightKeypadAlignment() {
+    if (p1RailAlignmentFrame) return;
+    if (window.requestAnimationFrame) {
+      p1RailAlignmentFrame = window.requestAnimationFrame(function () {
+        p1RailAlignmentFrame = window.requestAnimationFrame(function () {
+          p1RailAlignmentFrame = 0;
+          alignRightKeypadRail();
+        });
+      });
+    } else {
+      window.setTimeout(function () { p1RailAlignmentFrame = 0; alignRightKeypadRail(); }, 32);
+    }
+  }
+
+  function observeAnswerLayoutForKeypadAlignment() {
+    var step = byId('step-p1');
+    var group = byId('p1-input-group');
+    var control = byId('p1-answer-control');
+    var answerInput = byId('p1-answer-input');
+
+    // 問題標題、國曆／農曆選項及欄位高度變動時，重新對齊右側鍵盤；不改動左側欄位寬高。
+    if (window.ResizeObserver && !p1LayoutResizeObserver) {
+      p1LayoutResizeObserver = new ResizeObserver(function () {
+        if (panel && !panel.hidden) scheduleRightKeypadAlignment();
+      });
+      [step, group, control, answerInput].forEach(function (element) {
+        if (element) p1LayoutResizeObserver.observe(element);
+      });
+    }
+
+    // 日期切換國曆／農曆時會更新標籤與欄位顯示；監看第一關內容改變，確保鍵盤跟隨目前輸入框。
+    if (window.MutationObserver && step && !p1RailMutationObserver) {
+      p1RailMutationObserver = new MutationObserver(function () {
+        if (panel && !panel.hidden) scheduleRightKeypadAlignment();
+      });
+      p1RailMutationObserver.observe(step, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['style', 'class', 'hidden']
+      });
+    }
   }
 
   function syncResponsiveLayoutMode() {
@@ -11022,8 +11080,7 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
         }
         if (p1KeypadColumn.parentNode !== wrapper) wrapper.appendChild(p1KeypadColumn);
         p1KeypadColumn.style.marginTop = '';
-        if (window.requestAnimationFrame) window.requestAnimationFrame(alignRightKeypadRail);
-        else alignRightKeypadRail();
+        scheduleRightKeypadAlignment();
       } else {
         if (wrapper) {
           wrapper.classList.remove('has-p1-keypad-workspace');
@@ -11672,9 +11729,13 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
       var nativeNow = isNativeKeypadDevice();
       if (nativeNow !== lastNativePreference) lastNativePreference = nativeNow;
       if (getNumericConfig()) configureCurrentInput();
+      syncResponsiveLayoutMode();
     }, 100);
   });
   window.addEventListener('scroll', function () { if (panel && !panel.hidden) syncResponsiveLayoutMode(); }, true);
+
+  // 依據目前輸入框實際位置同步右側鍵盤；題目 1 年份、題目 2 月份、題目 3 日期共用此定位機制。
+  observeAnswerLayoutForKeypadAlignment();
 
   // 初始狀態只綁定欄位事件；不主動聚焦輸入框。
   bindInputOnce();
