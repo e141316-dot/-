@@ -3027,7 +3027,7 @@ body.text-only-mode .mode-status-chip {
         <button type="button" id="language-preview-repeat" class="language-preview-repeat" onclick="repeatLanguagePreview()">再聽一次試聽</button>
       </section>
       <div class="sticky-action-bar step-action">
-        <button type="button" class="btn-primary" onclick="goToLocationSetup()">下一步：選擇練習地點 ›</button>
+        <button type="button" class="btn-primary" onclick="goToLocationSetup()">下一步：選擇練習方式 ›</button>
       </div>
     </div>
 
@@ -3076,39 +3076,41 @@ body.text-only-mode .mode-status-chip {
       </div>
     </div>
 
-    <!-- 地點答案設定頁面 -->
+    <!-- 練習方式入口；專人協助設定沿用本頁原有地點與別名元件，切換為第二個頁面狀態。 -->
     <div id="step-location" class="exam-card" style="display:none;">
-      <section class="guide-card location-guide-card">
-        <div class="location-guide-top">
-          <div class="guide-avatar guide-illustrated" aria-hidden="true"></div>
-          <p class="guide-main">請選擇您現在練習的地方。</p>
+      <div id="practice-mode-entry">
+        <section class="guide-card location-guide-card">
+          <div class="location-guide-top">
+            <div class="guide-avatar guide-illustrated" aria-hidden="true"></div>
+            <p class="guide-main">請依照目前的情況選擇一種方式。</p>
+          </div>
+          <div class="guide-footer">
+            <p id="location-audio-status" class="audio-status" role="status" aria-live="polite"></p>
+            <button type="button" class="guide-audio-btn" onclick="repeatCurrentAudioWithStatus('location-audio-status')">再聽一次說明</button>
+          </div>
+        </section>
+        <div class="practice-mode-grid" role="group" aria-label="請選擇練習方式">
+          <button type="button" id="mode-home-btn" class="practice-mode-btn" aria-pressed="false" onclick="startHomePractice()">
+            <span class="mode-option-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V21H3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 21v-7h6v7" fill="none" stroke="currentColor" stroke-width="2"/></svg></span>
+            <span class="practice-mode-copy">
+              <span class="practice-mode-title">我在家裡練習</span>
+              <span class="practice-mode-subtitle">自己在家裡做練習（最常用）</span>
+            </span>
+            <span class="practice-mode-state" aria-hidden="true">○</span>
+            <span class="practice-mode-selected-label">已選擇</span>
+          </button>
+          <button type="button" id="mode-staff-btn" class="practice-mode-btn" aria-pressed="false" onclick="startStaffPractice()">
+            <span class="mode-option-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 20c0-3.5 2.5-5.5 6-5.5s6 2 6 5.5M16 8h5m-2.5-2.5v5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+            <span class="practice-mode-copy">
+              <span class="practice-mode-title">在監理站、醫院或由專人協助</span>
+              <span class="practice-mode-subtitle">由工作人員或家人幫忙設定</span>
+            </span>
+            <span class="practice-mode-state" aria-hidden="true">○</span>
+            <span class="practice-mode-selected-label">已選擇</span>
+          </button>
         </div>
-        <p class="guide-sub location-guide-copy">如果您在家裡自己練習，直接點選下方的「我在家裡練習」就可以了。</p>
-        <div class="guide-footer">
-          <p id="location-audio-status" class="audio-status" role="status" aria-live="polite"></p>
-          <button type="button" class="guide-audio-btn" onclick="repeatCurrentAudioWithStatus('location-audio-status')"> 再聽一次說明</button>
-        </div>
-      </section>
-      <div class="practice-mode-grid" role="group" aria-label="請選擇練習地點">
-        <button type="button" id="mode-home-btn" class="practice-mode-btn" aria-pressed="false" onclick="startHomePractice()">
-          <span class="mode-option-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V21H3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 21v-7h6v7" fill="none" stroke="currentColor" stroke-width="2"/></svg></span>
-          <span class="practice-mode-copy">
-            <span class="practice-mode-title">我在家裡練習</span>
-            <span class="practice-mode-subtitle">自己在家裡做練習（最常用）</span>
-          </span>
-          <span class="practice-mode-state" aria-hidden="true">○</span>
-          <span class="practice-mode-selected-label">已選擇</span>
-        </button>
-        <button type="button" id="mode-staff-btn" class="practice-mode-btn" aria-pressed="false" onclick="startStaffPractice()">
-          <span class="mode-option-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 20c0-3.5 2.5-5.5 6-5.5s6 2 6 5.5M16 8h5m-2.5-2.5v5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
-          <span class="practice-mode-copy">
-            <span class="practice-mode-title">在監理站、醫院或由專人協助</span>
-            <span class="practice-mode-subtitle">由工作人員或家人幫忙輸入地點</span>
-          </span>
-          <span class="practice-mode-state" aria-hidden="true">○</span>
-          <span class="practice-mode-selected-label">已選擇</span>
-        </button>
       </div>
+      <div id="staff-location-setup" hidden>
       <div id="location-fields" class="location-fields-card" style="text-align:left;display:none;" aria-hidden="true" inert>
         <h2 class="location-fields-title">請選擇您要練習的測驗地點</h2>
         <div class="form-group">
@@ -3157,12 +3159,13 @@ body.text-only-mode .mode-status-chip {
           </div>
         </div>
       </details>
+      </div>
       <div class="sticky-action-bar step-action">
-        <button type="button" class="btn-primary" onclick="startOfficialExam()">確認選擇，前往測驗介紹 ›</button>
+        <button type="button" id="location-next-btn" class="btn-primary" onclick="startOfficialExam()" disabled aria-disabled="true">請先選擇練習方式</button>
       </div>
     </div>
 
-    <!-- 第一關說明頁 -->
+    <!-- 第一關說明頁（自助與專人協助共用同一個元件） -->
     <div id="step-p1-intro" class="exam-card" style="display:none;">
       <section class="guide-card exam-guide-card">
         <div class="guide-intro-top">
@@ -3902,6 +3905,8 @@ function renderStageProgressBanner(banner,stageNumber,name){
       sessionId: createExamSessionId(),
       county: '', district: '', placeName: '', locationRecordId: '', acceptableAnswers: [], acceptableAnswerGroups: [], defaultAliases: [], isHomePractice: false,
       locationModeSelected: false,
+      practiceMode: '', // self = 自助練習；assisted = 專人協助
+      staffSetupActive: false,
       locationConfirmed: false, examIntroViewed: false,
       language: 'zh-TW', hakkaAccent: 'sixian', speechRate: 0.85, examMode: 'practice',
       p1: { currentIndex: 0, questions: [], score: 0, q5RawAnswer: '', q5AdminVerdict: null, q5ReviewPending: false, q5Status: '', q5Evaluation: null, q5ReviewAudit: [], q5ScoreApplied: false, currentAnswer: '', currentMode: '', answers: [] },
@@ -5302,11 +5307,23 @@ function getTaiwaneseKey(text) {
         showStep('step-location');
       }
       else if (step === 'step-location') {
+        if (examState.staffSetupActive) {
+          examState.staffSetupActive = false;
+          updateLocationModeVisibility();
+          if (typeof window.syncPracticeModeUI === 'function') window.syncPracticeModeUI();
+          return;
+        }
         examState.locationConfirmed = false;
         examState.examIntroViewed = false;
         showStep('step-lang');
       }
-      else if (step === 'step-p1-intro') showStep('step-intro');
+      else if (step === 'step-p1-intro') {
+        // 返回共用入口，讓使用者可在自助與專人協助之間重新選擇。
+        examState.staffSetupActive = false;
+        showStep('step-location');
+        updateLocationModeVisibility();
+        if (typeof window.syncPracticeModeUI === 'function') window.syncPracticeModeUI();
+      }
       else if (step === 'step-p2-intro') showStep('step-p1-intro');
       else if (step === 'step-p3-intro') showStep('step-p2-intro');
       else if (step === 'step-p3') {
@@ -5319,9 +5336,12 @@ function getTaiwaneseKey(text) {
     function updateLocationModeVisibility() {
       var modeSelected = !!examState.locationModeSelected;
       var isHome = modeSelected && !!examState.isHomePractice;
-      var staffEnabled = modeSelected && !isHome && examState.examMode === 'staff';
+      var staffSelected = modeSelected && !isHome && examState.examMode === 'staff';
+      var staffEnabled = staffSelected && !!examState.staffSetupActive;
       var homeButton = document.getElementById('mode-home-btn');
       var staffButton = document.getElementById('mode-staff-btn');
+      var modeEntry = document.getElementById('practice-mode-entry');
+      var staffSetup = document.getElementById('staff-location-setup');
       var locationFields = document.getElementById('location-fields');
       var staffSettings = document.getElementById('staff-mode-settings');
 
@@ -5330,18 +5350,29 @@ function getTaiwaneseKey(text) {
         homeButton.setAttribute('aria-pressed', isHome ? 'true' : 'false');
       }
       if (staffButton) {
-        staffButton.classList.toggle('active', staffEnabled);
-        staffButton.setAttribute('aria-pressed', staffEnabled ? 'true' : 'false');
+        staffButton.classList.toggle('active', staffSelected);
+        staffButton.setAttribute('aria-pressed', staffSelected ? 'true' : 'false');
       }
 
-      // 只有選取「施測人員代操作模式」後，才顯示縣市、行政區及測驗地點。
+      // 先只顯示兩種練習方式；按下「下一步：設定練習資訊」後才顯示原有工作人員設定。
+      if (modeEntry) {
+        modeEntry.hidden = staffEnabled;
+        modeEntry.setAttribute('aria-hidden', staffEnabled ? 'true' : 'false');
+        modeEntry.inert = staffEnabled;
+      }
+      if (staffSetup) {
+        staffSetup.hidden = !staffEnabled;
+        staffSetup.setAttribute('aria-hidden', staffEnabled ? 'false' : 'true');
+        staffSetup.inert = !staffEnabled;
+      }
+
       if (locationFields) {
         locationFields.style.display = staffEnabled ? '' : 'none';
         locationFields.setAttribute('aria-hidden', staffEnabled ? 'false' : 'true');
         locationFields.inert = !staffEnabled;
       }
 
-      // A 類別名與 B 類人工審核說明沿用原始資料及判斷，只在工作人員模式可見。
+      // 原有地點別名管理與人工核對說明仍只在專人設定狀態開放。
       if (staffSettings) {
         var settingsWereHidden = staffSettings.style.display === 'none';
         staffSettings.style.display = staffEnabled ? 'block' : 'none';
@@ -5417,13 +5448,17 @@ function getTaiwaneseKey(text) {
     function selectPracticeMode(mode) {
       if (mode !== 'home' && mode !== 'staff') return;
       var selectingHome = mode === 'home';
+      var currentPracticeMode = examState.practiceMode ||
+        (examState.isHomePractice ? 'self' : (examState.examMode === 'staff' ? 'assisted' : ''));
       var alreadySelected = examState.locationModeSelected &&
-        ((selectingHome && examState.isHomePractice) || (!selectingHome && !examState.isHomePractice && examState.examMode === 'staff'));
+        currentPracticeMode === (selectingHome ? 'self' : 'assisted');
       // 重複點擊已選取模式視為維持原狀，不取消選取、不清空已完成的設定。
       if (alreadySelected) return;
 
       captureStaffModeSnapshot();
       examState.locationModeSelected = true;
+      examState.practiceMode = selectingHome ? 'self' : 'assisted';
+      examState.staffSetupActive = false;
       examState.isHomePractice = selectingHome;
       examState.examMode = selectingHome ? 'practice' : 'staff';
       examState.locationConfirmed = false;
@@ -5643,9 +5678,9 @@ console.info('[國語語音台詞版本]', window.MANDARIN_VOICE_SCRIPT_BUILD);
 
 var MANDARIN_VOICE_SCRIPTS = {
   languagePreview: '已選擇國語，這是語音試聽，請確認您能清楚聽到聲音。',
-  locationIntro: '請先確認目前的練習方式。如果您是在家中自行練習，請選擇「我在家裡練習」；如果是在監理站、醫療院所或其他施測地點，請選擇「施測人員代操作模式」。選好之後，就可以進入下一步。',
-  homePracticeSelected: '您已選擇在家裡練習，我們馬上來看看測驗說明。',
-  staffModeSelected: '您已選擇施測人員代操作模式，請依照畫面選擇縣市、行政區和測驗地點，確認好就可以開始囉。',
+  locationIntro: '請依照目前的情況選擇一種練習方式。如果您在家裡自行練習，請選擇「我在家裡練習」；如果在監理站、醫院，或由工作人員、家人協助，請選擇「在監理站、醫院或由專人協助」。選好之後，按下下一步即可繼續。',
+  homePracticeSelected: '您已選擇在家裡自助練習，接下來直接進入第一關說明。',
+  staffModeSelected: '您已選擇由專人協助，接下來請依照畫面設定縣市、行政區和測驗地點，設定完成後就能開始第一關。',
   examIntro: '這次一共有三項認知功能測驗。第一項是時間與空間認知，共有五個問題。前四題請回答今年的年份、月份、日期和星期，四題都答對才算通過。第五題請回答目前所在的場所，這一題由施測人員現場核對，不列入計分。第二項是圖卡記憶，您會看到十張圖片，全部看完後休息兩分鐘，再回想並說出剛才看過的圖片名稱，答對三張以上就通過了。第三項是徒手繪畫時鐘，請依照指定時間畫出完整的時鐘，包括圓形、數字，以及時針和分針。滿分七分，取得四分以上就通過了，作答時間為四分鐘。都了解的話，我們就放輕鬆，從第一關開始吧！',
   p1Intro: '歡迎來到第一關，時間與空間認知。這一關共有五個問題，請仔細聽題目，憑現在的記憶回答就好。作答時請不要看日曆、時鐘，也不要請旁人提示喔。',
   p1Questions: {
@@ -5734,9 +5769,9 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       });
       var backMap = {
         'step-lang': ['返回練習選單', false],
-        'step-location': ['返回語言設定', true],
-        'step-intro': ['返回練習地點', true],
-        'step-p1-intro': ['返回測驗介紹', true],
+        'step-location': [examState.staffSetupActive ? '返回練習方式' : '返回語言設定', true],
+        'step-intro': ['返回練習方式', true],
+        'step-p1-intro': ['返回練習方式', true],
         'step-p2-intro': ['返回第一關說明', true],
         'step-p3-intro': ['返回第二關說明', true],
         'step-p3': ['返回第三關說明', true]
@@ -5754,7 +5789,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
           if (statusSub) { statusSub.innerText = ''; statusSub.style.display = 'none'; statusSub.hidden = true; }
         } else if (id === 'step-location') {
           if (nav) nav.style.display = 'none';
-          if (nameHeading) { nameHeading.hidden = false; nameHeading.style.display = 'block'; nameHeading.innerText = '選擇練習方式'; }
+          if (nameHeading) { nameHeading.hidden = false; nameHeading.style.display = 'block'; nameHeading.innerText = '請選擇練習方式'; }
           if (statusSub) statusSub.style.display = 'none';
         } else if (id === 'step-p1-intro' || id === 'step-p1') {
           if (nav) nav.style.display = id === 'step-p1-intro' ? 'flex' : 'none';
@@ -5907,6 +5942,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       stopAllSpeech();
       examState.locationConfirmed = false;
       examState.examIntroViewed = false;
+      examState.staffSetupActive = false;
       updateLocationModeVisibility();
       showStep('step-location');
     }
@@ -6640,46 +6676,61 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       unlockAudioContext();
 
       if (!examState.locationModeSelected) {
-        showCustomAlert('請先選擇「我在家裡練習」或「施測人員代操作模式」。');
+        showCustomAlert('請先選擇「我在家裡練習」或「在監理站、醫院或由專人協助」。');
         return;
       }
 
-      if (examState.isHomePractice) {
-        // 在家模式使用明確的地點名稱與核對別名，不讀取任何舊縣市／行政區資料。
+      if (examState.practiceMode === 'self' || examState.isHomePractice) {
+        // 自助練習不讀取、不要求填寫任何工作人員專用地點資料。
+        examState.practiceMode = 'self';
         examState.county = '';
         examState.district = '';
         examState.placeName = '家裡';
         examState.acceptableAnswers = ['家裡', '家中', '住家'];
         examState.acceptableAnswerGroups = [];
         examState.locationRecordId = '';
+        examState.defaultAliases = [];
         examState.examMode = 'practice';
-        // 在家練習不覆寫工作人員上次有效的施測地點偏好。
+        examState.isHomePractice = true;
+        examState.staffSetupActive = false;
         examState.locationConfirmed = true;
-        goToExamIntro();
+        examState.examIntroViewed = true;
+        // 自助練習略過工作人員地點設定與三關總覽，直接進入共用第一關說明頁。
+        startP1Intro();
         return;
       }
 
-      // 第二個互斥入口就是工作人員代操作模式；未選取 staff 不可走入外出施測流程。
-      if (examState.examMode !== 'staff') {
-        showCustomAlert('請重新選擇有效的練習模式。');
+      if (examState.practiceMode !== 'assisted' || examState.examMode !== 'staff' || examState.isHomePractice) {
+        showCustomAlert('請重新選擇有效的練習方式。');
         return;
       }
 
-      // 工作人員模式才可使用縣市、行政區、測驗地點及 A 類核對別名。
+      // 第一次按下時只切換到既有工作人員設定區，不略過任何必要設定。
+      if (!examState.staffSetupActive) {
+        examState.staffSetupActive = true;
+        updateLocationModeVisibility();
+        if (typeof window.syncPracticeModeUI === 'function') window.syncPracticeModeUI();
+        return;
+      }
+
+      // 專人協助模式才可使用縣市、行政區、測驗地點及既有別名管理／人工核對設定。
       var county = document.getElementById('countySelect').value;
       var district = document.getElementById('districtSelect').value;
       var place = document.getElementById('placeSelect').value;
       if (!county || !district || !place) { showCustomAlert('請選擇縣市、行政區及測驗地點。'); return; }
+
+      examState.practiceMode = 'assisted';
       examState.county = county;
       examState.district = district;
       examState.placeName = place;
       examState.locationRecordId = getLocationRecordId(county,district,place);
       examState.acceptableAnswerGroups = getCurrentAliasGroups();
       examState.acceptableAnswers = getCurrentAliasTags();
-      // 正式名稱本身即可作答；常用別名為選用補充，不要求每個地點都湊滿四組。
       saveLocationPreference();
       examState.locationConfirmed = true;
-      goToExamIntro();
+      examState.examIntroViewed = true;
+      // 專人協助設定完成後，同樣進入唯一一份第一關說明頁。
+      startP1Intro();
     }
 
     function startP1Intro() {
@@ -8345,6 +8396,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       return {
         sessionId: examState.sessionId,
         examMode: examState.examMode,
+        practiceMode: examState.practiceMode || (examState.isHomePractice ? 'self' : (examState.examMode === 'staff' ? 'assisted' : '')),
         isHomePractice: examState.isHomePractice,
         language: examState.language,
         hakkaAccent: examState.hakkaAccent,
@@ -8380,6 +8432,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       return {
         sessionId: examState.sessionId,
         examMode: examState.examMode,
+        practiceMode: examState.practiceMode || (examState.isHomePractice ? 'self' : (examState.examMode === 'staff' ? 'assisted' : '')),
         isHomePractice: examState.isHomePractice,
         language: examState.language,
         hakkaAccent: examState.hakkaAccent,
@@ -8680,6 +8733,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
         examState.sessionId = saved.sessionId || createExamSessionId();
         examState.examMode = saved.examMode || 'practice';
         examState.isHomePractice = !!saved.isHomePractice;
+        examState.practiceMode = saved.practiceMode || (examState.isHomePractice ? 'self' : (examState.examMode === 'staff' ? 'assisted' : ''));
         examState.language = saved.language || 'zh-TW';
         examState.hakkaAccent = saved.hakkaAccent || 'sixian';
         examState.county = saved.county || '';
@@ -8868,7 +8922,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       if (typeof updateLocationModeVisibility === 'function') updateLocationModeVisibility();
     }
     if(id==='step-location'){
-      var title=byId('test-name-heading'); if(title)title.textContent='請選擇目前的練習地點';
+      var title=byId('test-name-heading'); if(title)title.textContent=examState.staffSetupActive?'設定練習資訊':'請選擇練習方式';
       setLocationActionState();
       var settings=byId('staff-mode-settings');
       if(settings && previous!=='step-location' && examState.examMode==='staff')settings.open=false;
@@ -9401,6 +9455,8 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
   // Ensure all mode-dependent replay controls are synchronized after initial page load.
   updateLanguageReplay();syncAudioButtons();setStatusChip();setLocationActionState();
   if(byId('step-location')&&!examState.locationModeSelected){
+    examState.practiceMode = '';
+    examState.staffSetupActive = false;
     if (typeof updateLocationModeVisibility === 'function') updateLocationModeVisibility();
   }
 })();
@@ -10219,6 +10275,8 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
   color:var(--color-muted)!important;
 }
 .mode-status-chip svg{width:20px!important;height:20px!important;flex:0 0 20px!important}
+#step-location .practice-mode-state,
+#step-location .practice-mode-selected-label { display:none !important; }
 </style>
 <script id="numeric-keypad-device-switch-patch">
 /* 數字鍵盤依主要操作裝置切換：桌面使用網頁鍵盤，觸控手機／平板使用原生數字鍵盤。
@@ -10247,52 +10305,39 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
   var p1ActionArea = null;
   var p1LayoutResizeObserver = null;
 
-  // 將第一關原有內容整理成文件流 Grid：左側原寬度作答區、右側鍵盤專區、左側確認按鈕。
-  // 不改 .exam-wrapper 寬度或置中，不複製、不重建題目或按鈕，只移動既有 DOM 節點。
+  // 僅在「答案輸入區」內建立左右排列：題目卡、作答方式選項、外層作答卡及確認按鈕完全不移動。
+  // 只移動既有的 #p1-answer-control；鍵盤在同一個輸入區內成為右側欄位。
   function ensureP1ResponsiveLayout() {
-    var step = byId('step-p1');
-    if (!step) return null;
+    var inputGroup = byId('p1-input-group');
+    var inputControl = byId('p1-answer-control');
+    if (!inputGroup || !inputControl) return null;
     if (p1Layout && p1Layout.isConnected) return p1Layout;
 
-    p1Layout = step.querySelector('.p1-responsive-keypad-layout');
+    p1Layout = inputGroup.querySelector('.p1-answer-keypad-layout');
     if (p1Layout) {
-      p1MainColumn = p1Layout.querySelector('.p1-main-column');
+      p1MainColumn = p1Layout.querySelector('.p1-answer-input-column');
       p1KeypadColumn = p1Layout.querySelector('.p1-keypad-column');
-      p1ActionArea = byId('p1-standard-action');
       return p1Layout;
     }
 
-    var questionCard = byId('p1-question-card');
-    var answerPanel = step.querySelector('.p1-answer-panel');
-    p1ActionArea = byId('p1-standard-action');
-    if (!questionCard || !answerPanel || !p1ActionArea) return null;
-
     p1Layout = document.createElement('div');
-    p1Layout.className = 'p1-responsive-keypad-layout';
-    p1Layout.setAttribute('data-keypad-layout', 'in-flow');
+    p1Layout.className = 'p1-answer-keypad-layout';
+    p1Layout.setAttribute('data-keypad-layout', 'answer-input-only');
 
     p1MainColumn = document.createElement('div');
-    p1MainColumn.className = 'p1-main-column';
+    p1MainColumn.className = 'p1-answer-input-column';
 
     p1KeypadColumn = document.createElement('aside');
     p1KeypadColumn.className = 'p1-keypad-column';
     p1KeypadColumn.setAttribute('aria-label', '自訂數字鍵盤區');
     p1KeypadColumn.hidden = true;
 
-    // 題目卡、回答方式、輸入欄位及原本確認按鈕留在左側；鍵盤另設右側欄位。
-    p1MainColumn.appendChild(questionCard);
-    p1MainColumn.appendChild(answerPanel);
+    // 保留輸入控制原有的單位、輸入框、提示及錯誤訊息；不移動題目、選項、外框或確認按鈕。
+    inputGroup.insertBefore(p1Layout, inputControl);
+    p1MainColumn.appendChild(inputControl);
     p1Layout.appendChild(p1MainColumn);
     p1Layout.appendChild(p1KeypadColumn);
-    p1Layout.appendChild(p1ActionArea);
-    step.appendChild(p1Layout);
 
-    if (window.ResizeObserver && !p1LayoutResizeObserver) {
-      p1LayoutResizeObserver = new ResizeObserver(function () {
-        syncResponsiveLayoutMode();
-      });
-      p1LayoutResizeObserver.observe(p1Layout);
-    }
     syncResponsiveLayoutMode();
     return p1Layout;
   }
@@ -10300,21 +10345,7 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
   function syncResponsiveLayoutMode() {
     if (!p1Layout || !p1Layout.isConnected) return;
     var isOpen = !!(panel && !panel.hidden);
-    var step = byId('step-p1');
-    var stepWidth = step ? (step.clientWidth || step.getBoundingClientRect().width) : 0;
-    var layoutRect = p1Layout.getBoundingClientRect();
-    var viewportWidth = document.documentElement.clientWidth || window.innerWidth || 0;
-    var keypadWidth = 300;
-    var columnGap = 20;
-    var safeRight = 16;
-    // 以原始 step-p1 可用寬度作左欄寬度，不能用已展開的 Grid 寬度回算，避免反覆切換。
-    var requiredWidth = stepWidth + keypadWidth + columnGap;
-    var availableToRight = viewportWidth - layoutRect.left - safeRight;
-    var wideEnough = viewportWidth >= 900 && stepWidth > 0 && availableToRight >= requiredWidth;
-
     p1Layout.classList.toggle('has-visible-keypad', isOpen);
-    p1Layout.classList.toggle('is-wide-keypad-layout', isOpen && wideEnough);
-    if (step) step.classList.toggle('p1-keypad-wide-overflow', isOpen && wideEnough);
     if (p1KeypadColumn) p1KeypadColumn.hidden = !isOpen;
   }
 
@@ -10587,19 +10618,17 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
     // 鍵盤不再依輸入框座標定位；它是 Grid 的正常文件流子項目。
     if (!panel || panel.hidden) return;
     syncResponsiveLayoutMode();
-    if (p1Layout && !p1Layout.classList.contains('is-wide-keypad-layout')) {
-      window.requestAnimationFrame(function () {
-        if (!panel || panel.hidden) return;
-        var rect = panel.getBoundingClientRect();
-        var vv = window.visualViewport;
-        var visibleBottom = vv ? (vv.offsetTop + vv.height) : window.innerHeight;
-        // 手機／窄平板讓頁面自然延伸；只有面板超出可視範圍時才輕微捲動頁面。
-        if (rect.bottom > visibleBottom - 12) {
-          try { panel.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
-          catch (e) { panel.scrollIntoView(false); }
-        }
-      });
-    }
+    window.requestAnimationFrame(function () {
+      if (!panel || panel.hidden) return;
+      var rect = panel.getBoundingClientRect();
+      var vv = window.visualViewport;
+      var visibleBottom = vv ? (vv.offsetTop + vv.height) : window.innerHeight;
+      // 只在鍵盤超出可視範圍時自然捲動，不使用固定或浮動定位。
+      if (rect.bottom > visibleBottom - 12) {
+        try { panel.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+        catch (e) { panel.scrollIntoView(false); }
+      }
+    });
   }
 
   function openPanel() {
@@ -12384,16 +12413,13 @@ html:lang(ko) .choice-btn.active::after {
 
 
 
-<!-- Unified custom floating numeric keypad: same original keypad controls on phones, tablets, and computers. -->
+<!-- 自訂數字鍵盤只與最下方答案輸入區並排；題目、選項、外框與確認按鈕維持原本完整版面。 -->
 <style id="final-floating-keypad-layout-fix-styles">
-/* 保留原本 .exam-wrapper 的 720px 寬度、水平置中與內距。
-   桌面空間足夠時，只讓第一關版面向右延伸出鍵盤專區；左側作答區寬度不變。 */
 #p1-number-pad-floating-panel[hidden],
 #step-p1 .p1-keypad-column[hidden] { display:none !important; }
-#step-p1 .p1-responsive-keypad-layout {
+#step-p1 .p1-answer-keypad-layout {
   display:grid;
   grid-template-columns:minmax(0,1fr);
-  grid-template-areas:"main" "keypad" "action";
   gap:16px;
   align-items:start;
   width:100%;
@@ -12401,48 +12427,31 @@ html:lang(ko) .choice-btn.active::after {
   box-sizing:border-box;
   overflow:visible;
 }
-#step-p1 .p1-main-column {
-  grid-area:main;
-  display:flex;
-  flex-direction:column;
-  gap:16px;
+#step-p1 .p1-answer-input-column {
+  display:block;
   min-width:0;
   width:100%;
 }
 #step-p1 .p1-keypad-column {
-  grid-area:keypad;
   display:block;
   min-width:0;
   width:100%;
   align-self:start;
 }
-#step-p1 .p1-action-area {
-  grid-area:action;
-  position:static !important;
-  inset:auto !important;
-  width:100%;
-  min-width:0;
-  margin:0 !important;
+/* 桌面及一般平板：只在年份／月份／日期的輸入控制區內左右並排。 */
+@media (min-width:601px) {
+  #step-p1 .p1-answer-keypad-layout.has-visible-keypad {
+    grid-template-columns:minmax(0,1fr) minmax(220px,260px);
+    column-gap:16px;
+    row-gap:0;
+  }
 }
-/* 只有 JS 確認右側實際剩餘空間足夠時，才啟用並排。
-   左欄維持原本完整寬度，鍵盤專區向右延伸，不擠壓題目或選項。 */
-#step-p1 .p1-responsive-keypad-layout.is-wide-keypad-layout.has-visible-keypad {
-  width:calc(100% + 320px) !important;
-  grid-template-columns:minmax(0,1fr) 300px;
-  grid-template-areas:"main keypad" "action keypad";
-  column-gap:20px;
-  row-gap:16px;
+/* 手機或較窄螢幕：輸入框在上、鍵盤在下，頁面自然向下延伸。 */
+@media (max-width:600px) {
+  #step-p1 .p1-answer-keypad-layout.has-visible-keypad {
+    grid-template-columns:minmax(0,1fr);
+  }
 }
-#step-p1 .p1-responsive-keypad-layout.is-wide-keypad-layout .p1-keypad-column {
-  grid-area:keypad;
-  width:300px;
-  min-width:300px;
-  max-width:300px;
-  align-self:center;
-}
-/* 原本月份題為防止手機溢出而設定 overflow-x:clip；寬螢幕並排時只解除第一關裁切，
-   因為 JS 已先確認鍵盤完整位於視窗內，不會製造水平捲動。 */
-#step-p1.p1-keypad-wide-overflow { overflow-x:visible !important; }
 #p1-number-pad-floating-panel {
   position:static !important;
   inset:auto !important;
@@ -12559,20 +12568,6 @@ html:lang(ko) .choice-btn.active::after {
   line-height:1.5 !important;
 }
 #p1-number-pad-floating-panel button:focus-visible { outline:3px solid #17271B; outline-offset:2px; }
-@media (max-width:899px) {
-  #step-p1 .p1-responsive-keypad-layout.is-wide-keypad-layout.has-visible-keypad {
-    width:100% !important;
-    grid-template-columns:minmax(0,1fr);
-    grid-template-areas:"main" "keypad" "action";
-  }
-  #step-p1 .p1-responsive-keypad-layout.is-wide-keypad-layout .p1-keypad-column {
-    width:100%;
-    min-width:0;
-    max-width:100%;
-    align-self:start;
-  }
-  #step-p1.p1-keypad-wide-overflow { overflow-x:clip !important; }
-}
 @media (max-width:480px) {
   #p1-number-pad-floating-panel { padding:10px !important; border-radius:14px !important; }
   #p1-number-pad-floating-panel .number-key { min-height:52px !important; font-size:22px !important; }
@@ -12693,12 +12688,25 @@ html:lang(ko) .choice-btn.active::after {
 
   function byId(id) { return document.getElementById(id); }
 
-  // examState is the only source of truth for the selected practice mode.
+  // The main exam controller keeps examState in its own scope; read that same object through its public getter.
+  function getExamState() {
+    try {
+      if (typeof window.__getCognitiveExamState === 'function') return window.__getCognitiveExamState();
+      return window.examState || null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  // examState is the single source of truth; practiceMode uses the requested self/assisted values.
   function getModeState() {
-    var state = window.examState;
+    var state = getExamState();
     if (!state || !state.locationModeSelected) return { mode: '', home: false, staff: false };
-    var home = state.isHomePractice === true && state.examMode === 'practice';
-    var staff = state.isHomePractice === false && state.examMode === 'staff';
+    var canonical = state.practiceMode ||
+      (state.isHomePractice === true && state.examMode === 'practice' ? 'self' :
+      (state.isHomePractice === false && state.examMode === 'staff' ? 'assisted' : ''));
+    var home = canonical === 'self';
+    var staff = canonical === 'assisted';
     return { mode: home ? 'home' : staff ? 'staff' : '', home: home, staff: staff };
   }
 
@@ -12710,15 +12718,55 @@ html:lang(ko) .choice-btn.active::after {
   }
 
   if (typeof EXAM_TEXT_TRANSLATIONS !== 'undefined') {
-    EXAM_TEXT_TRANSLATIONS['請先選擇練習模式'] = [
-      'Choose a practice mode first',
-      '最初に練習モードを選択してください',
-      '먼저 연습 모드를 선택하세요'
+    EXAM_TEXT_TRANSLATIONS['下一步：選擇練習方式 ›'] = [
+      'Next: Choose a practice method ›',
+      '次へ：練習方法を選択 ›',
+      '다음: 연습 방식 선택 ›'
     ];
-    EXAM_TEXT_TRANSLATIONS['下一步：選擇測驗地點 ›'] = [
-      'Next: Choose testing location ›',
-      '次へ：検査場所を選択 ›',
-      '다음: 검사 장소 선택 ›'
+    EXAM_TEXT_TRANSLATIONS['請先選擇練習方式'] = [
+      'Please choose a practice method first',
+      '練習方法を選択してください',
+      '연습 방식을 먼저 선택하세요'
+    ];
+    EXAM_TEXT_TRANSLATIONS['請選擇練習方式'] = [
+      'Choose a practice method',
+      '練習方法を選択してください',
+      '연습 방식을 선택하세요'
+    ];
+    EXAM_TEXT_TRANSLATIONS['設定練習資訊'] = [
+      'Set up practice information',
+      '練習情報を設定',
+      '연습 정보 설정'
+    ];
+    EXAM_TEXT_TRANSLATIONS['請依照目前的情況選擇一種方式。'] = [
+      'Please choose the option that matches your situation.',
+      '現在の状況に合う方法を選択してください。',
+      '현재 상황에 맞는 방법을 선택하세요.'
+    ];
+    EXAM_TEXT_TRANSLATIONS['由工作人員或家人幫忙設定'] = [
+      'A staff member or family member can help with setup',
+      'スタッフまたはご家族が設定をお手伝いします',
+      '직원 또는 가족이 설정을 도와드립니다'
+    ];
+    EXAM_TEXT_TRANSLATIONS['開始自助練習 ›'] = [
+      'Start self-practice ›',
+      '自主練習を開始 ›',
+      '자가 연습 시작 ›'
+    ];
+    EXAM_TEXT_TRANSLATIONS['下一步：設定練習資訊 ›'] = [
+      'Next: Set up practice information ›',
+      '次へ：練習情報を設定 ›',
+      '다음: 연습 정보 설정 ›'
+    ];
+    EXAM_TEXT_TRANSLATIONS['確認設定並開始第一關 ›'] = [
+      'Confirm settings and start Stage 1 ›',
+      '設定を確認して第1段階を開始 ›',
+      '설정을 확인하고 1단계 시작 ›'
+    ];
+    EXAM_TEXT_TRANSLATIONS['請先完成練習資訊設定'] = [
+      'Please complete the practice setup first',
+      '先に練習情報を設定してください',
+      '먼저 연습 정보를 설정하세요'
     ];
   }
 
@@ -12744,28 +12792,43 @@ html:lang(ko) .choice-btn.active::after {
 
   function setLocationActionState() {
     var step = byId('step-location');
-    var btn = step && step.querySelector('.sticky-action-bar .btn-primary');
+    var btn = byId('location-next-btn') || (step && step.querySelector('.sticky-action-bar .btn-primary'));
     if (!btn) return;
 
     var state = getModeState();
+    var appState = getExamState();
+    var setupActive = !!(appState && appState.staffSetupActive);
     var complete = hasCompleteStaffLocation();
-    var disabled = !state.mode;
+    var disabled = !state.mode || (state.staff && setupActive && !complete);
     var label = !state.mode
-      ? '請先選擇練習模式'
-      : (state.staff && !complete)
-        ? '下一步：選擇測驗地點 ›'
-        : '確認選擇，前往測驗介紹 ›';
+      ? '請先選擇練習方式'
+      : state.home
+        ? '開始自助練習 ›'
+        : setupActive
+          ? '確認設定並開始第一關 ›'
+          : '下一步：設定練習資訊 ›';
 
     btn.disabled = disabled;
     btn.setAttribute('aria-disabled', disabled ? 'true' : 'false');
-    btn.dataset.practiceMode = state.mode || 'none';
+    btn.dataset.practiceMode = state.home ? 'self' : (state.staff ? 'assisted' : 'none');
     btn.textContent = translated(label);
+
+    if (document.body.getAttribute('data-step') === 'step-location') {
+      var title = byId('test-name-heading');
+      var back = byId('top-back-btn');
+      if (title) title.textContent = setupActive ? translated('設定練習資訊') : translated('請選擇練習方式');
+      if (back) back.textContent = setupActive ? '← ' + translated('返回練習方式') : '← ' + translated('返回語言設定');
+    }
   }
 
   function syncPracticeModeUI() {
     var state = getModeState();
     var homeButton = byId('mode-home-btn');
     var staffButton = byId('mode-staff-btn');
+    var appState = getExamState();
+    var setupActive = !!(appState && appState.staffSetupActive && state.staff);
+    var entry = byId('practice-mode-entry');
+    var setup = byId('staff-location-setup');
 
     if (homeButton) {
       homeButton.classList.toggle('active', state.home);
@@ -12775,23 +12838,32 @@ html:lang(ko) .choice-btn.active::after {
       staffButton.classList.toggle('active', state.staff);
       staffButton.setAttribute('aria-pressed', state.staff ? 'true' : 'false');
     }
+    if (entry) {
+      entry.hidden = setupActive;
+      entry.setAttribute('aria-hidden', setupActive ? 'true' : 'false');
+      entry.inert = setupActive;
+    }
+    if (setup) {
+      setup.hidden = !setupActive;
+      setup.setAttribute('aria-hidden', setupActive ? 'false' : 'true');
+      setup.inert = !setupActive;
+    }
 
-    // Reuse the existing visibility handler so saved locations, alias editor,
-    // and the staff-only fields continue to follow the selected mode.
+    // Reuse the existing selectors and alias manager; their data and handlers are unchanged.
     if (typeof window.updateLocationModeVisibility === 'function') {
       window.updateLocationModeVisibility();
     } else {
       var fields = byId('location-fields');
       var staffSettings = byId('staff-mode-settings');
       if (fields) {
-        fields.style.display = state.staff ? '' : 'none';
-        fields.setAttribute('aria-hidden', state.staff ? 'false' : 'true');
-        fields.inert = !state.staff;
+        fields.style.display = setupActive ? '' : 'none';
+        fields.setAttribute('aria-hidden', setupActive ? 'false' : 'true');
+        fields.inert = !setupActive;
       }
       if (staffSettings) {
-        staffSettings.style.display = state.staff ? 'block' : 'none';
-        staffSettings.setAttribute('aria-hidden', state.staff ? 'false' : 'true');
-        staffSettings.inert = !state.staff;
+        staffSettings.style.display = setupActive ? 'block' : 'none';
+        staffSettings.setAttribute('aria-hidden', setupActive ? 'false' : 'true');
+        staffSettings.inert = !setupActive;
       }
     }
 
@@ -12875,22 +12947,29 @@ html:lang(ko) .choice-btn.active::after {
   window.setLocationActionState = setLocationActionState;
   window.syncPracticeModeUI = syncPracticeModeUI;
 
-  // The next button is active immediately after either mode is selected.
-  // For staff mode, its first click takes the user to the location fields;
-  // only after a valid location is chosen does it enter the test instructions.
+  // 自助練習一按直達第一關說明；專人協助第一次按鈕進入既有設定區，完成後才確認。
   var originalStartOfficialExam = window.startOfficialExam;
   if (typeof originalStartOfficialExam === 'function') {
     window.startOfficialExam = function () {
       var state = getModeState();
-      syncPracticeModeUI();
 
       if (!state.mode) {
         if (typeof window.showCustomAlert === 'function') {
           window.showCustomAlert('請先選擇「我在家裡練習」或「在監理站、醫院或由專人協助」。');
         }
+        setLocationActionState();
         return;
       }
 
+      var appState = getExamState();
+      if (state.staff && appState && !appState.staffSetupActive) {
+        appState.staffSetupActive = true;
+        syncPracticeModeUI();
+        window.scrollTo(0, 0);
+        return;
+      }
+
+      syncPracticeModeUI();
       if (state.staff && !hasCompleteStaffLocation()) {
         var fields = byId('location-fields');
         var nextField = ['countySelect', 'districtSelect', 'placeSelect']
@@ -12904,10 +12983,35 @@ html:lang(ko) .choice-btn.active::after {
             catch (e) { nextField.focus(); }
           }, 220);
         }
+        setLocationActionState();
         return;
       }
 
       return originalStartOfficialExam.apply(this, arguments);
+    };
+  }
+
+  // 第一關說明頁只有一份；返回時自助回到入口，專人協助回到原本設定頁。
+  var originalHandleTopBack = window.handleTopBack;
+  if (typeof originalHandleTopBack === 'function') {
+    window.handleTopBack = function () {
+      var currentStep = document.body.getAttribute('data-step');
+      var appState = getExamState();
+      if (currentStep === 'step-location' && appState && appState.staffSetupActive) {
+        appState.staffSetupActive = false;
+        syncPracticeModeUI();
+        window.scrollTo(0, 0);
+        return;
+      }
+      if (currentStep === 'step-p1-intro') {
+        // 返回兩種練習方式入口；若選回專人協助，再由下一步進入既有設定頁。
+        if (appState) appState.staffSetupActive = false;
+        if (typeof window.showStep === 'function') window.showStep('step-location');
+        syncPracticeModeUI();
+        window.scrollTo(0, 0);
+        return;
+      }
+      return originalHandleTopBack.apply(this, arguments);
     };
   }
 
