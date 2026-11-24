@@ -2928,7 +2928,6 @@ body.text-only-mode .mode-status-chip {
 .location-name-section-title{font-size:18px;font-weight:900;margin-bottom:10px}
 .location-official-name-values{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
 .location-official-name-row{min-width:0;padding:8px 10px;border-radius:9px;background:#fff;border:1px solid var(--color-border)}
-.location-official-name-row .lang-label{display:block;color:var(--color-muted);font-size:14px;font-weight:800;margin-bottom:4px}
 .location-official-name-row .lang-value{display:block;font-size:17px;font-weight:800;line-height:1.5;overflow-wrap:anywhere;word-break:normal}
 .location-translation-note,.location-alias-rule-note,.location-alias-match-note,.location-alias-sync-status{
   margin:10px 0 0;color:var(--color-muted);font-size:15px;font-weight:700;line-height:1.55
@@ -2941,7 +2940,6 @@ body.text-only-mode .mode-status-chip {
 .alias-group-delete{flex:0 0 auto;min-width:88px;min-height:48px;padding:8px 12px;border:2px solid var(--color-dark);border-radius:10px;background:#fff;color:var(--color-dark);font-size:17px;font-weight:900;white-space:nowrap;word-break:keep-all;overflow-wrap:normal;writing-mode:horizontal-tb}
 .alias-group-fields{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
 .alias-group-field{display:flex;flex-direction:column;gap:5px;min-width:0}
-.alias-group-field label{font-size:15px;font-weight:900;color:var(--color-dark)}
 .alias-group-field input{width:100%;min-width:0;min-height:52px;box-sizing:border-box;padding:10px 12px;border:1.5px solid var(--color-dark);border-radius:10px;background:#fff;color:var(--color-dark);font:inherit;font-size:17px;font-weight:700}
 .alias-group-field input:focus{outline:3px solid rgba(79,112,88,.25);outline-offset:1px}
 .alias-group-incomplete{margin:8px 0 0;color:#8A4D27;font-size:14px;font-weight:800}
@@ -6408,20 +6406,15 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
         return;
       }
       card.style.display = 'block';
+      // 僅顯示目前介面語言的正式名稱，不另外建立「繁體中文／英文／日文／韓文」標籤。
       var lang = getActiveLocationCompareLanguage();
-      var languageLabels = {'zh-TW':'繁體中文', en:'英文', ja:'日文', ko:'韓文'};
-      var label = languageLabels[lang] || languageLabels['zh-TW'];
       var row = document.createElement('div');
       row.className = 'location-official-name-row';
       row.dataset.language = lang;
-      var labelNode = document.createElement('span');
-      labelNode.className = 'lang-label';
-      labelNode.textContent = translateExamDisplayText(label);
       var valueNode = document.createElement('span');
       valueNode.className = 'lang-value';
       valueNode.lang = lang;
       valueNode.textContent = String((record.officialNames && record.officialNames[lang]) || '—');
-      row.appendChild(labelNode);
       row.appendChild(valueNode);
       host.appendChild(row);
     }
@@ -6479,9 +6472,8 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
         wrapper.appendChild(empty);
         return;
       }
+      // 只建立目前介面語言的輸入欄位；語言仍以 lang/data-language 保存於原四語資料結構。
       var currentLanguage = getActiveLocationCompareLanguage();
-      var languageLabels = {'zh-TW':'繁體中文', en:'英文', ja:'日文', ko:'韓文'};
-      var langFields = [[currentLanguage, languageLabels[currentLanguage] || '繁體中文']];
       groups.forEach(function(group, index) {
         var card = document.createElement('section');
         card.className = 'alias-group-card';
@@ -6503,29 +6495,24 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
 
         var fields = document.createElement('div');
         fields.className = 'alias-group-fields';
-        langFields.forEach(function(pair) {
-          var field = document.createElement('div');
-          field.className = 'alias-group-field';
-          var label = document.createElement('label');
-          label.textContent = translateExamDisplayText(pair[1]);
-          var input = document.createElement('input');
-          input.type = 'text';
-          input.value = String(group[pair[0]] || '');
-          input.lang = pair[0];
-          input.dataset.language = pair[0];
-          input.placeholder = translateExamDisplayText('請輸入別名');
-          input.autocomplete = 'off';
-          input.maxLength = 120;
-          input.dataset.aliasIndex = String(index);
-          input.dataset.aliasLang = pair[0];
-          input.setAttribute('aria-label', translateExamDisplayText(pair[1]) + ' ' + (index + 1));
-          input.addEventListener('input', function() {
-            updateAliasGroupField(index, pair[0], input.value);
-          });
-          field.appendChild(label);
-          field.appendChild(input);
-          fields.appendChild(field);
+        var field = document.createElement('div');
+        field.className = 'alias-group-field';
+        var input = document.createElement('input');
+        input.type = 'text';
+        input.value = String(group[currentLanguage] || '');
+        input.lang = currentLanguage;
+        input.dataset.language = currentLanguage;
+        input.placeholder = translateExamDisplayText('請輸入別名');
+        input.autocomplete = 'off';
+        input.maxLength = 120;
+        input.dataset.aliasIndex = String(index);
+        input.dataset.aliasLang = currentLanguage;
+        input.setAttribute('aria-label', translateExamDisplayText('別名組') + ' ' + (index + 1) + '，' + translateExamDisplayText('請輸入別名'));
+        input.addEventListener('input', function() {
+          updateAliasGroupField(index, currentLanguage, input.value);
         });
+        field.appendChild(input);
+        fields.appendChild(field);
         card.appendChild(fields);
         wrapper.appendChild(card);
       });
@@ -12681,7 +12668,7 @@ html:lang(ko) .choice-btn.active::after {
   if (typeof window.applyExamDisplayLanguage === 'function') window.applyExamDisplayLanguage();
 })();
 </script>
-\n\n<script id="practice-mode-state-and-next-button-sync-fix">
+<script id="practice-mode-state-and-next-button-sync-fix">
 (function () {
   'use strict';
 
