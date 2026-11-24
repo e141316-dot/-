@@ -3129,27 +3129,22 @@ body.text-only-mode .mode-status-chip {
         <summary>地點名稱與別名管理</summary>
         <div class="staff-settings-content">
           <div class="staff-settings-content-inner">
-            <details class="staff-alias-details">
-              <summary id="alias-summary">地點別名管理</summary>
-              <div class="staff-alias-content">
-                <div class="staff-alias-content-inner">
-                  <div class="location-official-name-card" id="location-official-name-card">
-                    <div class="location-name-section-title" id="location-official-name-title">正式地點名稱</div>
-                    <div id="location-official-name-values" class="location-official-name-values"></div>
-                    <p class="location-translation-note" id="location-translation-note">外語名稱為便於辨識的描述性翻譯，未逐一確認為官方譯名。</p>
-                  </div>
-                  <p class="location-alias-rule-note" id="alias-empty-hint">請依照使用者的作答語言，填寫對應的地點別名。各語言獨立比對，可分別設定。</p>
-                  <div id="aliasTagsWrapper" class="alias-groups-container"></div>
-                  <div class="location-alias-actions">
-                    <button type="button" class="small-action-btn" id="alias-add-group-btn" onclick="addAliasGroup()">＋新增別名組</button>
-                    <button type="button" class="small-action-btn" id="alias-save-groups-btn" onclick="saveAliasGroupsToBackend()">儲存別名設定</button>
-                    <button type="button" class="alias-restore" id="alias-restore-btn" onclick="restoreDefaultAliases()">恢復系統預設名稱</button>
-                  </div>
-                  <p id="alias-sync-status" class="location-alias-sync-status" role="status" aria-live="polite"></p>
-                  <p class="location-alias-match-note" id="alias-match-note">地點名稱比對只採用完整相符；部分文字不會自動指定地點。</p>
-                </div>
+            <section class="staff-alias-section" aria-labelledby="alias-summary">
+              <div class="location-official-name-card" id="location-official-name-card">
+                <div class="location-name-section-title" id="location-official-name-title">正式地點名稱</div>
+                <div id="location-official-name-values" class="location-official-name-values"></div>
+                <p class="location-translation-note" id="location-translation-note">外語名稱為便於辨識的描述性翻譯，未逐一確認為官方譯名。</p>
               </div>
-            </details>
+              <h3 id="alias-summary" class="staff-alias-heading">地點別名管理</h3>
+              <p class="location-alias-rule-note" id="alias-empty-hint">最多設定 4 組常用別名，不需要填滿。</p>
+              <div id="aliasTagsWrapper" class="alias-groups-container"></div>
+              <div class="location-alias-actions">
+                <button type="button" class="small-action-btn" id="alias-add-group-btn" onclick="addAliasGroup()">＋ 新增別名組</button>
+                <button type="button" class="small-action-btn" id="alias-save-groups-btn" onclick="saveAliasGroupsToBackend()">儲存別名設定</button>
+                <button type="button" class="alias-restore" id="alias-restore-btn" onclick="restoreDefaultAliases()">恢復系統預設名稱</button>
+              </div>
+              <p id="alias-sync-status" class="location-alias-sync-status" role="status" aria-live="polite"></p>
+            </section>
             <div class="form-group staff-generic-group">
               <div class="staff-category-title">需由工作人員人工確認的名稱</div>
               <div class="staff-category-note">例如：衛生所、醫院、診所、監理所或監理站。只回答這類通用名稱時，會交由工作人員確認。</div>
@@ -6094,7 +6089,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
           sharedLocationAliasOverridesReady = false;
           console.warn('共用地點別名讀取失敗，先使用本機／系統預設資料。', error);
           if (showStatus && typeof setAliasSyncStatus === 'function') {
-            setAliasSyncStatus(translateExamDisplayText('已先儲存在此裝置；共用資料庫同步失敗，請確認後臺連線後再儲存。'));
+            setAliasSyncStatus(translateExamDisplayText('共用地點資料庫讀取失敗；目前顯示本機／系統預設資料，請確認後臺部署。'));
           }
         })
         .getExamLocationAliasOverrides();
@@ -6114,7 +6109,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
 
     function syncLocationAliasGroupsToBackend(locationId, groups, resetToDefault) {
       if (!locationId || !window.google || !google.script || !google.script.run) {
-        setAliasSyncStatus(translateExamDisplayText('已先儲存在此裝置；共用資料庫同步失敗，請確認後臺連線後再儲存。'));
+        setAliasSyncStatus(translateExamDisplayText('儲存失敗，請再試一次'));
         return;
       }
       var record = getLocationCatalogRecord(
@@ -6123,7 +6118,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
         document.getElementById('placeSelect').value
       );
       if (!record || record.id !== locationId) {
-        setAliasSyncStatus(translateExamDisplayText('已先儲存在此裝置；共用資料庫同步失敗，請確認後臺連線後再儲存。'));
+        setAliasSyncStatus(translateExamDisplayText('儲存失敗，請再試一次'));
         return;
       }
       var request = {
@@ -6135,12 +6130,12 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
         resetToDefault: !!resetToDefault
       };
       var action = resetToDefault ? 'deleteExamLocationAliasOverride' : 'saveExamLocationAliasOverrides';
-      setAliasSyncStatus(translateExamDisplayText('同步中…'));
+      setAliasSyncStatus(translateExamDisplayText('尚未儲存'));
       var runner = google.script.run
         .withSuccessHandler(function(response) {
           var payload = response && response.result ? response.result : response;
           if (!payload || payload.success !== true) {
-            setAliasSyncStatus(translateExamDisplayText('已先儲存在此裝置；共用資料庫同步失敗，請確認後臺連線後再儲存。'));
+            setAliasSyncStatus(translateExamDisplayText('儲存失敗，請再試一次'));
             return;
           }
           if (resetToDefault) {
@@ -6148,6 +6143,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
             delete getLocationAliasLocalStore()[locationId];
             writeLocationAliasLocalStore();
             updateAliasGroupsUI(cloneAliasGroups(LOCATION_ALIAS_DEFAULTS[locationId] || []), locationId, false);
+            setAliasSyncStatus(translateExamDisplayText('已儲存'));
           } else {
             sharedLocationAliasOverrides[locationId] = cloneAliasGroups(groups);
             var store = getLocationAliasLocalStore();
@@ -6158,13 +6154,13 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
               updatedAt: new Date().toISOString()
             };
             writeLocationAliasLocalStore();
-            setAliasSyncStatus(translateExamDisplayText('已儲存在共用地點資料庫。'));
+            setAliasSyncStatus(translateExamDisplayText('已儲存'));
           }
           sharedLocationAliasOverridesReady = true;
         })
         .withFailureHandler(function(error) {
           console.warn('地點別名同步失敗：', error);
-          setAliasSyncStatus(translateExamDisplayText('已先儲存在此裝置；共用資料庫同步失敗，請確認後臺連線後再儲存。'));
+          setAliasSyncStatus(translateExamDisplayText('儲存失敗，請再試一次'));
         });
       if (action === 'deleteExamLocationAliasOverride') {
         runner.deleteExamLocationAliasOverride(locationId);
@@ -6391,6 +6387,16 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       if (node) node.textContent = String(message || '');
     }
 
+    function hasPendingLocationAliasChanges(locationId) {
+      var id = locationId || activeLocationRecordId;
+      if (!id) return false;
+      var entry = getLocationAliasLocalStore()[id];
+      return !!(entry && entry.synced === false);
+    }
+    window.hasPendingLocationAliasChanges = function(locationId) {
+      return hasPendingLocationAliasChanges(locationId);
+    };
+
     function renderOfficialLocationNames(locationId) {
       var card = document.getElementById('location-official-name-card');
       var host = document.getElementById('location-official-name-values');
@@ -6406,8 +6412,14 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
         return;
       }
       card.style.display = 'block';
-      // 僅顯示目前介面語言的正式名稱，不另外建立「繁體中文／英文／日文／韓文」標籤。
+      // 僅顯示目前介面語言的正式名稱，不另外建立語言標籤。
       var lang = getActiveLocationCompareLanguage();
+      var translationNote = document.getElementById('location-translation-note');
+      if (translationNote) {
+        translationNote.textContent = translateExamDisplayText('外語名稱為便於辨識的描述性翻譯，未逐一確認為官方譯名。');
+        translationNote.hidden = lang === 'zh-TW';
+        translationNote.style.display = lang === 'zh-TW' ? 'none' : '';
+      }
       var row = document.createElement('div');
       row.className = 'location-official-name-row';
       row.dataset.language = lang;
@@ -6430,12 +6442,10 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       examState.defaultAliases = defaultPlaceAliases.slice();
       renderOfficialLocationNames(activeLocationRecordId);
       renderAliasGroups(safeGroups);
-      var summary = document.getElementById('alias-summary');
-      if (summary) summary.textContent = translateExamDisplayText('地點別名管理');
+      var heading = document.getElementById('alias-summary');
+      if (heading) heading.textContent = translateExamDisplayText('地點別名管理');
       var hint = document.getElementById('alias-empty-hint');
-      if (hint) hint.textContent = translateExamDisplayText(
-        '請依照使用者的作答語言，填寫對應的地點別名。各語言獨立比對，可分別設定。'
-      );
+      if (hint) hint.textContent = translateExamDisplayText('最多設定 4 組常用別名，不需要填滿。');
       var addButton = document.getElementById('alias-add-group-btn');
       var saveButton = document.getElementById('alias-save-groups-btn');
       var restoreButton = document.getElementById('alias-restore-btn');
@@ -6452,7 +6462,14 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
         restoreButton.disabled = !hasLocation;
         restoreButton.setAttribute('aria-disabled', restoreButton.disabled ? 'true' : 'false');
       }
-      if (persistDraft && activeLocationRecordId) saveLocationAliasDraft(activeLocationRecordId, safeGroups, false);
+      if (persistDraft && activeLocationRecordId) {
+        saveLocationAliasDraft(activeLocationRecordId, safeGroups, false);
+        setAliasSyncStatus(translateExamDisplayText('尚未儲存'));
+      } else if (hasPendingLocationAliasChanges(activeLocationRecordId)) {
+        setAliasSyncStatus(translateExamDisplayText('尚未儲存'));
+      } else {
+        setAliasSyncStatus('');
+      }
     }
 
     // 介面語言切換時重新呈現目前語言欄位；資料仍由四語系群組保存，不會清除隱藏欄位。
@@ -6525,8 +6542,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       examState.acceptableAnswerGroups = groups;
       examState.acceptableAnswers = getActiveAliasGroups(groups).map(function(group){ return String(group[getActiveLocationCompareLanguage()] || '').trim(); }).filter(Boolean);
       saveLocationAliasDraft(activeLocationRecordId, groups, false);
-      var summary = document.getElementById('alias-summary');
-      if (summary) summary.textContent = translateExamDisplayText('地點別名管理');
+      setAliasSyncStatus(translateExamDisplayText('尚未儲存'));
     }
 
     function addAliasGroup() {
@@ -6548,7 +6564,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       if (index < 0 || index >= groups.length) return;
       groups.splice(index, 1);
       updateAliasGroupsUI(groups, activeLocationRecordId, true);
-      setAliasSyncStatus(translateExamDisplayText('已更新別名設定；目前語言的非空白欄位會獨立參與比對。'));
+      setAliasSyncStatus(translateExamDisplayText('尚未儲存'));
     }
 
     function validateAliasGroups(groups) {
@@ -8278,11 +8294,14 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
     }
 
     function confirmClearCanvas() { showCustomConfirm('確定要全部擦掉重畫嗎？', clearCanvas); }
-    function showCustomConfirm(message, onConfirm) {
+    function showCustomConfirm(message, onConfirm, confirmLabel) {
       var modal=document.getElementById('customAlertModal');
       document.getElementById('customAlertTitle').innerText='請再次確認';
       document.getElementById('customAlertMessage').innerText=message;
-      var btn=modal.querySelector('.modal-btn'); btn.innerText='確定重畫'; btn.onclick=function(){ modal.classList.remove('active'); btn.innerText='好的，我知道了'; btn.onclick=closeCustomAlert; if(onConfirm)onConfirm(); };
+      var btn=modal.querySelector('.modal-btn');
+      var label=confirmLabel || '確定重畫';
+      btn.innerText=typeof translateExamDisplayText==='function' ? translateExamDisplayText(label) : label;
+      btn.onclick=function(){ modal.classList.remove('active'); btn.innerText='好的，我知道了'; btn.onclick=closeCustomAlert; if(onConfirm)onConfirm(); };
       modal.classList.add('active');
     }
 
@@ -9763,8 +9782,15 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
   var previousRestoreAliases=window.restoreDefaultAliases;
   if(typeof previousRestoreAliases==='function'){
     window.restoreDefaultAliases=function(){
-      previousRestoreAliases();
-      window.showCustomAlert('✓ 已恢復為系統預設名稱。');
+      var runRestore=function(){ previousRestoreAliases(); };
+      var message=typeof window.translateExamDisplayText==='function'
+        ? window.translateExamDisplayText('確定要恢復系統預設名稱嗎？目前的別名設定將以系統預設內容取代。')
+        : '確定要恢復系統預設名稱嗎？目前的別名設定將以系統預設內容取代。';
+      if(typeof window.showCustomConfirm==='function'){
+        window.showCustomConfirm(message, runRestore, '恢復預設名稱');
+      } else if(window.confirm(message)) {
+        runRestore();
+      }
     };
   }
 
@@ -12614,6 +12640,208 @@ html:lang(ko) .choice-btn.active::after {
     font-size: 16px !important;
   }
 }
+
+
+/* 地點管理介面層級簡化：只保留外層主收合，內層採一般標題與資訊區。 */
+#step-location .alias-panel.staff-settings-panel {
+  margin: 18px 0 0 !important;
+  padding: 0 !important;
+  border: 2px solid var(--color-dark) !important;
+  border-radius: 14px !important;
+  background: #FFFFFF !important;
+  overflow: hidden !important;
+}
+#step-location .staff-settings-panel > summary {
+  min-height: 60px;
+  padding: 12px 16px !important;
+}
+#step-location .staff-settings-content {
+  display: block !important;
+  padding: 0 !important;
+  opacity: 1 !important;
+}
+#step-location .staff-settings-content-inner {
+  padding: 14px !important;
+  min-height: 0;
+  overflow: visible;
+}
+#step-location .staff-alias-section {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+#step-location .staff-alias-heading {
+  margin: 0 0 12px !important;
+  padding: 0 !important;
+  color: var(--color-green) !important;
+  font-size: 20px !important;
+  font-weight: 900 !important;
+  line-height: 1.45 !important;
+}
+#step-location .location-official-name-card {
+  margin: 0 0 14px !important;
+  padding: 12px 14px !important;
+  border: 0 !important;
+  border-radius: 10px !important;
+  background: #F0F5ED !important;
+}
+#step-location .location-name-section-title {
+  margin: 0 0 6px !important;
+  color: var(--color-muted) !important;
+  font-size: 16px !important;
+  font-weight: 800 !important;
+}
+#step-location .location-official-name-row {
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+#step-location .location-official-name-row .lang-value {
+  color: var(--color-dark) !important;
+  font-size: 19px !important;
+  font-weight: 900 !important;
+  line-height: 1.5 !important;
+}
+#step-location .location-translation-note {
+  margin: 6px 0 0 !important;
+  padding: 0 !important;
+  color: var(--color-muted) !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+}
+#step-location .location-alias-rule-note {
+  margin: 0 0 10px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: var(--color-muted) !important;
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  line-height: 1.5 !important;
+}
+#step-location .alias-groups-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0 !important;
+}
+#step-location .alias-group-card {
+  padding: 10px 12px !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: 11px !important;
+  background: #F7F8F4 !important;
+}
+#step-location .alias-group-header {
+  align-items: center !important;
+  margin: 0 0 8px !important;
+}
+#step-location .alias-group-title {
+  color: var(--color-dark) !important;
+  font-size: 18px !important;
+  font-weight: 900 !important;
+}
+#step-location .alias-group-fields,
+#step-location .alias-group-field {
+  display: block !important;
+  margin: 0 !important;
+}
+#step-location .alias-group-field input {
+  min-height: 54px !important;
+  font-size: 18px !important;
+  border: 1.5px solid var(--color-border) !important;
+  border-radius: 10px !important;
+  background: #FFFFFF !important;
+}
+#step-location .alias-group-delete {
+  min-width: 72px !important;
+  min-height: 44px !important;
+  padding: 7px 12px !important;
+  border: 1.5px solid var(--color-green) !important;
+  border-radius: 10px !important;
+  background: #FFFFFF !important;
+  color: var(--color-green) !important;
+  font-size: 16px !important;
+  font-weight: 800 !important;
+}
+#step-location .location-alias-actions {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+  gap: 10px !important;
+  margin-top: 14px !important;
+}
+#step-location .location-alias-actions #alias-add-group-btn {
+  min-height: 54px !important;
+  padding: 10px 12px !important;
+  border: 2px solid var(--color-green) !important;
+  border-radius: 11px !important;
+  background: #FFFFFF !important;
+  color: var(--color-green) !important;
+  font-size: 17px !important;
+  font-weight: 900 !important;
+  white-space: normal !important;
+}
+#step-location .location-alias-actions #alias-save-groups-btn {
+  min-height: 54px !important;
+  padding: 10px 12px !important;
+  border: 2px solid var(--color-green) !important;
+  border-radius: 11px !important;
+  background: var(--color-green) !important;
+  color: #FFFFFF !important;
+  font-size: 17px !important;
+  font-weight: 900 !important;
+  white-space: normal !important;
+}
+#step-location .location-alias-actions #alias-restore-btn {
+  grid-column: 1 / -1;
+  justify-self: start;
+  width: auto !important;
+  min-height: 42px !important;
+  margin: 0 !important;
+  padding: 4px 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: var(--color-muted) !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  text-decoration: underline;
+}
+#step-location .location-alias-sync-status {
+  display: block;
+  min-height: 0 !important;
+  margin: 8px 0 0 !important;
+  padding: 0 !important;
+  color: var(--color-muted) !important;
+  font-size: 15px !important;
+  font-weight: 800 !important;
+  line-height: 1.5 !important;
+}
+#step-location .location-alias-sync-status:empty { display: none !important; }
+#step-location .staff-category-note {
+  margin-top: 6px;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: var(--color-muted) !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  line-height: 1.55 !important;
+}
+#step-location .staff-category-title {
+  margin: 16px 0 0 !important;
+  color: var(--color-green) !important;
+  font-size: 18px !important;
+  font-weight: 900 !important;
+}
+@media (max-width: 560px) {
+  #step-location .staff-settings-content-inner { padding: 12px !important; }
+  #step-location .location-alias-actions { grid-template-columns: 1fr !important; }
+  #step-location .location-alias-actions #alias-restore-btn { grid-column: 1; }
+  #step-location .alias-group-delete { min-width: 72px !important; }
+}
+
 </style>
 
 <script id="p1-location-question-excluded-from-score-copy">
@@ -12640,6 +12868,27 @@ html:lang(ko) .choice-btn.active::after {
       '場所の名称と別名の管理',
       '장소 이름 및 별칭 관리'
     ],
+    '最多設定 4 組常用別名，不需要填滿。': [
+      'Set up to 4 commonly used aliases. You do not need to fill every group.',
+      'よく使う別名を最大4グループまで設定できます。すべて入力する必要はありません。',
+      '자주 사용하는 별칭을 최대 4개 그룹까지 설정할 수 있습니다. 모든 그룹을 채울 필요는 없습니다.'
+    ],
+    '＋ 新增別名組': ['＋ Add alias group', '＋ 別名グループを追加', '＋ 별칭 그룹 추가'],
+    '尚未儲存': ['Not saved yet', '未保存', '아직 저장되지 않음'],
+    '已儲存': ['Saved', '保存済み', '저장됨'],
+    '儲存失敗，請再試一次': ['Save failed. Please try again.', '保存に失敗しました。もう一度お試しください。', '저장하지 못했습니다. 다시 시도해 주세요.'],
+    '別名設定尚未同步至共用資料庫。繼續操作前，請先儲存或確認以保留在此裝置的草稿。': [
+      'Alias changes have not synced to the shared database. Save them first, or confirm to keep the draft on this device and continue.',
+      '別名の変更は共用データベースに同期されていません。保存するか、この端末の下書きを保持して続行してください。',
+      '별칭 변경 사항이 공유 데이터베이스에 동기화되지 않았습니다. 저장하거나 이 기기에 임시 저장된 내용을 유지하고 계속하세요.'
+    ],
+    '確定要恢復系統預設名稱嗎？目前的別名設定將以系統預設內容取代。': [
+      'Restore the system default names? Current alias settings will be replaced with the defaults.',
+      'システムの既定名称に戻しますか？現在の別名設定は既定の内容に置き換えられます。',
+      '시스템 기본 이름으로 복원할까요? 현재 별칭 설정이 기본값으로 대체됩니다.'
+    ],
+    '繼續離開': ['Continue', '続行', '계속'],
+    '恢復預設名稱': ['Restore defaults', '既定に戻す', '기본값 복원'],
     '工作人員設定測驗地點': [
       'Staff: Set the testing location',
       'スタッフ用：検査場所を設定してください',
@@ -13004,6 +13253,104 @@ html:lang(ko) .choice-btn.active::after {
   // Initial state: deliberately no default mode is selected. The main button
   // remains disabled until the user actually activates one of the two cards.
   syncPracticeModeUI();
+})();
+</script>
+
+
+<script id="location-alias-draft-protection">
+(function () {
+  'use strict';
+  var byId = function (id) { return document.getElementById(id); };
+  var warningKey = '別名設定尚未同步至共用資料庫。繼續操作前，請先儲存或確認以保留在此裝置的草稿。';
+
+  function hasPending() {
+    return typeof window.hasPendingLocationAliasChanges === 'function' &&
+      window.hasPendingLocationAliasChanges();
+  }
+  function warningText() {
+    return typeof window.translateExamDisplayText === 'function'
+      ? window.translateExamDisplayText(warningKey) : warningKey;
+  }
+  function askBeforeContinue(action) {
+    if (!hasPending()) { action(); return; }
+    var message = warningText();
+    if (typeof window.showCustomConfirm === 'function') {
+      window.showCustomConfirm(message, action, '繼續離開');
+    } else if (window.confirm(message)) {
+      action();
+    }
+  }
+
+  // Closing the single outer management panel is treated as leaving the editor.
+  var panel = byId('staff-mode-settings');
+  var panelSummary = panel && panel.querySelector(':scope > summary');
+  if (panel && panelSummary && !panelSummary.dataset.aliasDraftGuardBound) {
+    panelSummary.dataset.aliasDraftGuardBound = 'true';
+    panelSummary.addEventListener('click', function (event) {
+      if (!panel.open || !hasPending()) return;
+      event.preventDefault();
+      askBeforeContinue(function () { panel.open = false; });
+    });
+  }
+
+  // Guard back navigation from staff setup and the final transition into the test.
+  var originalBack = window.handleTopBack;
+  if (typeof originalBack === 'function') {
+    window.handleTopBack = function () {
+      if (document.body.getAttribute('data-step') === 'step-location' && hasPending()) {
+        var self = this, args = arguments;
+        askBeforeContinue(function () { originalBack.apply(self, args); });
+        return;
+      }
+      return originalBack.apply(this, arguments);
+    };
+  }
+  var originalStart = window.startOfficialExam;
+  if (typeof originalStart === 'function') {
+    window.startOfficialExam = function () {
+      if (document.body.getAttribute('data-step') === 'step-location' && hasPending()) {
+        var self = this, args = arguments;
+        askBeforeContinue(function () { originalStart.apply(self, args); });
+        return;
+      }
+      return originalStart.apply(this, arguments);
+    };
+  }
+
+  // Guard in-page interface-language changes as well as answer-language selection.
+  var originalApplyDisplayLanguage = window.applyExamDisplayLanguage;
+  if (typeof originalApplyDisplayLanguage === 'function') {
+    window.applyExamDisplayLanguage = function () {
+      var requested = window.EXAM_DISPLAY_LANG;
+      var current = document.documentElement.lang || requested;
+      if (hasPending() && requested && current && requested !== current && !window.__allowAliasLanguageSwitchOnce) {
+        window.EXAM_DISPLAY_LANG = current;
+        try { localStorage.setItem('app_lang', current); } catch (storageError) {}
+        askBeforeContinue(function () {
+          window.EXAM_DISPLAY_LANG = requested;
+          try { localStorage.setItem('app_lang', requested); } catch (storageError) {}
+          window.__allowAliasLanguageSwitchOnce = true;
+          try { originalApplyDisplayLanguage.apply(window, arguments); }
+          finally { window.__allowAliasLanguageSwitchOnce = false; }
+        });
+        return;
+      }
+      return originalApplyDisplayLanguage.apply(this, arguments);
+    };
+  }
+
+  // Guard the test-language selector; all four language values remain in the existing group objects.
+  var originalSetLanguage = window.setLanguage;
+  if (typeof originalSetLanguage === 'function') {
+    window.setLanguage = function (languageCode) {
+      if (hasPending() && window.__pendingAliasLanguageConfirm !== true) {
+        var self = this, args = arguments;
+        askBeforeContinue(function () { originalSetLanguage.apply(self, args); });
+        return;
+      }
+      return originalSetLanguage.apply(this, arguments);
+    };
+  }
 })();
 </script>
 
