@@ -6095,11 +6095,38 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
         .getExamLocationAliasOverrides();
     }
 
+    function getSavedAliasBaselineGroups(locationId) {
+      if (!locationId) return [];
+      var store = getLocationAliasLocalStore();
+      var entry = store[locationId];
+      if (entry && entry.synced === false && Array.isArray(entry.baseAliasGroups)) {
+        return cloneAliasGroups(entry.baseAliasGroups);
+      }
+      if (sharedLocationAliasOverridesReady &&
+          Object.prototype.hasOwnProperty.call(sharedLocationAliasOverrides, locationId)) {
+        return cloneAliasGroups(sharedLocationAliasOverrides[locationId]);
+      }
+      if (entry && entry.synced !== false && Array.isArray(entry.aliasGroups)) {
+        return cloneAliasGroups(entry.aliasGroups);
+      }
+      return cloneAliasGroups(LOCATION_ALIAS_DEFAULTS[locationId] || []);
+    }
+
+    function aliasGroupsEqual(left, right) {
+      return JSON.stringify(cloneAliasGroups(left)) === JSON.stringify(cloneAliasGroups(right));
+    }
+
     function saveLocationAliasDraft(locationId, groups, resetToDefault) {
       if (!locationId) return false;
       var store = getLocationAliasLocalStore();
+      var existing = store[locationId];
+      // 第一次修改時固定記住已儲存版本；後續連續編輯不可覆蓋這份基準。
+      var baseline = existing && existing.synced === false && Array.isArray(existing.baseAliasGroups)
+        ? cloneAliasGroups(existing.baseAliasGroups)
+        : getSavedAliasBaselineGroups(locationId);
       store[locationId] = {
         aliasGroups: cloneAliasGroups(groups),
+        baseAliasGroups: baseline,
         synced: false,
         resetToDefault: !!resetToDefault,
         updatedAt: new Date().toISOString()
@@ -6108,65 +6135,96 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
     }
 
     function syncLocationAliasGroupsToBackend(locationId, groups, resetToDefault) {
-      if (!locationId || !window.google || !google.script || !google.script.run) {
-        setAliasSyncStatus(translateExamDisplayText('儲存失敗，請再試一次'));
-        return;
-      }
-      var record = getLocationCatalogRecord(
-        document.getElementById('countySelect').value,
-        document.getElementById('districtSelect').value,
-        document.getElementById('placeSelect').value
-      );
-      if (!record || record.id !== locationId) {
-        setAliasSyncStatus(translateExamDisplayText('儲存失敗，請再試一次'));
-        return;
-      }
-      var request = {
-        locationId: locationId,
-        county: record.county,
-        district: record.district,
-        placeName: record.placeName,
-        aliasGroups: cloneAliasGroups(groups),
-        resetToDefault: !!resetToDefault
-      };
-      var action = resetToDefault ? 'deleteExamLocationAliasOverride' : 'saveExamLocationAliasOverrides';
-      setAliasSyncStatus(translateExamDisplayText('尚未儲存'));
-      var runner = google.script.run
-        .withSuccessHandler(function(response) {
-          var payload = response && response.result ? response.result : response;
-          if (!payload || payload.success !== true) {
-            setAliasSyncStatus(translateExamDisplayText('儲存失敗，請再試一次'));
-            return;
+      return new Promise(function(resolve) {
+        var settled = false;
+        function finish(success) {
+          if (settled) return;
+          settled = true;
+          resolve(!!success);
+        }
+        function fail() {
+          if (activeLocationRecordId === locationId) {
+            setAliasSyncStatus(translateExamDisplayText('儲存失敗，請再試一次。'), 'error');
           }
-          if (resetToDefault) {
-            delete sharedLocationAliasOverrides[locationId];
-            delete getLocationAliasLocalStore()[locationId];
-            writeLocationAliasLocalStore();
-            updateAliasGroupsUI(cloneAliasGroups(LOCATION_ALIAS_DEFAULTS[locationId] || []), locationId, false);
-            setAliasSyncStatus(translateExamDisplayText('已儲存'));
+          finish(false);
+        }
+        if (!locationId || !window.google || !google.script || !google.script.run) {
+          fail();
+          return;
+        }
+        var countySelect = document.getElementById('countySelect');
+        var districtSelect = document.getElementById('districtSelect');
+        var placeSelect = document.getElementById('placeSelect');
+        var record = getLocationCatalogRecord(
+          countySelect && countySelect.value,
+          districtSelect && districtSelect.value,
+          placeSelect && placeSelect.value
+        );
+        if (!record || record.id !== locationId) {
+          fail();
+          return;
+        }
+        var request = {
+          locationId: locationId,
+          county: record.county,
+          district: record.district,
+          placeName: record.placeName,
+          aliasGroups: cloneAliasGroups(groups),
+          resetToDefault: !!resetToDefault
+        };
+        var action = resetToDefault ? 'deleteExamLocationAliasOverride' : 'saveExamLocationAliasOverrides';
+        if (activeLocationRecordId === locationId) {
+          setAliasSyncStatus(translateExamDisplayText('儲存中…'), 'saving');
+        }
+        try {
+          var runner = google.script.run
+            .withSuccessHandler(function(response) {
+              var payload = response && response.result ? response.result : response;
+              if (!payload || payload.success !== true) {
+                fail();
+                return;
+              }
+              if (resetToDefault) {
+                delete sharedLocationAliasOverrides[locationId];
+                delete getLocationAliasLocalStore()[locationId];
+                writeLocationAliasLocalStore();
+                sharedLocationAliasOverridesReady = true;
+                if (activeLocationRecordId === locationId) {
+                  updateAliasGroupsUI(cloneAliasGroups(LOCATION_ALIAS_DEFAULTS[locationId] || []), locationId, false);
+                  setAliasSyncStatus(translateExamDisplayText('✓ 已儲存'), 'success', 2000);
+                }
+              } else {
+                sharedLocationAliasOverrides[locationId] = cloneAliasGroups(groups);
+                var store = getLocationAliasLocalStore();
+                store[locationId] = {
+                  aliasGroups: cloneAliasGroups(groups),
+                  baseAliasGroups: cloneAliasGroups(groups),
+                  synced: true,
+                  resetToDefault: false,
+                  updatedAt: new Date().toISOString()
+                };
+                writeLocationAliasLocalStore();
+                sharedLocationAliasOverridesReady = true;
+                if (activeLocationRecordId === locationId) {
+                  setAliasSyncStatus(translateExamDisplayText('✓ 已儲存'), 'success', 2000);
+                }
+              }
+              finish(true);
+            })
+            .withFailureHandler(function(error) {
+              console.warn('地點別名同步失敗：', error);
+              fail();
+            });
+          if (action === 'deleteExamLocationAliasOverride') {
+            runner.deleteExamLocationAliasOverride(locationId);
           } else {
-            sharedLocationAliasOverrides[locationId] = cloneAliasGroups(groups);
-            var store = getLocationAliasLocalStore();
-            store[locationId] = {
-              aliasGroups: cloneAliasGroups(groups),
-              synced: true,
-              resetToDefault: false,
-              updatedAt: new Date().toISOString()
-            };
-            writeLocationAliasLocalStore();
-            setAliasSyncStatus(translateExamDisplayText('已儲存'));
+            runner.saveExamLocationAliasOverrides(request);
           }
-          sharedLocationAliasOverridesReady = true;
-        })
-        .withFailureHandler(function(error) {
-          console.warn('地點別名同步失敗：', error);
-          setAliasSyncStatus(translateExamDisplayText('儲存失敗，請再試一次'));
-        });
-      if (action === 'deleteExamLocationAliasOverride') {
-        runner.deleteExamLocationAliasOverride(locationId);
-      } else {
-        runner.saveExamLocationAliasOverrides(request);
-      }
+        } catch (error) {
+          console.warn('地點別名同步呼叫失敗：', error);
+          fail();
+        }
+      });
     }
 
     function getLocationNameVariantsForLanguage(record, groups, language) {
@@ -6382,19 +6440,73 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       return cloneAliasGroups(examState.acceptableAnswerGroups || []);
     }
 
-    function setAliasSyncStatus(message) {
+    var aliasStatusClearTimer = null;
+    function setAliasSyncStatus(message, kind, autoClearMs) {
       var node = document.getElementById('alias-sync-status');
-      if (node) node.textContent = String(message || '');
+      if (!node) return;
+      if (aliasStatusClearTimer) {
+        clearTimeout(aliasStatusClearTimer);
+        aliasStatusClearTimer = null;
+      }
+      var text = String(message || '');
+      node.textContent = text;
+      node.classList.remove('is-success', 'is-error', 'is-saving');
+      var state = kind || (text.indexOf('失敗') !== -1 ? 'error' : text.indexOf('儲存中') !== -1 ? 'saving' : text.indexOf('已儲存') !== -1 ? 'success' : '');
+      if (state === 'success') node.classList.add('is-success');
+      else if (state === 'error') node.classList.add('is-error');
+      else if (state === 'saving') node.classList.add('is-saving');
+      if (state === 'success' && Number(autoClearMs) > 0) {
+        aliasStatusClearTimer = setTimeout(function() {
+          if (node.textContent === text) {
+            node.textContent = '';
+            node.classList.remove('is-success', 'is-error', 'is-saving');
+          }
+          aliasStatusClearTimer = null;
+        }, Number(autoClearMs));
+      }
     }
 
     function hasPendingLocationAliasChanges(locationId) {
       var id = locationId || activeLocationRecordId;
       if (!id) return false;
       var entry = getLocationAliasLocalStore()[id];
-      return !!(entry && entry.synced === false);
+      if (!entry || entry.synced !== false) return false;
+      if (entry.resetToDefault) return true;
+      var baseline = Array.isArray(entry.baseAliasGroups)
+        ? entry.baseAliasGroups
+        : getSavedAliasBaselineGroups(id);
+      return !aliasGroupsEqual(entry.aliasGroups, baseline);
     }
+
+    function discardPendingLocationAliasChanges(locationId) {
+      var id = locationId || activeLocationRecordId;
+      if (!id) return false;
+      var store = getLocationAliasLocalStore();
+      var entry = store[id];
+      if (!entry || entry.synced !== false) return true;
+      var baseline = Array.isArray(entry.baseAliasGroups)
+        ? cloneAliasGroups(entry.baseAliasGroups)
+        : getSavedAliasBaselineGroups(id);
+      store[id] = {
+        aliasGroups: cloneAliasGroups(baseline),
+        baseAliasGroups: cloneAliasGroups(baseline),
+        synced: true,
+        resetToDefault: false,
+        updatedAt: new Date().toISOString()
+      };
+      writeLocationAliasLocalStore();
+      if (activeLocationRecordId === id) {
+        updateAliasGroupsUI(baseline, id, false);
+        setAliasSyncStatus('');
+      }
+      return true;
+    }
+
     window.hasPendingLocationAliasChanges = function(locationId) {
       return hasPendingLocationAliasChanges(locationId);
+    };
+    window.discardPendingLocationAliasChanges = function(locationId) {
+      return discardPendingLocationAliasChanges(locationId);
     };
 
     function renderOfficialLocationNames(locationId) {
@@ -6464,8 +6576,8 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       }
       if (persistDraft && activeLocationRecordId) {
         saveLocationAliasDraft(activeLocationRecordId, safeGroups, false);
-        setAliasSyncStatus(translateExamDisplayText('尚未儲存'));
-      } else if (hasPendingLocationAliasChanges(activeLocationRecordId)) {
+      }
+      if (hasPendingLocationAliasChanges(activeLocationRecordId)) {
         setAliasSyncStatus(translateExamDisplayText('尚未儲存'));
       } else {
         setAliasSyncStatus('');
@@ -6542,7 +6654,8 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       examState.acceptableAnswerGroups = groups;
       examState.acceptableAnswers = getActiveAliasGroups(groups).map(function(group){ return String(group[getActiveLocationCompareLanguage()] || '').trim(); }).filter(Boolean);
       saveLocationAliasDraft(activeLocationRecordId, groups, false);
-      setAliasSyncStatus(translateExamDisplayText('尚未儲存'));
+      setAliasSyncStatus(hasPendingLocationAliasChanges(activeLocationRecordId)
+        ? translateExamDisplayText('尚未儲存') : '');
     }
 
     function addAliasGroup() {
@@ -6596,25 +6709,58 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       return {ok:true, message:''};
     }
 
+    var aliasSaveInFlight = null;
     function saveAliasGroupsToBackend() {
+      if (aliasSaveInFlight) return aliasSaveInFlight;
       if (!activeLocationRecordId) {
         showCustomAlert(translateExamDisplayText('請先選擇測驗地點，再管理該地點的名稱。'));
-        return;
+        return Promise.resolve(false);
       }
+      var locationId = activeLocationRecordId;
       var groups = getCurrentAliasGroups();
       var validation = validateAliasGroups(groups);
       if (!validation.ok) {
         showCustomAlert(translateExamDisplayText(validation.message));
-        return;
+        return Promise.resolve(false);
       }
-      saveLocationAliasDraft(activeLocationRecordId, groups, false);
-      syncLocationAliasGroupsToBackend(activeLocationRecordId, groups, false);
+      var pendingEntry = getLocationAliasLocalStore()[locationId];
+      // 若先前的「恢復系統預設名稱」同步失敗，從離開確認視窗再次選擇儲存時仍應執行刪除覆寫紀錄。
+      var resetToDefault = !!(pendingEntry && pendingEntry.synced === false && pendingEntry.resetToDefault === true);
+      saveLocationAliasDraft(locationId, groups, resetToDefault);
+      var saveButton = document.getElementById('alias-save-groups-btn');
+      if (saveButton) {
+        saveButton.disabled = true;
+        saveButton.setAttribute('aria-busy', 'true');
+      }
+      aliasSaveInFlight = syncLocationAliasGroupsToBackend(locationId, groups, resetToDefault).then(function(success) {
+        return !!success;
+      }, function(error) {
+        console.warn('地點別名儲存流程失敗：', error);
+        if (activeLocationRecordId === locationId) {
+          setAliasSyncStatus(translateExamDisplayText('儲存失敗，請再試一次。'), 'error');
+        }
+        return false;
+      });
+      aliasSaveInFlight = aliasSaveInFlight.then(function(success) {
+        aliasSaveInFlight = null;
+        if (saveButton) {
+          saveButton.disabled = !activeLocationRecordId;
+          saveButton.setAttribute('aria-busy', 'false');
+        }
+        return success;
+      });
+      return aliasSaveInFlight;
     }
+    window.saveCurrentLocationAliasGroups = function() {
+      return saveAliasGroupsToBackend();
+    };
 
     function restoreDefaultAliases() {
       if (!activeLocationRecordId) return;
       var defaults = cloneAliasGroups(LOCATION_ALIAS_DEFAULTS[activeLocationRecordId] || []);
       updateAliasGroupsUI(defaults, activeLocationRecordId, true);
+      // 保留「刪除共用資料庫覆寫、恢復系統預設」的語意；若同步失敗，離開確認中的再次儲存也會延續此操作。
+      saveLocationAliasDraft(activeLocationRecordId, defaults, true);
       syncLocationAliasGroupsToBackend(activeLocationRecordId, defaults, true);
     }
 
@@ -12876,7 +13022,18 @@ html:lang(ko) .choice-btn.active::after {
     '＋ 新增別名組': ['＋ Add alias group', '＋ 別名グループを追加', '＋ 별칭 그룹 추가'],
     '尚未儲存': ['Not saved yet', '未保存', '아직 저장되지 않음'],
     '已儲存': ['Saved', '保存済み', '저장됨'],
+    '✓ 已儲存': ['✓ Saved', '✓ 保存しました', '✓ 저장됨'],
+    '儲存中…': ['Saving…', '保存中…', '저장 중…'],
     '儲存失敗，請再試一次': ['Save failed. Please try again.', '保存に失敗しました。もう一度お試しください。', '저장하지 못했습니다. 다시 시도해 주세요.'],
+    '儲存失敗，請再試一次。': ['Save failed. Please try again.', '保存に失敗しました。もう一度お試しください。', '저장하지 못했습니다. 다시 시도해 주세요.'],
+    '目前有尚未儲存的修改，是否要先儲存？': [
+      'You have unsaved changes. Would you like to save them before continuing?',
+      '未保存の変更があります。続行する前に保存しますか？',
+      '저장되지 않은 변경 사항이 있습니다. 계속하기 전에 저장하시겠습니까?'
+    ],
+    '儲存': ['Save', '保存', '저장'],
+    '不儲存': ['Discard', '保存しない', '저장 안 함'],
+    '取消': ['Cancel', 'キャンセル', '취소'],
     '別名設定尚未同步至共用資料庫。繼續操作前，請先儲存或確認以保留在此裝置的草稿。': [
       'Alias changes have not synced to the shared database. Save them first, or confirm to keep the draft on this device and continue.',
       '別名の変更は共用データベースに同期されていません。保存するか、この端末の下書きを保持して続行してください。',
@@ -13257,81 +13414,263 @@ html:lang(ko) .choice-btn.active::after {
 </script>
 
 
+<style id="location-alias-save-guard-styles">
+  #alias-unsaved-dialog[hidden] { display:none !important; }
+  #alias-unsaved-dialog {
+    position:fixed; inset:0; z-index:10030; display:flex; align-items:center; justify-content:center;
+    padding:20px; box-sizing:border-box; background:rgba(31,45,36,.48);
+  }
+  #alias-unsaved-dialog .alias-unsaved-card {
+    width:min(100%,460px); box-sizing:border-box; padding:24px 22px 20px; border-radius:18px;
+    background:#FFFFFF; border:1px solid #E4E9DF; box-shadow:0 12px 36px rgba(31,45,36,.2);
+  }
+  #alias-unsaved-dialog .alias-unsaved-title {
+    margin:0 0 10px; color:#2D3B2D; font-size:20px; line-height:1.45; font-weight:900;
+  }
+  #alias-unsaved-dialog .alias-unsaved-error {
+    min-height:0; margin:0 0 12px; color:#A6632B; font-size:15px; line-height:1.5; font-weight:800;
+  }
+  #alias-unsaved-dialog .alias-unsaved-error:empty { display:none; }
+  #alias-unsaved-dialog .alias-unsaved-actions { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  #alias-unsaved-dialog button {
+    min-height:50px; border-radius:12px; padding:10px 12px; font-family:inherit; font-size:17px; font-weight:800; line-height:1.3; cursor:pointer;
+  }
+  #alias-unsaved-dialog .alias-unsaved-save {
+    grid-column:1/-1; border:2px solid #4F7058; background:#4F7058; color:#FFFFFF;
+  }
+  #alias-unsaved-dialog .alias-unsaved-discard {
+    border:1.5px solid #A7B4A8; background:#FFFFFF; color:#4F7058;
+  }
+  #alias-unsaved-dialog .alias-unsaved-cancel {
+    border:1.5px solid #D7DED5; background:#F7F8F5; color:#35473C;
+  }
+  #alias-unsaved-dialog button:disabled { opacity:.6; cursor:wait; }
+  #alias-unsaved-dialog button:focus-visible { outline:3px solid #91A996; outline-offset:2px; }
+  @media (max-width:480px) {
+    #alias-unsaved-dialog .alias-unsaved-card { padding:20px 16px 16px; }
+    #alias-unsaved-dialog .alias-unsaved-actions { grid-template-columns:1fr; }
+    #alias-unsaved-dialog .alias-unsaved-save { grid-column:auto; }
+  }
+  #step-location .location-alias-sync-status.is-success { color:#2F7046 !important; }
+  #step-location .location-alias-sync-status.is-error { color:#A6632B !important; }
+  #step-location .location-alias-sync-status.is-saving { color:#6E8075 !important; }
+</style>
 <script id="location-alias-draft-protection">
 (function () {
   'use strict';
   var byId = function (id) { return document.getElementById(id); };
-  var warningKey = '別名設定尚未同步至共用資料庫。繼續操作前，請先儲存或確認以保留在此裝置的草稿。';
+  var panel = byId('staff-mode-settings');
+  var activeDialog = null;
+  var aliasEditorEngaged = false;
+  var navigationInProgress = false;
+  var locationChangeBypass = false;
 
   function hasPending() {
     return typeof window.hasPendingLocationAliasChanges === 'function' &&
       window.hasPendingLocationAliasChanges();
   }
-  function warningText() {
-    return typeof window.translateExamDisplayText === 'function'
-      ? window.translateExamDisplayText(warningKey) : warningKey;
+  function isEditorContext() {
+    return document.body.getAttribute('data-step') === 'step-location' &&
+      !!(panel && panel.open) && aliasEditorEngaged;
   }
-  function askBeforeContinue(action) {
-    if (!hasPending()) { action(); return; }
-    var message = warningText();
-    if (typeof window.showCustomConfirm === 'function') {
-      window.showCustomConfirm(message, action, '繼續離開');
-    } else if (window.confirm(message)) {
-      action();
+  function shouldGuard() { return hasPending() && isEditorContext(); }
+  function t(text) {
+    return typeof window.translateExamDisplayText === 'function'
+      ? window.translateExamDisplayText(text) : text;
+  }
+
+  function closeDialog() {
+    if (!activeDialog) return;
+    var dialog = activeDialog;
+    activeDialog = null;
+    dialog.hidden = true;
+    if (dialog.parentNode) dialog.parentNode.removeChild(dialog);
+    if (dialog._restoreFocus && document.contains(dialog._restoreFocus)) {
+      try { dialog._restoreFocus.focus({preventScroll:true}); } catch (e) { dialog._restoreFocus.focus(); }
     }
   }
 
-  // Closing the single outer management panel is treated as leaving the editor.
-  var panel = byId('staff-mode-settings');
+  function showUnsavedDialog(continueAction) {
+    if (activeDialog) return;
+    var dialog = document.createElement('div');
+    dialog.id = 'alias-unsaved-dialog';
+    dialog.setAttribute('role', 'presentation');
+    dialog.innerHTML = '';
+    var card = document.createElement('div');
+    card.className = 'alias-unsaved-card';
+    card.setAttribute('role', 'dialog');
+    card.setAttribute('aria-modal', 'true');
+    card.setAttribute('aria-labelledby', 'alias-unsaved-title');
+    var title = document.createElement('h2');
+    title.className = 'alias-unsaved-title';
+    title.id = 'alias-unsaved-title';
+    title.textContent = t('目前有尚未儲存的修改，是否要先儲存？');
+    var error = document.createElement('p');
+    error.className = 'alias-unsaved-error';
+    error.setAttribute('role', 'status');
+    error.setAttribute('aria-live', 'polite');
+    var actions = document.createElement('div');
+    actions.className = 'alias-unsaved-actions';
+    var save = document.createElement('button');
+    save.type = 'button';
+    save.className = 'alias-unsaved-save';
+    save.textContent = t('儲存');
+    var discard = document.createElement('button');
+    discard.type = 'button';
+    discard.className = 'alias-unsaved-discard';
+    discard.textContent = t('不儲存');
+    var cancel = document.createElement('button');
+    cancel.type = 'button';
+    cancel.className = 'alias-unsaved-cancel';
+    cancel.textContent = t('取消');
+    actions.appendChild(save);
+    actions.appendChild(discard);
+    actions.appendChild(cancel);
+    card.appendChild(title);
+    card.appendChild(error);
+    card.appendChild(actions);
+    dialog.appendChild(card);
+    dialog._restoreFocus = document.activeElement;
+    document.body.appendChild(dialog);
+    activeDialog = dialog;
+
+    function setBusy(busy) {
+      [save, discard, cancel].forEach(function (button) { button.disabled = !!busy; });
+      save.textContent = busy ? t('儲存中…') : t('儲存');
+    }
+    save.addEventListener('click', function () {
+      if (save.disabled) return;
+      if (typeof window.saveCurrentLocationAliasGroups !== 'function') {
+        error.textContent = t('儲存失敗，請再試一次。');
+        return;
+      }
+      setBusy(true);
+      Promise.resolve(window.saveCurrentLocationAliasGroups()).then(function (success) {
+        if (!success) {
+          error.textContent = t('儲存失敗，請再試一次。');
+          setBusy(false);
+          return;
+        }
+        closeDialog();
+        if (typeof continueAction === 'function') continueAction();
+      }).catch(function (saveError) {
+        console.warn('未儲存別名確認視窗中的儲存失敗：', saveError);
+        error.textContent = t('儲存失敗，請再試一次。');
+        setBusy(false);
+      });
+    });
+    discard.addEventListener('click', function () {
+      if (discard.disabled) return;
+      if (typeof window.discardPendingLocationAliasChanges === 'function') {
+        window.discardPendingLocationAliasChanges();
+      }
+      closeDialog();
+      if (typeof continueAction === 'function') continueAction();
+    });
+    cancel.addEventListener('click', function () { closeDialog(); });
+    dialog.addEventListener('click', function (event) {
+      if (event.target === dialog) closeDialog();
+    });
+    dialog.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') { event.preventDefault(); closeDialog(); }
+      if (event.key === 'Tab') {
+        var focusables = [save, discard, cancel].filter(function (button) { return !button.disabled; });
+        if (!focusables.length) return;
+        var first = focusables[0], last = focusables[focusables.length - 1];
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+      }
+    });
+    save.focus();
+  }
+
+  function requestToLeave(action) {
+    if (!shouldGuard() || navigationInProgress) {
+      if (typeof action === 'function') action();
+      return;
+    }
+    showUnsavedDialog(action);
+  }
+
+  // Opening the management area activates guards for subsequent leave/switch actions.
+  if (panel) {
+    panel.addEventListener('toggle', function () {
+      aliasEditorEngaged = !!panel.open;
+    });
+    panel.addEventListener('focusin', function () {
+      if (panel.open) aliasEditorEngaged = true;
+    });
+  }
+
+  // Closing the outer management panel: save/discard/cancel. The panel closes only after Save succeeds.
   var panelSummary = panel && panel.querySelector(':scope > summary');
   if (panel && panelSummary && !panelSummary.dataset.aliasDraftGuardBound) {
     panelSummary.dataset.aliasDraftGuardBound = 'true';
     panelSummary.addEventListener('click', function (event) {
-      if (!panel.open || !hasPending()) return;
+      if (!panel.open || !shouldGuard()) return;
       event.preventDefault();
-      askBeforeContinue(function () { panel.open = false; });
+      event.stopPropagation();
+      requestToLeave(function () {
+        panel.open = false;
+        aliasEditorEngaged = false;
+      });
     });
   }
 
-  // Guard back navigation from staff setup and the final transition into the test.
+  // Any step transition away from location setup is protected, including other settings routes.
+  var originalShowStep = window.showStep;
+  if (typeof originalShowStep === 'function') {
+    window.showStep = function (stepId) {
+      var currentStep = document.body.getAttribute('data-step');
+      if (currentStep === 'step-location' && stepId !== 'step-location' && shouldGuard() && !navigationInProgress) {
+        var self = this, args = arguments;
+        requestToLeave(function () { navigationInProgress = true; try { originalShowStep.apply(self, args); } finally { navigationInProgress = false; aliasEditorEngaged = false; } });
+        return;
+      }
+      return originalShowStep.apply(this, arguments);
+    };
+  }
+
+  // Back button: after Save/Discard, continue the original back route exactly once.
   var originalBack = window.handleTopBack;
   if (typeof originalBack === 'function') {
     window.handleTopBack = function () {
-      if (document.body.getAttribute('data-step') === 'step-location' && hasPending()) {
+      if (shouldGuard() && !navigationInProgress) {
         var self = this, args = arguments;
-        askBeforeContinue(function () { originalBack.apply(self, args); });
+        requestToLeave(function () { navigationInProgress = true; try { originalBack.apply(self, args); } finally { navigationInProgress = false; aliasEditorEngaged = false; } });
         return;
       }
       return originalBack.apply(this, arguments);
     };
   }
+
+  // Final transition out of staff settings / into the exam is protected in the same way.
   var originalStart = window.startOfficialExam;
   if (typeof originalStart === 'function') {
     window.startOfficialExam = function () {
-      if (document.body.getAttribute('data-step') === 'step-location' && hasPending()) {
+      if (shouldGuard() && !navigationInProgress) {
         var self = this, args = arguments;
-        askBeforeContinue(function () { originalStart.apply(self, args); });
+        requestToLeave(function () { navigationInProgress = true; try { originalStart.apply(self, args); } finally { navigationInProgress = false; aliasEditorEngaged = false; } });
         return;
       }
       return originalStart.apply(this, arguments);
     };
   }
 
-  // Guard in-page interface-language changes as well as answer-language selection.
+  // Display-language switch: revert the pending requested language until the user chooses Save/Discard.
   var originalApplyDisplayLanguage = window.applyExamDisplayLanguage;
   if (typeof originalApplyDisplayLanguage === 'function') {
     window.applyExamDisplayLanguage = function () {
-      var requested = window.EXAM_DISPLAY_LANG;
-      var current = document.documentElement.lang || requested;
-      if (hasPending() && requested && current && requested !== current && !window.__allowAliasLanguageSwitchOnce) {
-        window.EXAM_DISPLAY_LANG = current;
-        try { localStorage.setItem('app_lang', current); } catch (storageError) {}
-        askBeforeContinue(function () {
-          window.EXAM_DISPLAY_LANG = requested;
-          try { localStorage.setItem('app_lang', requested); } catch (storageError) {}
-          window.__allowAliasLanguageSwitchOnce = true;
-          try { originalApplyDisplayLanguage.apply(window, arguments); }
-          finally { window.__allowAliasLanguageSwitchOnce = false; }
+      var requestedLang = window.EXAM_DISPLAY_LANG;
+      var currentLang = document.documentElement.lang || requestedLang;
+      if (requestedLang && currentLang && requestedLang !== currentLang && shouldGuard()) {
+        window.EXAM_DISPLAY_LANG = currentLang;
+        try { localStorage.setItem('app_lang', currentLang); } catch (storageError) {}
+        var self = this, args = arguments;
+        requestToLeave(function () {
+          window.EXAM_DISPLAY_LANG = requestedLang;
+          try { localStorage.setItem('app_lang', requestedLang); } catch (storageError) {}
+          originalApplyDisplayLanguage.apply(self, args);
         });
         return;
       }
@@ -13339,18 +13678,50 @@ html:lang(ko) .choice-btn.active::after {
     };
   }
 
-  // Guard the test-language selector; all four language values remain in the existing group objects.
+  // Spoken-answer language changes are also settings transitions while the alias editor is open.
   var originalSetLanguage = window.setLanguage;
   if (typeof originalSetLanguage === 'function') {
     window.setLanguage = function (languageCode) {
-      if (hasPending() && window.__pendingAliasLanguageConfirm !== true) {
+      var exam = typeof window.__getCognitiveExamState === 'function' ? window.__getCognitiveExamState() : null;
+      if (shouldGuard() && exam && languageCode !== exam.language) {
         var self = this, args = arguments;
-        askBeforeContinue(function () { originalSetLanguage.apply(self, args); });
+        requestToLeave(function () { originalSetLanguage.apply(self, args); });
         return;
       }
       return originalSetLanguage.apply(this, arguments);
     };
   }
+
+  // Changing county/district/place leaves the alias editor's current location; intercept before inline handlers run.
+  ['countySelect', 'districtSelect', 'placeSelect'].forEach(function (id) {
+    var control = byId(id);
+    if (!control) return;
+    control.dataset.aliasGuardLastValue = control.value || '';
+    ['pointerdown', 'focusin'].forEach(function (eventName) {
+      control.addEventListener(eventName, function () {
+        if (!locationChangeBypass) control.dataset.aliasGuardLastValue = control.value || '';
+      }, true);
+    });
+    control.addEventListener('change', function (event) {
+      if (locationChangeBypass || !shouldGuard()) {
+        control.dataset.aliasGuardLastValue = control.value || '';
+        return;
+      }
+      var nextValue = control.value || '';
+      var priorValue = control.dataset.aliasGuardLastValue || '';
+      if (nextValue === priorValue) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      control.value = priorValue;
+      requestToLeave(function () {
+        locationChangeBypass = true;
+        control.value = nextValue;
+        control.dispatchEvent(new Event('change', {bubbles:true}));
+        control.dataset.aliasGuardLastValue = nextValue;
+        locationChangeBypass = false;
+      });
+    }, true);
+  });
 })();
 </script>
 
