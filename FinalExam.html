@@ -3909,6 +3909,9 @@ function renderStageProgressBanner(banner,stageNumber,name){
       p3: { targetTime: '', score: 0, undoStack: [], scoreBreakdown: null }
     };
 
+    // 提供後續獨立 UI 控制器讀取同一份測驗狀態；不複製或另建第二份 examState。
+    window.__getCognitiveExamState = function () { return examState; };
+
     var allMemoryBanks = null;
     var globalAudioPlayer = new Audio();
     var currentAudioText = '';
@@ -4117,7 +4120,7 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
 
 
 /* 補齊靜態及執行時介面的英／日／韓文字，避免顯示語言切換後殘留中文。 */
-Object.assign(EXAM_TEXT_TRANSLATIONS, {"臺語（閩南語）":["Taiwanese Hokkien","台湾語（閩南語）","대만 민난어"],"下一步：選擇練習地點 ›":["Next: Choose Practice Location ›","次へ：練習場所を選択 ›","다음: 연습 장소 선택 ›"],"測驗時請憑記憶獨立作答，請不要查看日曆、時鐘，也不要請旁人提示。":["Answer independently from memory. Do not check a calendar or clock, or ask anyone for hints.","検査中は記憶を頼りに自分で回答してください。カレンダーや時計を見たり、他の人にヒントを求めたりしないでください。","검사 중에는 기억에 의존해 스스로 답하세요. 달력이나 시계를 보거나 다른 사람에게 힌트를 요청하지 마세요."],"第 1 關":["Stage 1","第1段階","1단계"],"第 2 關":["Stage 2","第2段階","2단계"],"第 3 關":["Stage 3","第3段階","3단계"],"回答今年的年份、現在是幾月、今天是幾號、星期幾，以及目前所在的地方。":["Answer the current year, month, date, day of the week, and your current location.","現在の年・月・日・曜日と、現在いる場所を回答してください。","현재 연도, 월, 날짜, 요일 및 현재 위치를 답하세요."],"通過標準：5 題需答對 4 題。":["Passing standard: answer at least 4 of 5 questions correctly.","合格基準：5問中4問以上正解。","통과 기준: 5문항 중 4문항 이상 정답."],"觀看並記住 10 張圖片，休息 2 分鐘後，再依照記憶回答。":["Study and remember 10 pictures. After a 2-minute break, recall them from memory.","10枚の画像を見て覚え、2分間休憩した後、記憶を頼りに回答してください。","그림 10장을 보고 기억한 뒤 2분간 휴식하고 기억을 바탕으로 답하세요."],"通過標準：10 張圖片需答對 3 張。":["Passing standard: recall at least 3 of the 10 pictures.","合格基準：10枚中3枚以上正解。","통과 기준: 그림 10장 중 3장 이상 정답."],"依照指定時間，畫出時鐘外框、數字，以及時針和分針的位置。":["Draw the clock outline, numbers, and hour and minute hands to show the specified time.","指定された時刻に合わせて、時計の外枠、数字、時針と分針を描いてください。","지정된 시간을 나타내도록 시계 테두리와 숫자, 시침과 분침을 그리세요."],"通過標準：滿分 7 分，需取得 4 分以上（作答時間 4 分鐘）。":["Passing standard: score at least 4 out of 7. Time limit: 4 minutes.","合格基準：7点満点中4点以上（制限時間4分）。","통과 기준: 7점 만점에 4점 이상(제한 시간 4분)."],"再聽一次語音說明":["Replay the audio instructions","音声案内をもう一度聞く","음성 안내 다시 듣기"],"請選擇您現在練習的地方。":["Please select where you are practicing.","現在練習している場所を選択してください。","현재 연습 중인 장소를 선택하세요."],"如果您在家裡自己練習，直接點選下方的「我在家裡練習」就可以了。":["If you are practicing at home, simply select “I am practicing at home” below.","自宅で練習している場合は、下の「自宅で練習」を選択してください。","집에서 연습 중이라면 아래의 “집에서 연습”을 선택하세요."],"自己在家裡做練習（最常用）":["Practice at home (most common)","自宅で練習（最も一般的）","집에서 연습(가장 일반적)"],"已選擇":["Selected","選択済み","선택됨"],"在監理站、醫院或由專人協助":["At a motor vehicle office, hospital, or with staff assistance","監理機関・病院、または担当者の支援を受けて実施","운전면허시험장, 병원 또는 담당자 도움으로 진행"],"由工作人員或家人幫忙輸入地點":["A staff member or family member enters the location","スタッフまたは家族が場所を入力","직원 또는 가족이 장소를 입력"],"請選擇您要練習的測驗地點":["Please select the test location for your practice","練習する検査場所を選んでください","연습할 검사 장소를 선택하세요"],"縣市（必選）":["City or county (required)","県・市（必須）","시·현(필수)"],"行政區（必選）":["District (required)","区（必須）","행정구(필수)"],"測驗地點（必選）":["Test location (required)","検査場所（必須）","검사 장소(필수)"],"工作人員專用：調整地點名稱設定（一般練習免按）":["For staff only: Adjust location names (not needed for regular practice)","スタッフ専用：場所名の設定（通常の練習では操作不要）","직원 전용: 장소 이름 설정(일반 연습에서는 조작할 필요 없음)"],"系統自動認得的地點簡稱":["Location aliases recognized automatically by the system","システムが自動認識する場所の略称","시스템이 자동으로 인식하는 장소 별칭"],"請先選擇上方測驗地點，系統會自動帶入預設名稱。":["Select the test location above. The system will fill in the default names automatically.","上の検査場所を選択すると、既定の名称が自動入力されます。","위에서 검사 장소를 선택하면 기본 이름이 자동으로 입력됩니다."],"恢復系統預設名稱":["Restore system default names","システムの既定名称に戻す","시스템 기본 이름 복원"],"需由工作人員人工確認的名稱":["Names requiring staff review","スタッフによる確認が必要な名称","직원의 확인이 필요한 이름"],"例如：衛生所、醫院、診所、監理所或監理站。只回答這類通用名稱時，會交由工作人員確認。":["Examples: health center, hospital, clinic, motor vehicle office. Generic answers like these require staff review.","例：保健所、病院、診療所、監理機関など。このような一般名称のみの場合は、スタッフによる確認が必要です。","예: 보건소, 병원, 의원, 운전면허시험장 등. 이러한 일반 명칭만 답한 경우 직원 확인이 필요합니다."],"您好！":["Hello!","こんにちは！","안녕하세요!"],"第一關共有 5 個問題，請仔細聽題目，再輸入或點選答案。":["Stage 1 has 5 questions. Listen carefully, then type or select your answers.","第1段階は5問です。問題をよく聞き、入力または選択して回答してください。","1단계는 5문항입니다. 문제를 잘 듣고 답을 입력하거나 선택하세요."],"提醒您：作答時請不要查看日曆、時鐘，也不要請旁人提示。":["Reminder: Do not look at a calendar or clock, or ask anyone for hints while answering.","注意：回答中はカレンダーや時計を見たり、他の人にヒントを求めたりしないでください。","안내: 답변 중에는 달력이나 시계를 보거나 다른 사람에게 힌트를 요청하지 마세요."]," 再聽一次語音說明":[" Replay audio instructions"," 音声案内をもう一度聞く"," 음성 안내 다시 듣기"],"開始第一關作答 ›":["Start Stage 1 ›","第1段階の回答を開始 ›","1단계 답변 시작 ›"],"時間到後，回想並輸入剛才看過的圖片名稱。":["When time is up, recall and enter the names of the pictures you saw.","時間になったら、先ほど見た画像の名前を思い出して入力してください。","시간이 되면 방금 본 그림의 이름을 떠올려 입력하세요."],"開始觀看圖片 ›":["Start viewing pictures ›","画像の表示を開始 ›","그림 보기 시작 ›"],"再聽一次題目":["Play the question again","問題をもう一度聞く","문제 다시 듣기"],"✓ 已記錄答案":["✓ Answer recorded","✓ 回答を記録しました","✓ 답변이 기록되었습니다"],"請先在上方完成作答，再按確認。":["Complete your answer above, then select Confirm.","上で回答を入力してから「確認」を選択してください。","위에서 답변을 완료한 다음 확인을 누르세요."],"確認本題 ›":["Confirm this answer ›","この回答を確定 ›","이 답변 확인 ›"],"休息一下":["Take a break","休憩しましょう","잠시 쉬세요"],"請放輕鬆休息 2 分鐘，時間到後會自動開始回想作答。":["Please relax and rest for 2 minutes. Recall will begin automatically when the time is up.","リラックスして2分間休憩してください。時間になると自動的に思い出し回答が始まります。","편안하게 2분간 휴식하세요. 시간이 끝나면 자동으로 회상 답변이 시작됩니다."],"再聽一次休息說明":["Replay the break instructions","休憩の説明をもう一度聞く","휴식 안내 다시 듣기"],"請回想剛才看過的 10 張圖片，想到哪些就輸入哪些。":["Recall the 10 pictures you just saw. Enter any names you remember.","先ほど見た10枚の画像を思い出し、覚えている名前を入力してください。","방금 본 그림 10장을 떠올리고 기억나는 이름을 입력하세요."],"＋加入答案":["＋ Add answer","＋ 回答を追加","＋ 답변 추가"],"加入的圖片名稱會顯示在這裡。":["Added picture names will appear here.","追加した画像名がここに表示されます。","추가한 그림 이름이 여기에 표시됩니다."],"剩餘 04:00":["Time left: 04:00","残り時間：04:00","남은 시간: 04:00"],"正式施測模式":["Official assessment mode","正式検査モード","공식 검사 모드"],"查看本關作答明細":["View responses for this stage","この段階の回答詳細を見る","이 단계의 답변 세부 정보 보기"],"選擇作答語言":["Choose an answer language","回答言語を選択","답변 언어 선택"],"試聽國語":["Preview Mandarin audio","中国語音声を試聴","중국어 음성 미리 듣기"],"試聽臺語":["Preview Taiwanese Hokkien audio","台湾語音声を試聴","대만 민난어 음성 미리 듣기"],"試聽客語":["Preview Hakka audio","客家語音声を試聴","하카어 음성 미리 듣기"],"純文字模式不提供語音試聽":["Audio preview is unavailable in text-only mode","テキストのみモードでは音声を試聴できません","텍스트 전용 모드에서는 음성 미리 듣기를 사용할 수 없습니다"],"輸入其他地點簡稱":["Enter another location alias","別の場所の略称を入力","다른 장소 별칭 입력"],"請輸入答案":["Enter your answer","回答を入力してください","답변을 입력하세요"],"請輸入您記得的圖片名稱":["Enter the picture name you remember","覚えている画像の名前を入力してください","기억나는 그림 이름을 입력하세요"],"目前無法播放語音試聽，請稍後再試。":["Audio preview is currently unavailable. Please try again later.","現在、音声を試聴できません。しばらくしてからもう一度お試しください。","현재 음성 미리 듣기를 재생할 수 없습니다. 나중에 다시 시도하세요."],"返回練習選單":["Back to Practice Menu","練習メニューに戻る","연습 메뉴로 돌아가기"],"返回語言設定":["Back to Language Settings","言語設定に戻る","언어 설정으로 돌아가기"],"返回練習地點":["Back to Practice Location","練習場所に戻る","연습 장소로 돌아가기"],"返回測驗介紹":["Back to Test Instructions","検査説明に戻る","검사 안내로 돌아가기"],"返回第一關說明":["Back to Stage 1 Instructions","第1段階の説明に戻る","1단계 안내로 돌아가기"],"返回第二關說明":["Back to Stage 2 Instructions","第2段階の説明に戻る","2단계 안내로 돌아가기"],"返回第三關說明":["Back to Stage 3 Instructions","第3段階の説明に戻る","3단계 안내로 돌아가기"],"✓ 第一關":["✓ Stage 1","✓ 第1段階","✓ 1단계"],"✓ 第二關":["✓ Stage 2","✓ 第2段階","✓ 2단계"],"臺語練習方式錄音無法連線取得。":["The Taiwanese Hokkien practice audio could not be loaded.","台湾語の練習音声を読み込めませんでした。","대만 민난어 연습 음성을 불러오지 못했습니다."],"請先輸入一個別名，再按新增。":["Enter an alias before selecting Add.","追加する前に略称を入力してください。","추가를 누르기 전에 별칭을 입력하세요."],"家裡":["Home","自宅","집"],"家中":["At home","自宅","집"],"住家":["Residence","住居","거주지"],"請重新選擇有效的練習模式。":["Please select a valid practice mode again.","有効な練習モードをもう一度選択してください。","유효한 연습 모드를 다시 선택하세요."],"請輸入生肖名稱":["Enter a Chinese zodiac animal","十二支の動物名を入力してください","십이지 동물 이름을 입력하세요"],"請直接輸入您目前所在的地點名稱。":["Enter the name of your current location.","現在いる場所の名称を入力してください。","현재 위치의 이름을 입력하세요."],"資料暫無法取得":["Data is temporarily unavailable","データを一時的に取得できません","데이터를 일시적으로 가져올 수 없습니다"],"依測驗地點設定核對":["Verify using the configured test location","設定された検査場所を使用して照合","설정된 검사 장소를 기준으로 확인"],"請先輸入月份。":["Please enter a month first.","先に月を入力してください。","먼저 월을 입력하세요."],"休息期間，請您放輕鬆，靜候兩分鐘後再繼續作答。":["Please relax during the break. Continue answering after two minutes.","休憩中はリラックスして、2分後に回答を再開してください。","휴식 시간에는 편안히 쉬고 2분 후 답변을 계속하세요."],"本次認知功能測驗已完成，請查看以下測驗結果與作答明細。謝謝您的用心參與。":["The cognitive assessment is complete. Please review the results and response details below. Thank you for participating.","認知機能検査が完了しました。以下の結果と回答詳細をご確認ください。ご参加ありがとうございました。","인지 기능 검사가 완료되었습니다. 아래 결과와 답변 세부 정보를 확인하세요. 참여해 주셔서 감사합니다."],"您已完成前兩關測驗，返回將會離開目前進度，確定要返回嗎？":["You have completed the first two stages. Returning will leave your current progress. Are you sure you want to go back?","最初の2段階が完了しています。戻ると現在の進行状況が失われます。戻ってもよろしいですか？","앞의 두 단계를 완료했습니다. 돌아가면 현재 진행 상황을 벗어납니다. 돌아가시겠습니까?"],"請先完成上方測驗地點選擇":["Please complete the test location selection above first.","先に上の検査場所を選択してください。","먼저 위에서 검사 장소를 선택하세요."],"點此輸入數字":["Tap here to enter numbers","ここをタップして数字を入力","여기를 눌러 숫자를 입력하세요"],"輸入4位數字":["Enter 4 digits","4桁の数字を入力","숫자 4자리를 입력하세요"],"請輸入數字":["Enter numbers","数字を入力してください","숫자를 입력하세요"],"點此輸入一～六或日":["Tap to enter Monday through Sunday","ここをタップして月曜から日曜を入力","여기를 눌러 월요일부터 일요일까지 입력하세요"],"第一關｜時間、空間認知":["Stage 1 | Time and Spatial Orientation","第1段階｜時間・空間の見当識","1단계 | 시간·공간 지남력"],"本次實際完成的時鐘畫作":["Clock drawing submitted for this test","今回提出された時計の描画","이번 검사에서 제출한 시계 그림"],"本次實際繪圖紀錄":["Drawing record for this test","今回の描画記録","이번 검사 그림 기록"],"目前沒有可顯示的時鐘繪圖圖片紀錄。":["No clock drawing image is available to display.","表示できる時計の描画画像がありません。","표시할 시계 그림 이미지 기록이 없습니다."],"分針指向指定分鐘":["Minute hand points to the specified minute","分針が指定された分を指している","분침이 지정된 분을 가리킴"],"時針位置符合指定時間":["Hour hand position matches the specified time","時針の位置が指定時刻と一致している","시침 위치가 지정 시간과 일치함"],"沒有不相關添加":["No unrelated marks added","無関係な書き込みがない","관련 없는 표시가 없음"],"數字位於圓圈內":["Numbers are inside the circle","数字が円の内側にある","숫자가 원 안에 있음"],"1 至 12 完整且順時針排列":["Numbers 1 through 12 are complete and arranged clockwise","1から12までの数字がそろい、時計回りに配置されている","1부터 12까지 숫자가 빠짐없이 시계 방향으로 배열됨"],"圓形輪廓完整":["Complete circular outline","円の輪郭が完成している","원형 윤곽이 완성됨"],"圓形大小與比例":["Circle size and proportions","円の大きさと比率","원의 크기와 비율"],"原評分系統回傳的項目紀錄":["Item details returned by the original scoring system","元の採点システムから返された項目記録","기존 채점 시스템에서 반환한 항목 기록"],"得分紀錄：":["Score record: ","得点記録：","점수 기록: "],"判定紀錄：":["Assessment record: ","判定記録：","판정 기록: "],"符合":["Met","該当","충족"],"未符合":["Not met","非該当","미충족"],"評分紀錄：":["Scoring record: ","採点記録：","채점 기록: "],"收合本關作答明細":["Hide response details","回答詳細を閉じる","답변 세부 정보 접기"],"居家練習模式":["Home practice mode","自宅練習モード","가정 연습 모드"],"施測人員模式":["Staff assessment mode","検査担当者モード","검사 담당자 모드"],"正在播放語音說明中，請仔細聆聽（若沒聲音請調大手機音量）":["Audio instructions are playing. Listen carefully. Turn up your phone volume if needed.","音声案内を再生中です。よく聞いてください。聞こえない場合は端末の音量を上げてください。","음성 안내가 재생 중입니다. 잘 들어주세요. 소리가 들리지 않으면 휴대전화 음량을 높이세요."],"已選擇純文字模式，練習時不會播放聲音。":["Text-only mode is selected. Audio will not play during practice.","テキストのみモードが選択されています。練習中に音声は再生されません。","텍스트 전용 모드가 선택되었습니다. 연습 중에는 음성이 재생되지 않습니다."],"正在播放試聽語音，請確認聽得到聲音（若無聲音請調大手機音量）。":["Audio preview is playing. Make sure you can hear it. Turn up your phone volume if needed.","音声を試聴中です。聞こえることを確認してください。聞こえない場合は端末の音量を上げてください。","음성 미리 듣기가 재생 중입니다. 소리가 들리는지 확인하세요. 들리지 않으면 휴대전화 음량을 높이세요."],"目前作答方式：純文字":["Response mode: Text only","回答方法：テキストのみ","답변 방식: 텍스트 전용"],"目前語音：":["Audio language: ","音声：","음성: "],"選擇作答方式":["Choose a response mode","回答方法を選択","응답 방식 선택"],"選擇練習地點":["Choose a practice location","練習場所を選択","연습 장소 선택"],"數字按鍵":["Number keys","数字キー","숫자 키"],"清除重填":["Clear and re-enter","消去して再入力","지우고 다시 입력"],"刪掉一個字":["Delete one character","1文字削除","문자 하나 삭제"],"請用下方按鍵輸入年份數字":["Use the buttons below to enter the year","下のボタンで年を入力してください","아래 버튼을 사용해 연도를 입력하세요"],"請用下方按鍵點選日期數字":["Use the buttons below to enter the date","下のボタンで日付を入力してください","아래 버튼을 사용해 날짜를 입력하세요"],"請輸入農曆日期數字即可（例如：初五請按 5，十五請按 15）。":["Enter only the lunar date number (for example, press 5 for the 5th day or 15 for the 15th day).","旧暦の日付の数字のみを入力してください（例：初五は5、十五は15を押します）。","음력 날짜 숫자만 입력하세요(예: 초닷새는 5, 보름은 15를 누르세요)."],"您的答案":["Your answer","あなたの回答","답변"],"請輸入星期幾":["Enter the day of the week","曜日を入力してください","요일을 입력하세요"],"您的答案：請輸入星期幾":["Your answer: Enter the day of the week","あなたの回答：曜日を入力してください","답변: 요일을 입력하세요"],"請選擇一種回答方式，答對即可。":["Choose one response method. A correct answer is enough.","回答方法を1つ選んでください。正解すれば通過です。","답변 방식을 하나 선택하세요. 정답이면 통과입니다."],"您可以用「國曆」或「農曆」其中一種來回答，只要答對其中一種就算過關！請先點選您習慣的日曆：":["You may answer using either the Gregorian or lunar calendar. Either correct answer will count. Choose your preferred calendar first:","新暦または旧暦のどちらかで回答できます。どちらかが正解なら合格です。最初に使い慣れた暦を選んでください。","양력 또는 음력 중 하나로 답할 수 있습니다. 둘 중 하나만 맞아도 통과입니다. 먼저 익숙한 달력을 선택하세요."],"請直接輸入今天是星期幾。":["Please type the day of the week.","今日の曜日を入力してください。","오늘이 무슨 요일인지 입력하세요."],"請輸入今天是星期幾，再確認本題。":["Please enter the day of the week before confirming this answer.","曜日を入力してから、この回答を確定してください。","요일을 입력한 다음 이 답변을 확인하세요."],"請先在上方輸入日期數字，再按確認。":["Enter the date number above, then select Confirm.","上に日付を入力してから「確認」を選択してください。","위에 날짜 숫자를 입력한 다음 확인을 누르세요."],"請先選擇一種回答方式，並完成作答後再按確認。":["Choose a response method and complete your answer before selecting Confirm.","回答方法を選択して回答を入力してから、「確認」を選択してください。","답변 방식을 선택하고 답변을 완료한 다음 확인을 누르세요."],"請先選擇國曆或農曆，再輸入月份數字。":["Select the Gregorian or lunar calendar, then enter the month number.","新暦または旧暦を選択してから、月の数字を入力してください。","양력 또는 음력을 선택한 다음 월 숫자를 입력하세요."],"請輸入您目前所在的地點名稱，再按確認。":["Enter the name of your current location, then select Confirm.","現在いる場所の名称を入力してから「確認」を選択してください。","현재 위치 이름을 입력한 다음 확인을 누르세요."],"這個地點簡稱":["this location alias","この場所の略称","이 장소 별칭"],"刪除這個地點簡稱":["Delete this location alias","この場所の略称を削除","이 장소 별칭 삭제"],"請先選擇民國年、西元年或生肖，再完成作答。":["Select Minguo year, Gregorian year, or zodiac first, then complete your answer.","最初に民国年、西暦年、生肖のいずれかを選択してから回答してください。","먼저 민국 연도, 서력 연도 또는 띠를 선택한 다음 답변하세요."],"請先在上方輸入生肖，再按確認。":["Enter the zodiac animal above, then select Confirm.","上に生肖を入力してから「確認」を選択してください。","위에 띠를 입력한 다음 확인을 누르세요."],"請先在上方輸入年份數字，再按確認。":["Enter the year above, then select Confirm.","上に年の数字を入力してから「確認」を選択してください。","위에 연도 숫자를 입력한 다음 확인을 누르세요."],"請先選擇國曆或農曆，再輸入日期數字。":["Select the Gregorian or lunar calendar, then enter the date number.","新暦または旧暦を選択してから、日付の数字を入力してください。","양력 또는 음력을 선택한 다음 날짜 숫자를 입력하세요."],"您還沒選擇回答方式喔，請先點選民國年、西元年或生肖。":["Please choose a response method first: Minguo year, Gregorian year, or zodiac.","回答方法が選択されていません。民国年、西暦年、生肖のいずれかを選択してください。","답변 방식을 선택하지 않았습니다. 민국 연도, 서력 연도 또는 띠를 선택하세요."],"您還沒輸入生肖喔，請先在上方輸入生肖。":["You have not entered a zodiac animal. Enter it above first.","生肖が入力されていません。先に上に入力してください。","띠를 입력하지 않았습니다. 먼저 위에 입력하세요."],"您還沒輸入年份數字喔，請先點選下方的數字再按確認。":["You have not entered the year. Select the numbers below, then confirm.","年が入力されていません。下の数字を選択してから確認してください。","연도를 입력하지 않았습니다. 아래 숫자를 선택한 다음 확인하세요."],"您還沒選擇國曆或農曆喔，請先點選上方的日曆。":["You have not selected a calendar. Choose Gregorian or lunar above first.","暦が選択されていません。上で新暦または旧暦を選択してください。","달력을 선택하지 않았습니다. 위에서 양력 또는 음력을 선택하세요."],"您還沒輸入幾號喔，請先點選下方的數字再按確認。":["You have not entered the date. Select the numbers below, then confirm.","日付が入力されていません。下の数字を選択してから確認してください。","날짜를 입력하지 않았습니다. 아래 숫자를 선택한 다음 확인하세요."],"請用下方按鍵輸入月份數字（1 到 12）。":["Use the buttons below to enter a month from 1 to 12.","下のボタンで1から12までの月を入力してください。","아래 버튼으로 1부터 12까지의 월을 입력하세요."],"月份數字按鍵":["Month number keys","月の数字キー","월 숫자 키"],"月份最多輸入兩個數字，請清除後重新輸入。":["A month can have at most two digits. Clear and enter it again.","月は最大2桁です。消去してもう一度入力してください。","월은 최대 두 자리까지 입력할 수 있습니다. 지우고 다시 입력하세요."],"月份只能輸入 1 到 12，已清空，請重新輸入。":["Enter a month from 1 to 12. The field has been cleared; please try again.","月は1から12までで入力してください。入力欄を消去しました。もう一度入力してください。","월은 1부터 12까지 입력해야 합니다. 입력란을 지웠으니 다시 입력하세요."],"月份只能輸入 1 到 12，不能從 0 開始。":["Enter a month from 1 to 12. It cannot start with 0.","月は1から12までです。0から始めることはできません。","월은 1부터 12까지이며 0으로 시작할 수 없습니다."],"清除全部月份數字":["Clear all month digits","月の数字をすべて消去","월 숫자 모두 지우기"],"已清空，請重新輸入月份。":["Cleared. Please enter the month again.","消去しました。月をもう一度入力してください。","지웠습니다. 월을 다시 입력하세요."],"刪除上一個數字":["Delete the previous digit","前の数字を削除","이전 숫자 삭제"],"刪除上一個月份數字":["Delete the previous month digit","前の月の数字を削除","이전 월 숫자 삭제"],"已刪除數字，請重新輸入月份。":["The digit was deleted. Please enter the month again.","数字を削除しました。月をもう一度入力してください。","숫자를 삭제했습니다. 월을 다시 입력하세요."],"請用下方按鍵輸入月份數字":["Use the buttons below to enter the month","下のボタンで月を入力してください","아래 버튼으로 월을 입력하세요"],"農曆月份":["Lunar month","旧暦の月","음력 월"],"國曆月份":["Gregorian month","新暦の月","양력 월"],"，請使用下方數字按鍵輸入":[". Use the number keys below.","。下の数字キーを使用してください。",". 아래 숫자 키를 사용하세요."],"數字鍵盤":["Numeric keypad","数字キーパッド","숫자 키패드"],"收起":["Collapse","閉じる","접기"],"收起數字鍵盤":["Close numeric keypad","数字キーパッドを閉じる","숫자 키패드 닫기"],"點擊即可開啟數字鍵盤":["Tap to open the numeric keypad","タップして数字キーパッドを開く","눌러서 숫자 키패드 열기"],"請輸入生肖":["Enter the Chinese zodiac animal","十二支の動物名を入力してください","십이지 동물 이름을 입력하세요"],"請輸入您的生肖":["Please enter your Chinese zodiac animal","あなたの生肖を入力してください","본인의 띠를 입력하세요"],"請依照指定時間畫出時鐘。可以使用下方工具修改，完成後點選送出答案。":["Draw a clock showing the specified time. Use the tools below to make changes, then select Submit Answer when finished.","指定された時刻を示す時計を描いてください。下のツールで修正し、完成したら「回答を送信」を選択してください。","지정된 시간을 나타내는 시계를 그리세요. 아래 도구로 수정한 후 완료되면 답안 제출을 누르세요."],"請畫出一個完整的時鐘，顯示":["Draw a complete clock showing ","次の時刻を示す時計を描いてください：","다음 시간을 나타내는 완전한 시계를 그리세요: "],"目前沒有可以復原的筆畫。":["There are no strokes to undo.","元に戻せる線がありません。","되돌릴 획이 없습니다."],"確定要全部擦掉重畫嗎？":["Are you sure you want to erase everything and start over?","すべて消去して描き直しますか？","모두 지우고 다시 그리시겠습니까?"],"目前選擇的是純文字模式，練習時不會播放聲音。":["Text-only mode is selected. No audio will play during practice.","テキストのみモードが選択されています。練習中に音声は再生されません。","텍스트 전용 모드가 선택되었습니다. 연습 중에는 음성이 재생되지 않습니다."],"← 返回選擇語音":["← Back to Language Selection","← 音声選択に戻る","← 언어 선택으로 돌아가기"],"← 返回測驗介紹":["← Back to Test Instructions","← 検査説明に戻る","← 검사 안내로 돌아가기"],"← 返回第一關說明":["← Back to Stage 1 Instructions","← 第1段階の説明に戻る","← 1단계 안내로 돌아가기"],"← 返回第二關說明":["← Back to Stage 2 Instructions","← 第2段階の説明に戻る","← 2단계 안내로 돌아가기"],"← 返回第三關說明":["← Back to Stage 3 Instructions","← 第3段階の説明に戻る","← 3단계 안내로 돌아가기"],"請選擇練習地點":["Please select a practice location","練習場所を選択してください","연습 장소를 선택하세요"],"休息倒數":["Break countdown","休憩カウントダウン","휴식 카운트다운"],"休息倒數進度":["Break countdown progress","休憩カウントダウンの進行状況","휴식 카운트다운 진행 상황"],"時鐘繪圖畫布":["Clock drawing canvas","時計描画キャンバス","시계 그리기 캔버스"],"作答區":["Answer area","回答エリア","답변 영역"],"您的答案：請輸入地點名稱":["Your answer: Enter the location name","あなたの回答：場所の名前を入力してください","답변: 장소 이름을 입력하세요"]});
+Object.assign(EXAM_TEXT_TRANSLATIONS, {"臺語（閩南語）":["Taiwanese Hokkien","台湾語（閩南語）","대만 민난어"],"下一步：選擇練習地點 ›":["Next: Choose Practice Location ›","次へ：練習場所を選択 ›","다음: 연습 장소 선택 ›"],"測驗時請憑記憶獨立作答，請不要查看日曆、時鐘，也不要請旁人提示。":["Answer independently from memory. Do not check a calendar or clock, or ask anyone for hints.","検査中は記憶を頼りに自分で回答してください。カレンダーや時計を見たり、他の人にヒントを求めたりしないでください。","검사 중에는 기억에 의존해 스스로 답하세요. 달력이나 시계를 보거나 다른 사람에게 힌트를 요청하지 마세요."],"第 1 關":["Stage 1","第1段階","1단계"],"第 2 關":["Stage 2","第2段階","2단계"],"第 3 關":["Stage 3","第3段階","3단계"],"回答今年的年份、現在是幾月、今天是幾號、星期幾，以及目前所在的地方。":["Answer the current year, month, date, day of the week, and your current location.","現在の年・月・日・曜日と、現在いる場所を回答してください。","현재 연도, 월, 날짜, 요일 및 현재 위치를 답하세요."],"通過標準：5 題需答對 4 題。":["Passing standard: answer at least 4 of 5 questions correctly.","合格基準：5問中4問以上正解。","통과 기준: 5문항 중 4문항 이상 정답."],"觀看並記住 10 張圖片，休息 2 分鐘後，再依照記憶回答。":["Study and remember 10 pictures. After a 2-minute break, recall them from memory.","10枚の画像を見て覚え、2分間休憩した後、記憶を頼りに回答してください。","그림 10장을 보고 기억한 뒤 2분간 휴식하고 기억을 바탕으로 답하세요."],"通過標準：10 張圖片需答對 3 張。":["Passing standard: recall at least 3 of the 10 pictures.","合格基準：10枚中3枚以上正解。","통과 기준: 그림 10장 중 3장 이상 정답."],"依照指定時間，畫出時鐘外框、數字，以及時針和分針的位置。":["Draw the clock outline, numbers, and hour and minute hands to show the specified time.","指定された時刻に合わせて、時計の外枠、数字、時針と分針を描いてください。","지정된 시간을 나타내도록 시계 테두리와 숫자, 시침과 분침을 그리세요."],"通過標準：滿分 7 分，需取得 4 分以上（作答時間 4 分鐘）。":["Passing standard: score at least 4 out of 7. Time limit: 4 minutes.","合格基準：7点満点中4点以上（制限時間4分）。","통과 기준: 7점 만점에 4점 이상(제한 시간 4분)."],"再聽一次語音說明":["Replay the audio instructions","音声案内をもう一度聞く","음성 안내 다시 듣기"],"請選擇您現在練習的地方。":["Please select where you are practicing.","現在練習している場所を選択してください。","현재 연습 중인 장소를 선택하세요."],"如果您在家裡自己練習，直接點選下方的「我在家裡練習」就可以了。":["If you are practicing at home, simply select “I am practicing at home” below.","自宅で練習している場合は、下の「自宅で練習」を選択してください。","집에서 연습 중이라면 아래의 “집에서 연습”을 선택하세요."],"自己在家裡做練習（最常用）":["Practice at home (most common)","自宅で練習（最も一般的）","집에서 연습(가장 일반적)"],"已選擇":["Selected","選択済み","선택됨"],"在監理站、醫院或由專人協助":["At a motor vehicle office, hospital, or with staff assistance","監理機関・病院、または担当者の支援を受けて実施","운전면허시험장, 병원 또는 담당자 도움으로 진행"],"由工作人員或家人幫忙輸入地點":["A staff member or family member enters the location","スタッフまたは家族が場所を入力","직원 또는 가족이 장소를 입력"],"請選擇您要練習的測驗地點":["Please select the test location for your practice","練習する検査場所を選んでください","연습할 검사 장소를 선택하세요"],"縣市（必選）":["City or county (required)","県・市（必須）","시·현(필수)"],"行政區（必選）":["District (required)","区（必須）","행정구(필수)"],"測驗地點（必選）":["Test location (required)","検査場所（必須）","검사 장소(필수)"],"工作人員專用：調整地點名稱設定（一般練習免按）":["For staff only: Adjust location names (not needed for regular practice)","スタッフ専用：場所名の設定（通常の練習では操作不要）","직원 전용: 장소 이름 설정(일반 연습에서는 조작할 필요 없음)"],"系統自動認得的地點簡稱":["Location aliases recognized automatically by the system","システムが自動認識する場所の略称","시스템이 자동으로 인식하는 장소 별칭"],"請先選擇上方測驗地點，系統會自動帶入預設名稱。":["Select the test location above. The system will fill in the default names automatically.","上の検査場所を選択すると、既定の名称が自動入力されます。","위에서 검사 장소를 선택하면 기본 이름이 자동으로 입력됩니다."],"恢復系統預設名稱":["Restore system default names","システムの既定名称に戻す","시스템 기본 이름 복원"],"需由工作人員人工確認的名稱":["Names requiring staff review","スタッフによる確認が必要な名称","직원의 확인이 필요한 이름"],"例如：衛生所、醫院、診所、監理所或監理站。只回答這類通用名稱時，會交由工作人員確認。":["Examples: health center, hospital, clinic, motor vehicle office. Generic answers like these require staff review.","例：保健所、病院、診療所、監理機関など。このような一般名称のみの場合は、スタッフによる確認が必要です。","예: 보건소, 병원, 의원, 운전면허시험장 등. 이러한 일반 명칭만 답한 경우 직원 확인이 필요합니다."],"您好！":["Hello!","こんにちは！","안녕하세요!"],"第一關共有 5 個問題，請仔細聽題目，再輸入或點選答案。":["Stage 1 has 5 questions. Listen carefully, then type or select your answers.","第1段階は5問です。問題をよく聞き、入力または選択して回答してください。","1단계는 5문항입니다. 문제를 잘 듣고 답을 입력하거나 선택하세요."],"提醒您：作答時請不要查看日曆、時鐘，也不要請旁人提示。":["Reminder: Do not look at a calendar or clock, or ask anyone for hints while answering.","注意：回答中はカレンダーや時計を見たり、他の人にヒントを求めたりしないでください。","안내: 답변 중에는 달력이나 시계를 보거나 다른 사람에게 힌트를 요청하지 마세요."]," 再聽一次語音說明":[" Replay audio instructions"," 音声案内をもう一度聞く"," 음성 안내 다시 듣기"],"開始第一關作答 ›":["Start Stage 1 ›","第1段階の回答を開始 ›","1단계 답변 시작 ›"],"時間到後，回想並輸入剛才看過的圖片名稱。":["When time is up, recall and enter the names of the pictures you saw.","時間になったら、先ほど見た画像の名前を思い出して入力してください。","시간이 되면 방금 본 그림의 이름을 떠올려 입력하세요."],"開始觀看圖片 ›":["Start viewing pictures ›","画像の表示を開始 ›","그림 보기 시작 ›"],"再聽一次題目":["Play the question again","問題をもう一度聞く","문제 다시 듣기"],"✓ 已記錄答案":["✓ Answer recorded","✓ 回答を記録しました","✓ 답변이 기록되었습니다"],"請先在上方完成作答，再按確認。":["Complete your answer above, then select Confirm.","上で回答を入力してから「確認」を選択してください。","위에서 답변을 완료한 다음 확인을 누르세요."],"確認本題 ›":["Confirm this answer ›","この回答を確定 ›","이 답변 확인 ›"],"休息一下":["Take a break","休憩しましょう","잠시 쉬세요"],"請放輕鬆休息 2 分鐘，時間到後會自動開始回想作答。":["Please relax and rest for 2 minutes. Recall will begin automatically when the time is up.","リラックスして2分間休憩してください。時間になると自動的に思い出し回答が始まります。","편안하게 2분간 휴식하세요. 시간이 끝나면 자동으로 회상 답변이 시작됩니다."],"再聽一次休息說明":["Replay the break instructions","休憩の説明をもう一度聞く","휴식 안내 다시 듣기"],"請回想剛才看過的 10 張圖片，想到哪些就輸入哪些。":["Recall the 10 pictures you just saw. Enter any names you remember.","先ほど見た10枚の画像を思い出し、覚えている名前を入力してください。","방금 본 그림 10장을 떠올리고 기억나는 이름을 입력하세요."],"＋加入答案":["＋ Add answer","＋ 回答を追加","＋ 답변 추가"],"加入的圖片名稱會顯示在這裡。":["Added picture names will appear here.","追加した画像名がここに表示されます。","추가한 그림 이름이 여기에 표시됩니다."],"剩餘 04:00":["Time left: 04:00","残り時間：04:00","남은 시간: 04:00"],"正式施測模式":["Official assessment mode","正式検査モード","공식 검사 모드"],"查看本關作答明細":["View responses for this stage","この段階の回答詳細を見る","이 단계의 답변 세부 정보 보기"],"選擇作答語言":["Choose an answer language","回答言語を選択","답변 언어 선택"],"試聽國語":["Preview Mandarin audio","中国語音声を試聴","중국어 음성 미리 듣기"],"試聽臺語":["Preview Taiwanese Hokkien audio","台湾語音声を試聴","대만 민난어 음성 미리 듣기"],"試聽客語":["Preview Hakka audio","客家語音声を試聴","하카어 음성 미리 듣기"],"純文字模式不提供語音試聽":["Audio preview is unavailable in text-only mode","テキストのみモードでは音声を試聴できません","텍스트 전용 모드에서는 음성 미리 듣기를 사용할 수 없습니다"],"輸入其他地點簡稱":["Enter another location alias","別の場所の略称を入力","다른 장소 별칭 입력"],"請輸入答案":["Enter your answer","回答を入力してください","답변을 입력하세요"],"請輸入您記得的圖片名稱":["Enter the picture name you remember","覚えている画像の名前を入力してください","기억나는 그림 이름을 입력하세요"],"目前無法播放語音試聽，請稍後再試。":["Audio preview is currently unavailable. Please try again later.","現在、音声を試聴できません。しばらくしてからもう一度お試しください。","현재 음성 미리 듣기를 재생할 수 없습니다. 나중에 다시 시도하세요."],"返回練習選單":["Back to Practice Menu","練習メニューに戻る","연습 메뉴로 돌아가기"],"返回語言設定":["Back to Language Settings","言語設定に戻る","언어 설정으로 돌아가기"],"返回練習地點":["Back to Practice Location","練習場所に戻る","연습 장소로 돌아가기"],"返回測驗介紹":["Back to Test Instructions","検査説明に戻る","검사 안내로 돌아가기"],"返回第一關說明":["Back to Stage 1 Instructions","第1段階の説明に戻る","1단계 안내로 돌아가기"],"返回第二關說明":["Back to Stage 2 Instructions","第2段階の説明に戻る","2단계 안내로 돌아가기"],"返回第三關說明":["Back to Stage 3 Instructions","第3段階の説明に戻る","3단계 안내로 돌아가기"],"✓ 第一關":["✓ Stage 1","✓ 第1段階","✓ 1단계"],"✓ 第二關":["✓ Stage 2","✓ 第2段階","✓ 2단계"],"臺語練習方式錄音無法連線取得。":["The Taiwanese Hokkien practice audio could not be loaded.","台湾語の練習音声を読み込めませんでした。","대만 민난어 연습 음성을 불러오지 못했습니다."],"請先輸入一個別名，再按新增。":["Enter an alias before selecting Add.","追加する前に略称を入力してください。","추가를 누르기 전에 별칭을 입력하세요."],"家裡":["Home","自宅","집"],"家中":["At home","自宅","집"],"住家":["Residence","住居","거주지"],"請重新選擇有效的練習模式。":["Please select a valid practice mode again.","有効な練習モードをもう一度選択してください。","유효한 연습 모드를 다시 선택하세요."],"請輸入生肖名稱":["Enter a Chinese zodiac animal","十二支の動物名を入力してください","십이지 동물 이름을 입력하세요"],"請直接輸入您目前所在的地點名稱。":["Enter the name of your current location.","現在いる場所の名称を入力してください。","현재 위치의 이름을 입력하세요."],"資料暫無法取得":["Data is temporarily unavailable","データを一時的に取得できません","데이터를 일시적으로 가져올 수 없습니다"],"依測驗地點設定核對":["Verify using the configured test location","設定された検査場所を使用して照合","설정된 검사 장소를 기준으로 확인"],"請先輸入月份。":["Please enter a month first.","先に月を入力してください。","먼저 월을 입력하세요."],"休息期間，請您放輕鬆，靜候兩分鐘後再繼續作答。":["Please relax during the break. Continue answering after two minutes.","休憩中はリラックスして、2分後に回答を再開してください。","휴식 시간에는 편안히 쉬고 2분 후 답변을 계속하세요."],"本次認知功能測驗已完成，請查看以下測驗結果與作答明細。謝謝您的用心參與。":["The cognitive assessment is complete. Please review the results and response details below. Thank you for participating.","認知機能検査が完了しました。以下の結果と回答詳細をご確認ください。ご参加ありがとうございました。","인지 기능 검사가 완료되었습니다. 아래 결과와 답변 세부 정보를 확인하세요. 참여해 주셔서 감사합니다."],"您已完成前兩關測驗，返回將會離開目前進度，確定要返回嗎？":["You have completed the first two stages. Returning will leave your current progress. Are you sure you want to go back?","最初の2段階が完了しています。戻ると現在の進行状況が失われます。戻ってもよろしいですか？","앞의 두 단계를 완료했습니다. 돌아가면 현재 진행 상황을 벗어납니다. 돌아가시겠습니까?"],"請先完成上方測驗地點選擇":["Please complete the test location selection above first.","先に上の検査場所を選択してください。","먼저 위에서 검사 장소를 선택하세요."],"點此輸入數字":["Tap here to enter numbers","ここをタップして数字を入力","여기를 눌러 숫자를 입력하세요"],"輸入4位數字":["Enter 4 digits","4桁の数字を入力","숫자 4자리를 입력하세요"],"請輸入數字":["Enter numbers","数字を入力してください","숫자를 입력하세요"],"點此輸入一～六或日":["Tap to enter Monday through Sunday","ここをタップして月曜から日曜を入力","여기를 눌러 월요일부터 일요일까지 입력하세요"],"第一關｜時間、空間認知":["Stage 1 | Time and Spatial Orientation","第1段階｜時間・空間の見当識","1단계 | 시간·공간 지남력"],"本次實際完成的時鐘畫作":["Clock drawing submitted for this test","今回提出された時計の描画","이번 검사에서 제출한 시계 그림"],"本次實際繪圖紀錄":["Drawing record for this test","今回の描画記録","이번 검사 그림 기록"],"目前沒有可顯示的時鐘繪圖圖片紀錄。":["No clock drawing image is available to display.","表示できる時計の描画画像がありません。","표시할 시계 그림 이미지 기록이 없습니다."],"分針指向指定分鐘":["Minute hand points to the specified minute","分針が指定された分を指している","분침이 지정된 분을 가리킴"],"時針位置符合指定時間":["Hour hand position matches the specified time","時針の位置が指定時刻と一致している","시침 위치가 지정 시간과 일치함"],"沒有不相關添加":["No unrelated marks added","無関係な書き込みがない","관련 없는 표시가 없음"],"數字位於圓圈內":["Numbers are inside the circle","数字が円の内側にある","숫자가 원 안에 있음"],"1 至 12 完整且順時針排列":["Numbers 1 through 12 are complete and arranged clockwise","1から12までの数字がそろい、時計回りに配置されている","1부터 12까지 숫자가 빠짐없이 시계 방향으로 배열됨"],"圓形輪廓完整":["Complete circular outline","円の輪郭が完成している","원형 윤곽이 완성됨"],"圓形大小與比例":["Circle size and proportions","円の大きさと比率","원의 크기와 비율"],"原評分系統回傳的項目紀錄":["Item details returned by the original scoring system","元の採点システムから返された項目記録","기존 채점 시스템에서 반환한 항목 기록"],"得分紀錄：":["Score record: ","得点記録：","점수 기록: "],"判定紀錄：":["Assessment record: ","判定記録：","판정 기록: "],"符合":["Met","該当","충족"],"未符合":["Not met","非該当","미충족"],"評分紀錄：":["Scoring record: ","採点記録：","채점 기록: "],"收合本關作答明細":["Hide response details","回答詳細を閉じる","답변 세부 정보 접기"],"居家練習模式":["Home practice mode","自宅練習モード","가정 연습 모드"],"施測人員模式":["Staff assessment mode","検査担当者モード","검사 담당자 모드"],"正在播放語音說明中，請仔細聆聽（若沒聲音請調大手機音量）":["Audio instructions are playing. Listen carefully. Turn up your phone volume if needed.","音声案内を再生中です。よく聞いてください。聞こえない場合は端末の音量を上げてください。","음성 안내가 재생 중입니다. 잘 들어주세요. 소리가 들리지 않으면 휴대전화 음량을 높이세요."],"已選擇純文字模式，練習時不會播放聲音。":["Text-only mode is selected. Audio will not play during practice.","テキストのみモードが選択されています。練習中に音声は再生されません。","텍스트 전용 모드가 선택되었습니다. 연습 중에는 음성이 재생되지 않습니다."],"正在播放試聽語音，請確認聽得到聲音（若無聲音請調大手機音量）。":["Audio preview is playing. Make sure you can hear it. Turn up your phone volume if needed.","音声を試聴中です。聞こえることを確認してください。聞こえない場合は端末の音量を上げてください。","음성 미리 듣기가 재생 중입니다. 소리가 들리는지 확인하세요. 들리지 않으면 휴대전화 음량을 높이세요."],"目前作答方式：純文字":["Response mode: Text only","回答方法：テキストのみ","답변 방식: 텍스트 전용"],"目前語音：":["Audio language: ","音声：","음성: "],"選擇作答方式":["Choose a response mode","回答方法を選択","응답 방식 선택"],"選擇練習地點":["Choose a practice location","練習場所を選択","연습 장소 선택"],"數字按鍵":["Number keys","数字キー","숫자 키"],"清除重填":["Clear and re-enter","消去して再入力","지우고 다시 입력"],"刪掉一個字":["Delete one character","1文字削除","문자 하나 삭제"],"請用下方按鍵輸入年份數字":["Use the buttons below to enter the year","下のボタンで年を入力してください","아래 버튼을 사용해 연도를 입력하세요"],"請用下方按鍵點選日期數字":["Use the buttons below to enter the date","下のボタンで日付を入力してください","아래 버튼을 사용해 날짜를 입력하세요"],"請輸入農曆日期數字即可（例如：初五請按 5，十五請按 15）。":["Enter only the lunar date number (for example, press 5 for the 5th day or 15 for the 15th day).","旧暦の日付の数字のみを入力してください（例：初五は5、十五は15を押します）。","음력 날짜 숫자만 입력하세요(예: 초닷새는 5, 보름은 15를 누르세요)."],"您的答案":["Your answer","あなたの回答","답변"],"請輸入星期幾":["Enter the day of the week","曜日を入力してください","요일을 입력하세요"],"您的答案：請輸入星期幾":["Your answer: Enter the day of the week","あなたの回答：曜日を入力してください","답변: 요일을 입력하세요"],"請選擇一種回答方式，答對即可。":["Choose one response method. A correct answer is enough.","回答方法を1つ選んでください。正解すれば通過です。","답변 방식을 하나 선택하세요. 정답이면 통과입니다."],"您可以用「國曆」或「農曆」其中一種來回答，只要答對其中一種就算過關！請先點選您習慣的日曆：":["You may answer using either the Gregorian or lunar calendar. Either correct answer will count. Choose your preferred calendar first:","新暦または旧暦のどちらかで回答できます。どちらかが正解なら合格です。最初に使い慣れた暦を選んでください。","양력 또는 음력 중 하나로 답할 수 있습니다. 둘 중 하나만 맞아도 통과입니다. 먼저 익숙한 달력을 선택하세요."],"請直接輸入今天是星期幾。":["Please type the day of the week.","今日の曜日を入力してください。","오늘이 무슨 요일인지 입력하세요."],"請輸入今天是星期幾，再確認本題。":["Please enter the day of the week before confirming this answer.","曜日を入力してから、この回答を確定してください。","요일을 입력한 다음 이 답변을 확인하세요."],"請先在上方輸入日期數字，再按確認。":["Enter the date number above, then select Confirm.","上に日付を入力してから「確認」を選択してください。","위에 날짜 숫자를 입력한 다음 확인을 누르세요."],"請先選擇一種回答方式，並完成作答後再按確認。":["Choose a response method and complete your answer before selecting Confirm.","回答方法を選択して回答を入力してから、「確認」を選択してください。","답변 방식을 선택하고 답변을 완료한 다음 확인을 누르세요."],"請先選擇國曆或農曆，再輸入月份數字。":["Select the Gregorian or lunar calendar, then enter the month number.","新暦または旧暦を選択してから、月の数字を入力してください。","양력 또는 음력을 선택한 다음 월 숫자를 입력하세요."],"請輸入您目前所在的地點名稱，再按確認。":["Enter the name of your current location, then select Confirm.","現在いる場所の名称を入力してから「確認」を選択してください。","현재 위치 이름을 입력한 다음 확인을 누르세요."],"這個地點簡稱":["this location alias","この場所の略称","이 장소 별칭"],"刪除這個地點簡稱":["Delete this location alias","この場所の略称を削除","이 장소 별칭 삭제"],"請先選擇民國年、西元年或生肖，再完成作答。":["Select Minguo year, Gregorian year, or zodiac first, then complete your answer.","最初に民国年、西暦年、生肖のいずれかを選択してから回答してください。","먼저 민국 연도, 서력 연도 또는 띠를 선택한 다음 답변하세요."],"請先在上方輸入生肖，再按確認。":["Enter the zodiac animal above, then select Confirm.","上に生肖を入力してから「確認」を選択してください。","위에 띠를 입력한 다음 확인을 누르세요."],"請先在上方輸入年份數字，再按確認。":["Enter the year above, then select Confirm.","上に年の数字を入力してから「確認」を選択してください。","위에 연도 숫자를 입력한 다음 확인을 누르세요."],"請先選擇國曆或農曆，再輸入日期數字。":["Select the Gregorian or lunar calendar, then enter the date number.","新暦または旧暦を選択してから、日付の数字を入力してください。","양력 또는 음력을 선택한 다음 날짜 숫자를 입력하세요."],"您還沒選擇回答方式喔，請先點選民國年、西元年或生肖。":["Please choose a response method first: Minguo year, Gregorian year, or zodiac.","回答方法が選択されていません。民国年、西暦年、生肖のいずれかを選択してください。","답변 방식을 선택하지 않았습니다. 민국 연도, 서력 연도 또는 띠를 선택하세요."],"您還沒輸入生肖喔，請先在上方輸入生肖。":["You have not entered a zodiac animal. Enter it above first.","生肖が入力されていません。先に上に入力してください。","띠를 입력하지 않았습니다. 먼저 위에 입력하세요."],"您還沒輸入年份數字喔，請先點選下方的數字再按確認。":["You have not entered the year. Select the numbers below, then confirm.","年が入力されていません。下の数字を選択してから確認してください。","연도를 입력하지 않았습니다. 아래 숫자를 선택한 다음 확인하세요."],"您還沒選擇國曆或農曆喔，請先點選上方的日曆。":["You have not selected a calendar. Choose Gregorian or lunar above first.","暦が選択されていません。上で新暦または旧暦を選択してください。","달력을 선택하지 않았습니다. 위에서 양력 또는 음력을 선택하세요."],"您還沒輸入幾號喔，請先點選下方的數字再按確認。":["You have not entered the date. Select the numbers below, then confirm.","日付が入力されていません。下の数字を選択してから確認してください。","날짜를 입력하지 않았습니다. 아래 숫자를 선택한 다음 확인하세요."],"請用下方按鍵輸入月份數字（1 到 12）。":["Use the buttons below to enter a month from 1 to 12.","下のボタンで1から12までの月を入力してください。","아래 버튼으로 1부터 12까지의 월을 입력하세요."],"月份數字按鍵":["Month number keys","月の数字キー","월 숫자 키"],"月份最多輸入兩個數字，請清除後重新輸入。":["A month can have at most two digits. Clear and enter it again.","月は最大2桁です。消去してもう一度入力してください。","월은 최대 두 자리까지 입력할 수 있습니다. 지우고 다시 입력하세요."],"月份只能輸入 1 到 12，已清空，請重新輸入。":["Enter a month from 1 to 12. The field has been cleared; please try again.","月は1から12までで入力してください。入力欄を消去しました。もう一度入力してください。","월은 1부터 12까지 입력해야 합니다. 입력란을 지웠으니 다시 입력하세요."],"月份只能輸入 1 到 12，不能從 0 開始。":["Enter a month from 1 to 12. It cannot start with 0.","月は1から12までです。0から始めることはできません。","월은 1부터 12까지이며 0으로 시작할 수 없습니다."],"清除全部月份數字":["Clear all month digits","月の数字をすべて消去","월 숫자 모두 지우기"],"已清空，請重新輸入月份。":["Cleared. Please enter the month again.","消去しました。月をもう一度入力してください。","지웠습니다. 월을 다시 입력하세요."],"刪除上一個數字":["Delete the previous digit","前の数字を削除","이전 숫자 삭제"],"刪除上一個月份數字":["Delete the previous month digit","前の月の数字を削除","이전 월 숫자 삭제"],"已刪除數字，請重新輸入月份。":["The digit was deleted. Please enter the month again.","数字を削除しました。月をもう一度入力してください。","숫자를 삭제했습니다. 월을 다시 입력하세요."],"請用下方按鍵輸入月份數字":["Use the buttons below to enter the month","下のボタンで月を入力してください","아래 버튼으로 월을 입력하세요"],"農曆月份":["Lunar month","旧暦の月","음력 월"],"國曆月份":["Gregorian month","新暦の月","양력 월"],"，請使用下方數字按鍵輸入":[". Use the number keys below.","。下の数字キーを使用してください。",". 아래 숫자 키를 사용하세요."],"數字鍵盤":["Numeric keypad","数字キーパッド","숫자 키패드"],"收起":["Collapse","閉じる","접기"],"收起數字鍵盤":["Close numeric keypad","数字キーパッドを閉じる","숫자 키패드 닫기"],"請輸入生肖":["Enter the Chinese zodiac animal","十二支の動物名を入力してください","십이지 동물 이름을 입력하세요"],"請輸入您的生肖":["Please enter your Chinese zodiac animal","あなたの生肖を入力してください","본인의 띠를 입력하세요"],"請依照指定時間畫出時鐘。可以使用下方工具修改，完成後點選送出答案。":["Draw a clock showing the specified time. Use the tools below to make changes, then select Submit Answer when finished.","指定された時刻を示す時計を描いてください。下のツールで修正し、完成したら「回答を送信」を選択してください。","지정된 시간을 나타내는 시계를 그리세요. 아래 도구로 수정한 후 완료되면 답안 제출을 누르세요."],"請畫出一個完整的時鐘，顯示":["Draw a complete clock showing ","次の時刻を示す時計を描いてください：","다음 시간을 나타내는 완전한 시계를 그리세요: "],"目前沒有可以復原的筆畫。":["There are no strokes to undo.","元に戻せる線がありません。","되돌릴 획이 없습니다."],"確定要全部擦掉重畫嗎？":["Are you sure you want to erase everything and start over?","すべて消去して描き直しますか？","모두 지우고 다시 그리시겠습니까?"],"目前選擇的是純文字模式，練習時不會播放聲音。":["Text-only mode is selected. No audio will play during practice.","テキストのみモードが選択されています。練習中に音声は再生されません。","텍스트 전용 모드가 선택되었습니다. 연습 중에는 음성이 재생되지 않습니다."],"← 返回選擇語音":["← Back to Language Selection","← 音声選択に戻る","← 언어 선택으로 돌아가기"],"← 返回測驗介紹":["← Back to Test Instructions","← 検査説明に戻る","← 검사 안내로 돌아가기"],"← 返回第一關說明":["← Back to Stage 1 Instructions","← 第1段階の説明に戻る","← 1단계 안내로 돌아가기"],"← 返回第二關說明":["← Back to Stage 2 Instructions","← 第2段階の説明に戻る","← 2단계 안내로 돌아가기"],"← 返回第三關說明":["← Back to Stage 3 Instructions","← 第3段階の説明に戻る","← 3단계 안내로 돌아가기"],"請選擇練習地點":["Please select a practice location","練習場所を選択してください","연습 장소를 선택하세요"],"休息倒數":["Break countdown","休憩カウントダウン","휴식 카운트다운"],"休息倒數進度":["Break countdown progress","休憩カウントダウンの進行状況","휴식 카운트다운 진행 상황"],"時鐘繪圖畫布":["Clock drawing canvas","時計描画キャンバス","시계 그리기 캔버스"],"作答區":["Answer area","回答エリア","답변 영역"],"您的答案：請輸入地點名稱":["Your answer: Enter the location name","あなたの回答：場所の名前を入力してください","답변: 장소 이름을 입력하세요"]});
 
 Object.assign(EXAM_TEXT_TRANSLATIONS, {"正式地點名稱":["Official location name","正式な場所の名称","공식 장소 이름"],"外語名稱為便於辨識的描述性翻譯，未逐一確認為官方譯名。":["Foreign-language names are descriptive translations for identification and have not all been verified as official names.","外国語名は識別用の説明的な翻訳であり、すべてが公式名称として確認されたものではありません。","외국어 이름은 식별을 위한 설명형 번역이며, 모두 공식 명칭으로 확인된 것은 아닙니다."],"地點別名管理":["Location alias management","場所の別名管理","장소 별칭 관리"],"每個地點保留 1 個正式名稱，最多 4 組別名；每組都需填寫四種語言。":["Keep one formal name per location and up to 4 alias groups. Complete all four languages in each group.","各場所の正式名称は1つ、別名は最大4グループです。各グループの4言語すべてを入力してください。","장소마다 공식 이름은 1개, 별칭 그룹은 최대 4개입니다. 각 그룹의 4개 언어를 모두 입력하세요."],"繁體中文":["Traditional Chinese","繁体字中国語","번체 중국어"],"英文":["English","英語","영어"],"日文":["Japanese","日本語","일본어"],"韓文":["Korean","韓国語","한국어"],"別名組":["Alias group","別名グループ","별칭 그룹"],"請輸入別名":["Enter alias","別名を入力","별칭 입력"],"＋新增別名組":["＋ Add alias group","＋ 別名グループを追加","＋ 별칭 그룹 추가"],"儲存別名設定":["Save alias settings","別名設定を保存","별칭 설정 저장"],"此地點最多設定 4 組別名。":["A location can have up to 4 alias groups.","1か所につき別名は最大4グループまで設定できます。","장소당 별칭 그룹은 최대 4개까지 설정할 수 있습니다."],"每組別名請填寫繁體中文、英文、日文及韓文。":["Complete the Traditional Chinese, English, Japanese, and Korean fields for every alias group.","各別名グループの繁体字中国語、英語、日本語、韓国語をすべて入力してください。","각 별칭 그룹의 번체 중국어, 영어, 일본어, 한국어 항목을 모두 입력하세요."],"別名四種語言都填寫後，才會納入地點名稱比對。":["An alias group is used for matching only after all four language fields are completed.","4言語すべてを入力した別名グループのみ照合に使用されます。","4개 언어 항목을 모두 입력한 별칭 그룹만 대조에 사용됩니다."],"目前尚未設定常用別名；可先使用正式名稱作答。":["No common aliases are configured yet. The formal name can still be used.","一般的な別名はまだ設定されていません。正式名称で回答できます。","아직 일반 별칭이 설정되지 않았습니다. 공식 이름으로 답할 수 있습니다."],"請先選擇測驗地點，再管理該地點的名稱。":["Select a testing location before managing its names.","名称を管理する前に検査場所を選択してください。","장소 이름을 관리하기 전에 검사 장소를 선택하세요."],"已儲存在共用地點資料庫。":["Saved to the shared location database.","共用場所データベースに保存しました。","공유 장소 데이터베이스에 저장했습니다."],"已先儲存在此裝置；共用資料庫同步失敗，請確認後臺連線後再儲存。":["Saved on this device. Shared database sync failed; check the backend connection and save again.","この端末には保存しましたが、共用データベースとの同期に失敗しました。バックエンド接続を確認して再保存してください。","이 기기에는 저장했지만 공유 데이터베이스 동기화에 실패했습니다. 백엔드 연결을 확인한 뒤 다시 저장하세요."],"已還原系統預設別名。":["System default aliases have been restored.","システムの既定の別名に戻しました。","시스템 기본 별칭으로 복원했습니다."],"已還原此地點的系統預設別名，但尚未同步至共用資料庫。":["Default aliases were restored on this device but have not synced to the shared database.","この端末では既定の別名に戻しましたが、共用データベースにはまだ同期されていません。","이 기기에서 기본 별칭을 복원했지만 공유 데이터베이스에는 아직 동기화되지 않았습니다."],"地點名稱尚待工作人員現場確認；此題不列入正式計分。":["The location answer still requires on-site staff verification. This question is excluded from the official score.","場所の回答は担当者による現地確認が必要です。この問題は正式な得点に含まれません。","장소 답변은 담당자의 현장 확인이 필요합니다. 이 문항은 공식 점수에 포함되지 않습니다."],"第五題地點答案需要人工核對，不列入第一關正式計分。":["The location answer in Question 5 requires manual verification and is excluded from the Stage 1 score.","第5問の場所の回答は手動確認が必要で、第1段階の正式な得点には含まれません。","5번 문항의 장소 답변은 수동 확인이 필요하며 1단계 공식 점수에서 제외됩니다."],"系統找到一筆完全相符的地點名稱，但仍須現場核對。":["One exact location-name match was found, but on-site verification is still required.","完全一致する場所名が1件見つかりましたが、現地確認が必要です。","정확히 일치하는 장소 이름을 찾았지만 현장 확인이 필요합니다."],"輸入內容可能對應多個地點，請由工作人員確認。":["The entry may match multiple locations. Staff verification is required.","入力内容は複数の場所に該当する可能性があります。担当者の確認が必要です。","입력 내용이 여러 장소와 일치할 수 있습니다. 담당자 확인이 필요합니다."],"沒有找到完全相符的地點名稱，請由工作人員確認。":["No exact location-name match was found. Staff verification is required.","完全一致する場所名が見つかりません。担当者の確認が必要です。","정확히 일치하는 장소 이름을 찾지 못했습니다. 담당자 확인이 필요합니다."],"地點名稱比對只採用完整相符；部分文字不會自動指定地點。":["Location matching requires an exact full-name match. Partial text never selects a location automatically.","場所の照合は名称全体の完全一致のみです。一部一致で場所を自動指定することはありません。","장소 이름은 전체가 정확히 일치해야 합니다. 일부 일치만으로 장소를 자동 지정하지 않습니다."],"地點別名已在此裝置儲存；按「儲存別名設定」才會同步到所有裝置。":["Alias edits are saved on this device. Select “Save alias settings” to sync them across devices.","別名の編集はこの端末に保存されます。「別名設定を保存」を選択すると全端末に同期されます。","별칭 수정 사항은 이 기기에 저장됩니다. ‘별칭 설정 저장’을 눌러 모든 기기와 동기화하세요."]});
 
@@ -9526,6 +9529,9 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
     actions.appendChild(clear);actions.appendChild(backspace);control.appendChild(actions);
   }
 
+  // 將原本實際建立互動按鍵的函式提供給浮動面板控制器；不是圖片或假按鍵。
+  window.__renderOriginalP1NumberPad = renderNumberPad;
+
   var previousSetP1Q1Mode=window.setP1Q1Mode;
   if(typeof previousSetP1Q1Mode==='function'){
     window.setP1Q1Mode=function(mode){
@@ -10031,6 +10037,9 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
     input.setAttribute('aria-describedby', 'p1-number-pad-instruction ' + feedback.id);
   }
 
+  // 月份專用的原始 1–12 按鍵同樣保留，供浮動面板在節點遺失時恢復。
+  window.__renderOriginalP1MonthNumberPad = renderMonthNumberPad;
+
   window.setP1Q2Mode = function (mode, announce) {
     if (mode !== 'solar' && mode !== 'lunar') return;
     var input = byId('p1-answer-input');
@@ -10192,34 +10201,45 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
   var suppressNextFocusOpen = false;
 
   function isNativeKeypadDevice() {
-    // 全平台一律使用網頁自訂浮動數字鍵盤；inputmode=none 僅抑制裝置螢幕鍵盤，
-    // 不會阻擋電腦實體鍵盤、外接鍵盤或藍牙鍵盤輸入。
+    // 所有裝置均使用原本網頁自訂數字鍵盤；不以原生鍵盤取代。
+    // input.readOnly=false，電腦實體鍵盤與外接鍵盤仍可輸入。
     return false;
   }
 
-  function getQuestion() {
+  function getAppState() {
     try {
-      var state = (typeof examState !== 'undefined' && examState) || window.examState || null;
-      return state && state.p1 && state.p1.questions
-        ? state.p1.questions[state.p1.currentIndex] : null;
-    } catch (e) { return null; }
+      if (typeof window.__getCognitiveExamState === 'function') return window.__getCognitiveExamState();
+      if (window.examState) return window.examState;
+      if (typeof examState !== 'undefined') return examState;
+    } catch (e) {}
+    return null;
+  }
+
+  function getQuestion() {
+    var state = getAppState();
+    return state && state.p1 && state.p1.questions
+      ? state.p1.questions[state.p1.currentIndex] : null;
   }
 
   function getNumericConfig() {
     var q = getQuestion();
-    if (!q) return null;
-    // 四種介面語言都保留數字鍵盤；英／日／韓另允許使用者以實體鍵盤輸入文字答案。
-    var allowWords = typeof EXAM_DISPLAY_LANG !== 'undefined' && EXAM_DISPLAY_LANG !== 'zh-TW';
+    var state = getAppState();
+    if (!q || !state || !state.p1) return null;
+    var mode = state.p1.currentMode;
+    var lang = (typeof window.EXAM_DISPLAY_LANG === 'string' && window.EXAM_DISPLAY_LANG) ||
+      (typeof EXAM_DISPLAY_LANG !== 'undefined' && EXAM_DISPLAY_LANG) || 'zh-TW';
+    // 四種介面語言都保留自訂數字鍵盤；英／日／韓亦可由實體鍵盤輸入文字答案。
+    var allowWords = lang !== 'zh-TW';
     if (q.type === 'q1') {
-      if (examState.p1.currentMode === 'roc') return { key: 'q1-roc', kind: 'year', maxDigits: 3, placeholder: '點此輸入年份數字', label: '民國年份', allowWords: allowWords };
-      if (examState.p1.currentMode === 'western') return { key: 'q1-western', kind: 'year', maxDigits: 4, placeholder: '點此輸入年份數字', label: '西元年份', allowWords: allowWords };
+      if (mode === 'roc') return { key: 'q1-roc', kind: 'year', maxDigits: 3, placeholder: '點此輸入年份數字', label: '民國年份', allowWords: allowWords };
+      if (mode === 'western') return { key: 'q1-western', kind: 'year', maxDigits: 4, placeholder: '點此輸入年份數字', label: '西元年份', allowWords: allowWords };
       return null; // 生肖維持一般文字輸入，不顯示數字鍵盤。
     }
-    if (q.type === 'q2' && (examState.p1.currentMode === 'solar' || examState.p1.currentMode === 'lunar')) {
-      return { key: 'q2-' + examState.p1.currentMode, kind: 'month', maxDigits: 2, placeholder: '點此輸入月份數字', label: examState.p1.currentMode === 'lunar' ? '農曆月份' : '國曆月份', allowWords: allowWords };
+    if (q.type === 'q2' && (mode === 'solar' || mode === 'lunar')) {
+      return { key: 'q2-' + mode, kind: 'month', maxDigits: 2, placeholder: '點此輸入月份數字', label: mode === 'lunar' ? '農曆月份' : '國曆月份', allowWords: allowWords };
     }
-    if (q.type === 'q3' && (examState.p1.currentMode === 'solar' || examState.p1.currentMode === 'lunar')) {
-      return { key: 'q3-' + examState.p1.currentMode, kind: 'date', maxDigits: 2, placeholder: '請輸入日期數字', label: examState.p1.currentMode === 'lunar' ? '農曆日期數字' : '國曆日期數字', allowWords: allowWords };
+    if (q.type === 'q3' && (mode === 'solar' || mode === 'lunar')) {
+      return { key: 'q3-' + mode, kind: 'date', maxDigits: 2, placeholder: '請輸入日期數字', label: mode === 'lunar' ? '農曆日期數字' : '國曆日期數字', allowWords: allowWords };
     }
     return null;
   }
@@ -10347,25 +10367,45 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
 
   function captureCurrentPadNodes() {
     var liveNodes = getPadNodesFrom(control);
+    if (!liveNodes.length && panel) liveNodes = getPadNodesFrom(panel);
     if (liveNodes.length) {
       cachedPadNodes = liveNodes.filter(function (node) { return !node.classList.contains('number-pad-help'); });
-      cachedPadMode = (getNumericConfig() || {}).key || '';
-      liveNodes.forEach(function (node) { if (node.parentNode) node.parentNode.removeChild(node); });
-      return;
+      cachedPadMode = (getNumericConfig() || {}).key || cachedPadMode;
+      cachedPadNodes.forEach(function (node) { if (node.parentNode) node.parentNode.removeChild(node); });
     }
-    if (panel && !panel.hidden) {
-      var inPanel = getPadNodesFrom(panel);
-      if (inPanel.length) {
-        cachedPadNodes = inPanel.filter(function (node) { return !node.classList.contains('number-pad-help'); });
-        cachedPadMode = (getNumericConfig() || {}).key || cachedPadMode;
-        cachedPadNodes.forEach(function (node) { if (node.parentNode) node.parentNode.removeChild(node); });
+  }
+
+  function ensureOriginalPadNodes(config) {
+    if (!config) return false;
+    captureCurrentPadNodes();
+    if (cachedPadNodes.length && cachedPadMode === config.key) return true;
+
+    // 模式切換後若沒有捕捉到新節點，先清除舊模式節點，再呼叫專案原有的鍵盤渲染器。
+    if (cachedPadMode && cachedPadMode !== config.key) {
+      cachedPadNodes = [];
+      clearPanelPadNodes();
+    }
+    cachedPadMode = config.key;
+    var renderer = config.kind === 'month'
+      ? window.__renderOriginalP1MonthNumberPad
+      : window.__renderOriginalP1NumberPad;
+    if (!cachedPadNodes.length && typeof renderer === 'function') {
+      try {
+        if (config.kind === 'month') renderer(control, input);
+        else renderer(control, input, config.maxDigits, '');
+      } catch (renderError) {
+        console.error('[數字鍵盤] 原始鍵盤渲染器執行失敗：', renderError);
       }
+      captureCurrentPadNodes();
+      if (cachedPadNodes.length) cachedPadMode = config.key;
     }
+    return cachedPadNodes.length > 0;
   }
 
   function buildPanelContent() {
     var host = ensurePanel();
-    // 先抓取當前模式剛建立的原有鍵盤節點；若沒有新節點則沿用先前保留的同一組按鍵。
+    var config = getNumericConfig();
+    ensureOriginalPadNodes(config);
     captureCurrentPadNodes();
     var header = host.querySelector('.number-pad-float-header');
     var nodes = cachedPadNodes.slice();
@@ -10385,12 +10425,12 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
       if (button.dataset.deviceBridgeBound === '1') return;
       button.dataset.deviceBridgeBound = '1';
       button.addEventListener('click', function () {
-        // 原有按鈕先執行其原本的輸入／清除／刪除事件，此處只同步資料及按鈕狀態。
-        window.setTimeout(function () {
-          if (!input) return;
-          input.dataset.lastAcceptedValue = String(input.value || '');
-          syncAnswerState();
-        }, 0);
+        // 原始按鈕事件先更新 input.value；此監聽器隨即同步同一欄位的輸入事件與 examState，
+        // 不使用 setTimeout，避免畫面已顯示新數字、答案狀態卻短暫落後一拍。
+        if (!input) return;
+        try { input.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) {}
+        input.dataset.lastAcceptedValue = String(input.value || '');
+        syncAnswerState();
       });
     });
   }
@@ -10404,37 +10444,36 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
     var viewportW = vv ? Number(vv.width || window.innerWidth) : Math.min(document.documentElement.clientWidth || window.innerWidth, window.innerWidth || 0);
     var viewportH = vv ? Number(vv.height || window.innerHeight) : (window.innerHeight || document.documentElement.clientHeight || 0);
     var margin = 12;
-    var width = Math.min(328, Math.max(220, viewportW - margin * 2));
+    var safeViewportW = Math.max(180, viewportW || window.innerWidth || 320);
+    var safeViewportH = Math.max(180, viewportH || window.innerHeight || 480);
+    var width = Math.min(328, Math.max(180, safeViewportW - margin * 2));
+    var maxPanelHeight = Math.max(150, safeViewportH - margin * 2);
     panel.style.position = 'fixed';
     panel.style.width = width + 'px';
     panel.style.maxWidth = 'calc(100vw - 24px)';
-    panel.style.maxHeight = Math.max(150, viewportH - margin * 2) + 'px';
+    panel.style.maxHeight = maxPanelHeight + 'px';
     panel.style.overflowY = 'auto';
     panel.style.overflowX = 'hidden';
     panel.style.left = (viewportLeft + margin) + 'px';
     panel.style.top = (viewportTop + margin) + 'px';
     panel.style.visibility = 'hidden';
     panel.hidden = false;
+    panel.style.display = 'block';
+    panel.style.zIndex = '2147483000';
 
-    var measuredHeight = Math.min(panel.scrollHeight || panel.getBoundingClientRect().height, viewportH - margin * 2);
-    var availableBelow = viewportTop + viewportH - margin - (rect.bottom + 8);
-    var availableAbove = rect.top - (viewportTop + margin) - 8;
-    var top;
-    // 優先放在欄位下方；下方不足時改放上方，並限制面板高度讓內容可在面板內捲動。
-    if (availableBelow >= Math.min(measuredHeight, 230) || availableBelow >= availableAbove) {
-      top = rect.bottom + 8;
-      panel.style.maxHeight = Math.max(150, Math.min(measuredHeight, availableBelow)) + 'px';
-    } else {
-      panel.style.maxHeight = Math.max(150, Math.min(measuredHeight, availableAbove)) + 'px';
-      var actualHeight = Math.min(panel.scrollHeight || measuredHeight, parseFloat(panel.style.maxHeight) || measuredHeight);
-      top = rect.top - actualHeight - 8;
-    }
-
+    var measuredHeight = Math.min(panel.scrollHeight || panel.getBoundingClientRect().height, maxPanelHeight);
+    var availableBelow = Math.max(0, viewportTop + safeViewportH - margin - (rect.bottom + 8));
+    var availableAbove = Math.max(0, rect.top - (viewportTop + margin) - 8);
+    var placeBelow = availableBelow >= Math.min(measuredHeight, 220) || availableBelow >= availableAbove;
+    var available = placeBelow ? availableBelow : availableAbove;
+    var finalHeight = Math.min(measuredHeight, maxPanelHeight, Math.max(150, available || maxPanelHeight));
+    panel.style.maxHeight = finalHeight + 'px';
+    var top = placeBelow ? rect.bottom + 8 : rect.top - finalHeight - 8;
     var minTop = viewportTop + margin;
-    var maxTop = viewportTop + viewportH - margin - Math.min(measuredHeight, parseFloat(panel.style.maxHeight) || measuredHeight);
+    var maxTop = viewportTop + safeViewportH - margin - finalHeight;
     top = Math.max(minTop, Math.min(top, maxTop));
     var minLeft = viewportLeft + margin;
-    var maxLeft = viewportLeft + viewportW - width - margin;
+    var maxLeft = viewportLeft + safeViewportW - width - margin;
     var left = Math.max(minLeft, Math.min(rect.left, maxLeft));
     panel.style.left = Math.round(left) + 'px';
     panel.style.top = Math.round(top) + 'px';
@@ -10442,17 +10481,26 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
   }
 
   function openPanel() {
-    if (isNativeKeypadDevice() || !getNumericConfig()) return;
+    var config = getNumericConfig();
+    if (isNativeKeypadDevice() || !config) return;
+    ensureOriginalPadNodes(config);
     buildPanelContent();
-    if (!panel || !cachedPadNodes.length) return;
+    if (!panel || !panel.querySelector('.number-pad-grid')) {
+      console.error('[數字鍵盤] 未找到原始數字按鍵節點，請檢查第一關渲染器。');
+      return;
+    }
     updatePanelLanguage();
     panel.hidden = false;
+    panel.style.display = 'block';
+    panel.style.zIndex = '2147483000';
     input.setAttribute('aria-expanded', 'true');
     positionPanel();
+    if (window.requestAnimationFrame) window.requestAnimationFrame(function () { if (panel && !panel.hidden) positionPanel(); });
   }
 
   function syncAnswerState() {
-    if (window.examState && examState.p1) examState.p1.currentAnswer = String(input.value || '');
+    var state = getAppState();
+    if (state && state.p1) state.p1.currentAnswer = String(input.value || '');
     if (typeof window.updateP1SubmitButton === 'function') window.updateP1SubmitButton();
     else if (typeof window.onP1AnswerInputChanged === 'function') window.onP1AnswerInputChanged();
   }
@@ -10496,6 +10544,7 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
       if (!suppressNextFocusOpen && !isNativeKeypadDevice() && getNumericConfig()) openPanel();
     });
     input.addEventListener('click', function () {
+      // 收起後輸入框可能仍保有焦點，因此不能只依賴 focus；每次實際點擊都重新開啟。
       if (!isNativeKeypadDevice() && getNumericConfig()) openPanel();
     });
     input.addEventListener('keydown', function (event) {
@@ -10529,7 +10578,8 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
       input.removeAttribute('aria-describedby');
 
       // 只有生肖與非數字題目不使用自訂數字鍵盤。
-      if (q && q.type === 'q1' && examState.p1.currentMode === 'zodiac') {
+      var currentState = getAppState();
+      if (q && q.type === 'q1' && currentState && currentState.p1.currentMode === 'zodiac') {
         input.type = 'text';
         input.style.display = 'block';
         input.readOnly = false;
@@ -10570,7 +10620,8 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
       } else if (q.type === 'q2') {
         input.placeholder = getExamGenericAnswerPlaceholder(lang);
       } else if (q.type === 'q3') {
-        var lunarDate = examState.p1.currentMode === 'lunar';
+        var currentState = getAppState();
+        var lunarDate = !!(currentState && currentState.p1.currentMode === 'lunar');
         input.placeholder = getExamGenericAnswerPlaceholder(lang);
       }
     } else {
@@ -10593,16 +10644,7 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
     // 把原本在欄位下方建立的按鍵節點收進浮動面板，絕不留在頁面文件流中。
     var helpNodes = getPadNodesFrom(control).filter(function (node) { return node.classList.contains('number-pad-help'); });
     helpNodes.forEach(function (node) { if (node.parentNode) node.parentNode.removeChild(node); });
-    var livePadNodes = getPadNodesFrom(control);
-    if (livePadNodes.length) {
-      cachedPadNodes = livePadNodes.filter(function (node) { return !node.classList.contains('number-pad-help'); });
-      cachedPadMode = config.key;
-      livePadNodes.forEach(function (node) { if (node.parentNode) node.parentNode.removeChild(node); });
-    } else if (cachedPadMode && cachedPadMode !== config.key) {
-      cachedPadNodes = [];
-      cachedPadMode = config.key;
-      clearPanelPadNodes();
-    }
+    ensureOriginalPadNodes(config);
 
     var statusHelp = ensureFeedback();
     setFeedback('');
@@ -10624,7 +10666,8 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
       keypadReconcileTimer = null;
       if (!input || !input.isConnected) return;
       var current = getQuestion();
-      if (current && current.type === 'q1' && examState.p1.currentMode === 'zodiac') {
+      var currentState = getAppState();
+      if (current && current.type === 'q1' && currentState && currentState.p1.currentMode === 'zodiac') {
         restoreZodiacTextInput();
         return;
       }
@@ -10650,7 +10693,8 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
 
   function restoreZodiacTextInput() {
     var q = getQuestion();
-    if (!q || q.type !== 'q1' || examState.p1.currentMode !== 'zodiac') return;
+    var state = getAppState();
+    if (!q || q.type !== 'q1' || !state || state.p1.currentMode !== 'zodiac') return;
     closePanel(false);
     removeTriggerHelp();
     cachedPadNodes = [];
@@ -10724,7 +10768,8 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
       closePanel(false);
       var result = originalRender.apply(this, arguments);
       var q = getQuestion();
-      if (q && q.type === 'q1' && examState.p1.currentMode === 'zodiac') restoreZodiacTextInput();
+      var currentState = getAppState();
+      if (q && q.type === 'q1' && currentState && currentState.p1.currentMode === 'zodiac') restoreZodiacTextInput();
       else if (getNumericConfig()) configureCurrentInput();
       else {
         configureCurrentInput();
@@ -10783,7 +10828,7 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
   bindInputOnce();
   lastNativePreference = isNativeKeypadDevice();
   if (getNumericConfig()) configureCurrentInput();
-  else if (getQuestion() && getQuestion().type === 'q1' && examState.p1.currentMode === 'zodiac') restoreZodiacTextInput();
+  else if (getQuestion() && getQuestion().type === 'q1' && getAppState() && getAppState().p1.currentMode === 'zodiac') restoreZodiacTextInput();
   scheduleKeypadReconcile();
 })();
 
@@ -10845,11 +10890,6 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
     '請輸入國曆日期：': ['Enter the Gregorian date:', '西暦の日付を入力してください：', '양력 날짜를 입력하세요:'],
     '請輸入農曆日期：': ['Enter the lunar date:', '旧暦の日付を入力してください：', '음력 날짜를 입력하세요:'],
     '請輸入日期': ['Enter the date', '日付を入力', '날짜를 입력하세요'],
-    '點擊輸入框即可開啟數字鍵盤。': [
-      'Tap the input field to open the numeric keypad.',
-      '入力欄をタップすると数字キーパッドが開きます。',
-      '입력란을 누르면 숫자 키패드가 열립니다.'
-    ],
     '號': ['day', '日', '일'],
     '您的答案': ['Your answer', 'あなたの回答', '답변'],
     '例如：星期一': ['Enter your answer', '回答を入力してください', '답변을 입력하세요'],
@@ -12268,204 +12308,7 @@ html:lang(ko) .choice-btn.active::after {
   #p1-number-pad-floating-panel .number-pad-action{min-height:52px!important;font-size:15px!important}
 }
 </style>
-<script id="final-floating-keypad-layout-fix">
-(function(){
-  'use strict';
-  var CONTROL_ID='p1-answer-control';
-  var INPUT_ID='p1-answer-input';
-  var PANEL_ID='p1-number-pad-floating-panel';
-  var PAD_SELECTOR='.number-pad-grid,.number-pad-actions,.number-pad-feedback';
-  var control=document.getElementById(CONTROL_ID);
-  var input=document.getElementById(INPUT_ID);
-  if(!control||!input)return;
-
-  var panel=null,observer=null,syncTimer=null,openedByUser=false,suppressFocusOpen=false;
-  function getState(){
-    try{return (typeof examState!=='undefined'&&examState)||window.examState||null;}catch(e){return window.examState||null;}
-  }
-  function getQuestion(){
-    var state=getState();
-    return state&&state.p1&&state.p1.questions?state.p1.questions[state.p1.currentIndex]:null;
-  }
-  function isNumericQuestion(){
-    var state=getState(),q=getQuestion();
-    if(!state||!state.p1||!q)return false;
-    if(q.type==='q1')return state.p1.currentMode==='roc'||state.p1.currentMode==='western';
-    if(q.type==='q2'||q.type==='q3')return state.p1.currentMode==='solar'||state.p1.currentMode==='lunar';
-    return false;
-  }
-  function language(){return String(window.EXAM_DISPLAY_LANG||'zh-TW');}
-  function labels(){
-    var lang=language();
-    if(lang==='en')return {title:'Numeric keypad',close:'Close',closeAria:'Close numeric keypad'};
-    if(lang==='ja')return {title:'数字キーパッド',close:'閉じる',closeAria:'数字キーパッドを閉じる'};
-    if(lang==='ko')return {title:'숫자 키패드',close:'닫기',closeAria:'숫자 키패드 닫기'};
-    return {title:'數字鍵盤',close:'收起',closeAria:'收起數字鍵盤'};
-  }
-  function ensurePanel(){
-    panel=document.getElementById(PANEL_ID);
-    if(!panel){
-      panel=document.createElement('section');
-      panel.id=PANEL_ID;
-      panel.className='number-pad-float';
-      panel.hidden=true;
-      panel.setAttribute('role','dialog');
-      panel.setAttribute('aria-modal','false');
-      document.body.appendChild(panel);
-    }
-    var header=panel.querySelector('.number-pad-float-header');
-    if(!header){header=document.createElement('div');header.className='number-pad-float-header';panel.insertBefore(header,panel.firstChild);}
-    var title=header.querySelector('[data-keypad-title]');
-    if(!title){title=header.querySelector('strong');}
-    if(!title){title=document.createElement('strong');header.insertBefore(title,header.firstChild);}
-    title.setAttribute('data-keypad-title','1');
-    var close=header.querySelector('.number-pad-float-close');
-    if(!close){close=document.createElement('button');close.type='button';close.className='number-pad-float-close';header.appendChild(close);}
-    close.setAttribute('data-keypad-close','1');
-    close.setAttribute('aria-label',labels().closeAria);
-    if(close.dataset.unifiedCloseBound!=='1'){
-      close.dataset.unifiedCloseBound='1';
-      close.addEventListener('click',function(){closePanel(true);});
-    }
-    updatePanelLabels();
-    return panel;
-  }
-  function updatePanelLabels(){
-    if(!panel)return;
-    var copy=labels();
-    var title=panel.querySelector('[data-keypad-title]');
-    var close=panel.querySelector('[data-keypad-close]');
-    if(title)title.textContent=copy.title;
-    if(close){close.textContent=copy.close;close.setAttribute('aria-label',copy.closeAria);}
-    panel.setAttribute('aria-label',copy.title);
-  }
-  function padNodesInControl(){return Array.prototype.slice.call(control.querySelectorAll(PAD_SELECTOR));}
-  function panelHasKeys(){return !!(panel&&panel.querySelector('.number-pad-grid'));}
-  function moveCurrentKeys(){
-    var live=padNodesInControl();
-    if(!live.length)return false;
-    ensurePanel();
-    // 新題目產生了新按鍵時，先移除上一題的舊節點，再搬入本題原始按鍵；事件不會重建或遺失。
-    Array.prototype.slice.call(panel.querySelectorAll(PAD_SELECTOR)).forEach(function(node){node.remove();});
-    live.forEach(function(node){panel.appendChild(node);});
-    return true;
-  }
-  function viewport(){
-    var vv=window.visualViewport;
-    return {
-      left:vv?Number(vv.offsetLeft||0):0,
-      top:vv?Number(vv.offsetTop||0):0,
-      width:vv?Number(vv.width||window.innerWidth):Math.max(document.documentElement.clientWidth||0,window.innerWidth||0),
-      height:vv?Number(vv.height||window.innerHeight):Math.max(document.documentElement.clientHeight||0,window.innerHeight||0)
-    };
-  }
-  function positionPanel(){
-    if(!panel||panel.hidden||!input.isConnected)return;
-    var v=viewport(),r=input.getBoundingClientRect(),margin=10,gap=8;
-    var width=Math.max(220,Math.min(328,v.width-margin*2));
-    panel.style.position='fixed';panel.style.width=width+'px';panel.style.maxWidth='calc(100vw - 20px)';
-    panel.style.left=(v.left+margin)+'px';panel.style.top=(v.top+margin)+'px';
-    panel.style.maxHeight=Math.max(150,v.height-margin*2)+'px';
-    panel.style.overflowY='auto';panel.style.overflowX='hidden';panel.style.visibility='hidden';
-    var fullHeight=Math.min(panel.scrollHeight||panel.getBoundingClientRect().height,v.height-margin*2);
-    var below=v.top+v.height-margin-(r.bottom+gap);
-    var above=r.top-(v.top+margin)-gap;
-    var placeBelow=below>=Math.min(fullHeight,210)||below>=above;
-    var available=placeBelow?below:above;
-    var panelHeight=Math.max(150,Math.min(fullHeight,available));
-    panel.style.maxHeight=panelHeight+'px';
-    var top=placeBelow?r.bottom+gap:r.top-panelHeight-gap;
-    var minTop=v.top+margin,maxTop=v.top+v.height-margin-panelHeight;
-    top=Math.max(minTop,Math.min(top,maxTop));
-    var minLeft=v.left+margin,maxLeft=v.left+v.width-width-margin;
-    var left=Math.max(minLeft,Math.min(r.left,maxLeft));
-    panel.style.left=Math.round(left)+'px';panel.style.top=Math.round(top)+'px';panel.style.visibility='visible';
-  }
-  function openPanel(){
-    if(!isNumericQuestion())return;
-    ensurePanel();
-    // 在焦點事件發生時，最後再檢查一次；若渲染器剛完成插入，直接移入原始按鍵。
-    moveCurrentKeys();
-    if(!panelHasKeys()){
-      window.setTimeout(function(){
-        if(!openedByUser || !isNumericQuestion())return;
-        moveCurrentKeys();
-        if(panelHasKeys()){panel.hidden=false;positionPanel();}
-      },40);
-      return;
-    }
-    input.disabled=false;input.readOnly=false;input.type='text';
-    input.setAttribute('inputmode','none');
-    input.setAttribute('aria-haspopup','dialog');
-    input.setAttribute('aria-expanded','true');
-    openedByUser=true;panel.hidden=false;updatePanelLabels();positionPanel();
-    window.requestAnimationFrame(function(){if(openedByUser&&!panel.hidden)positionPanel();});
-  }
-  function closePanel(returnFocus){
-    openedByUser=false;
-    if(panel)panel.hidden=true;
-    input.setAttribute('aria-expanded','false');
-    if(returnFocus){
-      suppressFocusOpen=true;
-      try{input.focus({preventScroll:true});}catch(e){try{input.focus();}catch(ignore){}}
-      window.setTimeout(function(){suppressFocusOpen=false;},0);
-    }
-  }
-  function sync(){
-    syncTimer=null;
-    if(!input.isConnected||!control.isConnected)return;
-    ensurePanel();
-    if(isNumericQuestion()){
-      moveCurrentKeys();
-      input.disabled=false;input.readOnly=false;input.type='text';input.setAttribute('inputmode','none');
-      input.setAttribute('aria-haspopup','dialog');
-      if(openedByUser&&panelHasKeys()){panel.hidden=false;positionPanel();}
-    }else{
-      if(panel){Array.prototype.slice.call(panel.querySelectorAll(PAD_SELECTOR)).forEach(function(node){node.remove();});panel.hidden=true;}
-      openedByUser=false;input.setAttribute('aria-expanded','false');
-    }
-    updatePanelLabels();
-  }
-  function scheduleSync(){if(syncTimer)window.clearTimeout(syncTimer);syncTimer=window.setTimeout(sync,0);}
-
-  // 統一事件：手機、平板、電腦點擊、觸控或鍵盤聚焦輸入框，都顯示同一組自訂面板。
-  if(input.dataset.unifiedCustomPadBound!=='1'){
-    input.dataset.unifiedCustomPadBound='1';
-    input.addEventListener('focus',function(){if(!suppressFocusOpen)openPanel();});
-    input.addEventListener('click',function(){openPanel();});
-    input.addEventListener('pointerdown',function(){if(isNumericQuestion())scheduleSync();});
-    input.addEventListener('keydown',function(event){if(event.key==='Escape'&&panel&&!panel.hidden){event.preventDefault();closePanel(false);}});
-  }
-  document.addEventListener('pointerdown',function(event){
-    if(!panel||panel.hidden)return;
-    if(panel.contains(event.target)||event.target===input)return;
-    closePanel(false);
-  },true);
-  document.addEventListener('keydown',function(event){if(event.key==='Escape'&&panel&&!panel.hidden)closePanel(false);});
-
-  ['setP1Q1Mode','setP1Q2Mode','setP1Q3Mode','renderP1Question','showStep'].forEach(function(name){
-    var previous=window[name];
-    if(typeof previous!=='function'||previous.__unifiedCustomPadWrapped)return;
-    var wrapped=function(){var result=previous.apply(this,arguments);scheduleSync();return result;};
-    wrapped.__unifiedCustomPadWrapped=true;window[name]=wrapped;
-  });
-  if(window.MutationObserver){
-    observer=new MutationObserver(function(records){
-      var relevant=records.some(function(record){return Array.prototype.some.call(record.addedNodes||[],function(node){return node.nodeType===1&&((node.matches&&node.matches(PAD_SELECTOR))||(node.querySelector&&node.querySelector(PAD_SELECTOR)));});});
-      if(relevant)scheduleSync();
-    });
-    observer.observe(control,{childList:true,subtree:true});
-  }
-  window.addEventListener('resize',function(){if(panel&&!panel.hidden)positionPanel();},{passive:true});
-  window.addEventListener('scroll',function(){if(panel&&!panel.hidden)positionPanel();},true);
-  window.addEventListener('orientationchange',function(){window.setTimeout(function(){scheduleSync();if(panel&&!panel.hidden)positionPanel();},120);},{passive:true});
-  if(window.visualViewport){
-    window.visualViewport.addEventListener('resize',function(){if(panel&&!panel.hidden)positionPanel();},{passive:true});
-    window.visualViewport.addEventListener('scroll',function(){if(panel&&!panel.hidden)positionPanel();},{passive:true});
-  }
-  ensurePanel();sync();
-})();
-</script>
+<!-- Duplicate keypad controller removed: the original controller above is now the sole owner of the floating panel. -->
 
 
 <style id="location-alias-natural-wrap-fix">
