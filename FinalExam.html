@@ -2920,6 +2920,40 @@ body.text-only-mode #step-result {
 body.text-only-mode .mode-status-chip {
   display: none !important;
 }
+
+/* 地點正式名稱與四語系別名群組管理 v2 */
+.location-official-name-card,.location-alias-rule-note{
+  border:1px solid var(--color-border);border-radius:12px;background:#F7F8F4;padding:14px;margin:0 0 12px;
+}
+.location-name-section-title{font-size:18px;font-weight:900;margin-bottom:10px}
+.location-official-name-values{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.location-official-name-row{min-width:0;padding:8px 10px;border-radius:9px;background:#fff;border:1px solid var(--color-border)}
+.location-official-name-row .lang-label{display:block;color:var(--color-muted);font-size:14px;font-weight:800;margin-bottom:4px}
+.location-official-name-row .lang-value{display:block;font-size:17px;font-weight:800;line-height:1.5;overflow-wrap:anywhere;word-break:normal}
+.location-translation-note,.location-alias-rule-note,.location-alias-match-note,.location-alias-sync-status{
+  margin:10px 0 0;color:var(--color-muted);font-size:15px;font-weight:700;line-height:1.55
+}
+.location-alias-rule-note{color:var(--color-dark);background:#F0F5ED}
+.alias-groups-container{display:flex;flex-direction:column;gap:12px;margin:12px 0}
+.alias-group-card{width:100%;min-width:0;box-sizing:border-box;border:1.5px solid var(--color-dark);border-radius:13px;background:#F7F8F4;padding:12px}
+.alias-group-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+.alias-group-title{font-size:18px;font-weight:900;line-height:1.4}
+.alias-group-delete{flex:0 0 auto;min-width:88px;min-height:48px;padding:8px 12px;border:2px solid var(--color-dark);border-radius:10px;background:#fff;color:var(--color-dark);font-size:17px;font-weight:900;white-space:nowrap;word-break:keep-all;overflow-wrap:normal;writing-mode:horizontal-tb}
+.alias-group-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.alias-group-field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.alias-group-field label{font-size:15px;font-weight:900;color:var(--color-dark)}
+.alias-group-field input{width:100%;min-width:0;min-height:52px;box-sizing:border-box;padding:10px 12px;border:1.5px solid var(--color-dark);border-radius:10px;background:#fff;color:var(--color-dark);font:inherit;font-size:17px;font-weight:700}
+.alias-group-field input:focus{outline:3px solid rgba(79,112,88,.25);outline-offset:1px}
+.alias-group-incomplete{margin:8px 0 0;color:#8A4D27;font-size:14px;font-weight:800}
+.location-alias-actions{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.location-alias-actions button{width:100%;min-height:54px;white-space:normal;word-break:normal}
+.location-alias-sync-status{min-height:1.4em}
+@media(max-width:560px){
+  .location-official-name-values,.alias-group-fields{grid-template-columns:1fr}
+  .alias-group-header{align-items:flex-start}
+  .alias-group-delete{min-width:76px}
+}
+
 </style>
 
 </head>
@@ -3011,7 +3045,7 @@ body.text-only-mode .mode-status-chip {
             <h3 class="info-card-title">時間、空間認知</h3>
           </div>
           <p class="info-card-desc">回答今年的年份、月份、日期、星期，以及您目前所在的地方。</p>
-          <p class="info-card-standard">通過標準：5 題中答對 4 題即可通過。</p>
+          <p class="info-card-standard">通過標準：前四題需全部答對；第五題地點由施測人員核對，不列入計分。</p>
         </article>
         <article class="info-card">
           <div class="info-card-top">
@@ -3096,16 +3130,23 @@ body.text-only-mode .mode-status-chip {
         <div class="staff-settings-content">
           <div class="staff-settings-content-inner">
             <details class="staff-alias-details">
-              <summary id="alias-summary">系統自動認得的地點簡稱</summary>
+              <summary id="alias-summary">地點別名管理</summary>
               <div class="staff-alias-content">
                 <div class="staff-alias-content-inner">
-                  <p id="alias-empty-hint" class="helper-note">請先選擇上方測驗地點，系統會自動帶入預設名稱。</p>
-                  <div class="alias-editor-row">
-                    <input type="text" id="alias-add-input" class="form-input" placeholder="輸入其他地點簡稱">
-                    <button type="button" class="small-action-btn" onclick="addAliasTag()">＋ 新增</button>
+                  <div class="location-official-name-card" id="location-official-name-card">
+                    <div class="location-name-section-title" id="location-official-name-title">正式地點名稱</div>
+                    <div id="location-official-name-values" class="location-official-name-values"></div>
+                    <p class="location-translation-note" id="location-translation-note">外語名稱為便於辨識的描述性翻譯，未逐一確認為官方譯名。</p>
                   </div>
-                  <div id="aliasTagsWrapper" class="alias-tags-container"></div>
-                  <button type="button" class="alias-restore" onclick="restoreDefaultAliases()">恢復系統預設名稱</button>
+                  <p class="location-alias-rule-note" id="alias-empty-hint">每個地點保留 1 個正式名稱，最多 4 組別名；每組都需填寫四種語言。</p>
+                  <div id="aliasTagsWrapper" class="alias-groups-container"></div>
+                  <div class="location-alias-actions">
+                    <button type="button" class="small-action-btn" id="alias-add-group-btn" onclick="addAliasGroup()">＋新增別名組</button>
+                    <button type="button" class="small-action-btn" id="alias-save-groups-btn" onclick="saveAliasGroupsToBackend()">儲存別名設定</button>
+                    <button type="button" class="alias-restore" id="alias-restore-btn" onclick="restoreDefaultAliases()">恢復系統預設名稱</button>
+                  </div>
+                  <p id="alias-sync-status" class="location-alias-sync-status" role="status" aria-live="polite"></p>
+                  <p class="location-alias-match-note" id="alias-match-note">地點名稱比對只採用完整相符；部分文字不會自動指定地點。</p>
                 </div>
               </div>
             </details>
@@ -3339,8 +3380,8 @@ body.text-only-mode .mode-status-chip {
           <h3 class="q5-review-title">第五題｜地點答案人工審核</h3>
           <p id="q5-review-body" class="q5-review-body"></p>
           <div id="q5-review-actions" class="q5-review-actions">
-            <button type="button" class="btn-primary" onclick="submitQ5Verdict(true)">判定答對</button>
-            <button type="button" class="btn-outline" style="border-color:#4F7058;color:#A6632B;" onclick="submitQ5Verdict(false)">判定答錯</button>
+            <button type="button" class="btn-primary" onclick="submitQ5Verdict(true)">地點相符</button>
+            <button type="button" class="btn-outline" style="border-color:#4F7058;color:#A6632B;" onclick="submitQ5Verdict(false)">地點不符</button>
           </div>
           <p id="q5-review-audit" class="q5-review-audit"></p>
         </section>
@@ -3859,7 +3900,7 @@ function renderStageProgressBanner(banner,stageNumber,name){
     }
     var examState = {
       sessionId: createExamSessionId(),
-      county: '', district: '', placeName: '', acceptableAnswers: [], defaultAliases: [], isHomePractice: false,
+      county: '', district: '', placeName: '', locationRecordId: '', acceptableAnswers: [], acceptableAnswerGroups: [], defaultAliases: [], isHomePractice: false,
       locationModeSelected: false,
       locationConfirmed: false, examIntroViewed: false,
       language: 'zh-TW', hakkaAccent: 'sixian', speechRate: 0.85, examMode: 'practice',
@@ -3891,6 +3932,13 @@ function renderStageProgressBanner(banner,stageNumber,name){
     var p3CanvasBound = false;
     var p3CurrentCanvasTool = 'pen';
     var defaultPlaceAliases = [];
+    var defaultPlaceAliasGroups = [];
+    var activeLocationRecordId = '';
+    var sharedLocationAliasOverrides = {};
+    var sharedLocationAliasOverridesReady = false;
+    var sharedLocationAliasOverridesLoading = false;
+    var locationAliasLocalStoreCache = null;
+    var locationCatalogCache = null;
     // 僅在本次頁面工作階段暫存工作人員的地點與手動別名，切回在家再切回工作人員時可還原。
     var staffModeSnapshot = null;
     var savedStaffLocationPreference = null;
@@ -4071,6 +4119,12 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
 /* 補齊靜態及執行時介面的英／日／韓文字，避免顯示語言切換後殘留中文。 */
 Object.assign(EXAM_TEXT_TRANSLATIONS, {"臺語（閩南語）":["Taiwanese Hokkien","台湾語（閩南語）","대만 민난어"],"下一步：選擇練習地點 ›":["Next: Choose Practice Location ›","次へ：練習場所を選択 ›","다음: 연습 장소 선택 ›"],"測驗時請憑記憶獨立作答，請不要查看日曆、時鐘，也不要請旁人提示。":["Answer independently from memory. Do not check a calendar or clock, or ask anyone for hints.","検査中は記憶を頼りに自分で回答してください。カレンダーや時計を見たり、他の人にヒントを求めたりしないでください。","검사 중에는 기억에 의존해 스스로 답하세요. 달력이나 시계를 보거나 다른 사람에게 힌트를 요청하지 마세요."],"第 1 關":["Stage 1","第1段階","1단계"],"第 2 關":["Stage 2","第2段階","2단계"],"第 3 關":["Stage 3","第3段階","3단계"],"回答今年的年份、現在是幾月、今天是幾號、星期幾，以及目前所在的地方。":["Answer the current year, month, date, day of the week, and your current location.","現在の年・月・日・曜日と、現在いる場所を回答してください。","현재 연도, 월, 날짜, 요일 및 현재 위치를 답하세요."],"通過標準：5 題需答對 4 題。":["Passing standard: answer at least 4 of 5 questions correctly.","合格基準：5問中4問以上正解。","통과 기준: 5문항 중 4문항 이상 정답."],"觀看並記住 10 張圖片，休息 2 分鐘後，再依照記憶回答。":["Study and remember 10 pictures. After a 2-minute break, recall them from memory.","10枚の画像を見て覚え、2分間休憩した後、記憶を頼りに回答してください。","그림 10장을 보고 기억한 뒤 2분간 휴식하고 기억을 바탕으로 답하세요."],"通過標準：10 張圖片需答對 3 張。":["Passing standard: recall at least 3 of the 10 pictures.","合格基準：10枚中3枚以上正解。","통과 기준: 그림 10장 중 3장 이상 정답."],"依照指定時間，畫出時鐘外框、數字，以及時針和分針的位置。":["Draw the clock outline, numbers, and hour and minute hands to show the specified time.","指定された時刻に合わせて、時計の外枠、数字、時針と分針を描いてください。","지정된 시간을 나타내도록 시계 테두리와 숫자, 시침과 분침을 그리세요."],"通過標準：滿分 7 分，需取得 4 分以上（作答時間 4 分鐘）。":["Passing standard: score at least 4 out of 7. Time limit: 4 minutes.","合格基準：7点満点中4点以上（制限時間4分）。","통과 기준: 7점 만점에 4점 이상(제한 시간 4분)."],"再聽一次語音說明":["Replay the audio instructions","音声案内をもう一度聞く","음성 안내 다시 듣기"],"請選擇您現在練習的地方。":["Please select where you are practicing.","現在練習している場所を選択してください。","현재 연습 중인 장소를 선택하세요."],"如果您在家裡自己練習，直接點選下方的「我在家裡練習」就可以了。":["If you are practicing at home, simply select “I am practicing at home” below.","自宅で練習している場合は、下の「自宅で練習」を選択してください。","집에서 연습 중이라면 아래의 “집에서 연습”을 선택하세요."],"自己在家裡做練習（最常用）":["Practice at home (most common)","自宅で練習（最も一般的）","집에서 연습(가장 일반적)"],"已選擇":["Selected","選択済み","선택됨"],"在監理站、醫院或由專人協助":["At a motor vehicle office, hospital, or with staff assistance","監理機関・病院、または担当者の支援を受けて実施","운전면허시험장, 병원 또는 담당자 도움으로 진행"],"由工作人員或家人幫忙輸入地點":["A staff member or family member enters the location","スタッフまたは家族が場所を入力","직원 또는 가족이 장소를 입력"],"請選擇您要練習的測驗地點":["Please select the test location for your practice","練習する検査場所を選んでください","연습할 검사 장소를 선택하세요"],"縣市（必選）":["City or county (required)","県・市（必須）","시·현(필수)"],"行政區（必選）":["District (required)","区（必須）","행정구(필수)"],"測驗地點（必選）":["Test location (required)","検査場所（必須）","검사 장소(필수)"],"工作人員專用：調整地點名稱設定（一般練習免按）":["For staff only: Adjust location names (not needed for regular practice)","スタッフ専用：場所名の設定（通常の練習では操作不要）","직원 전용: 장소 이름 설정(일반 연습에서는 조작할 필요 없음)"],"系統自動認得的地點簡稱":["Location aliases recognized automatically by the system","システムが自動認識する場所の略称","시스템이 자동으로 인식하는 장소 별칭"],"請先選擇上方測驗地點，系統會自動帶入預設名稱。":["Select the test location above. The system will fill in the default names automatically.","上の検査場所を選択すると、既定の名称が自動入力されます。","위에서 검사 장소를 선택하면 기본 이름이 자동으로 입력됩니다."],"恢復系統預設名稱":["Restore system default names","システムの既定名称に戻す","시스템 기본 이름 복원"],"需由工作人員人工確認的名稱":["Names requiring staff review","スタッフによる確認が必要な名称","직원의 확인이 필요한 이름"],"例如：衛生所、醫院、診所、監理所或監理站。只回答這類通用名稱時，會交由工作人員確認。":["Examples: health center, hospital, clinic, motor vehicle office. Generic answers like these require staff review.","例：保健所、病院、診療所、監理機関など。このような一般名称のみの場合は、スタッフによる確認が必要です。","예: 보건소, 병원, 의원, 운전면허시험장 등. 이러한 일반 명칭만 답한 경우 직원 확인이 필요합니다."],"您好！":["Hello!","こんにちは！","안녕하세요!"],"第一關共有 5 個問題，請仔細聽題目，再輸入或點選答案。":["Stage 1 has 5 questions. Listen carefully, then type or select your answers.","第1段階は5問です。問題をよく聞き、入力または選択して回答してください。","1단계는 5문항입니다. 문제를 잘 듣고 답을 입력하거나 선택하세요."],"提醒您：作答時請不要查看日曆、時鐘，也不要請旁人提示。":["Reminder: Do not look at a calendar or clock, or ask anyone for hints while answering.","注意：回答中はカレンダーや時計を見たり、他の人にヒントを求めたりしないでください。","안내: 답변 중에는 달력이나 시계를 보거나 다른 사람에게 힌트를 요청하지 마세요."]," 再聽一次語音說明":[" Replay audio instructions"," 音声案内をもう一度聞く"," 음성 안내 다시 듣기"],"開始第一關作答 ›":["Start Stage 1 ›","第1段階の回答を開始 ›","1단계 답변 시작 ›"],"時間到後，回想並輸入剛才看過的圖片名稱。":["When time is up, recall and enter the names of the pictures you saw.","時間になったら、先ほど見た画像の名前を思い出して入力してください。","시간이 되면 방금 본 그림의 이름을 떠올려 입력하세요."],"開始觀看圖片 ›":["Start viewing pictures ›","画像の表示を開始 ›","그림 보기 시작 ›"],"再聽一次題目":["Play the question again","問題をもう一度聞く","문제 다시 듣기"],"✓ 已記錄答案":["✓ Answer recorded","✓ 回答を記録しました","✓ 답변이 기록되었습니다"],"請先在上方完成作答，再按確認。":["Complete your answer above, then select Confirm.","上で回答を入力してから「確認」を選択してください。","위에서 답변을 완료한 다음 확인을 누르세요."],"確認本題 ›":["Confirm this answer ›","この回答を確定 ›","이 답변 확인 ›"],"休息一下":["Take a break","休憩しましょう","잠시 쉬세요"],"請放輕鬆休息 2 分鐘，時間到後會自動開始回想作答。":["Please relax and rest for 2 minutes. Recall will begin automatically when the time is up.","リラックスして2分間休憩してください。時間になると自動的に思い出し回答が始まります。","편안하게 2분간 휴식하세요. 시간이 끝나면 자동으로 회상 답변이 시작됩니다."],"再聽一次休息說明":["Replay the break instructions","休憩の説明をもう一度聞く","휴식 안내 다시 듣기"],"請回想剛才看過的 10 張圖片，想到哪些就輸入哪些。":["Recall the 10 pictures you just saw. Enter any names you remember.","先ほど見た10枚の画像を思い出し、覚えている名前を入力してください。","방금 본 그림 10장을 떠올리고 기억나는 이름을 입력하세요."],"＋加入答案":["＋ Add answer","＋ 回答を追加","＋ 답변 추가"],"加入的圖片名稱會顯示在這裡。":["Added picture names will appear here.","追加した画像名がここに表示されます。","추가한 그림 이름이 여기에 표시됩니다."],"剩餘 04:00":["Time left: 04:00","残り時間：04:00","남은 시간: 04:00"],"正式施測模式":["Official assessment mode","正式検査モード","공식 검사 모드"],"查看本關作答明細":["View responses for this stage","この段階の回答詳細を見る","이 단계의 답변 세부 정보 보기"],"選擇作答語言":["Choose an answer language","回答言語を選択","답변 언어 선택"],"試聽國語":["Preview Mandarin audio","中国語音声を試聴","중국어 음성 미리 듣기"],"試聽臺語":["Preview Taiwanese Hokkien audio","台湾語音声を試聴","대만 민난어 음성 미리 듣기"],"試聽客語":["Preview Hakka audio","客家語音声を試聴","하카어 음성 미리 듣기"],"純文字模式不提供語音試聽":["Audio preview is unavailable in text-only mode","テキストのみモードでは音声を試聴できません","텍스트 전용 모드에서는 음성 미리 듣기를 사용할 수 없습니다"],"輸入其他地點簡稱":["Enter another location alias","別の場所の略称を入力","다른 장소 별칭 입력"],"請輸入答案":["Enter your answer","回答を入力してください","답변을 입력하세요"],"請輸入您記得的圖片名稱":["Enter the picture name you remember","覚えている画像の名前を入力してください","기억나는 그림 이름을 입력하세요"],"目前無法播放語音試聽，請稍後再試。":["Audio preview is currently unavailable. Please try again later.","現在、音声を試聴できません。しばらくしてからもう一度お試しください。","현재 음성 미리 듣기를 재생할 수 없습니다. 나중에 다시 시도하세요."],"返回練習選單":["Back to Practice Menu","練習メニューに戻る","연습 메뉴로 돌아가기"],"返回語言設定":["Back to Language Settings","言語設定に戻る","언어 설정으로 돌아가기"],"返回練習地點":["Back to Practice Location","練習場所に戻る","연습 장소로 돌아가기"],"返回測驗介紹":["Back to Test Instructions","検査説明に戻る","검사 안내로 돌아가기"],"返回第一關說明":["Back to Stage 1 Instructions","第1段階の説明に戻る","1단계 안내로 돌아가기"],"返回第二關說明":["Back to Stage 2 Instructions","第2段階の説明に戻る","2단계 안내로 돌아가기"],"返回第三關說明":["Back to Stage 3 Instructions","第3段階の説明に戻る","3단계 안내로 돌아가기"],"✓ 第一關":["✓ Stage 1","✓ 第1段階","✓ 1단계"],"✓ 第二關":["✓ Stage 2","✓ 第2段階","✓ 2단계"],"臺語練習方式錄音無法連線取得。":["The Taiwanese Hokkien practice audio could not be loaded.","台湾語の練習音声を読み込めませんでした。","대만 민난어 연습 음성을 불러오지 못했습니다."],"請先輸入一個別名，再按新增。":["Enter an alias before selecting Add.","追加する前に略称を入力してください。","추가를 누르기 전에 별칭을 입력하세요."],"家裡":["Home","自宅","집"],"家中":["At home","自宅","집"],"住家":["Residence","住居","거주지"],"請重新選擇有效的練習模式。":["Please select a valid practice mode again.","有効な練習モードをもう一度選択してください。","유효한 연습 모드를 다시 선택하세요."],"請輸入生肖名稱":["Enter a Chinese zodiac animal","十二支の動物名を入力してください","십이지 동물 이름을 입력하세요"],"請直接輸入您目前所在的地點名稱。":["Enter the name of your current location.","現在いる場所の名称を入力してください。","현재 위치의 이름을 입력하세요."],"資料暫無法取得":["Data is temporarily unavailable","データを一時的に取得できません","데이터를 일시적으로 가져올 수 없습니다"],"依測驗地點設定核對":["Verify using the configured test location","設定された検査場所を使用して照合","설정된 검사 장소를 기준으로 확인"],"請先輸入月份。":["Please enter a month first.","先に月を入力してください。","먼저 월을 입력하세요."],"休息期間，請您放輕鬆，靜候兩分鐘後再繼續作答。":["Please relax during the break. Continue answering after two minutes.","休憩中はリラックスして、2分後に回答を再開してください。","휴식 시간에는 편안히 쉬고 2분 후 답변을 계속하세요."],"本次認知功能測驗已完成，請查看以下測驗結果與作答明細。謝謝您的用心參與。":["The cognitive assessment is complete. Please review the results and response details below. Thank you for participating.","認知機能検査が完了しました。以下の結果と回答詳細をご確認ください。ご参加ありがとうございました。","인지 기능 검사가 완료되었습니다. 아래 결과와 답변 세부 정보를 확인하세요. 참여해 주셔서 감사합니다."],"您已完成前兩關測驗，返回將會離開目前進度，確定要返回嗎？":["You have completed the first two stages. Returning will leave your current progress. Are you sure you want to go back?","最初の2段階が完了しています。戻ると現在の進行状況が失われます。戻ってもよろしいですか？","앞의 두 단계를 완료했습니다. 돌아가면 현재 진행 상황을 벗어납니다. 돌아가시겠습니까?"],"請先完成上方測驗地點選擇":["Please complete the test location selection above first.","先に上の検査場所を選択してください。","먼저 위에서 검사 장소를 선택하세요."],"點此輸入數字":["Tap here to enter numbers","ここをタップして数字を入力","여기를 눌러 숫자를 입력하세요"],"輸入4位數字":["Enter 4 digits","4桁の数字を入力","숫자 4자리를 입력하세요"],"請輸入數字":["Enter numbers","数字を入力してください","숫자를 입력하세요"],"點此輸入一～六或日":["Tap to enter Monday through Sunday","ここをタップして月曜から日曜を入力","여기를 눌러 월요일부터 일요일까지 입력하세요"],"第一關｜時間、空間認知":["Stage 1 | Time and Spatial Orientation","第1段階｜時間・空間の見当識","1단계 | 시간·공간 지남력"],"本次實際完成的時鐘畫作":["Clock drawing submitted for this test","今回提出された時計の描画","이번 검사에서 제출한 시계 그림"],"本次實際繪圖紀錄":["Drawing record for this test","今回の描画記録","이번 검사 그림 기록"],"目前沒有可顯示的時鐘繪圖圖片紀錄。":["No clock drawing image is available to display.","表示できる時計の描画画像がありません。","표시할 시계 그림 이미지 기록이 없습니다."],"分針指向指定分鐘":["Minute hand points to the specified minute","分針が指定された分を指している","분침이 지정된 분을 가리킴"],"時針位置符合指定時間":["Hour hand position matches the specified time","時針の位置が指定時刻と一致している","시침 위치가 지정 시간과 일치함"],"沒有不相關添加":["No unrelated marks added","無関係な書き込みがない","관련 없는 표시가 없음"],"數字位於圓圈內":["Numbers are inside the circle","数字が円の内側にある","숫자가 원 안에 있음"],"1 至 12 完整且順時針排列":["Numbers 1 through 12 are complete and arranged clockwise","1から12までの数字がそろい、時計回りに配置されている","1부터 12까지 숫자가 빠짐없이 시계 방향으로 배열됨"],"圓形輪廓完整":["Complete circular outline","円の輪郭が完成している","원형 윤곽이 완성됨"],"圓形大小與比例":["Circle size and proportions","円の大きさと比率","원의 크기와 비율"],"原評分系統回傳的項目紀錄":["Item details returned by the original scoring system","元の採点システムから返された項目記録","기존 채점 시스템에서 반환한 항목 기록"],"得分紀錄：":["Score record: ","得点記録：","점수 기록: "],"判定紀錄：":["Assessment record: ","判定記録：","판정 기록: "],"符合":["Met","該当","충족"],"未符合":["Not met","非該当","미충족"],"評分紀錄：":["Scoring record: ","採点記録：","채점 기록: "],"收合本關作答明細":["Hide response details","回答詳細を閉じる","답변 세부 정보 접기"],"居家練習模式":["Home practice mode","自宅練習モード","가정 연습 모드"],"施測人員模式":["Staff assessment mode","検査担当者モード","검사 담당자 모드"],"正在播放語音說明中，請仔細聆聽（若沒聲音請調大手機音量）":["Audio instructions are playing. Listen carefully. Turn up your phone volume if needed.","音声案内を再生中です。よく聞いてください。聞こえない場合は端末の音量を上げてください。","음성 안내가 재생 중입니다. 잘 들어주세요. 소리가 들리지 않으면 휴대전화 음량을 높이세요."],"已選擇純文字模式，練習時不會播放聲音。":["Text-only mode is selected. Audio will not play during practice.","テキストのみモードが選択されています。練習中に音声は再生されません。","텍스트 전용 모드가 선택되었습니다. 연습 중에는 음성이 재생되지 않습니다."],"正在播放試聽語音，請確認聽得到聲音（若無聲音請調大手機音量）。":["Audio preview is playing. Make sure you can hear it. Turn up your phone volume if needed.","音声を試聴中です。聞こえることを確認してください。聞こえない場合は端末の音量を上げてください。","음성 미리 듣기가 재생 중입니다. 소리가 들리는지 확인하세요. 들리지 않으면 휴대전화 음량을 높이세요."],"目前作答方式：純文字":["Response mode: Text only","回答方法：テキストのみ","답변 방식: 텍스트 전용"],"目前語音：":["Audio language: ","音声：","음성: "],"選擇作答方式":["Choose a response mode","回答方法を選択","응답 방식 선택"],"選擇練習地點":["Choose a practice location","練習場所を選択","연습 장소 선택"],"數字按鍵":["Number keys","数字キー","숫자 키"],"清除重填":["Clear and re-enter","消去して再入力","지우고 다시 입력"],"刪掉一個字":["Delete one character","1文字削除","문자 하나 삭제"],"請用下方按鍵輸入年份數字":["Use the buttons below to enter the year","下のボタンで年を入力してください","아래 버튼을 사용해 연도를 입력하세요"],"請用下方按鍵點選日期數字":["Use the buttons below to enter the date","下のボタンで日付を入力してください","아래 버튼을 사용해 날짜를 입력하세요"],"請輸入農曆日期數字即可（例如：初五請按 5，十五請按 15）。":["Enter only the lunar date number (for example, press 5 for the 5th day or 15 for the 15th day).","旧暦の日付の数字のみを入力してください（例：初五は5、十五は15を押します）。","음력 날짜 숫자만 입력하세요(예: 초닷새는 5, 보름은 15를 누르세요)."],"您的答案":["Your answer","あなたの回答","답변"],"請輸入星期幾":["Enter the day of the week","曜日を入力してください","요일을 입력하세요"],"您的答案：請輸入星期幾":["Your answer: Enter the day of the week","あなたの回答：曜日を入力してください","답변: 요일을 입력하세요"],"請選擇一種回答方式，答對即可。":["Choose one response method. A correct answer is enough.","回答方法を1つ選んでください。正解すれば通過です。","답변 방식을 하나 선택하세요. 정답이면 통과입니다."],"您可以用「國曆」或「農曆」其中一種來回答，只要答對其中一種就算過關！請先點選您習慣的日曆：":["You may answer using either the Gregorian or lunar calendar. Either correct answer will count. Choose your preferred calendar first:","新暦または旧暦のどちらかで回答できます。どちらかが正解なら合格です。最初に使い慣れた暦を選んでください。","양력 또는 음력 중 하나로 답할 수 있습니다. 둘 중 하나만 맞아도 통과입니다. 먼저 익숙한 달력을 선택하세요."],"請直接輸入今天是星期幾。":["Please type the day of the week.","今日の曜日を入力してください。","오늘이 무슨 요일인지 입력하세요."],"請輸入今天是星期幾，再確認本題。":["Please enter the day of the week before confirming this answer.","曜日を入力してから、この回答を確定してください。","요일을 입력한 다음 이 답변을 확인하세요."],"請先在上方輸入日期數字，再按確認。":["Enter the date number above, then select Confirm.","上に日付を入力してから「確認」を選択してください。","위에 날짜 숫자를 입력한 다음 확인을 누르세요."],"請先選擇一種回答方式，並完成作答後再按確認。":["Choose a response method and complete your answer before selecting Confirm.","回答方法を選択して回答を入力してから、「確認」を選択してください。","답변 방식을 선택하고 답변을 완료한 다음 확인을 누르세요."],"請先選擇國曆或農曆，再輸入月份數字。":["Select the Gregorian or lunar calendar, then enter the month number.","新暦または旧暦を選択してから、月の数字を入力してください。","양력 또는 음력을 선택한 다음 월 숫자를 입력하세요."],"請輸入您目前所在的地點名稱，再按確認。":["Enter the name of your current location, then select Confirm.","現在いる場所の名称を入力してから「確認」を選択してください。","현재 위치 이름을 입력한 다음 확인을 누르세요."],"這個地點簡稱":["this location alias","この場所の略称","이 장소 별칭"],"刪除這個地點簡稱":["Delete this location alias","この場所の略称を削除","이 장소 별칭 삭제"],"請先選擇民國年、西元年或生肖，再完成作答。":["Select Minguo year, Gregorian year, or zodiac first, then complete your answer.","最初に民国年、西暦年、生肖のいずれかを選択してから回答してください。","먼저 민국 연도, 서력 연도 또는 띠를 선택한 다음 답변하세요."],"請先在上方輸入生肖，再按確認。":["Enter the zodiac animal above, then select Confirm.","上に生肖を入力してから「確認」を選択してください。","위에 띠를 입력한 다음 확인을 누르세요."],"請先在上方輸入年份數字，再按確認。":["Enter the year above, then select Confirm.","上に年の数字を入力してから「確認」を選択してください。","위에 연도 숫자를 입력한 다음 확인을 누르세요."],"請先選擇國曆或農曆，再輸入日期數字。":["Select the Gregorian or lunar calendar, then enter the date number.","新暦または旧暦を選択してから、日付の数字を入力してください。","양력 또는 음력을 선택한 다음 날짜 숫자를 입력하세요."],"您還沒選擇回答方式喔，請先點選民國年、西元年或生肖。":["Please choose a response method first: Minguo year, Gregorian year, or zodiac.","回答方法が選択されていません。民国年、西暦年、生肖のいずれかを選択してください。","답변 방식을 선택하지 않았습니다. 민국 연도, 서력 연도 또는 띠를 선택하세요."],"您還沒輸入生肖喔，請先在上方輸入生肖。":["You have not entered a zodiac animal. Enter it above first.","生肖が入力されていません。先に上に入力してください。","띠를 입력하지 않았습니다. 먼저 위에 입력하세요."],"您還沒輸入年份數字喔，請先點選下方的數字再按確認。":["You have not entered the year. Select the numbers below, then confirm.","年が入力されていません。下の数字を選択してから確認してください。","연도를 입력하지 않았습니다. 아래 숫자를 선택한 다음 확인하세요."],"您還沒選擇國曆或農曆喔，請先點選上方的日曆。":["You have not selected a calendar. Choose Gregorian or lunar above first.","暦が選択されていません。上で新暦または旧暦を選択してください。","달력을 선택하지 않았습니다. 위에서 양력 또는 음력을 선택하세요."],"您還沒輸入幾號喔，請先點選下方的數字再按確認。":["You have not entered the date. Select the numbers below, then confirm.","日付が入力されていません。下の数字を選択してから確認してください。","날짜를 입력하지 않았습니다. 아래 숫자를 선택한 다음 확인하세요."],"請用下方按鍵輸入月份數字（1 到 12）。":["Use the buttons below to enter a month from 1 to 12.","下のボタンで1から12までの月を入力してください。","아래 버튼으로 1부터 12까지의 월을 입력하세요."],"月份數字按鍵":["Month number keys","月の数字キー","월 숫자 키"],"月份最多輸入兩個數字，請清除後重新輸入。":["A month can have at most two digits. Clear and enter it again.","月は最大2桁です。消去してもう一度入力してください。","월은 최대 두 자리까지 입력할 수 있습니다. 지우고 다시 입력하세요."],"月份只能輸入 1 到 12，已清空，請重新輸入。":["Enter a month from 1 to 12. The field has been cleared; please try again.","月は1から12までで入力してください。入力欄を消去しました。もう一度入力してください。","월은 1부터 12까지 입력해야 합니다. 입력란을 지웠으니 다시 입력하세요."],"月份只能輸入 1 到 12，不能從 0 開始。":["Enter a month from 1 to 12. It cannot start with 0.","月は1から12までです。0から始めることはできません。","월은 1부터 12까지이며 0으로 시작할 수 없습니다."],"清除全部月份數字":["Clear all month digits","月の数字をすべて消去","월 숫자 모두 지우기"],"已清空，請重新輸入月份。":["Cleared. Please enter the month again.","消去しました。月をもう一度入力してください。","지웠습니다. 월을 다시 입력하세요."],"刪除上一個數字":["Delete the previous digit","前の数字を削除","이전 숫자 삭제"],"刪除上一個月份數字":["Delete the previous month digit","前の月の数字を削除","이전 월 숫자 삭제"],"已刪除數字，請重新輸入月份。":["The digit was deleted. Please enter the month again.","数字を削除しました。月をもう一度入力してください。","숫자를 삭제했습니다. 월을 다시 입력하세요."],"請用下方按鍵輸入月份數字":["Use the buttons below to enter the month","下のボタンで月を入力してください","아래 버튼으로 월을 입력하세요"],"農曆月份":["Lunar month","旧暦の月","음력 월"],"國曆月份":["Gregorian month","新暦の月","양력 월"],"，請使用下方數字按鍵輸入":[". Use the number keys below.","。下の数字キーを使用してください。",". 아래 숫자 키를 사용하세요."],"數字鍵盤":["Numeric keypad","数字キーパッド","숫자 키패드"],"收起":["Collapse","閉じる","접기"],"收起數字鍵盤":["Close numeric keypad","数字キーパッドを閉じる","숫자 키패드 닫기"],"點擊即可開啟數字鍵盤":["Tap to open the numeric keypad","タップして数字キーパッドを開く","눌러서 숫자 키패드 열기"],"請輸入生肖":["Enter the Chinese zodiac animal","十二支の動物名を入力してください","십이지 동물 이름을 입력하세요"],"請輸入您的生肖":["Please enter your Chinese zodiac animal","あなたの生肖を入力してください","본인의 띠를 입력하세요"],"請依照指定時間畫出時鐘。可以使用下方工具修改，完成後點選送出答案。":["Draw a clock showing the specified time. Use the tools below to make changes, then select Submit Answer when finished.","指定された時刻を示す時計を描いてください。下のツールで修正し、完成したら「回答を送信」を選択してください。","지정된 시간을 나타내는 시계를 그리세요. 아래 도구로 수정한 후 완료되면 답안 제출을 누르세요."],"請畫出一個完整的時鐘，顯示":["Draw a complete clock showing ","次の時刻を示す時計を描いてください：","다음 시간을 나타내는 완전한 시계를 그리세요: "],"目前沒有可以復原的筆畫。":["There are no strokes to undo.","元に戻せる線がありません。","되돌릴 획이 없습니다."],"確定要全部擦掉重畫嗎？":["Are you sure you want to erase everything and start over?","すべて消去して描き直しますか？","모두 지우고 다시 그리시겠습니까?"],"目前選擇的是純文字模式，練習時不會播放聲音。":["Text-only mode is selected. No audio will play during practice.","テキストのみモードが選択されています。練習中に音声は再生されません。","텍스트 전용 모드가 선택되었습니다. 연습 중에는 음성이 재생되지 않습니다."],"← 返回選擇語音":["← Back to Language Selection","← 音声選択に戻る","← 언어 선택으로 돌아가기"],"← 返回測驗介紹":["← Back to Test Instructions","← 検査説明に戻る","← 검사 안내로 돌아가기"],"← 返回第一關說明":["← Back to Stage 1 Instructions","← 第1段階の説明に戻る","← 1단계 안내로 돌아가기"],"← 返回第二關說明":["← Back to Stage 2 Instructions","← 第2段階の説明に戻る","← 2단계 안내로 돌아가기"],"← 返回第三關說明":["← Back to Stage 3 Instructions","← 第3段階の説明に戻る","← 3단계 안내로 돌아가기"],"請選擇練習地點":["Please select a practice location","練習場所を選択してください","연습 장소를 선택하세요"],"休息倒數":["Break countdown","休憩カウントダウン","휴식 카운트다운"],"休息倒數進度":["Break countdown progress","休憩カウントダウンの進行状況","휴식 카운트다운 진행 상황"],"時鐘繪圖畫布":["Clock drawing canvas","時計描画キャンバス","시계 그리기 캔버스"],"作答區":["Answer area","回答エリア","답변 영역"],"您的答案：請輸入地點名稱":["Your answer: Enter the location name","あなたの回答：場所の名前を入力してください","답변: 장소 이름을 입력하세요"]});
 
+Object.assign(EXAM_TEXT_TRANSLATIONS, {"正式地點名稱":["Official location name","正式な場所の名称","공식 장소 이름"],"外語名稱為便於辨識的描述性翻譯，未逐一確認為官方譯名。":["Foreign-language names are descriptive translations for identification and have not all been verified as official names.","外国語名は識別用の説明的な翻訳であり、すべてが公式名称として確認されたものではありません。","외국어 이름은 식별을 위한 설명형 번역이며, 모두 공식 명칭으로 확인된 것은 아닙니다."],"地點別名管理":["Location alias management","場所の別名管理","장소 별칭 관리"],"每個地點保留 1 個正式名稱，最多 4 組別名；每組都需填寫四種語言。":["Keep one formal name per location and up to 4 alias groups. Complete all four languages in each group.","各場所の正式名称は1つ、別名は最大4グループです。各グループの4言語すべてを入力してください。","장소마다 공식 이름은 1개, 별칭 그룹은 최대 4개입니다. 각 그룹의 4개 언어를 모두 입력하세요."],"繁體中文":["Traditional Chinese","繁体字中国語","번체 중국어"],"英文":["English","英語","영어"],"日文":["Japanese","日本語","일본어"],"韓文":["Korean","韓国語","한국어"],"別名組":["Alias group","別名グループ","별칭 그룹"],"請輸入別名":["Enter alias","別名を入力","별칭 입력"],"＋新增別名組":["＋ Add alias group","＋ 別名グループを追加","＋ 별칭 그룹 추가"],"儲存別名設定":["Save alias settings","別名設定を保存","별칭 설정 저장"],"此地點最多設定 4 組別名。":["A location can have up to 4 alias groups.","1か所につき別名は最大4グループまで設定できます。","장소당 별칭 그룹은 최대 4개까지 설정할 수 있습니다."],"每組別名請填寫繁體中文、英文、日文及韓文。":["Complete the Traditional Chinese, English, Japanese, and Korean fields for every alias group.","各別名グループの繁体字中国語、英語、日本語、韓国語をすべて入力してください。","각 별칭 그룹의 번체 중국어, 영어, 일본어, 한국어 항목을 모두 입력하세요."],"別名四種語言都填寫後，才會納入地點名稱比對。":["An alias group is used for matching only after all four language fields are completed.","4言語すべてを入力した別名グループのみ照合に使用されます。","4개 언어 항목을 모두 입력한 별칭 그룹만 대조에 사용됩니다."],"目前尚未設定常用別名；可先使用正式名稱作答。":["No common aliases are configured yet. The formal name can still be used.","一般的な別名はまだ設定されていません。正式名称で回答できます。","아직 일반 별칭이 설정되지 않았습니다. 공식 이름으로 답할 수 있습니다."],"請先選擇測驗地點，再管理該地點的名稱。":["Select a testing location before managing its names.","名称を管理する前に検査場所を選択してください。","장소 이름을 관리하기 전에 검사 장소를 선택하세요."],"已儲存在共用地點資料庫。":["Saved to the shared location database.","共用場所データベースに保存しました。","공유 장소 데이터베이스에 저장했습니다."],"已先儲存在此裝置；共用資料庫同步失敗，請確認後臺連線後再儲存。":["Saved on this device. Shared database sync failed; check the backend connection and save again.","この端末には保存しましたが、共用データベースとの同期に失敗しました。バックエンド接続を確認して再保存してください。","이 기기에는 저장했지만 공유 데이터베이스 동기화에 실패했습니다. 백엔드 연결을 확인한 뒤 다시 저장하세요."],"已還原系統預設別名。":["System default aliases have been restored.","システムの既定の別名に戻しました。","시스템 기본 별칭으로 복원했습니다."],"已還原此地點的系統預設別名，但尚未同步至共用資料庫。":["Default aliases were restored on this device but have not synced to the shared database.","この端末では既定の別名に戻しましたが、共用データベースにはまだ同期されていません。","이 기기에서 기본 별칭을 복원했지만 공유 데이터베이스에는 아직 동기화되지 않았습니다."],"地點名稱尚待工作人員現場確認；此題不列入正式計分。":["The location answer still requires on-site staff verification. This question is excluded from the official score.","場所の回答は担当者による現地確認が必要です。この問題は正式な得点に含まれません。","장소 답변은 담당자의 현장 확인이 필요합니다. 이 문항은 공식 점수에 포함되지 않습니다."],"第五題地點答案需要人工核對，不列入第一關正式計分。":["The location answer in Question 5 requires manual verification and is excluded from the Stage 1 score.","第5問の場所の回答は手動確認が必要で、第1段階の正式な得点には含まれません。","5번 문항의 장소 답변은 수동 확인이 필요하며 1단계 공식 점수에서 제외됩니다."],"系統找到一筆完全相符的地點名稱，但仍須現場核對。":["One exact location-name match was found, but on-site verification is still required.","完全一致する場所名が1件見つかりましたが、現地確認が必要です。","정확히 일치하는 장소 이름을 찾았지만 현장 확인이 필요합니다."],"輸入內容可能對應多個地點，請由工作人員確認。":["The entry may match multiple locations. Staff verification is required.","入力内容は複数の場所に該当する可能性があります。担当者の確認が必要です。","입력 내용이 여러 장소와 일치할 수 있습니다. 담당자 확인이 필요합니다."],"沒有找到完全相符的地點名稱，請由工作人員確認。":["No exact location-name match was found. Staff verification is required.","完全一致する場所名が見つかりません。担当者の確認が必要です。","정확히 일치하는 장소 이름을 찾지 못했습니다. 담당자 확인이 필요합니다."],"地點名稱比對只採用完整相符；部分文字不會自動指定地點。":["Location matching requires an exact full-name match. Partial text never selects a location automatically.","場所の照合は名称全体の完全一致のみです。一部一致で場所を自動指定することはありません。","장소 이름은 전체가 정확히 일치해야 합니다. 일부 일치만으로 장소를 자동 지정하지 않습니다."],"地點別名已在此裝置儲存；按「儲存別名設定」才會同步到所有裝置。":["Alias edits are saved on this device. Select “Save alias settings” to sync them across devices.","別名の編集はこの端末に保存されます。「別名設定を保存」を選択すると全端末に同期されます。","별칭 수정 사항은 이 기기에 저장됩니다. ‘별칭 설정 저장’을 눌러 모든 기기와 동기화하세요."]});
+
+Object.assign(EXAM_TEXT_TRANSLATIONS, {"狀態：地點已由施測人員確認（不列入計分）":["Status: Location verified by staff (excluded from score)","状態：担当者が場所を確認（得点対象外）","상태: 담당자가 장소 확인(점수 제외)"],"狀態：地點未獲施測人員確認（不列入計分）":["Status: Location not verified by staff (excluded from score)","状態：担当者による場所確認なし（得点対象外）","상태: 담당자가 장소를 확인하지 않음(점수 제외)"]});
+
+Object.assign(EXAM_TEXT_TRANSLATIONS, {"別名組不可重複，請合併相同名稱或修改其中一組。":["Alias groups must be unique. Merge duplicate names or edit one group.","別名グループは重複できません。同じ名称を統合するか、いずれかを編集してください。","별칭 그룹은 중복될 수 없습니다. 중복 이름을 합치거나 한 그룹을 수정하세요."],"地點相符":["Location matches","場所が一致","장소 일치"],"地點不符":["Location does not match","場所が一致しない","장소 불일치"],"地點已由施測人員確認（不列入計分）":["Location verified by staff (not scored)","担当者が場所を確認（採点対象外）","담당자가 장소 확인(점수 제외)"],"地點未獲施測人員確認（不列入計分）":["Location not verified by staff (not scored)","担当者による場所確認なし（採点対象外）","담당자가 장소를 확인하지 않음(점수 제외)"],"地點待人工確認（不列入計分）":["Location pending manual verification (not scored)","場所の手動確認待ち（採点対象外）","장소 수동 확인 대기(점수 제외)"],"已完成地點核對紀錄；第五題不增加或扣除分數。":["Location verification was recorded. Question 5 does not add or subtract points.","場所の確認を記録しました。第5問は得点を加減しません。","장소 확인을 기록했습니다. 5번 문항은 점수를 가산하거나 감점하지 않습니다."]});
+
 function normalizeExamDisplayLanguage(raw) {
   var value = String(raw || '').trim().replace(/_/g, '-').toLowerCase();
   if (value === 'en' || value.indexOf('en-') === 0 || value === 'english') return 'en';
@@ -4096,6 +4150,14 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
     "검사 장소를 선택하세요"
   ]
 });
+
+function getExamGenericAnswerPlaceholder(language) {
+  var lang = language || EXAM_DISPLAY_LANG || 'zh-TW';
+  if (lang === 'en') return 'Enter your answer';
+  if (lang === 'ja') return '回答を入力してください';
+  if (lang === 'ko') return '답변을 입력하세요';
+  return '請輸入答案';
+}
 
 function translateExamDisplayText(value) {
   var original = String(value == null ? '' : value);
@@ -4178,10 +4240,10 @@ function translateExamDisplayText(value) {
   if ((m = trimmed.match(/^前四題已判定得分：\s*(\d+)\s*\/\s*4；第五題未經現場核對，不列入正式對錯判定。$/))) {
     return index === 0 ? 'Score from first four questions: ' + m[1] + ' / 4; Question 5 is not included in the official result because it was not verified on site.' : index === 1 ? '最初の4問の得点：' + m[1] + ' / 4。第5問は現地確認がないため、正式な正誤判定に含まれません。' : '앞의 4문항 점수: ' + m[1] + ' / 4. 5번 문항은 현장 확인을 거치지 않아 공식 정오 판정에 포함되지 않습니다.';
   }
-  if ((m = trimmed.match(/^暫定得分：\s*(\d+)\s*\/\s*5；第五題待人工確認，審核完成後更新。$/))) {
-    return index === 0 ? 'Provisional score: ' + m[1] + ' / 5; Question 5 is pending manual review and will be updated after review.' : index === 1 ? '暫定得点：' + m[1] + ' / 5。第5問は手動確認待ちで、確認後に更新されます。' : '임시 점수: ' + m[1] + ' / 5. 5번 문항은 수동 검토 대기 중이며 검토 후 업데이트됩니다.';
+  if ((m = trimmed.match(/^暫定得分：\s*(\d+)\s*\/\s*4；第五題待人工確認，審核完成後更新。$/))) {
+    return index === 0 ? 'Provisional score: ' + m[1] + ' / 4; Question 5 is pending staff location verification and is not scored.' : index === 1 ? '暫定得点：' + m[1] + ' / 4。第5問は担当者による場所の確認待ちで、採点対象外です。' : '임시 점수: ' + m[1] + ' / 4. 5번 문항은 담당자의 장소 확인 대기 중이며 점수에 포함되지 않습니다.';
   }
-  if ((m = trimmed.match(/^得分：\s*(\d+)\s*\/\s*5（通過門檻：4 題）$/))) return index === 0 ? 'Score: ' + m[1] + ' / 5 (passing threshold: 4 questions)' : index === 1 ? '得点：' + m[1] + ' / 5（合格基準：4問）' : '점수: ' + m[1] + ' / 5 (통과 기준: 4문항)';
+  if ((m = trimmed.match(/^得分：\s*(\d+)\s*\/\s*4（通過門檻：4 題）$/))) return index === 0 ? 'Score: ' + m[1] + ' / 4 (all four scored questions must be correct)' : index === 1 ? '得点：' + m[1] + ' / 4（採点対象の4問すべて正解が必要）' : '점수: ' + m[1] + ' / 4 (채점 대상 4문항 모두 정답 필요)';
   if ((m = trimmed.match(/^得分：\s*(\d+)\s*\/\s*10（通過門檻：3 張）$/))) return index === 0 ? 'Score: ' + m[1] + ' / 10 (passing threshold: 3 pictures)' : index === 1 ? '得点：' + m[1] + ' / 10（合格基準：3枚）' : '점수: ' + m[1] + ' / 10 (통과 기준: 그림 3장)';
   if ((m = trimmed.match(/^得分：\s*(\d+)\s*\/\s*7（通過門檻：4 分）$/))) return index === 0 ? 'Score: ' + m[1] + ' / 7 (passing threshold: 4 points)' : index === 1 ? '得点：' + m[1] + ' / 7（合格基準：4点）' : '점수: ' + m[1] + ' / 7 (통과 기준: 4점)';
   if ((m = trimmed.match(/^整體測驗結果：(.+)$/))) return index === 0 ? 'Overall assessment result: ' + (m[1] === '通過' ? 'Passed' : 'Not passed yet') : index === 1 ? '総合検査結果：' + (m[1] === '通過' ? '合格' : '未合格') : '전체 검사 결과: ' + (m[1] === '通過' ? '통과' : '아직 통과하지 못함');
@@ -4273,7 +4335,15 @@ function initExamDisplayLanguage() {
  * 僅變更下拉選單顯示文字；原始中文 key/value、examState、localStorage、答案比對及送出資料一律不變。
  * 陣列順序固定為 English、Japanese、Korean。
  */
-var EXAM_LOCATION_DISPLAY_TRANSLATIONS = {"county":{"臺北市":["Taipei City","台北市","타이베이시"],"新北市":["New Taipei City","新北市","신베이시"],"基隆市":["Keelung City","基隆市","지룽시"],"桃園市":["Taoyuan City","桃園市","타오위안시"],"新竹縣":["Hsinchu County","新竹県","신주현"],"新竹市":["Hsinchu City","新竹市","신주시"],"苗栗縣":["Miaoli County","苗栗県","먀오리현"],"臺中市":["Taichung City","台中市","타이중시"],"彰化縣":["Changhua County","彰化県","장화현"],"南投縣":["Nantou County","南投県","난터우현"],"雲林縣":["Yunlin County","雲林県","윈린현"],"嘉義縣":["Chiayi County","嘉義県","자이현"],"嘉義市":["Chiayi City","嘉義市","자이시"],"臺南市":["Tainan City","台南市","타이난시"],"高雄市":["Kaohsiung City","高雄市","가오슝시"],"屏東縣":["Pingtung County","屏東県","핑둥현"],"宜蘭縣":["Yilan County","宜蘭県","이란현"],"花蓮縣":["Hualien County","花蓮県","화롄현"],"臺東縣":["Taitung County","台東県","타이둥현"],"澎湖縣":["Penghu County","澎湖県","펑후현"],"金門縣":["Kinmen County","金門県","진먼현"],"連江縣":["Lienchiang County","連江県","롄장현"]},"district":{"七堵區":["Qidu District","七堵区","치두구"],"七美鄉":["Qimei Township","七美郷","치메이향"],"三地門鄉":["Sandimen Township","三地門郷","산디멘향"],"三峽區":["Sanxia District","三峽区","산샤구"],"三星鄉":["Sanxing Township","三星郷","산싱향"],"三灣鄉":["Sanwan Township","三灣郷","산완향"],"三義鄉":["Sanyi Township","三義郷","산이향"],"三芝區":["Sanzhi District","三芝区","산즈구"],"三重區":["Sanchong District","三重区","산중구"],"中和區":["Zhonghe District","中和区","중허구"],"中壢區":["Zhongli District","中壢区","중리구"],"中寮鄉":["Zhongliao Township","中寮郷","중리아오향"],"中正區":["Zhongzheng District","中正区","중정구"],"中西區":["West Central District","中西区","중시구"],"九如鄉":["Jiuru Township","九如郷","주루향"],"二林鎮":["Erlin Township","二林鎮","얼린진"],"二水鄉":["Ershui Township","二水郷","얼슈이향"],"五峰鄉":["Wufeng Township","五峰郷","우펭향"],"五結鄉":["Wujie Township","五結郷","우제향"],"五股區":["Wugu District","五股区","우구구"],"仁愛區":["Renai District","仁愛区","런아이구"],"仁愛鄉":["Renai Township","仁愛郷","런아이향"],"伸港鄉":["Shengang Township","伸港郷","선강향"],"佳冬鄉":["Jiadong Township","佳冬郷","자동향"],"佳里區":["JiaLi District","佳里区","자리구"],"來義鄉":["Laiyi Township","來義郷","라이이향"],"信義區":["Xinyi District","信義区","신이구"],"信義鄉":["Xinyi Township","信義郷","신이향"],"光復鄉":["Guangfu Township","光復郷","광푸향"],"內埔鄉":["Neipu Township","內埔郷","네이부향"],"內門區":["Neimen District","內門区","네이멘구"],"八德區":["Bade District","八德区","바데구"],"八里區":["Bali District","八里区","바리구"],"公館鄉":["Gongguan Township","公館郷","궁관향"],"冬山鄉":["Dongshan Township","冬山郷","동산향"],"北區":["North District","北区","북구"],"北埔鄉":["Beipu Township","北埔郷","베이부향"],"北屯區":["Beitun District","北屯区","베이툰구"],"北投區":["Beitou District","北投区","베이토우구"],"北斗鎮":["Beidou Township","北斗鎮","베이도우진"],"北港鎮":["Beigang Township","北港鎮","베이강진"],"卑南鄉":["Beinan Township","卑南郷","베이난향"],"卓欄鎮":["Zhuolan Township","卓欄鎮","줘란진"],"卓溪鄉":["Zhuoxi Township","卓溪郷","줘시향"],"南區":["South District","南区","남구"],"南屯區":["Nantun District","南屯区","난툰구"],"南州鄉":["Nanzhou Township","南州郷","난저우향"],"南庄鄉":["Nanzhuang Township","南庄郷","난좡향"],"南投市":["Nantou City","南投市","난토우시"],"南澳鄉":["Nanao Township","南澳郷","난아오향"],"南竿鄉":["Nangan Township","南竿郷","난간향"],"吉安鄉":["Jian Township","吉安郷","지안향"],"名間鄉":["Mingjian Township","名間郷","밍젠향"],"后里區":["Houli District","后里区","허우리구"],"和平區":["Heping District","和平区","허핑구"],"和美鎮":["Hemei Township","和美鎮","허메이진"],"員山鄉":["Yuanshan Township","員山郷","위안산향"],"員林市":["Yuanlin City","員林市","위안린시"],"善化區":["ShanHua District","善化区","산화구"],"國姓鄉":["Guoxing Township","國姓郷","궈싱향"],"土城區":["Tucheng District","土城区","투청구"],"坪林區":["Pinglin District","坪林区","핑린구"],"埔心鄉":["Puxin Township","埔心郷","부신향"],"埔里鎮":["Puli Township","埔里鎮","부리진"],"埔鹽鄉":["Puyan Township","埔鹽郷","부옌향"],"埤頭鄉":["Pitou Township","埤頭郷","피토우향"],"士林區":["Shilin District","士林区","스린구"],"壯圍鄉":["Zhuangwei Township","壯圍郷","좡웨이향"],"壽豐鄉":["Shoufeng Township","壽豐郷","쇼우펭향"],"外埔區":["Waipu District","外埔区","와이부구"],"大同區":["Datong District","大同区","다통구"],"大同鄉":["Datong Township","大同郷","다통향"],"大園區":["Dayuan District","大園区","다위안구"],"大城鄉":["Dacheng Township","大城郷","다청향"],"大安區":["Daan District","大安区","다안구"],"大寮區":["Daliao District","大寮区","다리아오구"],"大村鄉":["Dacun Township","大村郷","다춘향"],"大林鎮":["Dalin Township","大林鎮","다린진"],"大武鄉":["Dawu Township","大武郷","다우향"],"大湖鄉":["Dahu Township","大湖郷","다후향"],"大溪區":["Daxi District","大溪区","다시구"],"大甲區":["Dajia District","大甲区","다자구"],"大里區":["Dali District","大里区","다리구"],"大雅區":["Daya District","大雅区","다야구"],"太平區":["Taiping District","太平区","타이핑구"],"太麻里鄉":["Taimali Township","太麻里郷","타이마리향"],"安南區":["AnNan District","安南区","안난구"],"宜蘭市":["Yilan City","宜蘭市","이란시"],"富里鄉":["Fuli Township","富里郷","푸리향"],"寶山鄉":["Baoshan Township","寶山郷","바오산향"],"尖石鄉":["Jianshi Township","尖石郷","젠스향"],"屏東市":["Pingtung City","屏東市","핑동시"],"岡山區":["Gangshan District","岡山区","강산구"],"峨眉鄉":["Emei Township","峨眉郷","에메이향"],"崁頂鄉":["Kanding Township","崁頂郷","칸딩향"],"平溪區":["Pingxi District","平溪区","핑시구"],"平鎮區":["Pingzhen District","平鎮区","핑전구"],"延平鄉":["Yanping Township","延平郷","옌핑향"],"彌陀區":["Mituo District","彌陀区","미투오구"],"彰化市":["Changhua City","彰化市","장화시"],"後龍鎮":["Houlong Township","後龍鎮","허우롱진"],"復興區":["Fuxing District","復興区","푸싱구"],"恆春鎮":["Hengchun Township","恆春鎮","헝춘진"],"成功鎮":["Chenggong Township","成功鎮","청궁진"],"文山區":["Wenshan District","文山区","원산구"],"斗六市":["Douliu City","斗六市","도우리우시"],"新園鄉":["Xinyuan Township","新園郷","신위안향"],"新城鄉":["Xincheng Township","新城郷","신청향"],"新埔鎮":["Xinpu Township","新埔鎮","신부진"],"新埤鄉":["Xinpi Township","新埤郷","신피향"],"新屋區":["Xinwu District","新屋区","신우구"],"新店區":["Xindian District","新店区","신디안구"],"新營區":["XinYing District","新營区","신잉구"],"新社區":["Xinshe District","新社区","신셔구"],"新莊區":["Xinzhuang District","新莊区","신좡구"],"新豐鄉":["Xinfeng Township","新豐郷","신펭향"],"旗山等地區醫院與診所":["Hospitals and Clinics in Qishan and Nearby Areas","旗山など周辺地域の病院・診療所","치산 및 인근 지역 병원·의원"],"春日鄉":["Chunri Township","春日郷","춘르향"],"望安鄉":["Wangan Township","望安郷","왕안향"],"朴子市":["Puzi City","朴子市","포시시"],"東勢區":["Dongshi District","東勢区","동스구"],"東勢鄉":["Dongshi Township","東勢郷","동스향"],"東區":["East District","東区","동구"],"東河鄉":["Donghe Township","東河郷","동허향"],"東港鎮":["Donggang Township","東港鎮","동강진"],"松山區":["Songshan District","松山区","쑹산구"],"板橋區":["Banqiao District","板橋区","반차오구"],"枋寮鄉":["Fangliao Township","枋寮郷","팡리아오향"],"枋山鄉":["Fangshan Township","枋山郷","팡산향"],"林口區":["Linkou District","林口区","린코우구"],"林園區":["Linyuan District","林園区","린위안구"],"林邊鄉":["Linbian Township","林邊郷","린비안향"],"桃園區":["Taoyuan District","桃園区","타오위안구"],"桃源區":["Taoyuan District","桃源区","타오위안구"],"梧棲區":["Wuqi District","梧棲区","우치구"],"楊梅區":["Yangmei District","楊梅区","양메이구"],"楠梓區":["Nanzi District","楠梓区","난시구"],"樹林區":["Shulin District","樹林区","슈린구"],"橫山鄉":["Hengshan Township","橫山郷","헝산향"],"水里鄉":["Shuili Township","水里郷","슈이리향"],"永和區":["Yonghe District","永和区","용허구"],"永康區":["YongKang District","永康区","용캉구"],"永靖鄉":["Yongjing Township","永靖郷","용징향"],"汐止區":["Xizhi District","汐止区","시즈구"],"池上鄉":["Chishang Township","池上郷","츠샹향"],"沙鹿區":["Shalu District","沙鹿区","샤루구"],"泰安鄉":["Tai-an Township","泰安郷","타이안향"],"泰山區":["Taishan District","泰山区","타이산구"],"泰武鄉":["Taiwu Township","泰武郷","타이우향"],"海端鄉":["Haiduan Township","海端郷","하이두안향"],"淡水區":["Danshui District","淡水区","단슈이구"],"深坑區":["Shenkeng District","深坑区","선켕구"],"湖內區":["Hunei District","湖內区","후네이구"],"湖口鄉":["Hukou Township","湖口郷","후코우향"],"溪州鄉":["Xizhou Township","溪州郷","시저우향"],"溪湖鎮":["Xihu Township","溪湖鎮","시후진"],"滿州鄉":["Manzhou Township","滿州郷","만저우향"],"潭子區":["Tanzi District","潭子区","탄시구"],"潮州鎮":["Chaozhou Township","潮州鎮","차오저우진"],"烈嶼鄉":["Lieyu Township","烈嶼郷","리에위향"],"烏來區":["Wulai District","烏來区","우라이구"],"烏日區":["Wuri District","烏日区","우르구"],"牡丹鄉":["Mudan Township","牡丹郷","무단향"],"獅子鄉":["Shizi Township","獅子郷","스시향"],"獅潭鄉":["Shitan Township","獅潭郷","스탄향"],"玉里鎮":["Yuli Township","玉里鎮","위리진"],"琉球鄉":["Liuqiu Township","琉球郷","리우치우향"],"瑞穗鄉":["Ruisui Township","瑞穗郷","루이싀향"],"瑞芳區":["Ruifang District","瑞芳区","루이팡구"],"瑪家鄉":["Majia Township","瑪家郷","마자향"],"田中鎮":["Tianzhong Township","田中鎮","티안중진"],"田尾鄉":["Tianwei Township","田尾郷","티안웨이향"],"甲仙區":["Jiaxian District","甲仙区","자셴구"],"白沙鄉":["Baisha Township","白沙郷","바이샤향"],"監理機關":["Motor Vehicles Offices","運転免許関連機関","운전면허 관련 기관"],"石岡區":["Shigang District","石岡区","스강구"],"石碇區":["Shiding District","石碇区","스딩구"],"石門區":["Shimen District","石門区","스멘구"],"礁溪鄉":["Jiaoxi Township","礁溪郷","자오시향"],"社頭鄉":["Shetou Township","社頭郷","셔토우향"],"神岡區":["Shengang District","神岡区","선강구"],"福興鄉":["Fuxing Township","福興郷","푸싱향"],"秀林鄉":["Xiulin Township","秀林郷","슈린향"],"秀水鄉":["Xiushui Township","秀水郷","슈슈이향"],"竹北市":["Zhubei City","竹北市","주베이시"],"竹南鎮":["Zhunan Township","竹南鎮","주난진"],"竹塘鄉":["Zhutang Township","竹塘郷","주탕향"],"竹山鎮":["Zhushan Township","竹山鎮","주산진"],"竹崎鄉":["Zhuqi Township","竹崎郷","주치향"],"竹東鎮":["Zhudong Township","竹東鎮","주동진"],"竹田鄉":["Zhutian Township","竹田郷","주티안향"],"綜合醫院與醫療院所":["General Hospitals and Medical Facilities","総合病院・医療機関","종합병원 및 의료기관"],"綠島鄉":["Lyudao Township","綠島郷","루다오향"],"線西鄉":["Xianxi Township","線西郷","셴시향"],"羅東鎮":["Luodong Township","羅東鎮","루오동진"],"美濃區":["Meinong District","美濃区","메이농구"],"臺東市":["Taitung City","台東市","타이동시"],"芎林鄉":["Qionglin Township","芎林郷","충린향"],"芬園鄉":["Fenyuan Township","芬園郷","펜위안향"],"花壇鄉":["Huatan Township","花壇郷","화탄향"],"花蓮市":["Hualien City","花蓮市","화리안시"],"芳苑鄉":["Fangyuan Township","芳苑郷","팡위안향"],"苑裡鎮":["Yuanli Township","苑裡鎮","위안리진"],"苗栗市":["Miaoli City","苗栗市","미아오리시"],"茂林區":["Maolin District","茂林区","마오린구"],"茄萣區":["Qieding District","茄萣区","체구"],"草屯鎮":["Caotun Township","草屯鎮","차오툰진"],"萬丹鄉":["Wandan Township","萬丹郷","완단향"],"萬巒鄉":["Wanluan Township","萬巒郷","완루안향"],"萬榮鄉":["Wanrong Township","萬榮郷","완룽향"],"萬里區":["Wanli District","萬里区","완리구"],"蘆洲區":["Luzhou District","蘆洲区","루저우구"],"蘆竹區":["Luzhu District","蘆竹区","루주구"],"蘇澳鎮":["Suao Township","蘇澳鎮","수아오진"],"蘭嶼鄉":["Lanyu Township","蘭嶼郷","란위향"],"虎尾鎮":["Huwei Township","虎尾鎮","후웨이진"],"西區":["West District","西区","서구"],"西屯區":["Xitun District","西屯区","시툰구"],"西湖鄉":["Xihu Township","西湖郷","시후향"],"觀音區":["Guanyin District","觀音区","관인구"],"豐原區":["Fengyuan District","豐原区","펭위안구"],"貢寮區":["Gongliao District","貢寮区","궁리아오구"],"路竹區":["Luzhu District","路竹区","루주구"],"車城鄉":["Checheng Township","車城郷","처청향"],"通霄鎮":["Tongxiao Township","通霄鎮","통샤오진"],"造橋鄉":["Zaoqiao Township","造橋郷","사오차오향"],"達仁鄉":["Daren Township","達仁郷","다런향"],"那瑪夏區":["Namaxia District","那瑪夏区","나마샤구"],"里港鄉":["Ligang Township","里港郷","리강향"],"金城鎮":["Jincheng Township","金城鎮","진청진"],"金寧鄉":["Jinning Township","金寧郷","진주향"],"金山區":["Jinshan District","金山区","진산구"],"金峰鄉":["Jinfeng Township","金峰郷","진펭향"],"金沙鎮":["Jinsha Township","金沙鎮","진샤진"],"金湖鎮":["Jinhu Township","金湖鎮","진후진"],"銅鑼鄉":["Tongluo Township","銅鑼郷","통루오향"],"長治鄉":["Changzhi Township","長治郷","창즈향"],"長濱鄉":["Changbin Township","長濱郷","창빈향"],"關山鎮":["Guanshan Township","關山鎮","관산진"],"關廟區":["GuanMiao District","關廟区","관미아오구"],"關西鎮":["Guanxi Township","關西鎮","관시진"],"集集鎮":["Jiji Township","集集鎮","지지진"],"雙溪區":["Shuangxi District","雙溪区","솽시구"],"霧台鄉":["Wutai Township","霧台郷","우타이향"],"霧峰區":["Wufeng District","霧峰区","우펭구"],"頭份市":["Toufen City","頭份市","토우펜시"],"頭城鎮":["Toucheng Township","頭城鎮","토우청진"],"頭屋鄉":["Touwu Township","頭屋郷","토우우향"],"香山區":["Xiangshan District","香山区","샹산구"],"馬公市":["Magong City","馬公市","마궁시"],"高樹鄉":["Gaoshu Township","高樹郷","가오슈향"],"魚池鄉":["Yuchi Township","魚池郷","위츠향"],"鳳山區":["Fengshan District","鳳山区","펭산구"],"鳳林鎮":["Fenglin Township","鳳林鎮","펭린진"],"鶯歌區":["Yingge District","鶯歌区","잉거구"],"鹽埔鄉":["Yanpu Township","鹽埔郷","옌부향"],"鹿港鎮":["Lukang Township","鹿港鎮","루강진"],"鹿谷鄉":["Lugu Township","鹿谷郷","루구향"],"鹿野鄉":["Luye Township","鹿野郷","루예향"],"麟洛鄉":["Linluo Township","麟洛郷","린루오향"],"麥寮鄉":["Mailiao Township","麥寮郷","마이리아오향"],"麻豆區":["MaDou District","麻豆区","마도우구"],"龍井區":["Longjing District","龍井区","롱징구"],"龍潭區":["Longtan District","龍潭区","롱탄구"],"龜山區":["Guishan District","龜山区","구이산구"]},"place":{"一生安診所":["Yishengan Clinic","一生安診療所","이성안 의원"],"七美鄉衛生所":["Qimei Health Center","七美郷保健所","치메이 향 보건소"],"三上耳鼻喉科診所":["San Shang ENT Clinic","三上耳鼻咽喉科診療所","산샹 이비인후과 의원"],"三地門鄉衛生所":["Sandimen Health Center","三地門郷保健所","산디멘 향 보건소"],"三大診所":["Sand Da Clinic","三大診療所","산다 의원"],"三峽區衛生所":["Sanxia Health Center","三峽区保健所","산샤 구 보건소"],"三星鄉衛生所":["Sanxing Health Center","三星郷保健所","산싱 향 보건소"],"三灣鄉衛生所":["Sanwan Health Center","三灣郷保健所","산완 향 보건소"],"三義鄉衛生所":["Sanyi Health Center","三義郷保健所","산이 향 보건소"],"三芝區衛生所":["Sanzhi Health Center","三芝区保健所","산즈 구 보건소"],"三軍總醫院松山分院":["Tri-Service General Hospital Songshan Branch","三軍総合病院松山分院","삼군종합병원 쑹산 분원"],"三重區衛生所":["Sanchong Health Center","三重区保健所","산중 구 보건소"],"中和區衛生所":["Zhonghe Health Center","中和区保健所","중허 구 보건소"],"中壢區衛生所":["Zhongli Health Center","中壢区保健所","중리 구 보건소"],"中壢監理站（僅作認知測驗）":["Zhong Li Motor Vehicles Station (Cognitive assessment only)","中壢運転免許試験場（認知機能検査のみ）","중리 운전면허시험장 (인지기능 검사만 가능)"],"中寮鄉衛生所":["Zhongliao Health Center","中寮郷保健所","중리아오 향 보건소"],"中山診所":["Zhongshan Clinic","中山診療所","중산 의원"],"中祥醫院":["Zhongxiang Hospital","中祥病院","중샹 병원"],"中華民國汽車駕駛人雲林區體能檢測代辦所":["Republic of China Motor Vehicle Drivers Yunlin District Physical Fitness Assessment Service Agency","中華民国の自動車運転者雲林区体力検査代行事務所","중화민국 자동차 운전자 윈린 구 체력검사 대행사무소"],"中西區衛生所":["West Central District Health Center","中西区保健所","중시 구 보건소"],"九如鄉衛生所":["Jiuru Health Center","九如郷保健所","주루 향 보건소"],"二水鄉衛生所":["Ershui Health Center","二水郷保健所","얼슈이 향 보건소"],"五峰鄉衛生所":["Wufeng Health Center","五峰郷保健所","우펭 향 보건소"],"五福診所":["Wufu Clinic","五福診療所","우푸 의원"],"五結鄉衛生所":["Wujie Health Center","五結郷保健所","우제 향 보건소"],"五股區衛生所":["Wugu Health Center","五股区保健所","우구 구 보건소"],"亞洲大學附屬醫院":["Asia University Affiliated Hospital","アジア大学付属病院","아시아대학교 부속 병원"],"仁佑診所":["Renyou Clinic","仁佑診療所","런유 의원"],"仁和醫院":["Renhe Hospital","仁和病院","런허 병원"],"仁愛鄉衛生所":["Renai Health Center","仁愛郷保健所","런아이 향 보건소"],"仁愛醫院":["Renai Hospital","仁愛病院","런아이 병원"],"仁慈醫院":["Renci Hospital","仁慈病院","런츠 병원"],"仁祥診所":["Ren Xiang Clinic","仁祥診療所","런샹 의원"],"伸港鄉衛生所":["Shengang Health Center","伸港郷保健所","선강 향 보건소"],"佑康診所":["You Kang Clinic","佑康診療所","유캉 의원"],"佑林診所":["Youlin Clinic","佑林診療所","유린 의원"],"佑民醫院":["You Min Hospital","佑民病院","유민 병원"],"何毓基神經外科復健診所":["He Yuji Neurosurgery Fu Jian Clinic","何毓基脳神経外科復健診療所","허위지 신경외과 푸젠 의원"],"佛教正德醫院":["Fo Jiao Zheng De Hospital","佛教正德病院","포자오정데 병원"],"佳冬鄉衛生所":["Jiadong Health Center","佳冬郷保健所","자동 향 보건소"],"佳禾診所":["Jia He Clinic","佳禾診療所","자허 의원"],"來義鄉衛生所":["Laiyi Health Center","來義郷保健所","라이이 향 보건소"],"信合美診所":["Xin He Mei Clinic","信合美診療所","신허메이 의원"],"信生醫院":["Xinsheng Hospital","信生病院","신성 병원"],"信義鄉衛生所":["Xinyi Health Center","信義郷保健所","신이 향 보건소"],"健仁醫院":["Jianren Hospital","健仁病院","젠런 병원"],"元亨診所":["Yuan Heng Clinic","元亨診療所","위안헝 의원"],"元新眼科診所":["Yuanxin Ophthalmology Clinic","元新眼科診療所","위안신 안과 의원"],"元里診所":["Yuan Li Clinic","元里診療所","위안리 의원"],"光復衛生所":["Guang Fu Health Center","光復保健所","광푸 보건소"],"光田綜合醫院（向上院區）":["Kuang Tien General Hospital （Xiang Shang Campus ）","光田総合病院（向上院区）","광티안 종합병원 （샹샹 병원 캠퍼스 ）"],"內埔鄉衛生所":["Neipu Health Center","內埔郷保健所","네이부 향 보건소"],"內門區衛生所":["Neimen Health Center","內門区保健所","네이멘 구 보건소"],"全民診所":["Quanmin Clinic","全民診療所","취안민 의원"],"全民醫院":["Quanmin Hospital","全民病院","취안민 병원"],"全生醫院":["Quan Sheng Hospital","全生病院","취안성 병원"],"全視界眼科診所":["Quanshijie Ophthalmology Clinic","全視界眼科診療所","취안스제 안과 의원"],"八德區衛生所":["Bade Health Center","八德区保健所","바데 구 보건소"],"八里區衛生所":["Bali Health Center","八里区保健所","바리 구 보건소"],"公館鄉衛生所":["Gongguan Health Center","公館郷保健所","궁관 향 보건소"],"冬山鄉衛生所":["Dongshan Health Center","冬山郷保健所","동산 향 보건소"],"北一診所":["Beiyi Clinic","北一診療所","베이이 의원"],"北埔鄉衛生所":["Beipu Health Center","北埔郷保健所","베이부 향 보건소"],"北屯區軍功衛生所":["Beitun Jun Gong Health Center","北屯区軍功保健所","베이툰 구 준궁 보건소"],"卑南鄉衛生所":["Beinan Health Center","卑南郷保健所","베이난 향 보건소"],"卓欄衛生所":["Zhuolan Health Center","卓欄保健所","줘란 보건소"],"卓溪衛生所":["Zhuo Xi Health Center","卓溪保健所","줘시 보건소"],"卓醫院":["Zhuo Hospital","卓病院","줘 병원"],"協和醫院":["Xiehe Hospital","協和病院","셰허 병원"],"協順診所":["Xie Shun Clinic","協順診療所","셰순 의원"],"南區衛生所":["South District Health Center","南区保健所","난 구 보건소"],"南基醫院":["Nan Ji Hospital","南基病院","난지 병원"],"南屯區衛生所":["Nantun Health Center","南屯区保健所","난툰 구 보건소"],"南州鄉衛生所":["Nanzhou Health Center","南州郷保健所","난저우 향 보건소"],"南庄鄉衛生所":["Nanzhuang Health Center","南庄郷保健所","난좡 향 보건소"],"南投市衛生所":["Nantou Health Center","南投市保健所","난터우 시 보건소"],"南澳鄉衛生所":["Nanao Health Center","南澳郷保健所","난아오 향 보건소"],"台全耳鼻喉科診所":["Tai Quan ENT Clinic","台全耳鼻咽喉科診療所","타이취안 이비인후과 의원"],"台安耳鼻喉科":["Taian ENT","台安耳鼻咽喉科","타이안 이비인후과"],"台新醫院":["Tai Xin Hospital","台新病院","타이신 병원"],"台東聖母醫院":["Taitung St. Mary Hospital","台東聖母病院","타이둥 성무 병원"],"右昌聯合醫院":["Youchang United Hospital","右昌連合病院","유창 연합 병원"],"吉安衛生所":["Ji-an Health Center","吉安保健所","지안 보건소"],"吉安醫院":["Ji-an Hospital","吉安病院","지안 병원"],"名間鄉衛生所":["Mingjian Health Center","名間郷保健所","밍젠 향 보건소"],"后里區衛生所":["Houli Health Center","后里区保健所","허우리 구 보건소"],"和平區衛生所":["Heping Health Center","和平区保健所","허핑 구 보건소"],"和興聯合診所":["Hexing Joint Clinic","和興連合診療所","허싱 연합 의원"],"員山鄉衛生所":["Yuanshan Health Center","員山郷保健所","위안산 향 보건소"],"員林何醫院":["Yuan Lin He Hospital","員林何病院","위안린허 병원"],"員榮醫院":["Yuanrong Hospital","員栄病院","위안룽 병원"],"員生醫院":["Yuansheng Hospital","員生病院","위안성 병원"],"員郭醫院":["Yuanguo Hospital","員郭病院","위안궈 병원"],"嘉義區監理所（僅作認知測驗）":["Chiayi Area Motor Vehicles Office (Cognitive assessment only)","嘉義区運転免許事務所（認知機能検査のみ）","자이 지역 차량관리사무소 (인지기능 검사만 가능)"],"嘉義基督教醫院":["Chiayi Christian Hospital","嘉義キリスト教病院","자이 기독교 병원"],"嘉義市監理站（僅作認知測驗）":["Chiayi Shi Motor Vehicles Station (Cognitive assessment only)","嘉義市運転免許試験場（認知機能検査のみ）","자이 시 운전면허시험장 (인지기능 검사만 가능)"],"嘉義長庚紀念醫院":["Chiayi Chang Geng Memorial Hospital","嘉義長庚記念病院","자이 창겅 기념 병원"],"國姓鄉衛生所":["Guoxing Health Center","國姓郷保健所","궈싱 향 보건소"],"國泰聯合診所":["Cathay Joint Clinic","國泰連合診療所","궈타이 연합 의원"],"國軍左營總醫院":["Armed Forces Zuo Ying General Hospital","国軍左營総合病院","국군 수오잉 종합병원"],"國軍新竹地區醫院":["Armed Forces Hsinchu Di District Hospital","国軍新竹地区病院","국군 신주 디 구 병원"],"國軍臺中總醫院中清院區":["Armed Forces Taichung General Hospital Zhongqing Campus","国軍台中総合病院中清院区","국군 타이중 종합병원 중칭 병원 캠퍼스"],"國軍高雄總醫院":["Armed Forces Kaohsiung General Hospital","国軍高雄総合病院","국군 가오슝 종합병원"],"國軍高雄總醫院岡山分院":["Armed Forces Kaohsiung General Hospital Gang Shan Branch","国軍高雄総合病院岡山分院","국군 가오슝 종합병원 강산 분원"],"國軍高雄門診中心":["Armed Forces Kaohsiung Men Zhen Zhong Xin","国軍高雄門診中心","국군 가오슝 멘전중신"],"土城區衛生所":["Tucheng Health Center","土城区保健所","투청 구 보건소"],"坪林區衛生所":["Pinglin Health Center","坪林区保健所","핑린 구 보건소"],"埔心鄉衛生所":["Puxin Health Center","埔心郷保健所","부신 향 보건소"],"埔里基督教醫院":["Puli Christian Hospital","埔里キリスト教病院","부리 기독교 병원"],"埔里鎮衛生所":["Puli Health Center","埔里鎮保健所","부리 진 보건소"],"埔鹽鄉衛生所":["Puyan Health Center","埔鹽郷保健所","부옌 향 보건소"],"埤頭鄉衛生所":["Pitou Health Center","埤頭郷保健所","피토우 향 보건소"],"基隆監理站（無體檢）":["Keelung Motor Vehicles Station (No medical examination)","基隆運転免許試験場（健康診断なし）","지룽 운전면허시험장 (신체검사 없음)"],"士林承德診所":["Shi Lin Chengde Clinic","士林承德診療所","스린청데 의원"],"士林監理站（無體檢）":["Shi Lin Motor Vehicles Station (No medical examination)","士林運転免許試験場（健康診断なし）","스린 운전면허시험장 (신체검사 없음)"],"壯圍鄉衛生所":["Zhuangwei Health Center","壯圍郷保健所","좡웨이 향 보건소"],"壽豐衛生所":["Shou Feng Health Center","壽豐保健所","쇼우펭 보건소"],"外埔區衛生所":["Waipu Health Center","外埔区保健所","와이부 구 보건소"],"大千綜合醫院":["Daqian General Hospital","大千総合病院","다첸 종합병원"],"大同鄉衛生所":["Datong Health Center","大同郷保健所","다통 향 보건소"],"大園敏盛醫院":["Dayuan Minsheng Hospital","大園敏盛病院","다위안민성 병원"],"大城鄉衛生所":["Dacheng Health Center","大城郷保健所","다청 향 보건소"],"大安區衛生所":["Daan Health Center","大安区保健所","다안 구 보건소"],"大安醫院":["Da An Hospital","大安病院","다안 병원"],"大寮區衛生所":["Daliao Health Center","大寮区保健所","다리아오 구 보건소"],"大村鄉衛生所":["Dacun Health Center","大村郷保健所","다춘 향 보건소"],"大林慈濟醫院":["Da Lin Ci Ji Hospital","大林慈濟病院","다린 츠지 병원"],"大武鄉衛生所":["Dawu Health Center","大武郷保健所","다우 향 보건소"],"大湖鄉衛生所":["Dahu Health Center","大湖郷保健所","다후 향 보건소"],"大溪區衛生所":["Daxi Health Center","大溪区保健所","다시 구 보건소"],"大生診所":["Dasheng Clinic","大生診療所","다성 의원"],"大甲區衛生所":["Dajia Health Center","大甲区保健所","다자 구 보건소"],"大甲李綜合醫院":["Dajia Lee General Hospital","大甲李総合病院","다자리 종합병원"],"天主教聖馬爾定醫院":["Catholic Sheng Ma Er Ding Hospital","カトリック聖馬爾定病院","가톨릭 성마얼딩 병원"],"天行健診所":["Tian Xing Jian Clinic","天行健診療所","티안싱젠 의원"],"太平區衛生所":["Taiping Health Center","太平区保健所","타이핑 구 보건소"],"太麻里鄉衛生所":["Taimali Health Center","太麻里郷保健所","타이마리 향 보건소"],"如毅診所":["Ru Yi Clinic","如毅診療所","루이 의원"],"姜博文診所":["Jiang Bowen Clinic","姜博文診療所","장보원 의원"],"安心醫院":["Anxin Hospital","安心病院","안신 병원"],"安泰診所":["Antai Clinic","安泰診療所","안타이 의원"],"安泰醫院":["Antai Hospital","安泰病院","안타이 병원"],"宏仁醫院":["Hongren Hospital","宏仁病院","훙런 병원"],"宏元診所":["Hongyuan Clinic","宏元診療所","훙위안 의원"],"宏恩綜合醫院":["Hong En General Hospital","宏恩総合病院","훙엔 종합병원"],"宏科醫院":["Hongke Hospital","宏科病院","훙케 병원"],"定安診所":["Ding An Clinic","定安診療所","딩안 의원"],"宜蘭市衛生所":["Yilan Health Center","宜蘭市保健所","이란 시 보건소"],"宜蘭監理站（僅作認知測驗）":["Yilan Motor Vehicles Station (Cognitive assessment only)","宜蘭運転免許試験場（認知機能検査のみ）","이란 운전면허시험장 (인지기능 검사만 가능)"],"富里衛生所":["Fu Li Health Center","富里保健所","푸리 보건소"],"寶山鄉衛生所":["Baoshan Health Center","寶山郷保健所","바오산 향 보건소"],"尖石鄉衛生所":["Jianshi Health Center","尖石郷保健所","젠스 향 보건소"],"屏東基督教醫院":["Pingtung Christian Hospital","屏東キリスト教病院","핑둥 기독교 병원"],"岷安診所":["Minan Clinic","岷安診療所","민안 의원"],"峨眉鄉衛生所":["Emei Health Center","峨眉郷保健所","에메이 향 보건소"],"崁頂鄉衛生所":["Kanding Health Center","崁頂郷保健所","칸딩 향 보건소"],"常春醫院":["Changchun Hospital","常春病院","창춘 병원"],"平安葉治威聯合診所":["Pingan Ye Zhiwei Joint Clinic","平安葉治威連合診療所","핑안셰즈웨이 연합 의원"],"平溪區衛生所":["Pingxi Health Center","平溪区保健所","핑시 구 보건소"],"平鎮區衛生所":["Pingzhen Health Center","平鎮区保健所","핑 진 구 보건소"],"延平鄉衛生所":["Yanping Health Center","延平郷保健所","옌핑 향 보건소"],"建佑醫院":["Jianyou Hospital","建佑病院","젠유 병원"],"弘大醫院":["Hongda Hospital","弘大病院","훙다 병원"],"張天長診所":["Zhang Tianchang Clinic","張天長診療所","장티안창 의원"],"彌陀區衛生所":["Mituo Health Center","彌陀区保健所","미투오 구 보건소"],"彰濱秀傳紀念醫院":["Zhang Bin Show Chwan Memorial Hospital","彰濱秀傳記念病院","장빈 슈촨 기념 병원"],"後龍鎮衛生所":["Houlong Health Center","後龍鎮保健所","허우롱 진 보건소"],"復興區衛生所":["Fuxing Health Center","復興区保健所","푸싱 구 보건소"],"德仁醫院":["Deren Hospital","德仁病院","데런 병원"],"德安聯合診所":["Dean Joint Clinic","德安連合診療所","데안 연합 의원"],"恆春鎮衛生所":["Hengchun Health Center","恆春鎮保健所","헝춘 진 보건소"],"恩樺醫院":["Enhua Hospital","恩樺病院","엔화 병원"],"惠民醫院":["Huimin Hospital","惠民病院","후이민 병원"],"慈祐診所":["Ciyou Clinic","慈祐診療所","츠유 의원"],"慈祐醫院":["Ciyou Hospital","慈祐病院","츠유 병원"],"慧明聯合診所":["Huiming Joint Clinic","慧明連合診療所","후이밍 연합 의원"],"成功鎮衛生所":["Chenggong Health Center","成功鎮保健所","청궁 진 보건소"],"戴銘浚醫院":["Dai Mingjun Hospital","戴銘浚病院","다이밍준 병원"],"新仁醫院":["Xinren Hospital","新仁病院","신런 병원"],"新博愛診所":["Xin Boai Clinic","新博愛診療所","신보아이 의원"],"新園鄉衛生所":["Xinyuan Health Center","新園郷保健所","신위안 향 보건소"],"新城衛生所":["Xin Cheng Health Center","新城保健所","신청 보건소"],"新埔立安診所":["Xinpu Li An Clinic","新埔立安診療所","신부리안 의원"],"新埔鎮衛生所":["Xinpu Health Center","新埔鎮保健所","신부 진 보건소"],"新埤鄉衛生所":["Xinpi Health Center","新埤郷保健所","신피 향 보건소"],"新大同診所":["Xin Datong Clinic","新大同診療所","신다통 의원"],"新屋區衛生所":["Xinwu Health Center","新屋区保健所","신우 구 보건소"],"新店區衛生所":["Xindian Health Center","新店区保健所","신디안 구 보건소"],"新文心診所":["Xin Wen Xin Clinic","新文心診療所","신원신 의원"],"新昆明醫院":["Xin Kun Ming Hospital","新昆明病院","신쿤밍 병원"],"新泰醫院":["Xintai Hospital","新泰病院","신타이 병원"],"新營監理站（僅作認知測驗）":["Xin Ying Motor Vehicles Station (Cognitive assessment only)","新營運転免許試験場（認知機能検査のみ）","신잉 운전면허시험장 (인지기능 검사만 가능)"],"新生醫院":["Xinsheng Hospital","新生病院","신성 병원"],"新社區衛生所":["Xinshe Health Center","新社区保健所","신셔 구 보건소"],"新竹區監理所（僅作認知測驗）":["Hsinchu Area Motor Vehicles Office (Cognitive assessment only)","新竹地区運転免許事務所（認知機能検査のみ）","신주 지역 차량관리사무소 (인지기능 검사만 가능)"],"新竹市監理站（僅作認知測驗）":["Hsinchu Shi Motor Vehicles Station (Cognitive assessment only)","新竹市運転免許試験場（認知機能検査のみ）","신주 시 운전면허시험장 (인지기능 검사만 가능)"],"新興醫院":["Xinxing Hospital","新興病院","신싱 병원"],"新莊區衛生所":["Xinzhuang Health Center","新莊区保健所","신좡 구 보건소"],"新豐鄉衛生所":["Xinfeng Health Center","新豐郷保健所","신펭 향 보건소"],"新高鳳醫院":["Xingaofeng Hospital","新高鳳病院","신가오펭 병원"],"旗山監理站（僅能做認知測驗）":["Qishan Motor Vehicles Station (Cognitive assessment only)","旗山運転免許試験場（認知機能検査のみ）","치산 운전면허시험장 (인지기능 검사만 가능)"],"日安診所":["Rian Clinic","日安診療所","르안 의원"],"明德醫院":["Mingde Hospital","明德病院","밍데 병원"],"春日鄉衛生所":["Chunri Health Center","春日郷保健所","춘르 향 보건소"],"晨宏診所":["Chenhong Clinic","晨宏診療所","천훙 의원"],"晨新診所":["Chenxin Clinic","晨新診療所","천신 의원"],"普懷醫學診所":["Puhuai Yi Xue Clinic","普懷医学診療所","푸화이 의학 의원"],"書田泌尿科眼科診所":["Shutian Urology and Ophthalmology Clinic","書田泌尿器科眼科診療所","슈티안 비뇨기과 안과 의원"],"曾漢祺綜合醫院":["Ceng Han Qi General Hospital","曾漢祺総合病院","청한치 종합병원"],"望安鄉將軍衛生所":["Wangan Jiang Jun Health Center","望安郷將軍保健所","왕안 향 장준 보건소"],"望安鄉衛生所":["Wangan Health Center","望安郷保健所","왕안 향 보건소"],"李國賢診所":["Li Guo Xian Clinic","李國賢診療所","리궈셴 의원"],"杏和醫院":["Xinghe Hospital","杏和病院","싱허 병원"],"杏福診所":["Xing Fu Clinic","杏福診療所","싱푸 의원"],"杏豐診所":["Xing Feng Clinic","杏豐診療所","싱펭 의원"],"東勢區衛生所":["Dongshi Health Center","東勢区保健所","동스 구 보건소"],"東勢區農會附設農民醫院":["Dongshi Nong Hui Affiliated Nong Min Hospital","東勢区農會付属農民病院","동스 구 농후이 부속 농민 병원"],"東勢監理分站（僅作認知測驗）":["Dong Shi Motor Vehicles Substation (Cognitive assessment only)","東勢運転免許支所（認知機能検査のみ）","동스 운전면허 출장소 (인지기능 검사만 가능)"],"東區衛生所":["East District Health Center","東区保健所","동 구 보건소"],"東新診所":["Dongxin Clinic","東新診療所","동신 의원"],"東榮診所":["Dong Rong Clinic","東栄診療所","동룽 의원"],"東河鄉衛生所":["Donghe Health Center","東河郷保健所","동허 향 보건소"],"東港鎮衛生所":["Donggang Health Center","東港鎮保健所","동강 진 보건소"],"東華醫院":["Donghua Hospital","東華病院","동화 병원"],"板橋區衛生所":["Banqiao Health Center","板橋区保健所","반차오 구 보건소"],"板橋監理站（僅作認知測驗）":["Banqiao Motor Vehicles Station (Cognitive assessment only)","板橋運転免許試験場（認知機能検査のみ）","반차오 운전면허시험장 (인지기능 검사만 가능)"],"枋寮鄉衛生所":["Fangliao Health Center","枋寮郷保健所","팡리아오 향 보건소"],"枋山鄉衛生所":["Fangshan Health Center","枋山郷保健所","팡산 향 보건소"],"林口區衛生所":["Linkou Health Center","林口区保健所","린코우 구 보건소"],"林園區衛生所":["Linyuan Health Center","林園区保健所","린위안 구 보건소"],"林怡仁診所":["Lin Yiren Clinic","林怡仁診療所","린이런 의원"],"林邊鄉衛生所":["Linbian Health Center","林邊郷保健所","린비안 향 보건소"],"林醫院":["Lin Hospital","林病院","린 병원"],"桃園區衛生所":["Taoyuan Health Center","桃園区保健所","타오위안 구 보건소"],"桃園監理站（僅作認知測驗）":["Taoyuan Motor Vehicles Station (Cognitive assessment only)","桃園運転免許試験場（認知機能検査のみ）","타오위안 운전면허시험장 (인지기능 검사만 가능)"],"桃源區衛生所":["Taoyuan Health Center","桃源区保健所","타오위안 구 보건소"],"梨山衛生所":["Li Shan Health Center","梨山保健所","리산 보건소"],"森歆林家醫診所":["Sen Xin Lin Family Medicine Clinic","森歆林家庭医診療所","센신린 가정의학 의원"],"楊梅區衛生所":["Yangmei Health Center","楊梅区保健所","양메이 구 보건소"],"樹林區衛生所":["Shulin Health Center","樹林区保健所","슈린 구 보건소"],"橫山鄉衛生所":["Hengshan Health Center","橫山郷保健所","헝산 향 보건소"],"欣達診所":["Xin Da Clinic","欣達診療所","신다 의원"],"民安診所":["Minan Clinic","民安診療所","민안 의원"],"民愛診所":["Minai Clinic","民愛診療所","민아이 의원"],"民眾醫院":["Minzhong Hospital","民眾病院","민중 병원"],"水里鄉衛生所":["Shuili Health Center","水里郷保健所","슈이리 향 보건소"],"永和區衛生所":["Yonghe Health Center","永和区保健所","용허 구 보건소"],"永和復康醫院":["Yonghe Fukang Hospital","永和復康病院","용허푸캉 병원"],"永大診所":["Yongda Clinic","永大診療所","용다 의원"],"永安診所":["Yongan Clinic","永安診療所","용안 의원"],"永康姜林診所":["Yong Kang Jiang Lin Clinic","永康姜林診療所","용캉장린 의원"],"永態診所":["Yongtai Clinic","永態診療所","용타이 의원"],"永達醫院":["Yongda Hospital","永達病院","용다 병원"],"永靖鄉衛生所":["Yongjing Health Center","永靖郷保健所","용징 향 보건소"],"汐止區衛生所":["Xizhi Health Center","汐止区保健所","시즈 구 보건소"],"池上鄉衛生所":["Chishang Health Center","池上郷保健所","츠샹 향 보건소"],"汽駕學會臺北地區代辦所":["Qi Jia Xue Hui Taipei Di District Service Agency","汽駕学會台北地区代行事務所","치자쉐후이 타이베이 지역 대행사무소"],"沙鹿區衛生所":["Shalu Health Center","沙鹿区保健所","샤루 구 보건소"],"泰安鄉衛生所":["Tai-an Health Center","泰安郷保健所","타이안 향 보건소"],"泰山區衛生所":["Taishan Health Center","泰山区保健所","타이산 구 보건소"],"泰武鄉衛生所":["Taiwu Health Center","泰武郷保健所","타이우 향 보건소"],"洪宗鄰醫院":["Hong Zonglin Hospital","洪宗鄰病院","훙송린 병원"],"活力診所":["Huoli Clinic","活力診療所","훠리 의원"],"海端鄉衛生所":["Haiduan Health Center","海端郷保健所","하이두안 향 보건소"],"淡水區衛生所":["Danshui Health Center","淡水区保健所","단슈이 구 보건소"],"深坑區衛生所":["Shenkeng Health Center","深坑区保健所","선켕 구 보건소"],"清泉醫院":["Qing Quan Hospital","清泉病院","칭취안 병원"],"湖內區衛生所":["Hunei Health Center","湖內区保健所","후네이 구 보건소"],"湖口鄉衛生所":["Hukou Health Center","湖口郷保健所","후코우 향 보건소"],"溪州鄉衛生所":["Xizhou Health Center","溪州郷保健所","시저우 향 보건소"],"滿州鄉衛生所":["Manzhou Health Center","滿州郷保健所","만저우 향 보건소"],"漢銘基督教醫院":["Hanming Christian Hospital","漢銘キリスト教病院","한밍 기독교 병원"],"潭子區衛生所":["Tanzi Health Center","潭子区保健所","탄시 구 보건소"],"潭子林外科診所":["Tan Zi Lin Wai Ke Clinic","潭子林外科診療所","탄시린와이케 의원"],"潮州鎮衛生所":["Chaozhou Health Center","潮州鎮保健所","차오저우 진 보건소"],"澎湖監理站（無體檢）":["Penghu Motor Vehicles Station (No medical examination)","澎湖運転免許試験場（健康診断なし）","펑후 운전면허시험장 (신체검사 없음)"],"為恭醫院":["Weigong Hospital","為恭病院","웨이궁 병원"],"烈嶼鄉衛生所":["Lieyu Health Center","烈嶼郷保健所","리에위 향 보건소"],"烏來區衛生所":["Wulai Health Center","烏來区保健所","우라이 구 보건소"],"牡丹鄉衛生所":["Mudan Health Center","牡丹郷保健所","무단 향 보건소"],"獅子鄉衛生所":["Shizi Health Center","獅子郷保健所","스시 향 보건소"],"獅潭鄉衛生所":["Shitan Health Center","獅潭郷保健所","스탄 향 보건소"],"玉里監理分站（僅作認知測驗）":["Yu Li Motor Vehicles Substation (Cognitive assessment only)","玉里運転免許支所（認知機能検査のみ）","위리 운전면허 출장소 (인지기능 검사만 가능)"],"玉里衛生所":["Yu Li Health Center","玉里保健所","위리 보건소"],"王國哲診所":["Wang Guo Zhe Clinic","王國哲診療所","왕궈저 의원"],"琉球鄉衛生所":["Liuqiu Health Center","琉球郷保健所","리우치우 향 보건소"],"琉璃光診所":["Liuliguang Clinic","琉璃光診療所","리우리광 의원"],"瑞健診所":["Rui Jian Clinic","瑞健診療所","루이젠 의원"],"瑞安診所":["Rui An Clinic","瑞安診療所","루이안 의원"],"瑞生醫院":["Ruisheng Hospital","瑞生病院","루이성 병원"],"瑞穗衛生所":["Rui Sui Health Center","瑞穗保健所","루이싀 보건소"],"瑞芳區衛生所":["Ruifang Health Center","瑞芳区保健所","루이팡 구 보건소"],"瑪家鄉衛生所":["Majia Health Center","瑪家郷保健所","마자 향 보건소"],"田中鎮衛生所":["Tianzhong Health Center","田中鎮保健所","티안중 진 보건소"],"田尾鄉衛生所":["Tianwei Health Center","田尾郷保健所","티안웨이 향 보건소"],"甲仙區衛生所":["Jiaxian Health Center","甲仙区保健所","자셴 구 보건소"],"白沙鄉吉貝衛生所":["Baisha Ji Bei Health Center","白沙郷吉貝保健所","바이샤 향 지베이 보건소"],"白沙鄉鳥嶼衛生所":["Baisha Niao Yu Health Center","白沙郷鳥嶼保健所","바이샤 향 니아오위 보건소"],"石岡區衛生所":["Shigang Health Center","石岡区保健所","스강 구 보건소"],"石碇區衛生所":["Shiding Health Center","石碇区保健所","스딩 구 보건소"],"石門區衛生所":["Shimen Health Center","石門区保健所","스멘 구 보건소"],"礁溪鄉衛生所":["Jiaoxi Health Center","礁溪郷保健所","자오시 향 보건소"],"社頭鄉衛生所":["Shetou Health Center","社頭郷保健所","셔토우 향 보건소"],"祐生醫院":["Yousheng Hospital","祐生病院","유성 병원"],"神岡區衛生所":["Shengang Health Center","神岡区保健所","선강 구 보건소"],"福田診所":["Futian Clinic","福田診療所","푸티안 의원"],"福興鄉衛生所":["Fuxing Health Center","福興郷保健所","푸싱 향 보건소"],"秀傳紀念醫院":["Show Chwan Memorial Hospital","秀傳記念病院","슈촨 기념 병원"],"秀林衛生所":["Xiu Lin Health Center","秀林保健所","슈린 보건소"],"秀水鄉衛生所":["Xiushui Health Center","秀水郷保健所","슈슈이 향 보건소"],"立霖診所":["Lilin Clinic","立霖診療所","리린 의원"],"童綜合醫院":["Tong General Hospital","童総合病院","통 종합병원"],"竹信醫院":["Zhuxin Hospital","竹信病院","주신 병원"],"竹北市衛生所":["Zhubei Health Center","竹北市保健所","주베이 시 보건소"],"竹南鎮衛生所":["Zhunan Health Center","竹南鎮保健所","주난 진 보건소"],"竹塘鄉衛生所":["Zhutang Health Center","竹塘郷保健所","주탕 향 보건소"],"竹山秀傳醫院":["Zhu Shan Show Chwan Hospital","竹山秀傳病院","주산 슈촨 병원"],"竹山鎮衛生所":["Zhushan Health Center","竹山鎮保健所","주산 진 보건소"],"竹東鎮衛生所":["Zhudong Health Center","竹東鎮保健所","주동 진 보건소"],"竹田鄉衛生所":["Zhutian Health Center","竹田郷保健所","주티안 향 보건소"],"第一聯合診所":["First Joint Clinic","第一連合診療所","디이 연합 의원"],"綠島鄉衛生所":["Lyudao Health Center","綠島郷保健所","루다오 향 보건소"],"線西鄉衛生所":["Xianxi Health Center","線西郷保健所","셴시 향 보건소"],"署立花蓮醫院":["Provincial Hualien Hospital","署立花蓮病院","슈리 화롄 병원"],"羅東博愛醫院":["Luodong Boai Hospital","羅東博愛病院","루오동보아이 병원"],"羅東聖母醫院":["Luodong St. Mary Hospital","羅東聖母病院","루오동성무 병원"],"羅東鎮衛生所":["Luodong Health Center","羅東鎮保健所","루오동 진 보건소"],"美濃區衛生所":["Meinong Health Center","美濃区保健所","메이농 구 보건소"],"義大大昌醫院":["E-Da Da Chang Hospital","義大大昌病院","이다다창 병원"],"義大醫院":["E-Da Hospital","義大病院","이다 병원"],"聯合醫院中興院區":["United Hospital Zhong Xing Campus","連合病院中興院区","연합 병원 중싱 병원 캠퍼스"],"聯合醫院仁愛院區":["United Hospital Renai Campus","連合病院仁愛院区","연합 병원 런아이 병원 캠퍼스"],"聯合醫院和平院區":["United Hospital Heping Campus","連合病院和平院区","연합 병원 허핑 병원 캠퍼스"],"聯合醫院附設北投門診部":["United Hospital Affiliated Bei Tou Outpatient Department","連合病院付属北投外来診療部","연합 병원 부속 베이토우 외래진료부"],"聯合醫院附設大安門診部":["United Hospital Affiliated Da An Outpatient Department","連合病院付属大安外来診療部","연합 병원 부속 다안 외래진료부"],"聯安醫院":["Lian An Hospital","連安病院","리안안 병원"],"臺中慈濟醫院":["Taichung Tzu Chi Hospital","台中慈濟病院","타이중 츠지병원"],"臺中榮民總醫院嘉義分院":["Taichung Veterans General Hospital Chiayi Branch","台中栄民総合病院嘉義分院","타이중 보훈종합병원 자이 분원"],"臺中榮民總醫院埔里分院":["Taichung Veterans General Hospital Puli Branch","台中栄民総合病院埔里分院","타이중 보훈종합병원 부리 분원"],"臺中榮民總醫院灣橋分院":["Taichung Veterans General Hospital Wanciao Branch","台中栄民総合病院灣橋分院","타이중 보훈종합병원 완차오 분원"],"臺北區監理所（僅作認知測驗）":["Taipei Area Motor Vehicles Office (Cognitive assessment only)","台北地区運転免許事務所（認知機能検査のみ）","타이베이 지역 차량관리사무소 (인지기능 검사만 가능)"],"臺北市區監理所（無體檢）":["Taipei City District Motor Vehicles Office (No medical examination)","台北市運転免許事務所（健康診断なし）","타이베이시 지역 차량관리사무소 (신체검사 없음)"],"臺北市立萬芳醫院":["Taipei Municipal Wanfang Hospital","台北市立萬芳病院","타이베이 시립 완팡 병원"],"臺北榮民總醫院蘇澳分院":["Taipei Veterans General Hospital Suao Branch","台北栄民総合病院蘇澳分院","타이베이 보훈 종합병원 수아오 분원"],"臺北醫學大學附設醫院":["Taipei Medical University Affiliated Hospital","台北医学大学付属病院","타이베이 의과대학 부속 병원"],"臺南監理站（僅作認知測驗）":["Tainan Motor Vehicles Station (Cognitive assessment only)","台南運転免許試験場（認知機能検査のみ）","타이난 운전면허시험장 (인지기능 검사만 가능)"],"臺大醫院新竹分院":["National Taiwan University Hospital Hsinchu Branch","台湾大学病院新竹分院","국립대만대학교 병원 신주 분원"],"臺安醫院雙十分院":["Tai An Hospital Shuang Shi Branch","台安病院雙十分院","타이안 병원 솽스 분원"],"芎林鄉衛生所":["Qionglin Health Center","芎林郷保健所","충린 향 보건소"],"芬園鄉衛生所":["Fenyuan Health Center","芬園郷保健所","펜위안 향 보건소"],"花壇鄉衛生所":["Huatan Health Center","花壇郷保健所","화탄 향 보건소"],"花蓮市衛生所":["Hualien Health Center","花蓮市保健所","화롄 시 보건소"],"花蓮慈濟醫院":["Hualien Tzu Chi Hospital","花蓮慈濟病院","화롄 츠지병원"],"花蓮監理站（僅作認知測驗）":["Hualien Motor Vehicles Station (Cognitive assessment only)","花蓮運転免許試験場（認知機能検査のみ）","화롄 운전면허시험장 (인지기능 검사만 가능)"],"芳苑鄉衛生所":["Fangyuan Health Center","芳苑郷保健所","팡위안 향 보건소"],"苑裡李綜合醫院":["Yuan Li Li General Hospital","苑裡李総合病院","위안리리 종합병원"],"苑裡鎮衛生所":["Yuanli Health Center","苑裡鎮保健所","위안리 진 보건소"],"苓雅監理站（僅能做認知測驗）":["Ling Ya Motor Vehicles Station (Cognitive assessment only)","苓雅運転免許試験場（認知機能検査のみ）","링야 운전면허시험장 (인지기능 검사만 가능)"],"苗栗市衛生所":["Miaoli Health Center","苗栗市保健所","먀오리 시 보건소"],"苗栗監理站（僅作認知測驗）":["Miaoli Motor Vehicles Station (Cognitive assessment only)","苗栗運転免許試験場（認知機能検査のみ）","먀오리 운전면허시험장 (인지기능 검사만 가능)"],"英吉診所":["Ying Ji Clinic","英吉診療所","잉지 의원"],"茂林區衛生所":["Maolin Health Center","茂林区保健所","마오린 구 보건소"],"茄萣區衛生所":["Qieding Health Center","茄萣区保健所","체 구 보건소"],"草屯鎮衛生所":["Caotun Health Center","草屯鎮保健所","차오툰 진 보건소"],"萬丹鄉衛生所":["Wandan Health Center","萬丹郷保健所","완단 향 보건소"],"萬巒鄉衛生所":["Wanluan Health Center","萬巒郷保健所","완루안 향 보건소"],"萬榮衛生所":["Wan Rong Health Center","萬栄保健所","완룽 보건소"],"萬里區衛生所":["Wanli Health Center","萬里区保健所","완리 구 보건소"],"葉婦產科診所":["Ye Obstetrics and Gynecology Clinic","葉産婦人科診療所","셰 산부인과 의원"],"蘆洲監理站（僅作認知測驗）":["Luzhou Motor Vehicles Station (Cognitive assessment only)","蘆洲運転免許試験場（認知機能検査のみ）","루저우 운전면허시험장 (인지기능 검사만 가능)"],"蘆竹區衛生所":["Luzhu Health Center","蘆竹区保健所","루주 구 보건소"],"蘇澳鎮衛生所":["Suao Health Center","蘇澳鎮保健所","수아오 진 보건소"],"蘭嶼鄉衛生所":["Lanyu Health Center","蘭嶼郷保健所","란위 향 보건소"],"虎尾台全診所":["Hu Wei Tai Quan Clinic","虎尾台全診療所","후웨이타이취안 의원"],"衛生福利部南投醫院":["Ministry of Health and Welfare Nantou Hospital","衛生福利部南投病院","보건복지부 난터우 병원"],"衛生福利部台東醫院":["Ministry of Health and Welfare Taitung Hospital","衛生福利部台東病院","보건복지부 타이둥 병원"],"衛生福利部嘉義醫院":["Ministry of Health and Welfare Chiayi Hospital","衛生福利部嘉義病院","보건복지부 자이 병원"],"衛生福利部彰化醫院":["Ministry of Health and Welfare Changhua Hospital","衛生福利部彰化病院","보건복지부 장화 병원"],"衛生福利部旗山醫院":["Ministry of Health and Welfare Qishan Hospital","衛生福利部旗山病院","보건복지부 치산 병원"],"衛生福利部朴子醫院":["Ministry of Health and Welfare Po Zi Hospital","衛生福利部朴子病院","보건복지부 포시 병원"],"衛生福利部臺中醫院":["Ministry of Health and Welfare Taichung Hospital","衛生福利部台中病院","보건복지부 타이중 병원"],"衛生福利部豐原醫院":["Ministry of Health and Welfare Feng Yuan Hospital","衛生福利部豐原病院","보건복지부 펭위안 병원"],"衛生福利部金門醫院":["Ministry of Health and Welfare Kinmen Hospital","衛生福利部金門病院","보건복지부 진먼 병원"],"衛福部苗栗醫院":["Wei Fu Bu Miaoli Hospital","衛福部苗栗病院","웨이푸부 먀오리 병원"],"裕東診所":["Yudong Clinic","裕東診療所","위동 의원"],"西屯區衛生所":["Xitun Health Center","西屯区保健所","시툰 구 보건소"],"西湖鄉衛生所":["Xihu Health Center","西湖郷保健所","시후 향 보건소"],"觀音區衛生所":["Guanyin Health Center","觀音区保健所","관인 구 보건소"],"許獻榮診所":["Xu Xian Rong Clinic","許獻栄診療所","쉬셴룽 의원"],"詠贊聯合診所":["Yongzan Joint Clinic","詠贊連合診療所","용산 연합 의원"],"謝樂偉眼科診所":["Xie Lewei Ophthalmology Clinic","謝樂偉眼科診療所","셰레웨이 안과 의원"],"豐安診所":["Feng An Clinic","豐安診療所","펭안 의원"],"豐安醫院":["Feng An Hospital","豐安病院","펭안 병원"],"貢寮區衛生所":["Gongliao Health Center","貢寮区保健所","궁리아오 구 보건소"],"賢德醫院":["Xian De Hospital","賢德病院","셴데 병원"],"路竹區衛生所":["Luzhu Health Center","路竹区保健所","루주 구 보건소"],"車城鄉衛生所":["Checheng Health Center","車城郷保健所","처청 향 보건소"],"輔仁大學學校財團法人輔仁大學醫務室":["Fu Jen Catholic University Medical Office","輔仁大学学校法人輔仁大学医務室","푸런대학교 의무실"],"迴龍樂生醫院":["Huilong Lesheng Hospital","迴龍樂生病院","후이롱레성 병원"],"通安診所":["Tong An Clinic","通安診療所","통안 의원"],"通霄鎮衛生所":["Tongxiao Health Center","通霄鎮保健所","통샤오 진 보건소"],"造橋鄉衛生所":["Zaoqiao Health Center","造橋郷保健所","사오차오 향 보건소"],"連江監理站":["Lienchiang Motor Vehicles Station","連江運転免許試験場","롄장 운전면허시험장"],"道周醫院":["Daozhou Hospital","道周病院","다오저우 병원"],"道安醫院":["Daoan Hospital","道安病院","다오안 병원"],"達仁鄉衛生所":["Daren Health Center","達仁郷保健所","다런 향 보건소"],"那瑪夏區衛生所":["Namaxia Health Center","那瑪夏区保健所","나마샤 구 보건소"],"里港鄉衛生所":["Ligang Health Center","里港郷保健所","리강 향 보건소"],"重光醫院":["Chongguang Hospital","重光病院","중광 병원"],"金城鎮衛生所":["Jincheng Health Center","金城鎮保健所","진청 진 보건소"],"金寧鄉衛生所":["Jinning Health Center","金寧郷保健所","진주 향 보건소"],"金山區衛生所":["Jinshan Health Center","金山区保健所","진산 구 보건소"],"金峰鄉衛生所":["Jinfeng Health Center","金峰郷保健所","진펭 향 보건소"],"金沙鎮衛生所":["Jinsha Health Center","金沙鎮保健所","진샤 진 보건소"],"金湖鎮衛生所":["Jinhu Health Center","金湖鎮保健所","진후 진 보건소"],"銅鑼鄉衛生所":["Tongluo Health Center","銅鑼郷保健所","통루오 향 보건소"],"長春診所":["Changchun Clinic","長春診療所","창춘 의원"],"長春醫院":["Changchun Hospital","長春病院","창춘 병원"],"長治鄉衛生所":["Changzhi Health Center","長治郷保健所","창즈 향 보건소"],"長濱鄉衛生所":["Changbin Health Center","長濱郷保健所","창빈 향 보건소"],"開蘭安心診所":["Kai Lan Anxin Clinic","開蘭安心診療所","카이란안신 의원"],"關山鎮衛生所":["Guanshan Health Center","關山鎮保健所","관산 진 보건소"],"關西鎮衛生所":["Guanxi Health Center","關西鎮保健所","관시 진 보건소"],"阮綜合醫院":["Ruan General Hospital","阮総合病院","루안 종합병원"],"陳宏麟診所":["Chen Honglin Clinic","陳宏麟診療所","천훙린 의원"],"陳志成耳鼻喉科診所":["Chen Zhicheng ENT Clinic","陳志成耳鼻咽喉科診療所","천즈청 이비인후과 의원"],"陳隆開診所":["Chen Longkai Clinic","陳隆開診療所","천롱카이 의원"],"集集鎮衛生所":["Jiji Health Center","集集鎮保健所","지지 진 보건소"],"雙溪區衛生所":["Shuangxi Health Center","雙溪区保健所","솽시 구 보건소"],"雲林監理站（僅作認知測驗）":["Yunlin Motor Vehicles Station (Cognitive assessment only)","雲林運転免許試験場（認知機能検査のみ）","윈린 운전면허시험장 (인지기능 검사만 가능)"],"霧台鄉衛生所":["Wutai Health Center","霧台郷保健所","우타이 향 보건소"],"霧峰區衛生所":["Wufeng Health Center","霧峰区保健所","우펭 구 보건소"],"頭份市衛生所":["Toufen Health Center","頭份市保健所","토우펜 시 보건소"],"頭城鎮衛生所":["Toucheng Health Center","頭城鎮保健所","토우청 진 보건소"],"頭屋鄉衛生所":["Touwu Health Center","頭屋郷保健所","토우우 향 보건소"],"香山衛生所":["Xiang Shan Health Center","香山保健所","샹산 보건소"],"高新醫院":["Gaoxin Hospital","高新病院","가오신 병원"],"高樹鄉衛生所":["Gaoshu Health Center","高樹郷保健所","가오슈 향 보건소"],"高雄基督教醫院":["Kaohsiung Christian Hospital","高雄キリスト教病院","가오슝 기독교 병원"],"高雄市區監理所（僅能做認知測驗）":["Kaohsiung Shi District Motor Vehicles Office (Cognitive assessment only)","高雄市区運転免許事務所（認知機能検査のみ）","가오슝 시 구 차량관리사무소 (인지기능 검사만 가능)"],"高雄市立大同醫院":["Kaohsiung Municipal Da Tong Hospital","高雄市立大同病院","가오슝 시립 다통 병원"],"高雄市立小港醫院":["Kaohsiung Municipal Siaogang Hospital","高雄市立小港病院","가오슝 시립 샤오강 병원"],"高雄市立旗津醫院":["Kaohsiung Municipal Qi Jin Hospital","高雄市立旗津病院","가오슝 시립 치진 병원"],"高雄市立民生醫院":["Kaohsiung Municipal Min Sheng Hospital","高雄市立民生病院","가오슝 시립 민성 병원"],"高雄市立聯合醫院":["Kaohsiung Municipal United Hospital","高雄市立連合病院","가오슝 시립 연합 병원"],"高雄醫學大學附設中和紀念醫院":["Kaohsiung Medical University Affiliated Zhonghe Memorial Hospital","高雄医学大学付属中和記念病院","가오슝 의과대학 부속 중허 기념 병원"],"高雄醫學大學附設高醫岡山醫院":["Kaohsiung Medical University Affiliated Kaohsiung Medical Gang Shan Hospital","高雄医学大学付属高医岡山病院","가오슝 의과대학 부속 가오이강산 병원"],"魏嘉慶診所":["Wei Jia Qing Clinic","魏嘉慶診療所","웨이자칭 의원"],"魚池鄉衛生所":["Yuchi Health Center","魚池郷保健所","위츠 향 보건소"],"鳳信診所":["Fengxin Clinic","鳳信診療所","펭신 의원"],"鳳山醫院":["Feng Shan Hospital","鳳山病院","펭산 병원"],"鳳林衛生所":["Feng Lin Health Center","鳳林保健所","펭린 보건소"],"鶯歌區衛生所":["Yingge Health Center","鶯歌区保健所","잉거 구 보건소"],"鹽埔鄉衛生所":["Yanpu Health Center","鹽埔郷保健所","옌부 향 보건소"],"鹿谷鄉衛生所":["Lugu Health Center","鹿谷郷保健所","루구 향 보건소"],"鹿野鄉衛生所":["Luye Health Center","鹿野郷保健所","루예 향 보건소"],"麟洛鄉衛生所":["Linluo Health Center","麟洛郷保健所","린루오 향 보건소"],"麥寮台全診所":["Mai Liao Tai Quan Clinic","麥寮台全診療所","마이리아오타이취안 의원"],"麻豆監理站（僅作認知測驗）":["Ma Dou Motor Vehicles Station (Cognitive assessment only)","麻豆運転免許試験場（認知機能検査のみ）","마도우 운전면허시험장 (인지기능 검사만 가능)"],"龍潭區衛生所":["Longtan Health Center","龍潭区保健所","롱탄 구 보건소"],"龜山區衛生所":["Guishan Health Center","龜山区保健所","구이산 구 보건소"]}};
+var EXAM_LOCATION_DISPLAY_TRANSLATIONS = {"county":{"臺北市":["Taipei City","台北市","타이베이시"],"新北市":["New Taipei City","新北市","신베이시"],"基隆市":["Keelung City","基隆市","지룽시"],"桃園市":["Taoyuan City","桃園市","타오위안시"],"新竹縣":["Hsinchu County","新竹県","신주현"],"新竹市":["Hsinchu City","新竹市","신주시"],"苗栗縣":["Miaoli County","苗栗県","먀오리현"],"臺中市":["Taichung City","台中市","타이중시"],"彰化縣":["Changhua County","彰化県","장화현"],"南投縣":["Nantou County","南投県","난터우현"],"雲林縣":["Yunlin County","雲林県","윈린현"],"嘉義縣":["Chiayi County","嘉義県","자이현"],"嘉義市":["Chiayi City","嘉義市","자이시"],"臺南市":["Tainan City","台南市","타이난시"],"高雄市":["Kaohsiung City","高雄市","가오슝시"],"屏東縣":["Pingtung County","屏東県","핑둥현"],"宜蘭縣":["Yilan County","宜蘭県","이란현"],"花蓮縣":["Hualien County","花蓮県","화롄현"],"臺東縣":["Taitung County","台東県","타이둥현"],"澎湖縣":["Penghu County","澎湖県","펑후현"],"金門縣":["Kinmen County","金門県","진먼현"],"連江縣":["Lienchiang County","連江県","롄장현"]},"district":{"七堵區":["Qidu District","七堵区","치두구"],"七美鄉":["Qimei Township","七美郷","치메이향"],"三地門鄉":["Sandimen Township","三地門郷","산디멘향"],"三峽區":["Sanxia District","三峽区","산샤구"],"三星鄉":["Sanxing Township","三星郷","산싱향"],"三灣鄉":["Sanwan Township","三灣郷","산완향"],"三義鄉":["Sanyi Township","三義郷","산이향"],"三芝區":["Sanzhi District","三芝区","산즈구"],"三重區":["Sanchong District","三重区","산중구"],"中和區":["Zhonghe District","中和区","중허구"],"中壢區":["Zhongli District","中壢区","중리구"],"中寮鄉":["Zhongliao Township","中寮郷","중리아오향"],"中正區":["Zhongzheng District","中正区","중정구"],"中西區":["West Central District","中西区","중시구"],"九如鄉":["Jiuru Township","九如郷","주루향"],"二林鎮":["Erlin Township","二林鎮","얼린진"],"二水鄉":["Ershui Township","二水郷","얼슈이향"],"五峰鄉":["Wufeng Township","五峰郷","우펭향"],"五結鄉":["Wujie Township","五結郷","우제향"],"五股區":["Wugu District","五股区","우구구"],"仁愛區":["Renai District","仁愛区","런아이구"],"仁愛鄉":["Renai Township","仁愛郷","런아이향"],"伸港鄉":["Shengang Township","伸港郷","선강향"],"佳冬鄉":["Jiadong Township","佳冬郷","자동향"],"佳里區":["JiaLi District","佳里区","자리구"],"來義鄉":["Laiyi Township","來義郷","라이이향"],"信義區":["Xinyi District","信義区","신이구"],"信義鄉":["Xinyi Township","信義郷","신이향"],"光復鄉":["Guangfu Township","光復郷","광푸향"],"內埔鄉":["Neipu Township","內埔郷","네이부향"],"內門區":["Neimen District","內門区","네이멘구"],"八德區":["Bade District","八德区","바데구"],"八里區":["Bali District","八里区","바리구"],"公館鄉":["Gongguan Township","公館郷","궁관향"],"冬山鄉":["Dongshan Township","冬山郷","동산향"],"北區":["North District","北区","북구"],"北埔鄉":["Beipu Township","北埔郷","베이부향"],"北屯區":["Beitun District","北屯区","베이툰구"],"北投區":["Beitou District","北投区","베이토우구"],"北斗鎮":["Beidou Township","北斗鎮","베이도우진"],"北港鎮":["Beigang Township","北港鎮","베이강진"],"卑南鄉":["Beinan Township","卑南郷","베이난향"],"卓欄鎮":["Zhuolan Township","卓欄鎮","줘란진"],"卓溪鄉":["Zhuoxi Township","卓溪郷","줘시향"],"南區":["South District","南区","남구"],"南屯區":["Nantun District","南屯区","난툰구"],"南州鄉":["Nanzhou Township","南州郷","난저우향"],"南庄鄉":["Nanzhuang Township","南庄郷","난좡향"],"南投市":["Nantou City","南投市","난토우시"],"南澳鄉":["Nanao Township","南澳郷","난아오향"],"南竿鄉":["Nangan Township","南竿郷","난간향"],"吉安鄉":["Jian Township","吉安郷","지안향"],"名間鄉":["Mingjian Township","名間郷","밍젠향"],"后里區":["Houli District","后里区","허우리구"],"和平區":["Heping District","和平区","허핑구"],"和美鎮":["Hemei Township","和美鎮","허메이진"],"員山鄉":["Yuanshan Township","員山郷","위안산향"],"員林市":["Yuanlin City","員林市","위안린시"],"善化區":["ShanHua District","善化区","산화구"],"國姓鄉":["Guoxing Township","國姓郷","궈싱향"],"土城區":["Tucheng District","土城区","투청구"],"坪林區":["Pinglin District","坪林区","핑린구"],"埔心鄉":["Puxin Township","埔心郷","부신향"],"埔里鎮":["Puli Township","埔里鎮","부리진"],"埔鹽鄉":["Puyan Township","埔鹽郷","부옌향"],"埤頭鄉":["Pitou Township","埤頭郷","피토우향"],"士林區":["Shilin District","士林区","스린구"],"壯圍鄉":["Zhuangwei Township","壯圍郷","좡웨이향"],"壽豐鄉":["Shoufeng Township","壽豐郷","쇼우펭향"],"外埔區":["Waipu District","外埔区","와이부구"],"大同區":["Datong District","大同区","다통구"],"大同鄉":["Datong Township","大同郷","다통향"],"大園區":["Dayuan District","大園区","다위안구"],"大城鄉":["Dacheng Township","大城郷","다청향"],"大安區":["Daan District","大安区","다안구"],"大寮區":["Daliao District","大寮区","다리아오구"],"大村鄉":["Dacun Township","大村郷","다춘향"],"大林鎮":["Dalin Township","大林鎮","다린진"],"大武鄉":["Dawu Township","大武郷","다우향"],"大湖鄉":["Dahu Township","大湖郷","다후향"],"大溪區":["Daxi District","大溪区","다시구"],"大甲區":["Dajia District","大甲区","다자구"],"大里區":["Dali District","大里区","다리구"],"大雅區":["Daya District","大雅区","다야구"],"太平區":["Taiping District","太平区","타이핑구"],"太麻里鄉":["Taimali Township","太麻里郷","타이마리향"],"安南區":["AnNan District","安南区","안난구"],"宜蘭市":["Yilan City","宜蘭市","이란시"],"富里鄉":["Fuli Township","富里郷","푸리향"],"寶山鄉":["Baoshan Township","寶山郷","바오산향"],"尖石鄉":["Jianshi Township","尖石郷","젠스향"],"屏東市":["Pingtung City","屏東市","핑동시"],"岡山區":["Gangshan District","岡山区","강산구"],"峨眉鄉":["Emei Township","峨眉郷","에메이향"],"崁頂鄉":["Kanding Township","崁頂郷","칸딩향"],"平溪區":["Pingxi District","平溪区","핑시구"],"平鎮區":["Pingzhen District","平鎮区","핑전구"],"延平鄉":["Yanping Township","延平郷","옌핑향"],"彌陀區":["Mituo District","彌陀区","미투오구"],"彰化市":["Changhua City","彰化市","장화시"],"後龍鎮":["Houlong Township","後龍鎮","허우롱진"],"復興區":["Fuxing District","復興区","푸싱구"],"恆春鎮":["Hengchun Township","恆春鎮","헝춘진"],"成功鎮":["Chenggong Township","成功鎮","청궁진"],"文山區":["Wenshan District","文山区","원산구"],"斗六市":["Douliu City","斗六市","도우리우시"],"新園鄉":["Xinyuan Township","新園郷","신위안향"],"新城鄉":["Xincheng Township","新城郷","신청향"],"新埔鎮":["Xinpu Township","新埔鎮","신부진"],"新埤鄉":["Xinpi Township","新埤郷","신피향"],"新屋區":["Xinwu District","新屋区","신우구"],"新店區":["Xindian District","新店区","신디안구"],"新營區":["XinYing District","新營区","신잉구"],"新社區":["Xinshe District","新社区","신셔구"],"新莊區":["Xinzhuang District","新莊区","신좡구"],"新豐鄉":["Xinfeng Township","新豐郷","신펭향"],"旗山等地區醫院與診所":["Hospitals and Clinics in Qishan and Nearby Areas","旗山など周辺地域の病院・診療所","치산 및 인근 지역 병원·의원"],"春日鄉":["Chunri Township","春日郷","춘르향"],"望安鄉":["Wangan Township","望安郷","왕안향"],"朴子市":["Puzi City","朴子市","포시시"],"東勢區":["Dongshi District","東勢区","동스구"],"東勢鄉":["Dongshi Township","東勢郷","동스향"],"東區":["East District","東区","동구"],"東河鄉":["Donghe Township","東河郷","동허향"],"東港鎮":["Donggang Township","東港鎮","동강진"],"松山區":["Songshan District","松山区","쑹산구"],"板橋區":["Banqiao District","板橋区","반차오구"],"枋寮鄉":["Fangliao Township","枋寮郷","팡리아오향"],"枋山鄉":["Fangshan Township","枋山郷","팡산향"],"林口區":["Linkou District","林口区","린코우구"],"林園區":["Linyuan District","林園区","린위안구"],"林邊鄉":["Linbian Township","林邊郷","린비안향"],"桃園區":["Taoyuan District","桃園区","타오위안구"],"桃源區":["Taoyuan District","桃源区","타오위안구"],"梧棲區":["Wuqi District","梧棲区","우치구"],"楊梅區":["Yangmei District","楊梅区","양메이구"],"楠梓區":["Nanzi District","楠梓区","난시구"],"樹林區":["Shulin District","樹林区","슈린구"],"橫山鄉":["Hengshan Township","橫山郷","헝산향"],"水里鄉":["Shuili Township","水里郷","슈이리향"],"永和區":["Yonghe District","永和区","용허구"],"永康區":["YongKang District","永康区","용캉구"],"永靖鄉":["Yongjing Township","永靖郷","용징향"],"汐止區":["Xizhi District","汐止区","시즈구"],"池上鄉":["Chishang Township","池上郷","츠샹향"],"沙鹿區":["Shalu District","沙鹿区","샤루구"],"泰安鄉":["Tai-an Township","泰安郷","타이안향"],"泰山區":["Taishan District","泰山区","타이산구"],"泰武鄉":["Taiwu Township","泰武郷","타이우향"],"海端鄉":["Haiduan Township","海端郷","하이두안향"],"淡水區":["Danshui District","淡水区","단슈이구"],"深坑區":["Shenkeng District","深坑区","선켕구"],"湖內區":["Hunei District","湖內区","후네이구"],"湖口鄉":["Hukou Township","湖口郷","후코우향"],"溪州鄉":["Xizhou Township","溪州郷","시저우향"],"溪湖鎮":["Xihu Township","溪湖鎮","시후진"],"滿州鄉":["Manzhou Township","滿州郷","만저우향"],"潭子區":["Tanzi District","潭子区","탄시구"],"潮州鎮":["Chaozhou Township","潮州鎮","차오저우진"],"烈嶼鄉":["Lieyu Township","烈嶼郷","리에위향"],"烏來區":["Wulai District","烏來区","우라이구"],"烏日區":["Wuri District","烏日区","우르구"],"牡丹鄉":["Mudan Township","牡丹郷","무단향"],"獅子鄉":["Shizi Township","獅子郷","스시향"],"獅潭鄉":["Shitan Township","獅潭郷","스탄향"],"玉里鎮":["Yuli Township","玉里鎮","위리진"],"琉球鄉":["Liuqiu Township","琉球郷","리우치우향"],"瑞穗鄉":["Ruisui Township","瑞穗郷","루이싀향"],"瑞芳區":["Ruifang District","瑞芳区","루이팡구"],"瑪家鄉":["Majia Township","瑪家郷","마자향"],"田中鎮":["Tianzhong Township","田中鎮","티안중진"],"田尾鄉":["Tianwei Township","田尾郷","티안웨이향"],"甲仙區":["Jiaxian District","甲仙区","자셴구"],"白沙鄉":["Baisha Township","白沙郷","바이샤향"],"監理機關":["Motor Vehicles Offices","運転免許関連機関","운전면허 관련 기관"],"石岡區":["Shigang District","石岡区","스강구"],"石碇區":["Shiding District","石碇区","스딩구"],"石門區":["Shimen District","石門区","스멘구"],"礁溪鄉":["Jiaoxi Township","礁溪郷","자오시향"],"社頭鄉":["Shetou Township","社頭郷","셔토우향"],"神岡區":["Shengang District","神岡区","선강구"],"福興鄉":["Fuxing Township","福興郷","푸싱향"],"秀林鄉":["Xiulin Township","秀林郷","슈린향"],"秀水鄉":["Xiushui Township","秀水郷","슈슈이향"],"竹北市":["Zhubei City","竹北市","주베이시"],"竹南鎮":["Zhunan Township","竹南鎮","주난진"],"竹塘鄉":["Zhutang Township","竹塘郷","주탕향"],"竹山鎮":["Zhushan Township","竹山鎮","주산진"],"竹崎鄉":["Zhuqi Township","竹崎郷","주치향"],"竹東鎮":["Zhudong Township","竹東鎮","주동진"],"竹田鄉":["Zhutian Township","竹田郷","주티안향"],"綜合醫院與醫療院所":["General Hospitals and Medical Facilities","総合病院・医療機関","종합병원 및 의료기관"],"綠島鄉":["Lyudao Township","綠島郷","루다오향"],"線西鄉":["Xianxi Township","線西郷","셴시향"],"羅東鎮":["Luodong Township","羅東鎮","루오동진"],"美濃區":["Meinong District","美濃区","메이농구"],"臺東市":["Taitung City","台東市","타이동시"],"芎林鄉":["Qionglin Township","芎林郷","충린향"],"芬園鄉":["Fenyuan Township","芬園郷","펜위안향"],"花壇鄉":["Huatan Township","花壇郷","화탄향"],"花蓮市":["Hualien City","花蓮市","화리안시"],"芳苑鄉":["Fangyuan Township","芳苑郷","팡위안향"],"苑裡鎮":["Yuanli Township","苑裡鎮","위안리진"],"苗栗市":["Miaoli City","苗栗市","미아오리시"],"茂林區":["Maolin District","茂林区","마오린구"],"茄萣區":["Qieding District","茄萣区","체구"],"草屯鎮":["Caotun Township","草屯鎮","차오툰진"],"萬丹鄉":["Wandan Township","萬丹郷","완단향"],"萬巒鄉":["Wanluan Township","萬巒郷","완루안향"],"萬榮鄉":["Wanrong Township","萬榮郷","완룽향"],"萬里區":["Wanli District","萬里区","완리구"],"蘆洲區":["Luzhou District","蘆洲区","루저우구"],"蘆竹區":["Luzhu District","蘆竹区","루주구"],"蘇澳鎮":["Suao Township","蘇澳鎮","수아오진"],"蘭嶼鄉":["Lanyu Township","蘭嶼郷","란위향"],"虎尾鎮":["Huwei Township","虎尾鎮","후웨이진"],"西區":["West District","西区","서구"],"西屯區":["Xitun District","西屯区","시툰구"],"西湖鄉":["Xihu Township","西湖郷","시후향"],"觀音區":["Guanyin District","觀音区","관인구"],"豐原區":["Fengyuan District","豐原区","펭위안구"],"貢寮區":["Gongliao District","貢寮区","궁리아오구"],"路竹區":["Luzhu District","路竹区","루주구"],"車城鄉":["Checheng Township","車城郷","처청향"],"通霄鎮":["Tongxiao Township","通霄鎮","통샤오진"],"造橋鄉":["Zaoqiao Township","造橋郷","사오차오향"],"達仁鄉":["Daren Township","達仁郷","다런향"],"那瑪夏區":["Namaxia District","那瑪夏区","나마샤구"],"里港鄉":["Ligang Township","里港郷","리강향"],"金城鎮":["Jincheng Township","金城鎮","진청진"],"金寧鄉":["Jinning Township","金寧郷","진주향"],"金山區":["Jinshan District","金山区","진산구"],"金峰鄉":["Jinfeng Township","金峰郷","진펭향"],"金沙鎮":["Jinsha Township","金沙鎮","진샤진"],"金湖鎮":["Jinhu Township","金湖鎮","진후진"],"銅鑼鄉":["Tongluo Township","銅鑼郷","통루오향"],"長治鄉":["Changzhi Township","長治郷","창즈향"],"長濱鄉":["Changbin Township","長濱郷","창빈향"],"關山鎮":["Guanshan Township","關山鎮","관산진"],"關廟區":["GuanMiao District","關廟区","관미아오구"],"關西鎮":["Guanxi Township","關西鎮","관시진"],"集集鎮":["Jiji Township","集集鎮","지지진"],"雙溪區":["Shuangxi District","雙溪区","솽시구"],"霧台鄉":["Wutai Township","霧台郷","우타이향"],"霧峰區":["Wufeng District","霧峰区","우펭구"],"頭份市":["Toufen City","頭份市","토우펜시"],"頭城鎮":["Toucheng Township","頭城鎮","토우청진"],"頭屋鄉":["Touwu Township","頭屋郷","토우우향"],"香山區":["Xiangshan District","香山区","샹산구"],"馬公市":["Magong City","馬公市","마궁시"],"高樹鄉":["Gaoshu Township","高樹郷","가오슈향"],"魚池鄉":["Yuchi Township","魚池郷","위츠향"],"鳳山區":["Fengshan District","鳳山区","펭산구"],"鳳林鎮":["Fenglin Township","鳳林鎮","펭린진"],"鶯歌區":["Yingge District","鶯歌区","잉거구"],"鹽埔鄉":["Yanpu Township","鹽埔郷","옌부향"],"鹿港鎮":["Lukang Township","鹿港鎮","루강진"],"鹿谷鄉":["Lugu Township","鹿谷郷","루구향"],"鹿野鄉":["Luye Township","鹿野郷","루예향"],"麟洛鄉":["Linluo Township","麟洛郷","린루오향"],"麥寮鄉":["Mailiao Township","麥寮郷","마이리아오향"],"麻豆區":["MaDou District","麻豆区","마도우구"],"龍井區":["Longjing District","龍井区","롱징구"],"龍潭區":["Longtan District","龍潭区","롱탄구"],"龜山區":["Guishan District","龜山区","구이산구"]},"place":{"一生安診所":["Yishengan Clinic","一生安診療所","이성안 의원"],"七美鄉衛生所":["Qimei Health Center","七美郷保健所","치메이 향 보건소"],"三上耳鼻喉科診所":["San Shang ENT Clinic","三上耳鼻咽喉科診療所","산샹 이비인후과 의원"],"三地門鄉衛生所":["Sandimen Health Center","三地門郷保健所","산디멘 향 보건소"],"三大診所":["Sand Da Clinic","三大診療所","산다 의원"],"三峽區衛生所":["Sanxia Health Center","三峽区保健所","산샤 구 보건소"],"三星鄉衛生所":["Sanxing Health Center","三星郷保健所","산싱 향 보건소"],"三灣鄉衛生所":["Sanwan Health Center","三灣郷保健所","산완 향 보건소"],"三義鄉衛生所":["Sanyi Health Center","三義郷保健所","산이 향 보건소"],"三芝區衛生所":["Sanzhi Health Center","三芝区保健所","산즈 구 보건소"],"三軍總醫院松山分院":["Tri-Service General Hospital Songshan Branch","三軍総合病院松山分院","삼군종합병원 쑹산 분원"],"三重區衛生所":["Sanchong Health Center","三重区保健所","산중 구 보건소"],"中和區衛生所":["Zhonghe Health Center","中和区保健所","중허 구 보건소"],"中壢區衛生所":["Zhongli Health Center","中壢区保健所","중리 구 보건소"],"中壢監理站（僅作認知測驗）":["Zhong Li Motor Vehicles Station (Cognitive assessment only)","中壢運転免許試験場（認知機能検査のみ）","중리 운전면허시험장 (인지기능 검사만 가능)"],"中寮鄉衛生所":["Zhongliao Health Center","中寮郷保健所","중리아오 향 보건소"],"中山診所":["Zhongshan Clinic","中山診療所","중산 의원"],"中祥醫院":["Zhongxiang Hospital","中祥病院","중샹 병원"],"中華民國汽車駕駛人雲林區體能檢測代辦所":["Republic of China Motor Vehicle Drivers Yunlin District Physical Fitness Assessment Service Agency","中華民国の自動車運転者雲林区体力検査代行事務所","중화민국 자동차 운전자 윈린 구 체력검사 대행사무소"],"中西區衛生所":["West Central District Health Center","中西区保健所","중시 구 보건소"],"九如鄉衛生所":["Jiuru Health Center","九如郷保健所","주루 향 보건소"],"二水鄉衛生所":["Ershui Health Center","二水郷保健所","얼슈이 향 보건소"],"五峰鄉衛生所":["Wufeng Health Center","五峰郷保健所","우펭 향 보건소"],"五福診所":["Wufu Clinic","五福診療所","우푸 의원"],"五結鄉衛生所":["Wujie Health Center","五結郷保健所","우제 향 보건소"],"五股區衛生所":["Wugu Health Center","五股区保健所","우구 구 보건소"],"亞洲大學附屬醫院":["Asia University Affiliated Hospital","アジア大学付属病院","아시아대학교 부속 병원"],"仁佑診所":["Renyou Clinic","仁佑診療所","런유 의원"],"仁和醫院":["Renhe Hospital","仁和病院","런허 병원"],"仁愛鄉衛生所":["Renai Health Center","仁愛郷保健所","런아이 향 보건소"],"仁愛醫院":["Renai Hospital","仁愛病院","런아이 병원"],"仁慈醫院":["Renci Hospital","仁慈病院","런츠 병원"],"仁祥診所":["Ren Xiang Clinic","仁祥診療所","런샹 의원"],"伸港鄉衛生所":["Shengang Health Center","伸港郷保健所","선강 향 보건소"],"佑康診所":["You Kang Clinic","佑康診療所","유캉 의원"],"佑林診所":["Youlin Clinic","佑林診療所","유린 의원"],"佑民醫院":["You Min Hospital","佑民病院","유민 병원"],"何毓基神經外科復健診所":["He Yuji Neurosurgery Fu Jian Clinic","何毓基脳神経外科復健診療所","허위지 신경외과 푸젠 의원"],"佛教正德醫院":["Fo Jiao Zheng De Hospital","佛教正德病院","포자오정데 병원"],"佳冬鄉衛生所":["Jiadong Health Center","佳冬郷保健所","자동 향 보건소"],"佳禾診所":["Jia He Clinic","佳禾診療所","자허 의원"],"來義鄉衛生所":["Laiyi Health Center","來義郷保健所","라이이 향 보건소"],"信合美診所":["Xin He Mei Clinic","信合美診療所","신허메이 의원"],"信生醫院":["Xinsheng Hospital","信生病院","신성 병원"],"信義鄉衛生所":["Xinyi Health Center","信義郷保健所","신이 향 보건소"],"健仁醫院":["Jianren Hospital","健仁病院","젠런 병원"],"元亨診所":["Yuan Heng Clinic","元亨診療所","위안헝 의원"],"元新眼科診所":["Yuanxin Ophthalmology Clinic","元新眼科診療所","위안신 안과 의원"],"元里診所":["Yuan Li Clinic","元里診療所","위안리 의원"],"光復衛生所":["Guang Fu Health Center","光復保健所","광푸 보건소"],"光田綜合醫院（向上院區）":["Kuang Tien General Hospital （Xiang Shang Campus ）","光田総合病院（向上院区）","광티안 종합병원 （샹샹 병원 캠퍼스 ）"],"內埔鄉衛生所":["Neipu Health Center","內埔郷保健所","네이부 향 보건소"],"內門區衛生所":["Neimen Health Center","內門区保健所","네이멘 구 보건소"],"全民診所":["Quanmin Clinic","全民診療所","취안민 의원"],"全民醫院":["Quanmin Hospital","全民病院","취안민 병원"],"全生醫院":["Quan Sheng Hospital","全生病院","취안성 병원"],"全視界眼科診所":["Quanshijie Ophthalmology Clinic","全視界眼科診療所","취안스제 안과 의원"],"八德區衛生所":["Bade Health Center","八德区保健所","바데 구 보건소"],"八里區衛生所":["Bali Health Center","八里区保健所","바리 구 보건소"],"公館鄉衛生所":["Gongguan Health Center","公館郷保健所","궁관 향 보건소"],"冬山鄉衛生所":["Dongshan Health Center","冬山郷保健所","동산 향 보건소"],"北一診所":["Beiyi Clinic","北一診療所","베이이 의원"],"北埔鄉衛生所":["Beipu Health Center","北埔郷保健所","베이부 향 보건소"],"北屯區軍功衛生所":["Beitun Jun Gong Health Center","北屯区軍功保健所","베이툰 구 준궁 보건소"],"卑南鄉衛生所":["Beinan Health Center","卑南郷保健所","베이난 향 보건소"],"卓欄衛生所":["Zhuolan Health Center","卓欄保健所","줘란 보건소"],"卓溪衛生所":["Zhuo Xi Health Center","卓溪保健所","줘시 보건소"],"卓醫院":["Zhuo Hospital","卓病院","줘 병원"],"協和醫院":["Xiehe Hospital","協和病院","셰허 병원"],"協順診所":["Xie Shun Clinic","協順診療所","셰순 의원"],"南區衛生所":["South District Health Center","南区保健所","난 구 보건소"],"南基醫院":["Nan Ji Hospital","南基病院","난지 병원"],"南屯區衛生所":["Nantun Health Center","南屯区保健所","난툰 구 보건소"],"南州鄉衛生所":["Nanzhou Health Center","南州郷保健所","난저우 향 보건소"],"南庄鄉衛生所":["Nanzhuang Health Center","南庄郷保健所","난좡 향 보건소"],"南投市衛生所":["Nantou Health Center","南投市保健所","난터우 시 보건소"],"南澳鄉衛生所":["Nanao Health Center","南澳郷保健所","난아오 향 보건소"],"台全耳鼻喉科診所":["Tai Quan ENT Clinic","台全耳鼻咽喉科診療所","타이취안 이비인후과 의원"],"台安耳鼻喉科":["Taian ENT","台安耳鼻咽喉科","타이안 이비인후과"],"台新醫院":["Tai Xin Hospital","台新病院","타이신 병원"],"台東聖母醫院":["Taitung St. Mary Hospital","台東聖母病院","타이둥 성무 병원"],"右昌聯合醫院":["Youchang United Hospital","右昌連合病院","유창 연합 병원"],"吉安衛生所":["Ji-an Health Center","吉安保健所","지안 보건소"],"吉安醫院":["Ji-an Hospital","吉安病院","지안 병원"],"名間鄉衛生所":["Mingjian Health Center","名間郷保健所","밍젠 향 보건소"],"后里區衛生所":["Houli Health Center","后里区保健所","허우리 구 보건소"],"和平區衛生所":["Heping Health Center","和平区保健所","허핑 구 보건소"],"和興聯合診所":["Hexing Joint Clinic","和興連合診療所","허싱 연합 의원"],"員山鄉衛生所":["Yuanshan Health Center","員山郷保健所","위안산 향 보건소"],"員林何醫院":["Yuan Lin He Hospital","員林何病院","위안린허 병원"],"員榮醫院":["Yuanrong Hospital","員栄病院","위안룽 병원"],"員生醫院":["Yuansheng Hospital","員生病院","위안성 병원"],"員郭醫院":["Yuanguo Hospital","員郭病院","위안궈 병원"],"嘉義區監理所（僅作認知測驗）":["Chiayi Area Motor Vehicles Office (Cognitive assessment only)","嘉義区運転免許事務所（認知機能検査のみ）","자이 지역 차량관리사무소 (인지기능 검사만 가능)"],"嘉義基督教醫院":["Ditmanson Medical Foundation Chiayi Christian Hospital","嘉義キリスト教病院","자이 기독교 병원"],"嘉義市監理站（僅作認知測驗）":["Chiayi Shi Motor Vehicles Station (Cognitive assessment only)","嘉義市運転免許試験場（認知機能検査のみ）","자이 시 운전면허시험장 (인지기능 검사만 가능)"],"嘉義長庚紀念醫院":["Chiayi Chang Geng Memorial Hospital","嘉義長庚記念病院","자이 창겅 기념 병원"],"國姓鄉衛生所":["Guoxing Health Center","國姓郷保健所","궈싱 향 보건소"],"國泰聯合診所":["Cathay Joint Clinic","國泰連合診療所","궈타이 연합 의원"],"國軍左營總醫院":["Armed Forces Zuo Ying General Hospital","国軍左營総合病院","국군 수오잉 종합병원"],"國軍新竹地區醫院":["Armed Forces Hsinchu Di District Hospital","国軍新竹地区病院","국군 신주 디 구 병원"],"國軍臺中總醫院中清院區":["Armed Forces Taichung General Hospital Zhongqing Campus","国軍台中総合病院中清院区","국군 타이중 종합병원 중칭 병원 캠퍼스"],"國軍高雄總醫院":["Armed Forces Kaohsiung General Hospital","国軍高雄総合病院","국군 가오슝 종합병원"],"國軍高雄總醫院岡山分院":["Armed Forces Kaohsiung General Hospital Gang Shan Branch","国軍高雄総合病院岡山分院","국군 가오슝 종합병원 강산 분원"],"國軍高雄門診中心":["Armed Forces Kaohsiung Men Zhen Zhong Xin","国軍高雄門診中心","국군 가오슝 멘전중신"],"土城區衛生所":["Tucheng Health Center","土城区保健所","투청 구 보건소"],"坪林區衛生所":["Pinglin Health Center","坪林区保健所","핑린 구 보건소"],"埔心鄉衛生所":["Puxin Health Center","埔心郷保健所","부신 향 보건소"],"埔里基督教醫院":["Puli Christian Hospital","埔里キリスト教病院","부리 기독교 병원"],"埔里鎮衛生所":["Puli Health Center","埔里鎮保健所","부리 진 보건소"],"埔鹽鄉衛生所":["Puyan Health Center","埔鹽郷保健所","부옌 향 보건소"],"埤頭鄉衛生所":["Pitou Health Center","埤頭郷保健所","피토우 향 보건소"],"基隆監理站（無體檢）":["Keelung Motor Vehicles Station (No medical examination)","基隆運転免許試験場（健康診断なし）","지룽 운전면허시험장 (신체검사 없음)"],"士林承德診所":["Shi Lin Chengde Clinic","士林承德診療所","스린청데 의원"],"士林監理站（無體檢）":["Shi Lin Motor Vehicles Station (No medical examination)","士林運転免許試験場（健康診断なし）","스린 운전면허시험장 (신체검사 없음)"],"壯圍鄉衛生所":["Zhuangwei Health Center","壯圍郷保健所","좡웨이 향 보건소"],"壽豐衛生所":["Shou Feng Health Center","壽豐保健所","쇼우펭 보건소"],"外埔區衛生所":["Waipu Health Center","外埔区保健所","와이부 구 보건소"],"大千綜合醫院":["Daqian General Hospital","大千総合病院","다첸 종합병원"],"大同鄉衛生所":["Datong Health Center","大同郷保健所","다통 향 보건소"],"大園敏盛醫院":["Dayuan Minsheng Hospital","大園敏盛病院","다위안민성 병원"],"大城鄉衛生所":["Dacheng Health Center","大城郷保健所","다청 향 보건소"],"大安區衛生所":["Daan Health Center","大安区保健所","다안 구 보건소"],"大安醫院":["Da An Hospital","大安病院","다안 병원"],"大寮區衛生所":["Daliao Health Center","大寮区保健所","다리아오 구 보건소"],"大村鄉衛生所":["Dacun Health Center","大村郷保健所","다춘 향 보건소"],"大林慈濟醫院":["Da Lin Ci Ji Hospital","大林慈濟病院","다린 츠지 병원"],"大武鄉衛生所":["Dawu Health Center","大武郷保健所","다우 향 보건소"],"大湖鄉衛生所":["Dahu Health Center","大湖郷保健所","다후 향 보건소"],"大溪區衛生所":["Daxi Health Center","大溪区保健所","다시 구 보건소"],"大生診所":["Dasheng Clinic","大生診療所","다성 의원"],"大甲區衛生所":["Dajia Health Center","大甲区保健所","다자 구 보건소"],"大甲李綜合醫院":["Dajia Lee General Hospital","大甲李総合病院","다자리 종합병원"],"天主教聖馬爾定醫院":["Catholic Sheng Ma Er Ding Hospital","カトリック聖馬爾定病院","가톨릭 성마얼딩 병원"],"天行健診所":["Tian Xing Jian Clinic","天行健診療所","티안싱젠 의원"],"太平區衛生所":["Taiping Health Center","太平区保健所","타이핑 구 보건소"],"太麻里鄉衛生所":["Taimali Health Center","太麻里郷保健所","타이마리 향 보건소"],"如毅診所":["Ru Yi Clinic","如毅診療所","루이 의원"],"姜博文診所":["Jiang Bowen Clinic","姜博文診療所","장보원 의원"],"安心醫院":["Anxin Hospital","安心病院","안신 병원"],"安泰診所":["Antai Clinic","安泰診療所","안타이 의원"],"安泰醫院":["Antai Hospital","安泰病院","안타이 병원"],"宏仁醫院":["Hongren Hospital","宏仁病院","훙런 병원"],"宏元診所":["Hongyuan Clinic","宏元診療所","훙위안 의원"],"宏恩綜合醫院":["Hong En General Hospital","宏恩総合病院","훙엔 종합병원"],"宏科醫院":["Hongke Hospital","宏科病院","훙케 병원"],"定安診所":["Ding An Clinic","定安診療所","딩안 의원"],"宜蘭市衛生所":["Yilan Health Center","宜蘭市保健所","이란 시 보건소"],"宜蘭監理站（僅作認知測驗）":["Yilan Motor Vehicles Station (Cognitive assessment only)","宜蘭運転免許試験場（認知機能検査のみ）","이란 운전면허시험장 (인지기능 검사만 가능)"],"富里衛生所":["Fu Li Health Center","富里保健所","푸리 보건소"],"寶山鄉衛生所":["Baoshan Health Center","寶山郷保健所","바오산 향 보건소"],"尖石鄉衛生所":["Jianshi Health Center","尖石郷保健所","젠스 향 보건소"],"屏東基督教醫院":["Pingtung Christian Hospital","屏東キリスト教病院","핑둥 기독교 병원"],"岷安診所":["Minan Clinic","岷安診療所","민안 의원"],"峨眉鄉衛生所":["Emei Health Center","峨眉郷保健所","에메이 향 보건소"],"崁頂鄉衛生所":["Kanding Health Center","崁頂郷保健所","칸딩 향 보건소"],"常春醫院":["Changchun Hospital","常春病院","창춘 병원"],"平安葉治威聯合診所":["Pingan Ye Zhiwei Joint Clinic","平安葉治威連合診療所","핑안셰즈웨이 연합 의원"],"平溪區衛生所":["Pingxi Health Center","平溪区保健所","핑시 구 보건소"],"平鎮區衛生所":["Pingzhen Health Center","平鎮区保健所","핑 진 구 보건소"],"延平鄉衛生所":["Yanping Health Center","延平郷保健所","옌핑 향 보건소"],"建佑醫院":["Jianyou Hospital","建佑病院","젠유 병원"],"弘大醫院":["Hongda Hospital","弘大病院","훙다 병원"],"張天長診所":["Zhang Tianchang Clinic","張天長診療所","장티안창 의원"],"彌陀區衛生所":["Mituo Health Center","彌陀区保健所","미투오 구 보건소"],"彰濱秀傳紀念醫院":["Zhang Bin Show Chwan Memorial Hospital","彰濱秀傳記念病院","장빈 슈촨 기념 병원"],"後龍鎮衛生所":["Houlong Health Center","後龍鎮保健所","허우롱 진 보건소"],"復興區衛生所":["Fuxing Health Center","復興区保健所","푸싱 구 보건소"],"德仁醫院":["Deren Hospital","德仁病院","데런 병원"],"德安聯合診所":["Dean Joint Clinic","德安連合診療所","데안 연합 의원"],"恆春鎮衛生所":["Hengchun Health Center","恆春鎮保健所","헝춘 진 보건소"],"恩樺醫院":["Enhua Hospital","恩樺病院","엔화 병원"],"惠民醫院":["Huimin Hospital","惠民病院","후이민 병원"],"慈祐診所":["Ciyou Clinic","慈祐診療所","츠유 의원"],"慈祐醫院":["Ciyou Hospital","慈祐病院","츠유 병원"],"慧明聯合診所":["Huiming Joint Clinic","慧明連合診療所","후이밍 연합 의원"],"成功鎮衛生所":["Chenggong Health Center","成功鎮保健所","청궁 진 보건소"],"戴銘浚醫院":["Dai Mingjun Hospital","戴銘浚病院","다이밍준 병원"],"新仁醫院":["Xinren Hospital","新仁病院","신런 병원"],"新博愛診所":["Xin Boai Clinic","新博愛診療所","신보아이 의원"],"新園鄉衛生所":["Xinyuan Health Center","新園郷保健所","신위안 향 보건소"],"新城衛生所":["Xin Cheng Health Center","新城保健所","신청 보건소"],"新埔立安診所":["Xinpu Li An Clinic","新埔立安診療所","신부리안 의원"],"新埔鎮衛生所":["Xinpu Health Center","新埔鎮保健所","신부 진 보건소"],"新埤鄉衛生所":["Xinpi Health Center","新埤郷保健所","신피 향 보건소"],"新大同診所":["Xin Datong Clinic","新大同診療所","신다통 의원"],"新屋區衛生所":["Xinwu Health Center","新屋区保健所","신우 구 보건소"],"新店區衛生所":["Xindian Health Center","新店区保健所","신디안 구 보건소"],"新文心診所":["Xin Wen Xin Clinic","新文心診療所","신원신 의원"],"新昆明醫院":["Xin Kun Ming Hospital","新昆明病院","신쿤밍 병원"],"新泰醫院":["Xintai Hospital","新泰病院","신타이 병원"],"新營監理站（僅作認知測驗）":["Xin Ying Motor Vehicles Station (Cognitive assessment only)","新營運転免許試験場（認知機能検査のみ）","신잉 운전면허시험장 (인지기능 검사만 가능)"],"新生醫院":["Xinsheng Hospital","新生病院","신성 병원"],"新社區衛生所":["Xinshe Health Center","新社区保健所","신셔 구 보건소"],"新竹區監理所（僅作認知測驗）":["Hsinchu Area Motor Vehicles Office (Cognitive assessment only)","新竹地区運転免許事務所（認知機能検査のみ）","신주 지역 차량관리사무소 (인지기능 검사만 가능)"],"新竹市監理站（僅作認知測驗）":["Hsinchu Shi Motor Vehicles Station (Cognitive assessment only)","新竹市運転免許試験場（認知機能検査のみ）","신주 시 운전면허시험장 (인지기능 검사만 가능)"],"新興醫院":["Xinxing Hospital","新興病院","신싱 병원"],"新莊區衛生所":["Xinzhuang Health Center","新莊区保健所","신좡 구 보건소"],"新豐鄉衛生所":["Xinfeng Health Center","新豐郷保健所","신펭 향 보건소"],"新高鳳醫院":["Xingaofeng Hospital","新高鳳病院","신가오펭 병원"],"旗山監理站（僅能做認知測驗）":["Qishan Motor Vehicles Station (Cognitive assessment only)","旗山運転免許試験場（認知機能検査のみ）","치산 운전면허시험장 (인지기능 검사만 가능)"],"日安診所":["Rian Clinic","日安診療所","르안 의원"],"明德醫院":["Mingde Hospital","明德病院","밍데 병원"],"春日鄉衛生所":["Chunri Health Center","春日郷保健所","춘르 향 보건소"],"晨宏診所":["Chenhong Clinic","晨宏診療所","천훙 의원"],"晨新診所":["Chenxin Clinic","晨新診療所","천신 의원"],"普懷醫學診所":["Puhuai Yi Xue Clinic","普懷医学診療所","푸화이 의학 의원"],"書田泌尿科眼科診所":["Shutian Urology and Ophthalmology Clinic","書田泌尿器科眼科診療所","슈티안 비뇨기과 안과 의원"],"曾漢祺綜合醫院":["Ceng Han Qi General Hospital","曾漢祺総合病院","청한치 종합병원"],"望安鄉將軍衛生所":["Wangan Jiang Jun Health Center","望安郷將軍保健所","왕안 향 장준 보건소"],"望安鄉衛生所":["Wangan Health Center","望安郷保健所","왕안 향 보건소"],"李國賢診所":["Li Guo Xian Clinic","李國賢診療所","리궈셴 의원"],"杏和醫院":["Xinghe Hospital","杏和病院","싱허 병원"],"杏福診所":["Xing Fu Clinic","杏福診療所","싱푸 의원"],"杏豐診所":["Xing Feng Clinic","杏豐診療所","싱펭 의원"],"東勢區衛生所":["Dongshi Health Center","東勢区保健所","동스 구 보건소"],"東勢區農會附設農民醫院":["Dongshi Nong Hui Affiliated Nong Min Hospital","東勢区農會付属農民病院","동스 구 농후이 부속 농민 병원"],"東勢監理分站（僅作認知測驗）":["Dong Shi Motor Vehicles Substation (Cognitive assessment only)","東勢運転免許支所（認知機能検査のみ）","동스 운전면허 출장소 (인지기능 검사만 가능)"],"東區衛生所":["East District Health Center","東区保健所","동 구 보건소"],"東新診所":["Dongxin Clinic","東新診療所","동신 의원"],"東榮診所":["Dong Rong Clinic","東栄診療所","동룽 의원"],"東河鄉衛生所":["Donghe Health Center","東河郷保健所","동허 향 보건소"],"東港鎮衛生所":["Donggang Health Center","東港鎮保健所","동강 진 보건소"],"東華醫院":["Donghua Hospital","東華病院","동화 병원"],"板橋區衛生所":["Banqiao Health Center","板橋区保健所","반차오 구 보건소"],"板橋監理站（僅作認知測驗）":["Banqiao Motor Vehicles Station (Cognitive assessment only)","板橋運転免許試験場（認知機能検査のみ）","반차오 운전면허시험장 (인지기능 검사만 가능)"],"枋寮鄉衛生所":["Fangliao Health Center","枋寮郷保健所","팡리아오 향 보건소"],"枋山鄉衛生所":["Fangshan Health Center","枋山郷保健所","팡산 향 보건소"],"林口區衛生所":["Linkou Health Center","林口区保健所","린코우 구 보건소"],"林園區衛生所":["Linyuan Health Center","林園区保健所","린위안 구 보건소"],"林怡仁診所":["Lin Yiren Clinic","林怡仁診療所","린이런 의원"],"林邊鄉衛生所":["Linbian Health Center","林邊郷保健所","린비안 향 보건소"],"林醫院":["Lin Hospital","林病院","린 병원"],"桃園區衛生所":["Taoyuan Health Center","桃園区保健所","타오위안 구 보건소"],"桃園監理站（僅作認知測驗）":["Taoyuan Motor Vehicles Station (Cognitive assessment only)","桃園運転免許試験場（認知機能検査のみ）","타오위안 운전면허시험장 (인지기능 검사만 가능)"],"桃源區衛生所":["Taoyuan Health Center","桃源区保健所","타오위안 구 보건소"],"梨山衛生所":["Li Shan Health Center","梨山保健所","리산 보건소"],"森歆林家醫診所":["Sen Xin Lin Family Medicine Clinic","森歆林家庭医診療所","센신린 가정의학 의원"],"楊梅區衛生所":["Yangmei Health Center","楊梅区保健所","양메이 구 보건소"],"樹林區衛生所":["Shulin Health Center","樹林区保健所","슈린 구 보건소"],"橫山鄉衛生所":["Hengshan Health Center","橫山郷保健所","헝산 향 보건소"],"欣達診所":["Xin Da Clinic","欣達診療所","신다 의원"],"民安診所":["Minan Clinic","民安診療所","민안 의원"],"民愛診所":["Minai Clinic","民愛診療所","민아이 의원"],"民眾醫院":["Minzhong Hospital","民眾病院","민중 병원"],"水里鄉衛生所":["Shuili Health Center","水里郷保健所","슈이리 향 보건소"],"永和區衛生所":["Yonghe Health Center","永和区保健所","용허 구 보건소"],"永和復康醫院":["Yonghe Fukang Hospital","永和復康病院","용허푸캉 병원"],"永大診所":["Yongda Clinic","永大診療所","용다 의원"],"永安診所":["Yongan Clinic","永安診療所","용안 의원"],"永康姜林診所":["Yong Kang Jiang Lin Clinic","永康姜林診療所","용캉장린 의원"],"永態診所":["Yongtai Clinic","永態診療所","용타이 의원"],"永達醫院":["Yongda Hospital","永達病院","용다 병원"],"永靖鄉衛生所":["Yongjing Health Center","永靖郷保健所","용징 향 보건소"],"汐止區衛生所":["Xizhi Health Center","汐止区保健所","시즈 구 보건소"],"池上鄉衛生所":["Chishang Health Center","池上郷保健所","츠샹 향 보건소"],"汽駕學會臺北地區代辦所":["Qi Jia Xue Hui Taipei Di District Service Agency","汽駕学會台北地区代行事務所","치자쉐후이 타이베이 지역 대행사무소"],"沙鹿區衛生所":["Shalu Health Center","沙鹿区保健所","샤루 구 보건소"],"泰安鄉衛生所":["Tai-an Health Center","泰安郷保健所","타이안 향 보건소"],"泰山區衛生所":["Taishan Health Center","泰山区保健所","타이산 구 보건소"],"泰武鄉衛生所":["Taiwu Health Center","泰武郷保健所","타이우 향 보건소"],"洪宗鄰醫院":["Hong Zonglin Hospital","洪宗鄰病院","훙송린 병원"],"活力診所":["Huoli Clinic","活力診療所","훠리 의원"],"海端鄉衛生所":["Haiduan Health Center","海端郷保健所","하이두안 향 보건소"],"淡水區衛生所":["Danshui Health Center","淡水区保健所","단슈이 구 보건소"],"深坑區衛生所":["Shenkeng Health Center","深坑区保健所","선켕 구 보건소"],"清泉醫院":["Qing Quan Hospital","清泉病院","칭취안 병원"],"湖內區衛生所":["Hunei Health Center","湖內区保健所","후네이 구 보건소"],"湖口鄉衛生所":["Hukou Health Center","湖口郷保健所","후코우 향 보건소"],"溪州鄉衛生所":["Xizhou Health Center","溪州郷保健所","시저우 향 보건소"],"滿州鄉衛生所":["Manzhou Health Center","滿州郷保健所","만저우 향 보건소"],"漢銘基督教醫院":["Hanming Christian Hospital","漢銘キリスト教病院","한밍 기독교 병원"],"潭子區衛生所":["Tanzi Health Center","潭子区保健所","탄시 구 보건소"],"潭子林外科診所":["Tan Zi Lin Wai Ke Clinic","潭子林外科診療所","탄시린와이케 의원"],"潮州鎮衛生所":["Chaozhou Health Center","潮州鎮保健所","차오저우 진 보건소"],"澎湖監理站（無體檢）":["Penghu Motor Vehicles Station (No medical examination)","澎湖運転免許試験場（健康診断なし）","펑후 운전면허시험장 (신체검사 없음)"],"為恭醫院":["Weigong Hospital","為恭病院","웨이궁 병원"],"烈嶼鄉衛生所":["Lieyu Health Center","烈嶼郷保健所","리에위 향 보건소"],"烏來區衛生所":["Wulai Health Center","烏來区保健所","우라이 구 보건소"],"牡丹鄉衛生所":["Mudan Health Center","牡丹郷保健所","무단 향 보건소"],"獅子鄉衛生所":["Shizi Health Center","獅子郷保健所","스시 향 보건소"],"獅潭鄉衛生所":["Shitan Health Center","獅潭郷保健所","스탄 향 보건소"],"玉里監理分站（僅作認知測驗）":["Yu Li Motor Vehicles Substation (Cognitive assessment only)","玉里運転免許支所（認知機能検査のみ）","위리 운전면허 출장소 (인지기능 검사만 가능)"],"玉里衛生所":["Yu Li Health Center","玉里保健所","위리 보건소"],"王國哲診所":["Wang Guo Zhe Clinic","王國哲診療所","왕궈저 의원"],"琉球鄉衛生所":["Liuqiu Health Center","琉球郷保健所","리우치우 향 보건소"],"琉璃光診所":["Liuliguang Clinic","琉璃光診療所","리우리광 의원"],"瑞健診所":["Rui Jian Clinic","瑞健診療所","루이젠 의원"],"瑞安診所":["Rui An Clinic","瑞安診療所","루이안 의원"],"瑞生醫院":["Ruisheng Hospital","瑞生病院","루이성 병원"],"瑞穗衛生所":["Rui Sui Health Center","瑞穗保健所","루이싀 보건소"],"瑞芳區衛生所":["Ruifang Health Center","瑞芳区保健所","루이팡 구 보건소"],"瑪家鄉衛生所":["Majia Health Center","瑪家郷保健所","마자 향 보건소"],"田中鎮衛生所":["Tianzhong Health Center","田中鎮保健所","티안중 진 보건소"],"田尾鄉衛生所":["Tianwei Health Center","田尾郷保健所","티안웨이 향 보건소"],"甲仙區衛生所":["Jiaxian Health Center","甲仙区保健所","자셴 구 보건소"],"白沙鄉吉貝衛生所":["Baisha Ji Bei Health Center","白沙郷吉貝保健所","바이샤 향 지베이 보건소"],"白沙鄉鳥嶼衛生所":["Baisha Niao Yu Health Center","白沙郷鳥嶼保健所","바이샤 향 니아오위 보건소"],"石岡區衛生所":["Shigang Health Center","石岡区保健所","스강 구 보건소"],"石碇區衛生所":["Shiding Health Center","石碇区保健所","스딩 구 보건소"],"石門區衛生所":["Shimen Health Center","石門区保健所","스멘 구 보건소"],"礁溪鄉衛生所":["Jiaoxi Health Center","礁溪郷保健所","자오시 향 보건소"],"社頭鄉衛生所":["Shetou Health Center","社頭郷保健所","셔토우 향 보건소"],"祐生醫院":["Yousheng Hospital","祐生病院","유성 병원"],"神岡區衛生所":["Shengang Health Center","神岡区保健所","선강 구 보건소"],"福田診所":["Futian Clinic","福田診療所","푸티안 의원"],"福興鄉衛生所":["Fuxing Health Center","福興郷保健所","푸싱 향 보건소"],"秀傳紀念醫院":["Show Chwan Memorial Hospital","秀傳記念病院","슈촨 기념 병원"],"秀林衛生所":["Xiu Lin Health Center","秀林保健所","슈린 보건소"],"秀水鄉衛生所":["Xiushui Health Center","秀水郷保健所","슈슈이 향 보건소"],"立霖診所":["Lilin Clinic","立霖診療所","리린 의원"],"童綜合醫院":["Tong General Hospital","童総合病院","통 종합병원"],"竹信醫院":["Zhuxin Hospital","竹信病院","주신 병원"],"竹北市衛生所":["Zhubei Health Center","竹北市保健所","주베이 시 보건소"],"竹南鎮衛生所":["Zhunan Health Center","竹南鎮保健所","주난 진 보건소"],"竹塘鄉衛生所":["Zhutang Health Center","竹塘郷保健所","주탕 향 보건소"],"竹山秀傳醫院":["Zhu Shan Show Chwan Hospital","竹山秀傳病院","주산 슈촨 병원"],"竹山鎮衛生所":["Zhushan Health Center","竹山鎮保健所","주산 진 보건소"],"竹東鎮衛生所":["Zhudong Health Center","竹東鎮保健所","주동 진 보건소"],"竹田鄉衛生所":["Zhutian Health Center","竹田郷保健所","주티안 향 보건소"],"第一聯合診所":["First Joint Clinic","第一連合診療所","디이 연합 의원"],"綠島鄉衛生所":["Lyudao Health Center","綠島郷保健所","루다오 향 보건소"],"線西鄉衛生所":["Xianxi Health Center","線西郷保健所","셴시 향 보건소"],"署立花蓮醫院":["Provincial Hualien Hospital","署立花蓮病院","슈리 화롄 병원"],"羅東博愛醫院":["Luodong Boai Hospital","羅東博愛病院","루오동보아이 병원"],"羅東聖母醫院":["Luodong St. Mary Hospital","羅東聖母病院","루오동성무 병원"],"羅東鎮衛生所":["Luodong Health Center","羅東鎮保健所","루오동 진 보건소"],"美濃區衛生所":["Meinong Health Center","美濃区保健所","메이농 구 보건소"],"義大大昌醫院":["E-Da Da Chang Hospital","義大大昌病院","이다다창 병원"],"義大醫院":["E-Da Hospital","義大病院","이다 병원"],"聯合醫院中興院區":["United Hospital Zhong Xing Campus","連合病院中興院区","연합 병원 중싱 병원 캠퍼스"],"聯合醫院仁愛院區":["United Hospital Renai Campus","連合病院仁愛院区","연합 병원 런아이 병원 캠퍼스"],"聯合醫院和平院區":["United Hospital Heping Campus","連合病院和平院区","연합 병원 허핑 병원 캠퍼스"],"聯合醫院附設北投門診部":["United Hospital Affiliated Bei Tou Outpatient Department","連合病院付属北投外来診療部","연합 병원 부속 베이토우 외래진료부"],"聯合醫院附設大安門診部":["United Hospital Affiliated Da An Outpatient Department","連合病院付属大安外来診療部","연합 병원 부속 다안 외래진료부"],"聯安醫院":["Lian An Hospital","連安病院","리안안 병원"],"臺中慈濟醫院":["Taichung Tzu Chi Hospital","台中慈濟病院","타이중 츠지병원"],"臺中榮民總醫院嘉義分院":["Taichung Veterans General Hospital Chiayi Branch","台中栄民総合病院嘉義分院","타이중 보훈종합병원 자이 분원"],"臺中榮民總醫院埔里分院":["Taichung Veterans General Hospital Puli Branch","台中栄民総合病院埔里分院","타이중 보훈종합병원 부리 분원"],"臺中榮民總醫院灣橋分院":["Taichung Veterans General Hospital Wanciao Branch","台中栄民総合病院灣橋分院","타이중 보훈종합병원 완차오 분원"],"臺北區監理所（僅作認知測驗）":["Taipei Area Motor Vehicles Office (Cognitive assessment only)","台北地区運転免許事務所（認知機能検査のみ）","타이베이 지역 차량관리사무소 (인지기능 검사만 가능)"],"臺北市區監理所（無體檢）":["Taipei City District Motor Vehicles Office (No medical examination)","台北市運転免許事務所（健康診断なし）","타이베이시 지역 차량관리사무소 (신체검사 없음)"],"臺北市立萬芳醫院":["Taipei Municipal Wanfang Hospital","台北市立萬芳病院","타이베이 시립 완팡 병원"],"臺北榮民總醫院蘇澳分院":["Taipei Veterans General Hospital Suao Branch","台北栄民総合病院蘇澳分院","타이베이 보훈 종합병원 수아오 분원"],"臺北醫學大學附設醫院":["Taipei Medical University Affiliated Hospital","台北医学大学付属病院","타이베이 의과대학 부속 병원"],"臺南監理站（僅作認知測驗）":["Tainan Motor Vehicles Station (Cognitive assessment only)","台南運転免許試験場（認知機能検査のみ）","타이난 운전면허시험장 (인지기능 검사만 가능)"],"臺大醫院新竹分院":["National Taiwan University Hospital Hsinchu Branch","台湾大学病院新竹分院","국립대만대학교 병원 신주 분원"],"臺安醫院雙十分院":["Tai An Hospital Shuang Shi Branch","台安病院雙十分院","타이안 병원 솽스 분원"],"芎林鄉衛生所":["Qionglin Health Center","芎林郷保健所","충린 향 보건소"],"芬園鄉衛生所":["Fenyuan Health Center","芬園郷保健所","펜위안 향 보건소"],"花壇鄉衛生所":["Huatan Health Center","花壇郷保健所","화탄 향 보건소"],"花蓮市衛生所":["Hualien Health Center","花蓮市保健所","화롄 시 보건소"],"花蓮慈濟醫院":["Hualien Tzu Chi Hospital","花蓮慈濟病院","화롄 츠지병원"],"花蓮監理站（僅作認知測驗）":["Hualien Motor Vehicles Station (Cognitive assessment only)","花蓮運転免許試験場（認知機能検査のみ）","화롄 운전면허시험장 (인지기능 검사만 가능)"],"芳苑鄉衛生所":["Fangyuan Health Center","芳苑郷保健所","팡위안 향 보건소"],"苑裡李綜合醫院":["Yuan Li Li General Hospital","苑裡李総合病院","위안리리 종합병원"],"苑裡鎮衛生所":["Yuanli Health Center","苑裡鎮保健所","위안리 진 보건소"],"苓雅監理站（僅能做認知測驗）":["Ling Ya Motor Vehicles Station (Cognitive assessment only)","苓雅運転免許試験場（認知機能検査のみ）","링야 운전면허시험장 (인지기능 검사만 가능)"],"苗栗市衛生所":["Miaoli Health Center","苗栗市保健所","먀오리 시 보건소"],"苗栗監理站（僅作認知測驗）":["Miaoli Motor Vehicles Station (Cognitive assessment only)","苗栗運転免許試験場（認知機能検査のみ）","먀오리 운전면허시험장 (인지기능 검사만 가능)"],"英吉診所":["Ying Ji Clinic","英吉診療所","잉지 의원"],"茂林區衛生所":["Maolin Health Center","茂林区保健所","마오린 구 보건소"],"茄萣區衛生所":["Qieding Health Center","茄萣区保健所","체 구 보건소"],"草屯鎮衛生所":["Caotun Health Center","草屯鎮保健所","차오툰 진 보건소"],"萬丹鄉衛生所":["Wandan Health Center","萬丹郷保健所","완단 향 보건소"],"萬巒鄉衛生所":["Wanluan Health Center","萬巒郷保健所","완루안 향 보건소"],"萬榮衛生所":["Wan Rong Health Center","萬栄保健所","완룽 보건소"],"萬里區衛生所":["Wanli Health Center","萬里区保健所","완리 구 보건소"],"葉婦產科診所":["Ye Obstetrics and Gynecology Clinic","葉産婦人科診療所","셰 산부인과 의원"],"蘆洲監理站（僅作認知測驗）":["Luzhou Motor Vehicles Station (Cognitive assessment only)","蘆洲運転免許試験場（認知機能検査のみ）","루저우 운전면허시험장 (인지기능 검사만 가능)"],"蘆竹區衛生所":["Luzhu Health Center","蘆竹区保健所","루주 구 보건소"],"蘇澳鎮衛生所":["Suao Health Center","蘇澳鎮保健所","수아오 진 보건소"],"蘭嶼鄉衛生所":["Lanyu Health Center","蘭嶼郷保健所","란위 향 보건소"],"虎尾台全診所":["Hu Wei Tai Quan Clinic","虎尾台全診療所","후웨이타이취안 의원"],"衛生福利部南投醫院":["Ministry of Health and Welfare Nantou Hospital","衛生福利部南投病院","보건복지부 난터우 병원"],"衛生福利部台東醫院":["Ministry of Health and Welfare Taitung Hospital","衛生福利部台東病院","보건복지부 타이둥 병원"],"衛生福利部嘉義醫院":["Ministry of Health and Welfare Chiayi Hospital","衛生福利部嘉義病院","보건복지부 자이 병원"],"衛生福利部彰化醫院":["Ministry of Health and Welfare Changhua Hospital","衛生福利部彰化病院","보건복지부 장화 병원"],"衛生福利部旗山醫院":["Ministry of Health and Welfare Qishan Hospital","衛生福利部旗山病院","보건복지부 치산 병원"],"衛生福利部朴子醫院":["Ministry of Health and Welfare Po Zi Hospital","衛生福利部朴子病院","보건복지부 포시 병원"],"衛生福利部臺中醫院":["Ministry of Health and Welfare Taichung Hospital","衛生福利部台中病院","보건복지부 타이중 병원"],"衛生福利部豐原醫院":["Ministry of Health and Welfare Feng Yuan Hospital","衛生福利部豐原病院","보건복지부 펭위안 병원"],"衛生福利部金門醫院":["Ministry of Health and Welfare Kinmen Hospital","衛生福利部金門病院","보건복지부 진먼 병원"],"衛福部苗栗醫院":["Wei Fu Bu Miaoli Hospital","衛福部苗栗病院","웨이푸부 먀오리 병원"],"裕東診所":["Yudong Clinic","裕東診療所","위동 의원"],"西屯區衛生所":["Xitun Health Center","西屯区保健所","시툰 구 보건소"],"西湖鄉衛生所":["Xihu Health Center","西湖郷保健所","시후 향 보건소"],"觀音區衛生所":["Guanyin Health Center","觀音区保健所","관인 구 보건소"],"許獻榮診所":["Xu Xian Rong Clinic","許獻栄診療所","쉬셴룽 의원"],"詠贊聯合診所":["Yongzan Joint Clinic","詠贊連合診療所","용산 연합 의원"],"謝樂偉眼科診所":["Xie Lewei Ophthalmology Clinic","謝樂偉眼科診療所","셰레웨이 안과 의원"],"豐安診所":["Feng An Clinic","豐安診療所","펭안 의원"],"豐安醫院":["Feng An Hospital","豐安病院","펭안 병원"],"貢寮區衛生所":["Gongliao Health Center","貢寮区保健所","궁리아오 구 보건소"],"賢德醫院":["Xian De Hospital","賢德病院","셴데 병원"],"路竹區衛生所":["Luzhu Health Center","路竹区保健所","루주 구 보건소"],"車城鄉衛生所":["Checheng Health Center","車城郷保健所","처청 향 보건소"],"輔仁大學學校財團法人輔仁大學醫務室":["Fu Jen Catholic University Medical Office","輔仁大学学校法人輔仁大学医務室","푸런대학교 의무실"],"迴龍樂生醫院":["Huilong Lesheng Hospital","迴龍樂生病院","후이롱레성 병원"],"通安診所":["Tong An Clinic","通安診療所","통안 의원"],"通霄鎮衛生所":["Tongxiao Health Center","通霄鎮保健所","통샤오 진 보건소"],"造橋鄉衛生所":["Zaoqiao Health Center","造橋郷保健所","사오차오 향 보건소"],"連江監理站":["Lienchiang Motor Vehicles Station","連江運転免許試験場","롄장 운전면허시험장"],"道周醫院":["Daozhou Hospital","道周病院","다오저우 병원"],"道安醫院":["Daoan Hospital","道安病院","다오안 병원"],"達仁鄉衛生所":["Daren Health Center","達仁郷保健所","다런 향 보건소"],"那瑪夏區衛生所":["Namaxia Health Center","那瑪夏区保健所","나마샤 구 보건소"],"里港鄉衛生所":["Ligang Health Center","里港郷保健所","리강 향 보건소"],"重光醫院":["Chongguang Hospital","重光病院","중광 병원"],"金城鎮衛生所":["Jincheng Health Center","金城鎮保健所","진청 진 보건소"],"金寧鄉衛生所":["Jinning Health Center","金寧郷保健所","진주 향 보건소"],"金山區衛生所":["Jinshan Health Center","金山区保健所","진산 구 보건소"],"金峰鄉衛生所":["Jinfeng Health Center","金峰郷保健所","진펭 향 보건소"],"金沙鎮衛生所":["Jinsha Health Center","金沙鎮保健所","진샤 진 보건소"],"金湖鎮衛生所":["Jinhu Health Center","金湖鎮保健所","진후 진 보건소"],"銅鑼鄉衛生所":["Tongluo Health Center","銅鑼郷保健所","통루오 향 보건소"],"長春診所":["Changchun Clinic","長春診療所","창춘 의원"],"長春醫院":["Changchun Hospital","長春病院","창춘 병원"],"長治鄉衛生所":["Changzhi Health Center","長治郷保健所","창즈 향 보건소"],"長濱鄉衛生所":["Changbin Health Center","長濱郷保健所","창빈 향 보건소"],"開蘭安心診所":["Kai Lan Anxin Clinic","開蘭安心診療所","카이란안신 의원"],"關山鎮衛生所":["Guanshan Health Center","關山鎮保健所","관산 진 보건소"],"關西鎮衛生所":["Guanxi Health Center","關西鎮保健所","관시 진 보건소"],"阮綜合醫院":["Ruan General Hospital","阮総合病院","루안 종합병원"],"陳宏麟診所":["Chen Honglin Clinic","陳宏麟診療所","천훙린 의원"],"陳志成耳鼻喉科診所":["Chen Zhicheng ENT Clinic","陳志成耳鼻咽喉科診療所","천즈청 이비인후과 의원"],"陳隆開診所":["Chen Longkai Clinic","陳隆開診療所","천롱카이 의원"],"集集鎮衛生所":["Jiji Health Center","集集鎮保健所","지지 진 보건소"],"雙溪區衛生所":["Shuangxi Health Center","雙溪区保健所","솽시 구 보건소"],"雲林監理站（僅作認知測驗）":["Yunlin Motor Vehicles Station (Cognitive assessment only)","雲林運転免許試験場（認知機能検査のみ）","윈린 운전면허시험장 (인지기능 검사만 가능)"],"霧台鄉衛生所":["Wutai Health Center","霧台郷保健所","우타이 향 보건소"],"霧峰區衛生所":["Wufeng Health Center","霧峰区保健所","우펭 구 보건소"],"頭份市衛生所":["Toufen Health Center","頭份市保健所","토우펜 시 보건소"],"頭城鎮衛生所":["Toucheng Health Center","頭城鎮保健所","토우청 진 보건소"],"頭屋鄉衛生所":["Touwu Health Center","頭屋郷保健所","토우우 향 보건소"],"香山衛生所":["Xiang Shan Health Center","香山保健所","샹산 보건소"],"高新醫院":["Gaoxin Hospital","高新病院","가오신 병원"],"高樹鄉衛生所":["Gaoshu Health Center","高樹郷保健所","가오슈 향 보건소"],"高雄基督教醫院":["Kaohsiung Christian Hospital","高雄キリスト教病院","가오슝 기독교 병원"],"高雄市區監理所（僅能做認知測驗）":["Kaohsiung Shi District Motor Vehicles Office (Cognitive assessment only)","高雄市区運転免許事務所（認知機能検査のみ）","가오슝 시 구 차량관리사무소 (인지기능 검사만 가능)"],"高雄市立大同醫院":["Kaohsiung Municipal Da Tong Hospital","高雄市立大同病院","가오슝 시립 다통 병원"],"高雄市立小港醫院":["Kaohsiung Municipal Siaogang Hospital","高雄市立小港病院","가오슝 시립 샤오강 병원"],"高雄市立旗津醫院":["Kaohsiung Municipal Qi Jin Hospital","高雄市立旗津病院","가오슝 시립 치진 병원"],"高雄市立民生醫院":["Kaohsiung Municipal Min Sheng Hospital","高雄市立民生病院","가오슝 시립 민성 병원"],"高雄市立聯合醫院":["Kaohsiung Municipal United Hospital","高雄市立連合病院","가오슝 시립 연합 병원"],"高雄醫學大學附設中和紀念醫院":["Kaohsiung Medical University Affiliated Zhonghe Memorial Hospital","高雄医学大学付属中和記念病院","가오슝 의과대학 부속 중허 기념 병원"],"高雄醫學大學附設高醫岡山醫院":["Kaohsiung Medical University Affiliated Kaohsiung Medical Gang Shan Hospital","高雄医学大学付属高医岡山病院","가오슝 의과대학 부속 가오이강산 병원"],"魏嘉慶診所":["Wei Jia Qing Clinic","魏嘉慶診療所","웨이자칭 의원"],"魚池鄉衛生所":["Yuchi Health Center","魚池郷保健所","위츠 향 보건소"],"鳳信診所":["Fengxin Clinic","鳳信診療所","펭신 의원"],"鳳山醫院":["Feng Shan Hospital","鳳山病院","펭산 병원"],"鳳林衛生所":["Feng Lin Health Center","鳳林保健所","펭린 보건소"],"鶯歌區衛生所":["Yingge Health Center","鶯歌区保健所","잉거 구 보건소"],"鹽埔鄉衛生所":["Yanpu Health Center","鹽埔郷保健所","옌부 향 보건소"],"鹿谷鄉衛生所":["Lugu Health Center","鹿谷郷保健所","루구 향 보건소"],"鹿野鄉衛生所":["Luye Health Center","鹿野郷保健所","루예 향 보건소"],"麟洛鄉衛生所":["Linluo Health Center","麟洛郷保健所","린루오 향 보건소"],"麥寮台全診所":["Mai Liao Tai Quan Clinic","麥寮台全診療所","마이리아오타이취안 의원"],"麻豆監理站（僅作認知測驗）":["Ma Dou Motor Vehicles Station (Cognitive assessment only)","麻豆運転免許試験場（認知機能検査のみ）","마도우 운전면허시험장 (인지기능 검사만 가능)"],"龍潭區衛生所":["Longtan Health Center","龍潭区保健所","롱탄 구 보건소"],"龜山區衛生所":["Guishan Health Center","龜山区保健所","구이산 구 보건소"]}};
+
+/* 全平台地點別名資料 v2。
+ * 穩定 ID = 縣市::行政區::正式地點中文名稱。
+ * 只放入有常用名稱依據的別名；沒有可靠常用別名的地點保留 0 組，不自動拼接。
+ * 外語正式名稱沿用既有顯示翻譯，未確認者僅視為描述性翻譯，不宣稱官方譯名。
+ */
+var LOCATION_ALIAS_DEFAULTS = {"臺北市::文山區::臺北市立萬芳醫院":[{"zh-TW":"萬芳醫院","en":"Wanfang Hospital","ja":"万芳病院","ko":"완팡 병원"}],"嘉義市::東區::嘉義基督教醫院":[{"zh-TW":"嘉基","en":"Chiayi Christian Hospital","ja":"嘉義キリスト教病院","ko":"자이 기독교 병원"}]};
+var LOCATION_ALIAS_GROUP_LIMIT = 4;
 
 function getExamLocationDisplayName(originalName, category) {
   var rawName = String(originalName == null ? '' : originalName);
@@ -5270,6 +5340,10 @@ function getTaiwaneseKey(text) {
         search.style.display = 'none';
       }
       defaultPlaceAliases = [];
+      defaultPlaceAliasGroups = [];
+      activeLocationRecordId = '';
+      examState.locationRecordId = '';
+      examState.acceptableAnswerGroups = [];
       examState.defaultAliases = [];
     }
 
@@ -5293,7 +5367,10 @@ function getTaiwaneseKey(text) {
         district:district,
         placeName:placeName,
         aliases:(examState.acceptableAnswers || []).slice(),
-        defaultAliases:(defaultPlaceAliases || []).slice()
+        aliasGroups:cloneAliasGroups(examState.acceptableAnswerGroups || []),
+        locationRecordId:examState.locationRecordId || '',
+        defaultAliases:(defaultPlaceAliases || []).slice(),
+        defaultAliasGroups:cloneAliasGroups(defaultPlaceAliasGroups || [])
       };
     }
 
@@ -5317,14 +5394,20 @@ function getTaiwaneseKey(text) {
       examState.district = '';
       examState.placeName = selectingHome ? '家裡' : '';
       examState.acceptableAnswers = selectingHome ? ['家裡', '家中', '住家'] : [];
-      examState.defaultAliases = examState.acceptableAnswers.slice();
-      defaultPlaceAliases = selectingHome ? examState.acceptableAnswers.slice() : [];
-      updateAliasesUI(examState.acceptableAnswers);
+      examState.acceptableAnswerGroups = [];
+      examState.locationRecordId = '';
+      examState.defaultAliases = [];
+      defaultPlaceAliases = [];
+      defaultPlaceAliasGroups = [];
+      activeLocationRecordId = '';
+      updateAliasGroupsUI([], '', false);
+      examState.acceptableAnswers = selectingHome ? ['家裡', '家中', '住家'] : [];
       updateLocationModeVisibility();
 
       if (!selectingHome) {
         // 只在使用者主動選擇工作人員模式後，才還原仍有效的地點資料。
         restoreSavedLocation(true);
+        loadSharedLocationAliasOverrides(false);
       }
     }
 
@@ -5523,7 +5606,7 @@ var MANDARIN_VOICE_SCRIPTS = {
   locationIntro: '請先確認目前的練習方式。如果您是在家中自行練習，請選擇「我在家裡練習」；如果是在監理站、醫療院所或其他施測地點，請選擇「施測人員代操作模式」。選好之後，就可以進入下一步。',
   homePracticeSelected: '您已選擇在家裡練習，我們馬上來看看測驗說明。',
   staffModeSelected: '您已選擇施測人員代操作模式，請依照畫面選擇縣市、行政區和測驗地點，確認好就可以開始囉。',
-  examIntro: '這次一共有三項認知功能測驗。第一項是時間與空間認知，共有五個問題，請回答今年的年份、月份、日期、星期，以及目前所在的場所，答對四題以上就通過了。第二項是圖卡記憶，您會看到十張圖片，全部看完後休息兩分鐘，再回想並說出剛才看過的圖片名稱，答對三張以上就通過了。第三項是徒手繪畫時鐘，請依照指定時間畫出完整的時鐘，包括圓形、數字，以及時針和分針。滿分七分，取得四分以上就通過了，作答時間為四分鐘。都了解的話，我們就放輕鬆，從第一關開始吧！',
+  examIntro: '這次一共有三項認知功能測驗。第一項是時間與空間認知，共有五個問題。前四題請回答今年的年份、月份、日期和星期，四題都答對才算通過。第五題請回答目前所在的場所，這一題由施測人員現場核對，不列入計分。第二項是圖卡記憶，您會看到十張圖片，全部看完後休息兩分鐘，再回想並說出剛才看過的圖片名稱，答對三張以上就通過了。第三項是徒手繪畫時鐘，請依照指定時間畫出完整的時鐘，包括圓形、數字，以及時針和分針。滿分七分，取得四分以上就通過了，作答時間為四分鐘。都了解的話，我們就放輕鬆，從第一關開始吧！',
   p1Intro: '歡迎來到第一關，時間與空間認知。這一關共有五個問題，請仔細聽題目，憑現在的記憶回答就好。作答時請不要看日曆、時鐘，也不要請旁人提示喔。',
   p1Questions: {
     q1Roc: '請問今年是民國幾年？',
@@ -5772,7 +5855,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       
       var fullExamIntroScript = 
         "接下來將進行三項認知功能測驗，我會先向您介紹每一項測驗的內容及通過標準。" +
-        "第一項是時間、空間認知。請回答今年的年份、月份、日期、星期，以及目前所在的場所。總共五題，需要答對四題以上才算通過。" +
+        "第一項是時間、空間認知，共有五個問題。前四題請回答今年的年份、月份、日期和星期，四題都答對才算通過。第五題請回答目前所在的場所，這一題由施測人員現場核對，不列入計分。" +
         "第二項是圖卡記憶。您將觀看並記憶十張圖片，全部看完後休息兩分鐘，接著請您輸入剛才看過的圖片名稱。十張圖片中，需要答對三張以上才算通過。" +
         "第三項是徒手繪畫時鐘。請依照題目指定的時間，畫出完整的時鐘，包括圓形、數字，以及時針和分針。滿分七分，需要取得四分以上才算通過，作答時間為四分鐘。" +
         "以上是三項測驗的介紹，請您放輕鬆，依照接下來的指示進行測驗。";
@@ -5788,84 +5871,305 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       showStep('step-location');
     }
 
-    function generateLocationData(county, district, rawPlaceName) {
-      if (!rawPlaceName) {
-        return { officialName: '', county: county || '', district: district || '', facilityType: '', autoAcceptAliases: [], genericKeywords: GENERIC_CATEGORY_TERMS };
-      }
-
-      var cleanPlace = rawPlaceName.replace(/（.*?）|\(.*?\)/g, '').replace(/\(.*?\)/g, '').trim();
-      var matchedType = "";
-      GENERIC_CATEGORY_TERMS.forEach(function(ft) {
-        if (cleanPlace.indexOf(ft) !== -1 && !matchedType) matchedType = ft;
-      });
-
-      var baseName = cleanPlace;
-      if (county && baseName.indexOf(county) === 0) baseName = baseName.substring(county.length).trim();
-      if (district && baseName.indexOf(district) === 0) baseName = baseName.substring(district.length).trim();
-
-      var autoAliases = [];
-      function addAlias(candidate) {
-        if (!candidate) return;
-        var cand = candidate.trim();
-        if (cand.length < 2) return;
-
-        GENERIC_CATEGORY_TERMS.forEach(function(ft) {
-          var doubleFt = ft + ft;
-          while (cand.indexOf(doubleFt) !== -1) cand = cand.replace(doubleFt, ft);
-        });
-
-        if (district) {
-          var doubleDist = district + district;
-          while (cand.indexOf(doubleDist) !== -1) cand = cand.replace(doubleDist, district);
-        }
-        if (county) {
-          var doubleCounty = county + county;
-          while (cand.indexOf(doubleCounty) !== -1) cand = cand.replace(doubleCounty, county);
-        }
-
-        var isPureGeneric = GENERIC_CATEGORY_TERMS.some(function(ft) { return cand === ft; });
-        if (isPureGeneric) return;
-
-        if (autoAliases.indexOf(cand) === -1) autoAliases.push(cand);
-      }
-
-      if (county && district) {
-        var fullWithCD = cleanPlace;
-        if (cleanPlace.indexOf(county) === -1 && cleanPlace.indexOf(district) === -1) fullWithCD = county + district + cleanPlace;
-        else if (cleanPlace.indexOf(county) === -1) fullWithCD = county + cleanPlace;
-        addAlias(fullWithCD);
-      }
-
-      addAlias(cleanPlace);
-      addAlias(baseName);
-
-      if (matchedType && baseName.indexOf(matchedType) !== -1) {
-        var subArea = baseName.replace(matchedType, '').trim();
-        if (subArea.length >= 2 && subArea !== district && subArea !== county) {
-          addAlias(subArea);
-          addAlias(subArea + matchedType);
-        }
-      }
-
-      if (district && matchedType && (matchedType === "衛生所" || matchedType === "監理站" || matchedType === "監理所")) {
-        addAlias(district + matchedType);
-        var distShort = district.replace(/[縣市區鄉鎮]/g, '').trim();
-        if (distShort.length >= 2) addAlias(distShort + matchedType);
-      }
-
-      if (autoAliases.length > 5) autoAliases = autoAliases.slice(0, 5);
-
-      return { officialName: rawPlaceName, county: county, district: district, facilityType: matchedType || "公私立機構", autoAcceptAliases: autoAliases, genericKeywords: GENERIC_CATEGORY_TERMS };
+    function getLocationRecordId(county, district, placeName) {
+      return [String(county || ''), String(district || ''), String(placeName || '')].join('::');
     }
 
-    function setLocationSelectPlaceholder(select, sourceText) {
-      if (!select) return;
-      var option = document.createElement('option');
-      option.value = '';
-      option.textContent = translateExamDisplayText(sourceText);
-      option.selected = true;
-      select.innerHTML = '';
-      select.appendChild(option);
+    function cloneAliasGroups(groups) {
+      return (Array.isArray(groups) ? groups : []).slice(0, LOCATION_ALIAS_GROUP_LIMIT).map(function(group) {
+        return {
+          'zh-TW': String(group && group['zh-TW'] || '').trim(),
+          en: String(group && group.en || '').trim(),
+          ja: String(group && group.ja || '').trim(),
+          ko: String(group && group.ko || '').trim()
+        };
+      });
+    }
+
+    function isAliasGroupComplete(group) {
+      return !!(group &&
+        String(group['zh-TW'] || '').trim() &&
+        String(group.en || '').trim() &&
+        String(group.ja || '').trim() &&
+        String(group.ko || '').trim());
+    }
+
+    function getCompleteAliasGroups(groups) {
+      return cloneAliasGroups(groups).filter(isAliasGroupComplete);
+    }
+
+    function getLocationAliasLocalStore() {
+      if (locationAliasLocalStoreCache) return locationAliasLocalStoreCache;
+      try {
+        locationAliasLocalStoreCache = JSON.parse(localStorage.getItem('seniorExamLocationAliasGroupsV2') || '{}') || {};
+      } catch (error) {
+        locationAliasLocalStoreCache = {};
+      }
+      return locationAliasLocalStoreCache;
+    }
+
+    function writeLocationAliasLocalStore() {
+      try {
+        localStorage.setItem('seniorExamLocationAliasGroupsV2', JSON.stringify(getLocationAliasLocalStore()));
+        return true;
+      } catch (error) {
+        return false;
+      }
+    }
+
+    function getLocationAliasGroups(locationId) {
+      if (!locationId) return [];
+      var localStore = getLocationAliasLocalStore();
+      var localEntry = localStore[locationId];
+      // 尚未成功同步的本機草稿／還原動作優先保留，避免重整後遺失。
+      if (localEntry && localEntry.synced === false && Array.isArray(localEntry.aliasGroups)) {
+        return cloneAliasGroups(localEntry.aliasGroups);
+      }
+      // 共用資料庫有明確覆寫（包含空陣列）時，以共用資料庫為準。
+      if (sharedLocationAliasOverridesReady &&
+          Object.prototype.hasOwnProperty.call(sharedLocationAliasOverrides, locationId)) {
+        return cloneAliasGroups(sharedLocationAliasOverrides[locationId]);
+      }
+      if (localEntry && Array.isArray(localEntry.aliasGroups)) return cloneAliasGroups(localEntry.aliasGroups);
+      return cloneAliasGroups(LOCATION_ALIAS_DEFAULTS[locationId] || []);
+    }
+
+    function getLocationFormalNames(county, district, placeName) {
+      var translations = (EXAM_LOCATION_DISPLAY_TRANSLATIONS.place || {})[placeName] || [placeName, placeName, placeName];
+      return {
+        'zh-TW': placeName,
+        en: String(translations[0] || placeName),
+        ja: String(translations[1] || placeName),
+        ko: String(translations[2] || placeName)
+      };
+    }
+
+    function buildLocationCatalog() {
+      if (locationCatalogCache) return locationCatalogCache;
+      var catalog = [];
+      Object.keys(LOCATION_EXAM_DATA).forEach(function(county) {
+        Object.keys(LOCATION_EXAM_DATA[county] || {}).forEach(function(district) {
+          (LOCATION_EXAM_DATA[county][district] || []).forEach(function(placeName) {
+            var id = getLocationRecordId(county, district, placeName);
+            catalog.push({
+              id: id,
+              county: county,
+              district: district,
+              placeName: placeName,
+              officialNames: getLocationFormalNames(county, district, placeName),
+              foreignNameStatus: 'descriptive_translation_unverified_as_official'
+            });
+          });
+        });
+      });
+      locationCatalogCache = catalog;
+      return catalog;
+    }
+
+    function getLocationCatalogRecord(county, district, placeName) {
+      if (!county || !district || !placeName) return null;
+      var id = getLocationRecordId(county, district, placeName);
+      var all = buildLocationCatalog();
+      for (var i = 0; i < all.length; i++) {
+        if (all[i].id === id) return all[i];
+      }
+      return null;
+    }
+
+    function normalizeLocationName(value) {
+      var text = String(value == null ? '' : value).trim();
+      try { text = text.normalize('NFKC'); } catch (error) {}
+      text = text.toLocaleLowerCase();
+      // 僅整理空白、標點及符號；不刪除地名文字，不做部分字串或模糊比對。
+      return text.replace(/[\s\p{P}\p{S}_]+/gu, '');
+    }
+
+    function loadSharedLocationAliasOverrides(showStatus) {
+      if (sharedLocationAliasOverridesReady || sharedLocationAliasOverridesLoading) return;
+      if (!window.google || !google.script || !google.script.run) {
+        sharedLocationAliasOverridesReady = true;
+        return;
+      }
+      sharedLocationAliasOverridesLoading = true;
+      google.script.run
+        .withSuccessHandler(function(response) {
+          var payload = response && response.result ? response.result : response;
+          if (payload && payload.success === true && payload.overrides && typeof payload.overrides === 'object') {
+            sharedLocationAliasOverrides = payload.overrides;
+            sharedLocationAliasOverridesReady = true;
+          } else {
+            sharedLocationAliasOverrides = {};
+            sharedLocationAliasOverridesReady = false;
+            sharedLocationAliasOverridesLoading = false;
+            console.warn('共用地點別名資料庫回傳失敗，暫時使用本機草稿及系統預設資料。', payload && payload.message);
+            if (showStatus && typeof setAliasSyncStatus === 'function') {
+              setAliasSyncStatus(translateExamDisplayText('共用地點資料庫讀取失敗；目前顯示本機／系統預設資料，請確認後臺部署。'));
+            }
+            return;
+          }
+          sharedLocationAliasOverridesLoading = false;
+          if (activeLocationRecordId) {
+            var localEntry = getLocationAliasLocalStore()[activeLocationRecordId];
+            if (!(localEntry && localEntry.synced === false)) {
+              var groups = getLocationAliasGroups(activeLocationRecordId);
+              updateAliasGroupsUI(groups, activeLocationRecordId, false);
+            }
+          }
+        })
+        .withFailureHandler(function(error) {
+          sharedLocationAliasOverridesLoading = false;
+          sharedLocationAliasOverridesReady = false;
+          console.warn('共用地點別名讀取失敗，先使用本機／系統預設資料。', error);
+          if (showStatus && typeof setAliasSyncStatus === 'function') {
+            setAliasSyncStatus(translateExamDisplayText('已先儲存在此裝置；共用資料庫同步失敗，請確認後臺連線後再儲存。'));
+          }
+        })
+        .getExamLocationAliasOverrides();
+    }
+
+    function saveLocationAliasDraft(locationId, groups, resetToDefault) {
+      if (!locationId) return false;
+      var store = getLocationAliasLocalStore();
+      store[locationId] = {
+        aliasGroups: cloneAliasGroups(groups),
+        synced: false,
+        resetToDefault: !!resetToDefault,
+        updatedAt: new Date().toISOString()
+      };
+      return writeLocationAliasLocalStore();
+    }
+
+    function syncLocationAliasGroupsToBackend(locationId, groups, resetToDefault) {
+      if (!locationId || !window.google || !google.script || !google.script.run) {
+        setAliasSyncStatus(translateExamDisplayText('已先儲存在此裝置；共用資料庫同步失敗，請確認後臺連線後再儲存。'));
+        return;
+      }
+      var record = getLocationCatalogRecord(
+        document.getElementById('countySelect').value,
+        document.getElementById('districtSelect').value,
+        document.getElementById('placeSelect').value
+      );
+      if (!record || record.id !== locationId) {
+        setAliasSyncStatus(translateExamDisplayText('已先儲存在此裝置；共用資料庫同步失敗，請確認後臺連線後再儲存。'));
+        return;
+      }
+      var request = {
+        locationId: locationId,
+        county: record.county,
+        district: record.district,
+        placeName: record.placeName,
+        aliasGroups: cloneAliasGroups(groups),
+        resetToDefault: !!resetToDefault
+      };
+      var action = resetToDefault ? 'deleteExamLocationAliasOverride' : 'saveExamLocationAliasOverrides';
+      setAliasSyncStatus(translateExamDisplayText('同步中…'));
+      var runner = google.script.run
+        .withSuccessHandler(function(response) {
+          var payload = response && response.result ? response.result : response;
+          if (!payload || payload.success !== true) {
+            setAliasSyncStatus(translateExamDisplayText('已先儲存在此裝置；共用資料庫同步失敗，請確認後臺連線後再儲存。'));
+            return;
+          }
+          if (resetToDefault) {
+            delete sharedLocationAliasOverrides[locationId];
+            delete getLocationAliasLocalStore()[locationId];
+            writeLocationAliasLocalStore();
+            updateAliasGroupsUI(cloneAliasGroups(LOCATION_ALIAS_DEFAULTS[locationId] || []), locationId, false);
+          } else {
+            sharedLocationAliasOverrides[locationId] = cloneAliasGroups(groups);
+            var store = getLocationAliasLocalStore();
+            store[locationId] = {
+              aliasGroups: cloneAliasGroups(groups),
+              synced: true,
+              resetToDefault: false,
+              updatedAt: new Date().toISOString()
+            };
+            writeLocationAliasLocalStore();
+            setAliasSyncStatus(translateExamDisplayText('已儲存在共用地點資料庫。'));
+          }
+          sharedLocationAliasOverridesReady = true;
+        })
+        .withFailureHandler(function(error) {
+          console.warn('地點別名同步失敗：', error);
+          setAliasSyncStatus(translateExamDisplayText('已先儲存在此裝置；共用資料庫同步失敗，請確認後臺連線後再儲存。'));
+        });
+      if (action === 'deleteExamLocationAliasOverride') {
+        runner.deleteExamLocationAliasOverride(locationId);
+      } else {
+        runner.saveExamLocationAliasOverrides(request);
+      }
+    }
+
+    function getCompleteAliasGroupNameVariants(record, groups) {
+      var names = [];
+      var official = record.officialNames || getLocationFormalNames(record.county, record.district, record.placeName);
+      Object.keys(official).forEach(function(lang) {
+        var value = String(official[lang] || '').trim();
+        if (value) names.push({value: value, language: lang, kind: 'official'});
+      });
+      getCompleteAliasGroups(groups).forEach(function(group, index) {
+        ['zh-TW','en','ja','ko'].forEach(function(lang) {
+          var value = String(group[lang] || '').trim();
+          if (value) names.push({value: value, language: lang, kind: 'alias', aliasIndex: index});
+        });
+      });
+      return names;
+    }
+
+    function resolveExactLocationName(userInput) {
+      var normalized = normalizeLocationName(userInput);
+      if (!normalized) return {matches: [], normalized: normalized};
+      var matches = [];
+      var catalog = buildLocationCatalog();
+      catalog.forEach(function(record) {
+        var groups = getLocationAliasGroups(record.id);
+        var variants = getCompleteAliasGroupNameVariants(record, groups);
+        var matchedVariants = variants.filter(function(variant) {
+          return normalizeLocationName(variant.value) === normalized;
+        });
+        if (matchedVariants.length) {
+          matches.push({
+            locationId: record.id,
+            county: record.county,
+            district: record.district,
+            placeName: record.placeName,
+            matchedNames: matchedVariants
+          });
+        }
+      });
+      return {matches: matches, normalized: normalized};
+    }
+
+    function generateLocationData(county, district, rawPlaceName) {
+      if (!rawPlaceName) {
+        return {
+          id: '',
+          officialName: '',
+          county: county || '',
+          district: district || '',
+          facilityType: '',
+          aliasGroups: [],
+          autoAcceptAliases: [],
+          genericKeywords: GENERIC_CATEGORY_TERMS
+        };
+      }
+      var record = getLocationCatalogRecord(county, district, rawPlaceName);
+      var groups = record ? getLocationAliasGroups(record.id) : [];
+      var type = '';
+      var cleanPlace = String(rawPlaceName).replace(/（.*?）|\(.*?\)/g, '').trim();
+      GENERIC_CATEGORY_TERMS.forEach(function(term) {
+        if (!type && cleanPlace.indexOf(term) !== -1) type = term;
+      });
+      return {
+        id: record ? record.id : getLocationRecordId(county, district, rawPlaceName),
+        officialName: rawPlaceName,
+        county: county,
+        district: district,
+        facilityType: type || '公私立機構',
+        aliasGroups: groups,
+        autoAcceptAliases: getCompleteAliasGroups(groups).map(function(group) { return group['zh-TW']; }),
+        genericKeywords: GENERIC_CATEGORY_TERMS
+      };
     }
 
     function initCountyOptions() {
@@ -5907,10 +6211,13 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
         onPlaceSelectChange();
 
         // 若是同一頁面中切換模式，連同工作人員當次編輯的別名也暫存還原。
-        if (candidate.aliases && Array.isArray(candidate.aliases)) {
-          defaultPlaceAliases = (candidate.defaultAliases || defaultPlaceAliases || []).slice();
+        if (candidate.aliasGroups && Array.isArray(candidate.aliasGroups)) {
+          defaultPlaceAliasGroups = cloneAliasGroups(candidate.defaultAliasGroups || defaultPlaceAliasGroups || []);
+          defaultPlaceAliases = getCompleteAliasGroups(defaultPlaceAliasGroups).map(function(group){ return group['zh-TW']; });
           examState.defaultAliases = defaultPlaceAliases.slice();
-          updateAliasesUI(candidate.aliases.slice());
+          activeLocationRecordId = candidate.locationRecordId || getLocationRecordId(candidate.county, candidate.district, candidate.placeName);
+          examState.locationRecordId = activeLocationRecordId;
+          updateAliasGroupsUI(candidate.aliasGroups.slice(), activeLocationRecordId, false);
         }
       } catch(e) {}
     }
@@ -5923,7 +6230,12 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
           isHomePractice: false,
           county: document.getElementById('countySelect').value,
           district: document.getElementById('districtSelect').value,
-          placeName: document.getElementById('placeSelect').value
+          placeName: document.getElementById('placeSelect').value,
+          locationRecordId: getLocationRecordId(
+            document.getElementById('countySelect').value,
+            document.getElementById('districtSelect').value,
+            document.getElementById('placeSelect').value
+          )
         };
         localStorage.setItem('seniorExamLocation', JSON.stringify(saved));
         if (isValidSavedStaffLocation(saved)) savedStaffLocationPreference = saved;
@@ -5940,11 +6252,11 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       setLocationSelectPlaceholder(districtSelect, '請選擇行政區');
       setLocationSelectPlaceholder(placeSelect, '請先選擇行政區');
       placeSelect.disabled = true; search.value = ''; search.disabled = true; search.style.display = 'none';
-      defaultPlaceAliases = []; examState.defaultAliases = [];
-      if (!countyVal || !LOCATION_EXAM_DATA[countyVal]) { districtSelect.disabled = true; updateAliasesUI([]); return; }
+      defaultPlaceAliases = []; defaultPlaceAliasGroups = []; examState.defaultAliases = []; activeLocationRecordId = ''; examState.locationRecordId = ''; examState.acceptableAnswerGroups = [];
+      if (!countyVal || !LOCATION_EXAM_DATA[countyVal]) { districtSelect.disabled = true; updateAliasGroupsUI([], '', false); return; }
       districtSelect.disabled = false;
       Object.keys(LOCATION_EXAM_DATA[countyVal]).forEach(function(dist) { var opt = document.createElement('option'); opt.value = dist; opt.textContent = getExamLocationDisplayName(dist, 'district'); districtSelect.appendChild(opt); });
-      updateAliasesUI([]);
+      updateAliasGroupsUI([], '', false);
     }
 
     function onDistrictChange() {
@@ -5956,12 +6268,12 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       var search = document.getElementById('placeSearchInput');
       var placeSelect = document.getElementById('placeSelect');
       search.value = '';
-      defaultPlaceAliases = []; examState.defaultAliases = [];
-      if (!places) { placeSelect.disabled = true; search.disabled = true; search.style.display = 'none'; setLocationSelectPlaceholder(placeSelect, '請先選擇行政區'); updateAliasesUI([]); return; }
+      defaultPlaceAliases = []; defaultPlaceAliasGroups = []; examState.defaultAliases = []; activeLocationRecordId = ''; examState.locationRecordId = ''; examState.acceptableAnswerGroups = [];
+      if (!places) { placeSelect.disabled = true; search.disabled = true; search.style.display = 'none'; setLocationSelectPlaceholder(placeSelect, '請先選擇行政區'); updateAliasGroupsUI([], '', false); return; }
       placeSelect.disabled = false; search.disabled = false;
       search.style.display = places.length >= 5 ? 'block' : 'none';
       renderPlaceOptions(places, '');
-      updateAliasesUI([]);
+      updateAliasGroupsUI([], '', false);
     }
 
     function renderPlaceOptions(placesArray, keyword) {
@@ -5980,73 +6292,303 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
     function onPlaceSelectChange() {
       examState.locationConfirmed = false;
       examState.examIntroViewed = false;
-      var county = document.getElementById('countySelect').value; var district = document.getElementById('districtSelect').value; var place = document.getElementById('placeSelect').value;
+      var county = document.getElementById('countySelect').value;
+      var district = document.getElementById('districtSelect').value;
+      var place = document.getElementById('placeSelect').value;
       var data = generateLocationData(county, district, place);
-      defaultPlaceAliases = (data.autoAcceptAliases || []).slice();
+      activeLocationRecordId = data.id || '';
+      examState.locationRecordId = activeLocationRecordId;
+      defaultPlaceAliasGroups = cloneAliasGroups(LOCATION_ALIAS_DEFAULTS[activeLocationRecordId] || []);
+      defaultPlaceAliases = getCompleteAliasGroups(defaultPlaceAliasGroups).map(function(group){ return group['zh-TW']; });
       examState.defaultAliases = defaultPlaceAliases.slice();
-      updateAliasesUI(defaultPlaceAliases);
+      var groups = activeLocationRecordId ? getLocationAliasGroups(activeLocationRecordId) : [];
+      updateAliasGroupsUI(groups, activeLocationRecordId, false);
       saveLocationPreference();
+      loadSharedLocationAliasOverrides(false);
     }
 
-    function getCurrentAliasTags() { return examState.acceptableAnswers || []; }
-
-    function updateAliasesUI(aliasesArray) {
-      examState.acceptableAnswers = (aliasesArray || []).slice();
-      renderAliasTags(examState.acceptableAnswers);
-      var summary = document.getElementById('alias-summary');
-      if (summary) summary.innerText = 'A 類｜已自動套用 ' + examState.acceptableAnswers.length + ' 組核對別名（點擊檢視或修改）';
-      var hint = document.getElementById('alias-empty-hint');
-      if (hint) hint.style.display = examState.acceptableAnswers.length ? 'none' : 'block';
+    function getCurrentAliasTags() {
+      // 相容舊報表欄位；僅回傳完整別名組中的繁體中文名稱。
+      return getCompleteAliasGroups(examState.acceptableAnswerGroups || []).map(function(group){ return group['zh-TW']; });
     }
 
-    function addAliasTag() {
-      var input = document.getElementById('alias-add-input'); var val = (input.value || '').trim();
-      if (!val) { showCustomAlert('請先輸入一個別名，再按新增。'); return; }
-      var list = getCurrentAliasTags();
-      if (!list.some(function(v){ return normalizeAnswerText(v) === normalizeAnswerText(val); })) list.push(val);
-      input.value = ''; updateAliasesUI(list);
+    function getCurrentAliasGroups() {
+      return cloneAliasGroups(examState.acceptableAnswerGroups || []);
     }
 
-    function renderAliasTags(aliasesArray) {
-      var wrapper = document.getElementById('aliasTagsWrapper'); if (!wrapper) return;
-      wrapper.innerHTML = '';
-      if (!aliasesArray || !aliasesArray.length) { wrapper.innerHTML = '<span style="font-size:13px;color:var(--color-muted);">（請先選擇測驗地點，系統會自動帶入預設別名）</span>'; return; }
-      aliasesArray.forEach(function(alias, index) {
-        var tag = document.createElement('span'); tag.className = 'alias-tag';
-        var text = document.createTextNode(alias + ' '); tag.appendChild(text);
-        var remove = document.createElement('button'); remove.type='button'; remove.className='remove-btn'; remove.setAttribute('aria-label','刪除別名 ' + alias); remove.innerText='×'; remove.onclick=function(){ removeAliasTag(index); }; tag.appendChild(remove); wrapper.appendChild(tag);
+    function setAliasSyncStatus(message) {
+      var node = document.getElementById('alias-sync-status');
+      if (node) node.textContent = String(message || '');
+    }
+
+    function renderOfficialLocationNames(locationId) {
+      var card = document.getElementById('location-official-name-card');
+      var host = document.getElementById('location-official-name-values');
+      if (!card || !host) return;
+      host.innerHTML = '';
+      var record = null;
+      var selects = ['countySelect','districtSelect','placeSelect'];
+      var county = document.getElementById(selects[0]).value;
+      var district = document.getElementById(selects[1]).value;
+      var place = document.getElementById(selects[2]).value;
+      if (locationId && county && district && place) record = getLocationCatalogRecord(county,district,place);
+      if (!record) {
+        card.style.display = 'none';
+        return;
+      }
+      card.style.display = 'block';
+      var labels = [
+        ['zh-TW','繁體中文'],['en','英文'],['ja','日文'],['ko','韓文']
+      ];
+      labels.forEach(function(pair) {
+        var row = document.createElement('div');
+        row.className = 'location-official-name-row';
+        var label = document.createElement('span');
+        label.className = 'lang-label';
+        label.textContent = translateExamDisplayText(pair[1]);
+        var value = document.createElement('span');
+        value.className = 'lang-value';
+        value.textContent = String(record.officialNames[pair[0]] || record.placeName);
+        row.appendChild(label);
+        row.appendChild(value);
+        host.appendChild(row);
       });
     }
 
-    function removeAliasTag(index) { var list = getCurrentAliasTags().slice(); list.splice(index,1); updateAliasesUI(list); }
-    function restoreDefaultAliases() { updateAliasesUI(defaultPlaceAliases.slice()); }
+    function updateAliasGroupsUI(groups, locationId, persistDraft) {
+      var safeGroups = cloneAliasGroups(groups);
+      if (safeGroups.length > LOCATION_ALIAS_GROUP_LIMIT) safeGroups = safeGroups.slice(0, LOCATION_ALIAS_GROUP_LIMIT);
+      activeLocationRecordId = locationId || '';
+      examState.locationRecordId = activeLocationRecordId;
+      examState.acceptableAnswerGroups = safeGroups;
+      var completeGroups = getCompleteAliasGroups(safeGroups);
+      examState.acceptableAnswers = completeGroups.map(function(group){ return group['zh-TW']; });
+      examState.defaultAliases = defaultPlaceAliases.slice();
+      renderOfficialLocationNames(activeLocationRecordId);
+      renderAliasGroups(safeGroups);
+      var summary = document.getElementById('alias-summary');
+      if (summary) summary.textContent = translateExamDisplayText('地點別名管理') + '（' + completeGroups.length + ' / 4）';
+      var hint = document.getElementById('alias-empty-hint');
+      if (hint) hint.textContent = translateExamDisplayText(
+        safeGroups.length ? '每組別名請填寫繁體中文、英文、日文及韓文。' : '目前尚未設定常用別名；可先使用正式名稱作答。'
+      );
+      var addButton = document.getElementById('alias-add-group-btn');
+      var saveButton = document.getElementById('alias-save-groups-btn');
+      var restoreButton = document.getElementById('alias-restore-btn');
+      var hasLocation = !!activeLocationRecordId;
+      if (addButton) {
+        addButton.disabled = !hasLocation || safeGroups.length >= LOCATION_ALIAS_GROUP_LIMIT;
+        addButton.setAttribute('aria-disabled', addButton.disabled ? 'true' : 'false');
+      }
+      if (saveButton) {
+        saveButton.disabled = !hasLocation;
+        saveButton.setAttribute('aria-disabled', saveButton.disabled ? 'true' : 'false');
+      }
+      if (restoreButton) {
+        restoreButton.disabled = !hasLocation;
+        restoreButton.setAttribute('aria-disabled', restoreButton.disabled ? 'true' : 'false');
+      }
+      if (persistDraft && activeLocationRecordId) saveLocationAliasDraft(activeLocationRecordId, safeGroups, false);
+    }
+
+    function renderAliasGroups(groups) {
+      var wrapper = document.getElementById('aliasTagsWrapper');
+      if (!wrapper) return;
+      wrapper.innerHTML = '';
+      if (!activeLocationRecordId) {
+        var empty = document.createElement('p');
+        empty.className = 'helper-note';
+        empty.textContent = translateExamDisplayText('請先選擇測驗地點，再管理該地點的名稱。');
+        wrapper.appendChild(empty);
+        return;
+      }
+      var langFields = [
+        ['zh-TW','繁體中文'],['en','英文'],['ja','日文'],['ko','韓文']
+      ];
+      groups.forEach(function(group, index) {
+        var card = document.createElement('section');
+        card.className = 'alias-group-card';
+        card.dataset.aliasIndex = String(index);
+        var header = document.createElement('div');
+        header.className = 'alias-group-header';
+        var title = document.createElement('div');
+        title.className = 'alias-group-title';
+        title.textContent = translateExamDisplayText('別名組') + ' ' + (index + 1);
+        var remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'alias-group-delete';
+        remove.textContent = translateExamDisplayText('刪除');
+        remove.setAttribute('aria-label', translateExamDisplayText('刪除') + ' ' + (index + 1));
+        remove.onclick = function() { deleteAliasGroup(index); };
+        header.appendChild(title);
+        header.appendChild(remove);
+        card.appendChild(header);
+
+        var fields = document.createElement('div');
+        fields.className = 'alias-group-fields';
+        langFields.forEach(function(pair) {
+          var field = document.createElement('div');
+          field.className = 'alias-group-field';
+          var label = document.createElement('label');
+          label.textContent = translateExamDisplayText(pair[1]);
+          var input = document.createElement('input');
+          input.type = 'text';
+          input.value = String(group[pair[0]] || '');
+          input.placeholder = translateExamDisplayText('請輸入別名');
+          input.autocomplete = 'off';
+          input.maxLength = 120;
+          input.dataset.aliasIndex = String(index);
+          input.dataset.aliasLang = pair[0];
+          input.setAttribute('aria-label', translateExamDisplayText(pair[1]) + ' ' + (index + 1));
+          input.addEventListener('input', function() {
+            updateAliasGroupField(index, pair[0], input.value);
+          });
+          field.appendChild(label);
+          field.appendChild(input);
+          fields.appendChild(field);
+        });
+        card.appendChild(fields);
+        if (!isAliasGroupComplete(group)) {
+          var incomplete = document.createElement('p');
+          incomplete.className = 'alias-group-incomplete';
+          incomplete.textContent = translateExamDisplayText('別名四種語言都填寫後，才會納入地點名稱比對。');
+          card.appendChild(incomplete);
+        }
+        wrapper.appendChild(card);
+      });
+    }
+
+    function updateAliasGroupField(index, language, value) {
+      var groups = getCurrentAliasGroups();
+      if (!groups[index] || ['zh-TW','en','ja','ko'].indexOf(language) === -1) return;
+      groups[index][language] = String(value || '').trim();
+      examState.acceptableAnswerGroups = groups;
+      examState.acceptableAnswers = getCompleteAliasGroups(groups).map(function(group){ return group['zh-TW']; });
+      saveLocationAliasDraft(activeLocationRecordId, groups, false);
+      var completeCount = getCompleteAliasGroups(groups).length;
+      var summary = document.getElementById('alias-summary');
+      if (summary) summary.textContent = translateExamDisplayText('地點別名管理') + '（' + completeCount + ' / 4）';
+    }
+
+    function addAliasGroup() {
+      if (!activeLocationRecordId) {
+        showCustomAlert(translateExamDisplayText('請先選擇測驗地點，再管理該地點的名稱。'));
+        return;
+      }
+      var groups = getCurrentAliasGroups();
+      if (groups.length >= LOCATION_ALIAS_GROUP_LIMIT) {
+        showCustomAlert(translateExamDisplayText('此地點最多設定 4 組別名。'));
+        return;
+      }
+      groups.push({'zh-TW':'',en:'',ja:'',ko:''});
+      updateAliasGroupsUI(groups, activeLocationRecordId, true);
+    }
+
+    function deleteAliasGroup(index) {
+      var groups = getCurrentAliasGroups();
+      if (index < 0 || index >= groups.length) return;
+      groups.splice(index, 1);
+      updateAliasGroupsUI(groups, activeLocationRecordId, true);
+      setAliasSyncStatus(translateExamDisplayText('別名四種語言都填寫後，才會納入地點名稱比對。'));
+    }
+
+    function validateAliasGroups(groups) {
+      if (!Array.isArray(groups) || groups.length > LOCATION_ALIAS_GROUP_LIMIT) {
+        return {ok:false, message:'此地點最多設定 4 組別名。'};
+      }
+      var keysByLanguage = {'zh-TW':{},en:{},ja:{},ko:{}};
+      for (var i = 0; i < groups.length; i++) {
+        var group = groups[i] || {};
+        if (!isAliasGroupComplete(group)) {
+          return {ok:false, message:'每組別名請填寫繁體中文、英文、日文及韓文。'};
+        }
+        var duplicate = false;
+        ['zh-TW','en','ja','ko'].forEach(function(language) {
+          var normalized = normalizeLocationName(group[language]);
+          if (keysByLanguage[language][normalized]) duplicate = true;
+          keysByLanguage[language][normalized] = true;
+        });
+        if (duplicate) return {ok:false, message:'別名組不可重複，請合併相同名稱或修改其中一組。'};
+      }
+      return {ok:true, message:''};
+    }
+
+    function saveAliasGroupsToBackend() {
+      if (!activeLocationRecordId) {
+        showCustomAlert(translateExamDisplayText('請先選擇測驗地點，再管理該地點的名稱。'));
+        return;
+      }
+      var groups = getCurrentAliasGroups();
+      var validation = validateAliasGroups(groups);
+      if (!validation.ok) {
+        showCustomAlert(translateExamDisplayText(validation.message));
+        return;
+      }
+      saveLocationAliasDraft(activeLocationRecordId, groups, false);
+      syncLocationAliasGroupsToBackend(activeLocationRecordId, groups, false);
+    }
+
+    function restoreDefaultAliases() {
+      if (!activeLocationRecordId) return;
+      var defaults = cloneAliasGroups(LOCATION_ALIAS_DEFAULTS[activeLocationRecordId] || []);
+      updateAliasGroupsUI(defaults, activeLocationRecordId, true);
+      syncLocationAliasGroupsToBackend(activeLocationRecordId, defaults, true);
+    }
+
+    function removeAliasTag(index) {
+      // 舊版函式名稱保留供舊程式呼叫；新版以整組四語系別名為單位刪除。
+      deleteAliasGroup(index);
+    }
+
+    function updateAliasesUI(groups) {
+      updateAliasGroupsUI(Array.isArray(groups) ? groups : [], activeLocationRecordId, false);
+    }
+
+    function getCurrentAliasTags() { return getCompleteAliasGroups(examState.acceptableAnswerGroups || []).map(function(group){ return group['zh-TW']; }); }
+
+    function getAllLocationNameCandidates(record) {
+      var groups = getLocationAliasGroups(record.id);
+      return getCompleteAliasGroupNameVariants(record, groups);
+    }
 
     function evaluateQ5Answer(userInput) {
-      if (!userInput || !userInput.trim()) return { status:'EMPTY', msg:'請輸入您目前所在的地點名稱。' };
-      var normalized = normalizeAnswerText(userInput);
-      var pureGeneric = GENERIC_CATEGORY_TERMS.some(function(term){ return normalized === normalizeAnswerText(term); });
-      if (pureGeneric) return { status:'MANUAL_REVIEW', reason:'GENERIC_CATEGORY', msg:'這個回答屬於通用地點名稱，需要工作人員確認。' };
-      // 一般非在家自行練習沒有工作人員設定的指定地點，不能拿隱藏欄位中
-      // 上一次的 A 類別名來自動判定通過；B 類通用名稱人工審核規則仍照常執行。
-      var aliases = (examState.isHomePractice || examState.examMode === 'staff')
-        ? (examState.acceptableAnswers || []) : [];
-      if (examState.isHomePractice && !aliases.length) aliases = ['家裡', '家中', '住家'];
-      for (var i=0;i<aliases.length;i++) {
-        var target = normalizeAnswerText(aliases[i]);
-        if (target && normalized.length >= 2 && (normalized === target || normalized.indexOf(target) !== -1 || target.indexOf(normalized) !== -1)) return { status:'PASS', matchedAlias:aliases[i], normalizedAnswer:normalized, msg:'已符合設定的地點名稱。' };
+      var raw = String(userInput == null ? '' : userInput).trim();
+      if (!raw) return {status:'EMPTY', reason:'EMPTY', msg:'請輸入您目前所在的地點名稱。'};
+      var normalized = normalizeLocationName(raw);
+      var generic = GENERIC_CATEGORY_TERMS.some(function(term) {
+        return normalized === normalizeLocationName(term);
+      });
+      if (generic) return {status:'MANUAL_REVIEW', reason:'GENERIC_CATEGORY', normalizedAnswer:normalized, msg:'這個回答屬於通用地點名稱，需要工作人員確認。'};
+
+      var exact = resolveExactLocationName(raw);
+      var selectedId = examState.locationRecordId || getLocationRecordId(examState.county, examState.district, examState.placeName);
+      if (exact.matches.length > 1) {
+        return {
+          status:'MANUAL_REVIEW',
+          reason:'AMBIGUOUS_EXACT_MATCH',
+          normalizedAnswer:normalized,
+          candidateLocationIds:exact.matches.map(function(match){ return match.locationId; }),
+          msg:'輸入內容可能對應多個地點，請由工作人員確認。'
+        };
       }
-      return { status:'MANUAL_REVIEW', reason:'UNMATCHED_LOCATION', normalizedAnswer:normalized, msg:'系統無法自動核對這個地點，需要工作人員確認。' };
-    }
-
-    function showCustomAlert(message) {
-      document.getElementById('customAlertTitle').innerText = '請確認設定資訊';
-      var alertBtn = document.querySelector('#customAlertModal .modal-btn'); if(alertBtn){ alertBtn.innerText='好的，我知道了'; alertBtn.onclick=closeCustomAlert; }
-      document.getElementById('customAlertMessage').innerText = message;
-      document.getElementById('customAlertModal').classList.add('active');
-    }
-
-    function closeCustomAlert() {
-      document.getElementById('customAlertModal').classList.remove('active');
+      if (exact.matches.length === 1) {
+        var match = exact.matches[0];
+        return {
+          status:'MANUAL_REVIEW',
+          reason:match.locationId === selectedId ? 'EXACT_SELECTED_LOCATION' : 'EXACT_OTHER_LOCATION',
+          normalizedAnswer:normalized,
+          matchedLocationId:match.locationId,
+          matchedLocationName:match.placeName,
+          matchedNames:match.matchedNames,
+          msg:'系統找到一筆完全相符的地點名稱，但仍須現場核對。'
+        };
+      }
+      return {
+        status:'MANUAL_REVIEW',
+        reason:'NO_EXACT_MATCH',
+        normalizedAnswer:normalized,
+        msg:'沒有找到完全相符的地點名稱，請由工作人員確認。'
+      };
     }
 
     function startOfficialExam() {
@@ -6062,11 +6604,9 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
         examState.county = '';
         examState.district = '';
         examState.placeName = '家裡';
-        examState.acceptableAnswers = getCurrentAliasTags().slice();
-        if (!examState.acceptableAnswers.length) {
-          examState.acceptableAnswers = ['家裡', '家中', '住家'];
-          updateAliasesUI(examState.acceptableAnswers);
-        }
+        examState.acceptableAnswers = ['家裡', '家中', '住家'];
+        examState.acceptableAnswerGroups = [];
+        examState.locationRecordId = '';
         examState.examMode = 'practice';
         // 在家練習不覆寫工作人員上次有效的施測地點偏好。
         examState.locationConfirmed = true;
@@ -6088,8 +6628,10 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       examState.county = county;
       examState.district = district;
       examState.placeName = place;
-      examState.acceptableAnswers = getCurrentAliasTags().slice();
-      if (!examState.acceptableAnswers.length) { showCustomAlert('請先選擇測驗地點，讓系統帶入核對別名。'); return; }
+      examState.locationRecordId = getLocationRecordId(county,district,place);
+      examState.acceptableAnswerGroups = getCurrentAliasGroups();
+      examState.acceptableAnswers = getCurrentAliasTags();
+      // 正式名稱本身即可作答；常用別名為選用補充，不要求每個地點都湊滿四組。
       saveLocationPreference();
       examState.locationConfirmed = true;
       goToExamIntro();
@@ -6399,10 +6941,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
         }
         yearWrap.appendChild(input);
         if (!allowLocalizedYearWords) yearWrap.insertAdjacentHTML('beforeend', '<span class="input-unit">年</span>');
-        if (EXAM_DISPLAY_LANG === 'en') input.placeholder = mode === 'roc' ? 'e.g. 115 or one hundred fifteen' : 'e.g. 2026 or twenty twenty-six';
-        else if (EXAM_DISPLAY_LANG === 'ja') input.placeholder = mode === 'roc' ? '例：115 または百十五年' : '例：2026 または二千二十六年';
-        else if (EXAM_DISPLAY_LANG === 'ko') input.placeholder = mode === 'roc' ? '예: 115 또는 백십오년' : '예: 2026 또는 이천이십육년';
-        else input.placeholder = mode === 'roc' ? '例如：115' : '例如：2026';
+        input.placeholder = getExamGenericAnswerPlaceholder();
         renderChoiceGrid([], [], '');
       }
       var q1 = examState.p1.questions[examState.p1.currentIndex];
@@ -6436,10 +6975,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       input.removeAttribute('min'); input.removeAttribute('max'); input.removeAttribute('step');
       input.autocomplete = 'off'; input.autocapitalize = 'off'; input.spellcheck = false;
       if (allowLocalizedMonthWords) input.setAttribute('lang', EXAM_DISPLAY_LANG === 'en' ? 'en' : EXAM_DISPLAY_LANG === 'ja' ? 'ja' : 'ko');
-      if (EXAM_DISPLAY_LANG === 'en') input.placeholder = 'e.g. 3 or March';
-      else if (EXAM_DISPLAY_LANG === 'ja') input.placeholder = '例：3 または三月';
-      else if (EXAM_DISPLAY_LANG === 'ko') input.placeholder = '예: 3 또는 삼월';
-      else input.placeholder = '例如：11';
+      input.placeholder = getExamGenericAnswerPlaceholder();
       control.innerHTML = '<div class="input-unit-wrap"></div>';
       var unitWrap = control.querySelector('.input-unit-wrap');
       unitWrap.appendChild(input);
@@ -6485,17 +7021,11 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       if (allowLocalizedDateWords) { input.removeAttribute('pattern'); input.maxLength = 40; }
       else { input.pattern = '[0-9]*'; input.maxLength = 2; }
       if (mode === 'solar') {
-        if (EXAM_DISPLAY_LANG === 'en') input.placeholder = 'e.g. 17 or 17th';
-        else if (EXAM_DISPLAY_LANG === 'ja') input.placeholder = '例：17 または十七日';
-        else if (EXAM_DISPLAY_LANG === 'ko') input.placeholder = '예: 17 또는 십칠일';
-        else input.placeholder = '例如：17';
+        input.placeholder = getExamGenericAnswerPlaceholder();
         label.innerText = '請輸入國曆日期：';
         if (!allowLocalizedDateWords) unitWrap.insertAdjacentHTML('beforeend', '<span class="input-unit">號</span>');
       } else {
-        if (EXAM_DISPLAY_LANG === 'en') input.placeholder = 'e.g. 14 or 14th';
-        else if (EXAM_DISPLAY_LANG === 'ja') input.placeholder = '例：14 または十四日';
-        else if (EXAM_DISPLAY_LANG === 'ko') input.placeholder = '예: 14 또는 십사일';
-        else input.placeholder = '例如：14';
+        input.placeholder = getExamGenericAnswerPlaceholder();
         label.innerText = '請輸入農曆日期數字：';
         if (!allowLocalizedDateWords) unitWrap.insertAdjacentHTML('beforeend', '<span class="input-unit">日</span>');
       }
@@ -6574,7 +7104,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
         resetAnswerInput.autocomplete='off';
         resetAnswerInput.autocapitalize='off';
         resetAnswerInput.spellcheck=false;
-        resetAnswerInput.placeholder='例如：星期三';
+        resetAnswerInput.placeholder=getExamGenericAnswerPlaceholder();
       } else {
         label.innerText='請輸入地點名稱：';
         var answerInput = document.getElementById('p1-answer-input');
@@ -6583,7 +7113,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
         answerControl.appendChild(answerInput);
         answerInput.type='text';
         answerInput.inputMode='text';
-        answerInput.placeholder='例如：衛生所、醫院或診所';
+        answerInput.placeholder=getExamGenericAnswerPlaceholder();
       }
       document.getElementById('p1-standard-action').style.display = 'flex';
       document.getElementById('p1-submit-btn').innerText = q.isQ5 ? '確認地點答案 ❯' : '確認本題 ❯';
@@ -6767,11 +7297,11 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
         review: false,
         score: null,
         testDate: examState.p1.testDate || '',
-        mode: examState.isHomePractice ? 'home' : 'staff'
+        mode: examState.isHomePractice ? 'home' : 'staff',
+        locationRecordId: examState.locationRecordId || ''
       };
 
       if (examState.isHomePractice) {
-        // 居家模式不做現場查證，既不加分也不扣分。
         examState.p1.q5Status = 'HOME_UNVERIFIED';
         examState.p1.q5Evaluation = {status:'HOME_UNVERIFIED', msg:'本次為居家自行練習，地點答案未經現場核對。'};
         examState.p1.q5ReviewPending = false;
@@ -6779,38 +7309,22 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
         record.status = 'HOME_UNVERIFIED';
         record.review = false;
       } else {
-        // 沿用原 evaluateQ5Answer()：A 類別名命中自動通過；B 類通用詞或未匹配項交由工作人員確認。
+        // 完整名稱或四語系別名只提供核對線索；第五題一律保留現場人工確認，不自動給分或扣分。
         var evaluation = evaluateQ5Answer(rawAnswer);
         examState.p1.q5Evaluation = evaluation;
-        if (evaluation.status === 'PASS') {
-          // Record the automatic match now, but defer the point/result application until the total-results page.
-          examState.p1.q5Status = 'AUTO_PASS_PENDING';
-          examState.p1.q5ReviewPending = false;
-          examState.p1.q5AdminVerdict = null;
-          examState.p1.q5ScoreApplied = false;
-          record.expected = '符合指定施測地點的 A 類核對別名';
-          record.matchedAlias = evaluation.matchedAlias || '';
-          record.normalizedLocation = evaluation.normalizedAnswer || normalizeAnswerText(rawAnswer);
-          record.status = 'AUTO_PASS_PENDING';
-          record.passed = null;
-          record.score = null;
-        } else if (evaluation.status === 'FAIL') {
-          // 若既有核對器未來明確回傳 FAIL，才視為自動答錯；目前原函式不會產生此狀態。
-          examState.p1.q5Status = 'AUTO_FAIL';
-          examState.p1.q5ReviewPending = false;
-          record.expected = '與指定施測地點不符';
-          record.status = 'AUTO_FAIL';
-          record.passed = false;
-          record.score = 0;
-        } else {
-          examState.p1.q5Status = 'MANUAL_REVIEW';
-          examState.p1.q5ReviewPending = true;
-          record.expected = '待施測人員依實際地點確認';
-          record.review = true;
-          record.status = 'MANUAL_REVIEW';
-          record.reviewReason = evaluation.reason || 'NEEDS_REVIEW';
-          record.reviewMessage = evaluation.msg || '需要工作人員確認。';
-        }
+        examState.p1.q5Status = 'MANUAL_REVIEW';
+        examState.p1.q5ReviewPending = true;
+        record.expected = '待施測人員依實際地點確認';
+        record.review = true;
+        record.status = 'MANUAL_REVIEW';
+        record.reviewReason = evaluation.reason || 'NEEDS_REVIEW';
+        record.reviewMessage = evaluation.msg || '需要工作人員確認。';
+        record.normalizedLocation = evaluation.normalizedAnswer || normalizeLocationName(rawAnswer);
+        record.matchedLocationId = evaluation.matchedLocationId || '';
+        record.candidateLocationIds = evaluation.candidateLocationIds || [];
+        record.matchedNames = evaluation.matchedNames || [];
+        record.score = null;
+        record.passed = null;
       }
 
       examState.p1.answers.push(record);
@@ -6827,24 +7341,25 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
 
       examState.p1.q5AdminVerdict = !!isPassed;
       examState.p1.q5ReviewPending = false;
-      examState.p1.q5Status = isPassed ? 'ADMIN_PASS' : 'ADMIN_FAIL';
-      examState.p1.q5ScoreApplied = true;
-      if (isPassed) examState.p1.score++;
+      examState.p1.q5Status = isPassed ? 'LOCATION_CONFIRMED' : 'LOCATION_NOT_CONFIRMED';
+      examState.p1.q5ScoreApplied = false;
 
       var reviewEntry = {
-        verdict: isPassed ? 'PASS' : 'FAIL',
+        verdict: isPassed ? 'LOCATION_CONFIRMED' : 'LOCATION_NOT_CONFIRMED',
         reviewedAt: new Date().toISOString(),
         reviewBy: '施測人員',
-        originalAnswer: examState.p1.q5RawAnswer
+        originalAnswer: examState.p1.q5RawAnswer,
+        includedInScore: false
       };
       examState.p1.q5ReviewAudit = examState.p1.q5ReviewAudit || [];
       examState.p1.q5ReviewAudit.push(reviewEntry);
 
-      answerRecord.passed = !!isPassed;
+      // 只保存地點核對紀錄；第五題不增加或扣除第一關正式分數。
+      answerRecord.passed = null;
       answerRecord.review = false;
-      answerRecord.score = isPassed ? 1 : 0;
+      answerRecord.score = null;
       answerRecord.status = examState.p1.q5Status;
-      answerRecord.expected = isPassed ? '施測人員已確認地點答案正確' : '施測人員判定地點答案不符合';
+      answerRecord.expected = isPassed ? '施測人員已確認地點' : '施測人員未確認地點';
       answerRecord.reviewAudit = reviewEntry;
       renderFinalReport();
     }
@@ -7791,7 +8306,9 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
         county: examState.county,
         district: examState.district,
         placeName: examState.placeName,
+        locationRecordId: examState.locationRecordId || '',
         acceptableAnswers: (examState.isHomePractice || examState.examMode === 'staff') ? examState.acceptableAnswers : [],
+        acceptableAnswerGroups: cloneAliasGroups(examState.acceptableAnswerGroups || []),
         q5RawAnswer: examState.p1.q5RawAnswer,
         q5AdminVerdict: examState.p1.q5AdminVerdict,
         q5ReviewPending: examState.p1.q5ReviewPending,
@@ -7824,7 +8341,9 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
         county: examState.county,
         district: examState.district,
         placeName: examState.placeName,
+        locationRecordId: examState.locationRecordId || '',
         acceptableAnswers: examState.acceptableAnswers || [],
+        acceptableAnswerGroups: cloneAliasGroups(examState.acceptableAnswerGroups || []),
         p1: {
           score: examState.p1.score,
           answers: examState.p1.answers || [],
@@ -7878,7 +8397,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       if (!panel) return;
       var isStaff = examState.examMode === 'staff' && !examState.isHomePractice;
       var status = examState.p1.q5Status;
-      if (!isStaff || !['MANUAL_REVIEW','ADMIN_PASS','ADMIN_FAIL'].includes(status)) {
+      if (!isStaff || !['MANUAL_REVIEW','LOCATION_CONFIRMED','LOCATION_NOT_CONFIRMED'].includes(status)) {
         panel.style.display = 'none';
         return;
       }
@@ -7893,23 +8412,62 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
         audit.innerText = translateExamDisplayText('尚未完成審核；第五題目前不列入正式得分。');
       } else {
         var lastReview = (examState.p1.q5ReviewAudit || []).slice(-1)[0];
-        body.innerText = translateExamDisplayText('您的答案：') + (examState.p1.q5RawAnswer || '') + '\n' + translateExamDisplayText('審核結果：') + translateExamDisplayText(status === 'ADMIN_PASS' ? '判定答對' : '判定答錯');
+        body.innerText = translateExamDisplayText('您的答案：') + (examState.p1.q5RawAnswer || '') + '\n' + translateExamDisplayText('審核結果：') + translateExamDisplayText(status === 'LOCATION_CONFIRMED' ? '地點已由施測人員確認（不列入計分）' : '地點未獲施測人員確認（不列入計分）');
         actions.style.display = 'none';
-        audit.innerText = lastReview ? translateExamDisplayText('審核紀錄：') + translateExamDisplayText(lastReview.reviewBy || '施測人員') + (EXAM_DISPLAY_LANG === 'en' ? ', ' : '、') + translateExamDisplayText(lastReview.verdict === 'PASS' ? '答對' : '答錯') + (EXAM_DISPLAY_LANG === 'en' ? '; ' : '；') + (EXAM_DISPLAY_LANG === 'en' ? 'Time: ' : EXAM_DISPLAY_LANG === 'ja' ? '時刻：' : EXAM_DISPLAY_LANG === 'ko' ? '시간: ' : '時間：') + lastReview.reviewedAt : translateExamDisplayText('已完成人工審核。');
+        var auditLocationVerdict = lastReview && (
+          lastReview.verdict === 'LOCATION_CONFIRMED' || lastReview.verdict === 'PASS'
+            ? '地點相符'
+            : '地點不符'
+        );
+        audit.innerText = lastReview
+          ? translateExamDisplayText('審核紀錄：') +
+            translateExamDisplayText(lastReview.reviewBy || '施測人員') +
+            (EXAM_DISPLAY_LANG === 'en' ? ', ' : '、') +
+            translateExamDisplayText(auditLocationVerdict) +
+            (EXAM_DISPLAY_LANG === 'en' ? '; ' : '；') +
+            (EXAM_DISPLAY_LANG === 'en' ? 'Time: ' : EXAM_DISPLAY_LANG === 'ja' ? '時刻：' : EXAM_DISPLAY_LANG === 'ko' ? '시간: ' : '時間：') +
+            lastReview.reviewedAt
+          : translateExamDisplayText('已完成人工審核。');
       }
     }
 
     function applyQ5AutomaticResultAtSummary() {
-      if (examState.examMode !== 'staff' || examState.isHomePractice) return;
-      if (examState.p1.q5Status !== 'AUTO_PASS_PENDING' || examState.p1.q5ScoreApplied) return;
-      examState.p1.q5Status = 'AUTO_PASS';
-      examState.p1.q5ScoreApplied = true;
-      examState.p1.score++;
-      var answerRecord = (examState.p1.answers || []).find(function(item) { return item.status === 'AUTO_PASS_PENDING'; });
-      if (answerRecord) {
-        answerRecord.status = 'AUTO_PASS';
-        answerRecord.passed = true;
-        answerRecord.score = 1;
+      // 相容舊版暫存：若舊版曾把第五題加進分數，進入新版結算時撤回該 1 分。
+      if (examState.p1.q5ScoreApplied === true) {
+        examState.p1.score = Math.max(0, Number(examState.p1.score || 0) - 1);
+      }
+      examState.p1.q5ScoreApplied = false;
+
+      // 舊版自動比對／自動判定狀態一律改為待人工核對；不沿用舊版 PASS/FAIL。
+      (examState.p1.answers || []).forEach(function(record) {
+        if (record.status === 'AUTO_PASS_PENDING' || record.status === 'AUTO_PASS' || record.status === 'AUTO_FAIL') {
+          record.status = 'MANUAL_REVIEW';
+          record.passed = null;
+          record.score = null;
+          record.review = true;
+          record.reviewMessage = '第五題地點答案需要人工核對，不列入正式計分。';
+        } else if (record.status === 'ADMIN_PASS') {
+          record.status = 'LOCATION_CONFIRMED';
+          record.passed = null;
+          record.score = null;
+          record.review = false;
+        } else if (record.status === 'ADMIN_FAIL') {
+          record.status = 'LOCATION_NOT_CONFIRMED';
+          record.passed = null;
+          record.score = null;
+          record.review = false;
+        }
+      });
+
+      if (examState.p1.q5Status === 'AUTO_PASS_PENDING' || examState.p1.q5Status === 'AUTO_PASS' || examState.p1.q5Status === 'AUTO_FAIL') {
+        examState.p1.q5Status = 'MANUAL_REVIEW';
+        examState.p1.q5ReviewPending = true;
+      } else if (examState.p1.q5Status === 'ADMIN_PASS') {
+        examState.p1.q5Status = 'LOCATION_CONFIRMED';
+        examState.p1.q5ReviewPending = false;
+      } else if (examState.p1.q5Status === 'ADMIN_FAIL') {
+        examState.p1.q5Status = 'LOCATION_NOT_CONFIRMED';
+        examState.p1.q5ReviewPending = false;
       }
     }
 
@@ -7921,7 +8479,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       var isStaff = examState.examMode === 'staff' && !isHome;
       var q5Pending = isStaff && examState.p1.q5ReviewPending === true;
       var q5Unverified = isHome || examState.p1.q5Status === 'HOME_UNVERIFIED';
-      var p1Pass = !isHome && !q5Pending && examState.p1.score >= 4;
+      var p1Pass = !isHome && examState.p1.score >= 4;
       var p2Pass = examState.p2.score >= 3;
       var p3Pass = examState.p3.score >= 4;
       var p1Status = document.getElementById('res-p1-status');
@@ -7930,18 +8488,16 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       var modeLabel = document.getElementById('result-mode-label');
       if (modeLabel) modeLabel.innerText = translateExamDisplayText(isHome ? '居家練習結果' : '正式施測結果');
 
-      p1Status.innerText = translateExamDisplayText(q5Unverified ? '未經現場核對' : q5Pending ? '待人工確認' : p1Pass ? '通過' : '未達通過標準');
-      p1Status.className = 'result-status ' + (q5Unverified || q5Pending ? 'status-pending' : p1Pass ? 'status-pass' : 'status-fail');
+      p1Status.innerText = translateExamDisplayText(q5Unverified ? '未經現場核對' : p1Pass ? '通過' : '未達通過標準');
+      p1Status.className = 'result-status ' + (q5Unverified ? 'status-pending' : p1Pass ? 'status-pass' : 'status-fail');
       p2Status.innerText = translateExamDisplayText(p2Pass ? '通過' : '未達通過標準'); p2Status.className = 'result-status ' + (p2Pass ? 'status-pass':'status-fail');
       p3Status.innerText = translateExamDisplayText(p3Pass ? '通過' : '未達通過標準'); p3Status.className = 'result-status ' + (p3Pass ? 'status-pass':'status-fail');
 
       var p1ScoreText;
       if (isHome) {
         p1ScoreText = '前四題已判定得分：' + examState.p1.score + ' / 4；第五題未經現場核對，不列入正式對錯判定。';
-      } else if (q5Pending) {
-        p1ScoreText = '暫定得分：' + examState.p1.score + ' / 5；第五題待人工確認，審核完成後更新。';
       } else {
-        p1ScoreText = '得分：' + examState.p1.score + ' / 5（通過門檻：4 題）';
+        p1ScoreText = '得分：' + examState.p1.score + ' / 4（通過門檻：4 題）；第五題地點答案需要人工核對，不列入計分。';
       }
       document.getElementById('res-p1-score').innerText = translateExamDisplayText(p1ScoreText);
       document.getElementById('res-p2-score').innerText = translateExamDisplayText('得分：' + examState.p2.score + ' / 10（通過門檻：3 張）');
@@ -7965,15 +8521,12 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
         // 移除「請參考各關成績及作答明細。」；保留下方「再聽一次」按鈕。
         bannerSub.innerText = '';
         bannerSub.style.display = 'none';
-      } else if (q5Pending) {
-        banner.className = 'overall-banner banner-pending';
-        bannerTitle.innerText = translateExamDisplayText('成績待人工確認');
-        bannerSub.innerText = translateExamDisplayText('第五題尚待施測人員審核；完成後才會更新正式總分及通過結果。');
       } else {
         var overallPass = passCount >= 2;
         banner.className = 'overall-banner ' + (overallPass ? 'banner-pass' : 'banner-fail');
         bannerTitle.innerText = translateExamDisplayText('整體測驗結果：' + (overallPass ? '通過' : '尚未通過'));
         bannerSub.innerText = translateExamDisplayText('三項測驗中，目前有 ' + passCount + ' 項達到通過標準。');
+        if (q5Pending) bannerSub.innerText += '\n' + translateExamDisplayText('第五題地點答案需要人工核對，不列入第一關正式計分。');
       }
 
       var p1Detail = (examState.p1.answers || []).map(function(item, i) {
@@ -7988,18 +8541,13 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
         if (item.status === 'HOME_UNVERIFIED') {
           detail += '\n' + translateExamDisplayText('狀態：未經現場核對（不列入正式對錯判定）');
           detail += '\n' + translateExamDisplayText('說明：本次為居家自行練習，地點答案未經現場核對。');
-        } else if (item.status === 'AUTO_PASS') {
-          detail += '\n' + translateExamDisplayText('狀態：自動核對：答對');
-          if (item.matchedAlias) detail += '\n' + translateExamDisplayText('符合的核對別名：') + item.matchedAlias;
+        } else if (item.status === 'LOCATION_CONFIRMED') {
+          detail += '\n' + translateExamDisplayText('狀態：地點已由施測人員確認（不列入計分）');
+        } else if (item.status === 'LOCATION_NOT_CONFIRMED') {
+          detail += '\n' + translateExamDisplayText('狀態：地點未獲施測人員確認（不列入計分）');
         } else if (item.status === 'MANUAL_REVIEW') {
           detail += '\n' + translateExamDisplayText('狀態：待人工確認');
           detail += '\n' + translateExamDisplayText('說明：') + translateExamDisplayText(item.reviewMessage || '此地點答案需要施測人員確認。');
-        } else if (item.status === 'ADMIN_PASS') {
-          detail += '\n' + translateExamDisplayText('狀態：人工審核：答對');
-        } else if (item.status === 'ADMIN_FAIL') {
-          detail += '\n' + translateExamDisplayText('狀態：人工審核：答錯');
-        } else if (item.status === 'AUTO_FAIL') {
-          detail += '\n' + translateExamDisplayText('狀態：自動核對：答錯');
         } else {
           detail += '\n' + translateExamDisplayText('參考答案：') + item.expected + '\n' + translateExamDisplayText('判定：') + translateExamDisplayText(item.review ? '待人工確認' : item.passed ? '答對' : '未答對');
         }
@@ -8092,7 +8640,9 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
         examState.county = saved.county || '';
         examState.district = saved.district || '';
         examState.placeName = saved.placeName || '';
+        examState.locationRecordId = saved.locationRecordId || '';
         examState.acceptableAnswers = saved.acceptableAnswers || [];
+        examState.acceptableAnswerGroups = cloneAliasGroups(saved.acceptableAnswerGroups || []);
         examState.p1 = Object.assign(examState.p1, saved.p1, {currentIndex:5, questions:[]});
         examState.p2 = Object.assign(examState.p2, saved.p2, {items:saved.p2.items || []});
         examState.p3 = Object.assign(examState.p3, saved.p3);
@@ -8112,11 +8662,10 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       var text;
       if (examState.isHomePractice) {
         text = '這是居家練習結果。第一關前四題得分 ' + examState.p1.score + ' 題；第五題地點答案未經現場核對，不列入正式判定。';
-      } else if (examState.p1.q5ReviewPending) {
-        text = '目前成績待人工確認。第一關第五題尚待施測人員審核，完成後才會更新正式總分與通過結果。';
       } else {
         var p1 = examState.p1.score >= 4;
-        text = '正式施測結果。第一關得分 ' + examState.p1.score + ' 題，' + (p1 ? '達到通過標準。' : '尚未達到通過標準。');
+        text = '正式施測結果。第一關前四題得分 ' + examState.p1.score + ' 題，' + (p1 ? '達到通過標準。' : '尚未達到通過標準。');
+        if (examState.p1.q5ReviewPending) text += '第五題地點答案尚待施測人員核對，但不列入第一關計分。';
       }
       text += '第二關答對 ' + examState.p2.score + ' 張，' + (p2 ? '達到通過標準。' : '再練習記圖片會更熟悉。') + '第三關時鐘得到 ' + examState.p3.score + ' 分。謝謝您的用心練習。';
       speakPrompt(text);
@@ -8412,7 +8961,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       setTimeout(function(){if(document.body.getAttribute('data-step')==='step-p1' && q.type==='q4')input.focus();},100);
       updateP1SubmitButton();
     }else if(q.isQ5){
-      input.placeholder='例如：衛生所、醫院或診所';
+      input.placeholder=getExamGenericAnswerPlaceholder();
       input.type='text';input.inputMode='text';input.removeAttribute('maxlength');input.removeAttribute('pattern');
       updateP1SubmitButton();
     }
@@ -8603,10 +9152,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       if(index===5){
         response=raw;
         var q5s=examState.p1.q5Status||'';
-        if(st==='HOME_UNVERIFIED'||examState.isHomePractice||q5s==='HOME_UNVERIFIED'||st==='MANUAL_REVIEW'||q5s==='MANUAL_REVIEW')kind='pending';
-        else if(st==='ADMIN_PASS'||q5s==='ADMIN_PASS'||st==='AUTO_PASS'||st==='AUTO_PASS_PENDING')kind='pass';
-        else if(st==='ADMIN_FAIL'||q5s==='ADMIN_FAIL'||st==='AUTO_FAIL')kind='fail';
-        else kind='pending';
+        kind='pending';
       }else{
         if(st==='AUTO_PASS'||st==='ADMIN_PASS'||st==='AUTO_PASS_PENDING')kind='pass';
         else if(st==='AUTO_FAIL'||st==='ADMIN_FAIL')kind='fail';
@@ -8616,7 +9162,12 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       addAnswer(row,'你的回答：',response||'未留下答案紀錄',false);
       var resLine=makeEl('div','detail-answer p1-result-line');
       resLine.appendChild(document.createTextNode('作答結果：'));
-      resLine.appendChild(makeEl('span','detail-status '+kind,kind==='pass'?'✓ 答對':kind==='fail'?'✗ 尚未答對':'⏳ 待現場確認'));
+      var resultLabel = index === 5
+        ? (st === 'LOCATION_CONFIRMED' ? '地點已由施測人員確認（不列入計分）'
+          : st === 'LOCATION_NOT_CONFIRMED' ? '地點未獲施測人員確認（不列入計分）'
+          : '地點待人工確認（不列入計分）')
+        : (kind==='pass'?'✓ 答對':kind==='fail'?'✗ 尚未答對':'⏳ 待現場確認');
+      resLine.appendChild(makeEl('span','detail-status '+kind,translateExamDisplayText(resultLabel)));
       row.appendChild(resLine);
       if(kind==='fail'&&item.expected!=null&&String(item.expected)!=='')addAnswer(row,'正確答案：',String(item.expected),true);
       p1.appendChild(row);
@@ -8635,7 +9186,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
     if(examState.isHomePractice){
       p1.appendChild(makeEl('p','detail-note','本次居家練習紀錄僅供參考。'));
     }else if(examState.p1.q5ReviewPending){
-      p1.appendChild(makeEl('p','detail-note detail-note-pending','提醒：第五題尚待施測人員核對，完成審核前不列入正式通過判定。'));
+      p1.appendChild(makeEl('p','detail-note detail-note-pending','提醒：第五題尚待施測人員核對；本題不列入第一關正式計分。'));
     }
     p1Host.appendChild(p1);
 
@@ -9019,7 +9570,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
     input.setAttribute('autocomplete','off');input.setAttribute('enterkeyhint','done');
     input.autocapitalize='off';input.spellcheck=false;
     input.removeAttribute('aria-describedby');input.removeAttribute('aria-haspopup');input.removeAttribute('aria-expanded');
-    input.placeholder='例如：星期一';input.setAttribute('aria-label','您的答案');
+    input.placeholder=getExamGenericAnswerPlaceholder();input.setAttribute('aria-label',getExamGenericAnswerPlaceholder());
     input.classList.add('weekday-text-input');
     control.appendChild(input);
     if(input.dataset.weekdayBound!=='1'){
@@ -9162,28 +9713,8 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
     if(typeof window.repeatCurrentAudio==='function')window.repeatCurrentAudio();
   };
 
-  // The legacy updateAliasesUI writes technical A/B labels into this summary.
-  // Keep its data updates and rendering, but replace only the visible summary.
-  var oldUpdateAliasesUI=window.updateAliasesUI;
-  if(typeof oldUpdateAliasesUI==='function'){
-    window.updateAliasesUI=function(list){
-      oldUpdateAliasesUI(list);
-      var summary=byId('alias-summary');
-      var count=(typeof examState!=='undefined' && examState.acceptableAnswers)?examState.acceptableAnswers.length:0;
-      if(summary)summary.textContent='系統自動認得的地點簡稱（目前 '+count+' 組）';
-    };
-  }
+  // V2 location alias editor is rendered by updateAliasGroupsUI(); do not wrap legacy tag renderer.
 
-  var oldRenderAliasTags=window.renderAliasTags;
-  if(typeof oldRenderAliasTags==='function'){
-    window.renderAliasTags=function(list){
-      oldRenderAliasTags(list);
-      Array.prototype.forEach.call(document.querySelectorAll('#aliasTagsWrapper .remove-btn'),function(button){
-        button.textContent='刪除';
-        button.setAttribute('aria-label','刪除這個地點簡稱');
-      });
-    };
-  }
 
   // Keep selection semantics available to screen readers as well as visually.
   function syncPressed(selector,selected){
@@ -9222,12 +9753,8 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
     };
   }
 
-  // Make sure the existing current selection is described in the summary on load.
-  var summary=byId('alias-summary');
-  if(summary && typeof examState!=='undefined'){
-    var count=(examState.acceptableAnswers||[]).length;
-    summary.textContent='系統自動認得的地點簡稱（目前 '+count+' 組）';
-  }
+  // Prefetch shared location alias overrides; static defaults remain available offline.
+  if (typeof loadSharedLocationAliasOverrides === 'function') loadSharedLocationAliasOverrides(false);
 })();
 
 
@@ -10004,27 +10531,19 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
       input.setAttribute('lang', lang === 'en' ? 'en' : (lang === 'ja' ? 'ja' : 'ko'));
       input.setAttribute('aria-label', config.label);
       if (q.type === 'q1') {
-        input.placeholder = lang === 'en'
-          ? (examState.p1.currentMode === 'roc' ? 'e.g. 115 or one hundred fifteen' : 'e.g. 2026 or twenty twenty-six')
-          : lang === 'ja'
-            ? (examState.p1.currentMode === 'roc' ? '例：115 または百十五年' : '例：2026 または二千二十六年')
-            : (examState.p1.currentMode === 'roc' ? '예: 115 또는 백십오년' : '예: 2026 또는 이천이십육년');
+        input.placeholder = getExamGenericAnswerPlaceholder(lang);
       } else if (q.type === 'q2') {
-        input.placeholder = lang === 'en' ? 'e.g. 3 or March' : (lang === 'ja' ? '例：3 または三月' : '예: 3 또는 삼월');
+        input.placeholder = getExamGenericAnswerPlaceholder(lang);
       } else if (q.type === 'q3') {
         var lunarDate = examState.p1.currentMode === 'lunar';
-        input.placeholder = lang === 'en'
-          ? (lunarDate ? 'e.g. 14 or 14th' : 'e.g. 17 or 17th')
-          : lang === 'ja'
-            ? (lunarDate ? '例：14 または十四日' : '例：17 または十七日')
-            : (lunarDate ? '예: 14 또는 십사일' : '예: 17 또는 십칠일');
+        input.placeholder = getExamGenericAnswerPlaceholder(lang);
       }
     } else {
       // 繁體中文保留原本數字輸入限制與自訂鍵盤規則。
       input.maxLength = config.maxDigits;
       input.setAttribute('pattern', '[0-9]*');
       input.setAttribute('aria-label', config.label + '，請輸入數字');
-      input.placeholder = config.placeholder;
+      input.placeholder = getExamGenericAnswerPlaceholder(lang);
       input.setAttribute('lang', 'zh-Hant');
     }
 
@@ -10306,12 +10825,13 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
     ],
     '號': ['day', '日', '일'],
     '您的答案': ['Your answer', 'あなたの回答', '답변'],
-    '例如：星期一': ['e.g., Monday', '例：月曜日', '예: 월요일'],
+    '例如：星期一': ['Enter your answer', '回答を入力してください', '답변을 입력하세요'],
     '例如：衛生所、醫院或診所': [
-      'e.g., health center, hospital, or clinic',
-      '例：保健所、病院、診療所',
-      '예: 보건소, 병원 또는 의원'
+      'Enter your answer',
+      '回答を入力してください',
+      '답변을 입력하세요'
     ],
+    '請輸入答案': ['Enter your answer', '回答を入力してください', '답변을 입력하세요'],
     '請先輸入答案，再確認本題。': [
       'Please enter an answer before confirming.',
       '回答を入力してから、この問題を確定してください。',
@@ -10435,10 +10955,7 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
         label.style.display = selected ? 'block' : 'none';
       }
       if (input && selected) {
-        if (EXAM_DISPLAY_LANG === 'en') input.placeholder = 'Enter date (e.g. 17 or 17th)';
-        else if (EXAM_DISPLAY_LANG === 'ja') input.placeholder = '日付を入力（例：17 または十七日）';
-        else if (EXAM_DISPLAY_LANG === 'ko') input.placeholder = '날짜 입력 (예: 17 또는 십칠일)';
-        else input.placeholder = t('請輸入日期');
+        input.placeholder = getExamGenericAnswerPlaceholder();
         input.setAttribute('aria-label', label ? label.textContent : t('請輸入日期'));
       }
       var q3LunarNote = byId('p1-lunar-month-note');
@@ -10455,7 +10972,7 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
       if (label) { label.classList.remove('date-input-label', 'q5-answer-label'); label.style.display = 'none'; }
       if (input) {
         input.classList.add('p1-open-text-input', 'weekday-text-input');
-        input.placeholder = t('例如：星期一');
+        input.placeholder = getExamGenericAnswerPlaceholder();
         input.setAttribute('aria-label', t('您的答案'));
         input.type = 'text'; input.readOnly = false;
         input.setAttribute('inputmode', 'text'); input.setAttribute('lang', EXAM_DISPLAY_LANG === 'en' ? 'en' : EXAM_DISPLAY_LANG === 'ja' ? 'ja' : EXAM_DISPLAY_LANG === 'ko' ? 'ko' : 'zh-Hant');
@@ -10483,7 +11000,7 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
         input.setAttribute('aria-label', t('您的答案'));
         input.setAttribute('autocomplete', 'off'); input.setAttribute('autocapitalize', 'off'); input.spellcheck = false;
         input.removeAttribute('maxlength'); input.removeAttribute('pattern');
-        input.placeholder = t('例如：衛生所、醫院或診所');
+        input.placeholder = getExamGenericAnswerPlaceholder();
       }
     }
   }
@@ -10721,7 +11238,7 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
       "今年の年、月、日、曜日、現在いる場所を回答してください。",
       "올해의 연도, 월, 날짜, 요일 및 현재 있는 장소를 답하세요."
     ],
-    "通過標準：5 題中答對 4 題即可通過。":[
+    "通過標準：前四題需全部答對；第五題地點由施測人員核對，不列入計分。":[
       "Passing standard: answer at least 4 of the 5 questions correctly.",
       "合格基準：5問中4問正解で合格です。",
       "통과 기준: 5문항 중 4문항을 맞히면 통과합니다."
@@ -11888,5 +12405,112 @@ html:lang(ko) .choice-btn.active::after {
 })();
 </script>
 
+
+
+<style id="location-alias-natural-wrap-fix">
+/* 地點別名：中文自然換行、英文單字不拆開，刪除按鈕固定保留完整寬度。 */
+#aliasTagsWrapper .alias-tag {
+  display: flex !important;
+  flex-flow: row nowrap !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+  overflow: visible !important;
+}
+#aliasTagsWrapper .alias-tag .alias-tag-text {
+  display: block !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  white-space: normal !important;
+  word-break: normal !important;
+  overflow-wrap: anywhere !important;
+  line-height: 1.5 !important;
+  text-align: left !important;
+}
+#aliasTagsWrapper .alias-tag .remove-btn {
+  display: inline-flex !important;
+  flex: 0 0 88px !important;
+  width: 88px !important;
+  min-width: 88px !important;
+  max-width: 88px !important;
+  min-height: 56px !important;
+  box-sizing: border-box !important;
+  align-items: center !important;
+  justify-content: center !important;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  overflow-wrap: normal !important;
+  writing-mode: horizontal-tb !important;
+  line-height: 1.2 !important;
+  padding: 8px 10px !important;
+}
+@media (max-width: 420px) {
+  #aliasTagsWrapper .alias-tag { gap: 8px !important; padding: 8px !important; }
+  #aliasTagsWrapper .alias-tag .remove-btn {
+    flex-basis: 76px !important;
+    width: 76px !important;
+    min-width: 76px !important;
+    max-width: 76px !important;
+    font-size: 16px !important;
+  }
+}
+</style>
+
+<script id="p1-location-question-excluded-from-score-copy">
+(function(){
+  if (typeof EXAM_TEXT_TRANSLATIONS === 'undefined') return;
+  var p1RuleTranslations = [
+    'Passing standard: answer all first four questions correctly. Question 5 is a location check by staff and is not scored.',
+    '合格基準：最初の4問すべてに正解してください。第5問は担当者による場所の確認で、採点対象外です。',
+    '통과 기준: 처음 4문항을 모두 맞혀야 합니다. 5번 문항은 담당자가 장소를 확인하며 점수에 포함되지 않습니다.'
+  ];
+  EXAM_TEXT_TRANSLATIONS['通過標準：前四題需全部答對；第五題地點由施測人員核對，不列入計分。'] = p1RuleTranslations;
+  EXAM_TEXT_TRANSLATIONS['通過標準：5 題中答對 4 題即可通過。'] = p1RuleTranslations;
+  EXAM_TEXT_TRANSLATIONS['通過標準：5題需答對4題。'] = p1RuleTranslations;
+  if (typeof window.applyExamDisplayLanguage === 'function') window.applyExamDisplayLanguage();
+})();
+</script>
+
+<script id="location-manager-complete-four-language-copy">
+(function(){
+  if (typeof EXAM_TEXT_TRANSLATIONS === 'undefined') return;
+  Object.assign(EXAM_TEXT_TRANSLATIONS, {
+    '工作人員專用：調整地點名稱設定（一般練習免按）': [
+      'Staff only: manage location names (not needed for regular practice)',
+      'スタッフ専用：場所名の設定（通常の練習では操作不要）',
+      '담당자 전용: 장소 이름 설정 관리(일반 연습에서는 조작 불필요)'
+    ],
+    '請選擇您要練習的測驗地點': [
+      'Choose the test location for your practice',
+      '練習する検査場所を選択してください',
+      '연습할 검사 장소를 선택하세요'
+    ],
+    '縣市（必選）': ['City / County (required)', '県・市（必須）', '시·현(필수)'],
+    '行政區（必選）': ['District (required)', '行政区（必須）', '행정구(필수)'],
+    '測驗地點（必選）': ['Testing location (required)', '検査場所（必須）', '검사 장소(필수)'],
+    '需由工作人員人工確認的名稱': [
+      'Names requiring staff verification',
+      'スタッフによる確認が必要な名称',
+      '담당자 확인이 필요한 명칭'
+    ],
+    '例如：衛生所、醫院、診所、監理所或監理站。只回答這類通用名稱時，會交由工作人員確認。': [
+      'Examples: health centers, hospitals, clinics, and motor vehicle offices. Generic answers are referred to staff for verification.',
+      '例：保健所、病院、診療所、運転免許事務所など。一般的な名称だけの場合はスタッフが確認します。',
+      '예: 보건소, 병원, 의원, 차량관리사무소 등. 일반 명칭만 답하면 담당자가 확인합니다.'
+    ],
+    '恢復系統預設名稱': ['Restore system default names', 'システムの既定名称に戻す', '시스템 기본 이름으로 복원'],
+    '共用地點資料庫讀取失敗；目前顯示本機／系統預設資料，請確認後臺部署。': [
+      'Unable to read the shared location database. Local or system defaults are shown; check the backend deployment.',
+      '共用場所データベースを読み込めません。端末内またはシステム既定のデータを表示しています。バックエンドのデプロイを確認してください。',
+      '공유 장소 데이터베이스를 읽지 못했습니다. 기기 또는 시스템 기본 데이터를 표시합니다. 백엔드 배포를 확인하세요.'
+    ]
+  });
+  if (typeof window.applyExamDisplayLanguage === 'function') window.applyExamDisplayLanguage();
+})();
+</script>
 </body>
 </html>
