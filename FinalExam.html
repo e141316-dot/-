@@ -10933,7 +10933,7 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
   var p1KeypadColumn = null;
   var p1ActionArea = null;
 
-  // 輸入框及數字鍵盤維持左右獨立欄位；桌面版將確認按鈕移到兩欄共同下方。
+  // 輸入框及數字鍵盤維持左右獨立欄位；確認按鈕留在原本 #step-p1 文件流位置。
   // 題目卡、選項、答案輸入控制及原始按鍵事件均不重建、不改尺寸。
   function ensureP1ResponsiveLayout() {
     var inputGroup = byId('p1-input-group');
@@ -11063,10 +11063,10 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
         wrapper.appendChild(p1KeypadColumn);
         changed = true;
       }
-      // 確認按鈕也移到 exam-wrapper 的第三列，跨越左側作答欄與右側鍵盤欄。
-      // 這樣按鈕只會出現在兩個欄位中較高者的下方，不會在左欄先結束。
-      if (p1ActionArea && p1ActionArea.parentNode !== wrapper) {
-        wrapper.appendChild(p1ActionArea);
+      // 確認本題按鈕維持在 #step-p1 原本位置，不受右側鍵盤高度影響。
+      // 若舊版執行期間曾移出，立即還原到原本作答流程的容器。
+      if (p1ActionArea && step && p1ActionArea.parentNode !== step) {
+        step.appendChild(p1ActionArea);
         changed = true;
       }
       // Keep the right grid track reserved for the whole Stage 1 view. The panel
@@ -14434,36 +14434,36 @@ html:lang(ko) .choice-btn.active::after {
 }
 </style>
 
-<style id="p1-confirm-button-after-two-column-workspace">
-/* 桌面第一關：輸入區與鍵盤同列；確認本題按鈕跨兩欄，放在共同底部。 */
+<style id="p1-preserve-original-confirm-button-position">
+/* 最終版面：只把數字鍵盤放到答案區右側；確認本題始終留在 #step-p1 原本的文件流位置。 */
 @media (min-width:1100px) {
   .exam-wrapper.has-p1-keypad-workspace {
-    grid-template-rows:auto auto auto !important;
+    grid-template-rows:auto auto !important;
     align-items:start !important;
   }
-  .exam-wrapper.has-p1-keypad-workspace > #p1-standard-action {
-    grid-column:1 / -1 !important;
-    grid-row:3 !important;
-    position:static !important;
-    inset:auto !important;
-    left:auto !important;
-    right:auto !important;
-    top:auto !important;
-    bottom:auto !important;
-    width:100% !important;
-    max-width:none !important;
-    margin:18px 0 0 !important;
-    padding:0 0 8px !important;
-    box-sizing:border-box !important;
-    display:flex;
-    flex-direction:column !important;
-    gap:14px !important;
-    background:transparent !important;
-    box-shadow:none !important;
-    z-index:auto !important;
+  .exam-wrapper.has-p1-keypad-workspace > #step-p1 {
+    grid-column:1 !important;
+    grid-row:2 !important;
     align-self:start !important;
   }
-  .exam-wrapper.has-p1-keypad-workspace > #p1-standard-action #p1-submit-btn {
+  .exam-wrapper.has-p1-keypad-workspace > .p1-keypad-column {
+    grid-column:2 !important;
+    grid-row:2 !important;
+    align-self:start !important;
+  }
+  /* 防止舊版殘留的第三列／跨欄規則影響確認按鈕。 */
+  #step-p1 #p1-standard-action {
+    position:static !important;
+    grid-column:auto !important;
+    grid-row:auto !important;
+    width:100% !important;
+    max-width:100% !important;
+    margin:22px 0 0 !important;
+    padding:0 !important;
+    background:transparent !important;
+    box-shadow:none !important;
+  }
+  #step-p1 #p1-standard-action #p1-submit-btn {
     width:100% !important;
     min-height:68px !important;
   }
