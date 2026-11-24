@@ -10965,7 +10965,7 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
   // 輸入框及數字鍵盤維持左右獨立欄位；確認按鈕留在原本 #step-p1 文件流位置。
   // 題目卡、選項、答案輸入控制及原始按鍵事件均不重建、不改尺寸。
   // Keep the original Stage 1 DOM and document flow intact.
-  // The keypad is an absolutely positioned sibling on wide screens, or a
+  // The keypad is a fixed-position viewport sibling on wide screens, or a
   // temporary in-flow accessory immediately after the input on narrow screens.
   function ensureP1ResponsiveLayout() {
     var step = byId('step-p1');
@@ -11005,23 +11005,23 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
       !step.hidden && step.style.display !== 'none');
   }
 
-  // Re-align only after the question/mode changes or when the page first opens.
-  // The keypad remains anchored to #step-p1 during scrolling, focus, typing and close/open.
+  // 桌面版鍵盤固定在視窗座標，避免右側較高的鍵盤擴大文件可捲動高度。
+  // 每次捲動或縮放時，重新讀取答案框與第一關卡片的視窗座標，維持相鄰及上緣對齊。
   function alignRightKeypadRail() {
     var step = byId('step-p1');
     var target = byId('p1-answer-control') || byId('p1-answer-input');
     if (!step || !target || !p1KeypadColumn ||
         p1KeypadColumn.parentNode !== step ||
-        !p1KeypadColumn.classList.contains('p1-keypad-rail-absolute')) return;
+        !p1KeypadColumn.classList.contains('p1-keypad-rail-absolute') ||
+        p1KeypadColumn.hidden) return;
 
     var targetRect = target.getBoundingClientRect();
     var stepRect = step.getBoundingClientRect();
-    var offset = Math.max(0, Math.round(targetRect.top - stepRect.top));
-    var nextTop = offset + 'px';
-    var currentTop = parseFloat(p1KeypadColumn.style.top || 'NaN');
-    if (!Number.isFinite(currentTop) || Math.abs(currentTop - offset) > 1) {
-      p1KeypadColumn.style.top = nextTop;
-    }
+    // 24px 是 CSS 實際間距；在瀏覽器縮放下會自然跟隨相同比例。
+    var left = Math.round(stepRect.right + 24);
+    var top = Math.round(targetRect.top);
+    p1KeypadColumn.style.setProperty('--p1-keypad-fixed-left', left + 'px');
+    p1KeypadColumn.style.setProperty('--p1-keypad-fixed-top', top + 'px');
   }
 
   function scheduleRightKeypadAlignment() {
@@ -11058,7 +11058,7 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
       }
       p1KeypadColumn.classList.add('p1-keypad-rail-absolute');
       p1KeypadColumn.hidden = !isOpen;
-      if (changed) scheduleRightKeypadAlignment();
+      if (isOpen) scheduleRightKeypadAlignment();
     } else {
       if (p1KeypadColumn.parentNode !== inputGroup ||
           p1KeypadColumn.previousElementSibling !== inputControl) {
@@ -11067,6 +11067,8 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
       }
       p1KeypadColumn.classList.remove('p1-keypad-rail-absolute');
       p1KeypadColumn.style.top = '';
+      p1KeypadColumn.style.removeProperty('--p1-keypad-fixed-left');
+      p1KeypadColumn.style.removeProperty('--p1-keypad-fixed-top');
       p1KeypadColumn.hidden = !isOpen;
     }
     return changed;
@@ -11370,9 +11372,10 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
     panel.style.overflowX = 'visible';
     input.setAttribute('aria-expanded', 'true');
 
-    // On desktop this is an idempotent no-op: the right rail was established
-    // on entry to Stage 1. On narrower screens it reveals the below-input rail.
+    // 桌面版只顯示視窗固定的右側鍵盤，不改變左欄文件流高度。
+    // 較窄螢幕則保留原本輸入框下方的響應式鍵盤。
     syncResponsiveLayoutMode();
+    scheduleRightKeypadAlignment();
   }
 
   function syncAnswerState() {
@@ -11690,6 +11693,8 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
   document.addEventListener('keydown', function (event) {
     if (event.key === 'Escape' && panel && !panel.hidden) closePanel(true);
   });
+  // 頁面捲動時同步固定鍵盤座標；鍵盤自身不再增加文件的可捲動高度。
+  window.addEventListener('scroll', scheduleRightKeypadAlignment, { passive: true });
   window.addEventListener('resize', function () {
     var nativeNow = isNativeKeypadDevice();
     if (nativeNow !== lastNativePreference) {
@@ -11697,13 +11702,15 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
       if (getNumericConfig()) configureCurrentInput();
     }
     syncResponsiveLayoutMode();
-  });
+    scheduleRightKeypadAlignment();
+  }, { passive: true });
   window.addEventListener('orientationchange', function () {
     window.setTimeout(function () {
       var nativeNow = isNativeKeypadDevice();
       if (nativeNow !== lastNativePreference) lastNativePreference = nativeNow;
       if (getNumericConfig()) configureCurrentInput();
       syncResponsiveLayoutMode();
+      scheduleRightKeypadAlignment();
     }, 100);
   });
 
@@ -14184,13 +14191,13 @@ html:lang(ko) .choice-btn.active::after {
 
 
 <style id="p1-keypad-aside-only-layout">
-/* 第一關保留原本測驗文件流：右側鍵盤為獨立附加工具，不參與左側排版。 */
+/* 第一關保留原本測驗文件流：桌面右側鍵盤固定於視窗，不撐高頁面。 */
 #step-p1 { position:relative; overflow:visible !important; }
 #step-p1 .p1-keypad-column[hidden] { display:none !important; }
 #step-p1 > .p1-keypad-column.p1-keypad-rail-absolute {
-  position:absolute !important;
-  left:calc(100% + 24px) !important;
-  top:0;
+  position:fixed !important;
+  left:var(--p1-keypad-fixed-left, 0px) !important;
+  top:var(--p1-keypad-fixed-top, 0px) !important;
   width:260px !important;
   min-width:260px !important;
   max-width:260px !important;
@@ -14199,13 +14206,17 @@ html:lang(ko) .choice-btn.active::after {
   align-self:start !important;
   box-sizing:border-box !important;
   z-index:30 !important;
-  overflow:visible !important;
+  max-height:max(120px, calc(100vh - var(--p1-keypad-fixed-top, 0px) - 12px)) !important;
+  overflow-x:hidden !important;
+  overflow-y:auto !important;
+  overscroll-behavior:contain;
   transition:none !important;
   animation:none !important;
   transform:none !important;
   overflow-anchor:none !important;
 }
-/* 平板／手機沒有足夠右側空間時，鍵盤才在答案輸入控制下方正常流動。 */
+/* 螢幕高度不足時，只在鍵盤面板內捲動，不增加整頁高度。 */
+/* 平板／手機沒有足夠右側空間時，鍵盤仍在答案輸入控制下方正常流動。 */
 #step-p1 .p1-keypad-column:not(.p1-keypad-rail-absolute) {
   position:static !important;
   display:block;
