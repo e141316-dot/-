@@ -10151,7 +10151,7 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
 /* 電腦版：數字鍵盤以浮動面板顯示，不佔用頁面文件流空間。 */
 .number-pad-trigger-help{margin:7px 0 0;color:#26392D;font-size:16px;font-weight:800;line-height:1.5}
 .number-pad-float[hidden]{display:none!important}
-.number-pad-float{position:fixed;z-index:10050;box-sizing:border-box;width:328px;max-width:calc(100vw - 32px);padding:12px;background:#FFFFFF;border:2px solid #26392D;border-radius:16px;box-shadow:0 12px 34px rgba(24,40,29,.22);overflow-y:auto;overscroll-behavior:contain}
+.number-pad-float{position:static;z-index:auto;box-sizing:border-box;width:100%;max-width:none;padding:12px;background:#FFFFFF;border:2px solid #26392D;border-radius:16px;box-shadow:0 6px 18px rgba(24,40,29,.10);overflow:visible;overscroll-behavior:auto}
 .number-pad-float-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 8px;color:#17271B;font-size:18px;font-weight:900;line-height:1.5}
 .number-pad-float-close{flex:0 0 auto;min-width:56px;min-height:56px;padding:8px 12px;border:2px solid #26392D;border-radius:10px;background:#F0F5ED;color:#17271B;font-family:inherit;font-size:17px;font-weight:900;cursor:pointer}
 .number-pad-float .number-pad-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:0}
@@ -10230,6 +10230,73 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
   var feedback = null;
   var lastNativePreference = null;
   var suppressNextFocusOpen = false;
+  var p1Layout = null;
+  var p1MainColumn = null;
+  var p1KeypadColumn = null;
+  var p1ActionArea = null;
+  var p1LayoutResizeObserver = null;
+
+  // 將第一關原有內容整理成正常文件流 Grid：作答主區、鍵盤專區、確認按鈕。
+  // 不複製、不重建題目或按鈕，只移動既有 DOM 節點，因此原事件及答案狀態保持不變。
+  function ensureP1ResponsiveLayout() {
+    var step = byId('step-p1');
+    if (!step) return null;
+    if (p1Layout && p1Layout.isConnected) return p1Layout;
+
+    p1Layout = step.querySelector('.p1-responsive-keypad-layout');
+    if (p1Layout) {
+      p1MainColumn = p1Layout.querySelector('.p1-main-column');
+      p1KeypadColumn = p1Layout.querySelector('.p1-keypad-column');
+      p1ActionArea = byId('p1-standard-action');
+      return p1Layout;
+    }
+
+    var questionCard = byId('p1-question-card');
+    var answerPanel = step.querySelector('.p1-answer-panel');
+    p1ActionArea = byId('p1-standard-action');
+    if (!questionCard || !answerPanel || !p1ActionArea) return null;
+
+    p1Layout = document.createElement('div');
+    p1Layout.className = 'p1-responsive-keypad-layout';
+    p1Layout.setAttribute('data-keypad-layout', 'in-flow');
+
+    p1MainColumn = document.createElement('div');
+    p1MainColumn.className = 'p1-main-column';
+
+    p1KeypadColumn = document.createElement('aside');
+    p1KeypadColumn.className = 'p1-keypad-column';
+    p1KeypadColumn.setAttribute('aria-label', '自訂數字鍵盤區');
+    p1KeypadColumn.hidden = true;
+
+    // 題目卡、回答方式、輸入欄位仍依原始順序放在左側主區。
+    p1MainColumn.appendChild(questionCard);
+    p1MainColumn.appendChild(answerPanel);
+    p1Layout.appendChild(p1MainColumn);
+    p1Layout.appendChild(p1KeypadColumn);
+    p1Layout.appendChild(p1ActionArea);
+    step.appendChild(p1Layout);
+
+    if (window.ResizeObserver && !p1LayoutResizeObserver) {
+      p1LayoutResizeObserver = new ResizeObserver(function () {
+        syncResponsiveLayoutMode();
+      });
+      p1LayoutResizeObserver.observe(p1Layout);
+    }
+    syncResponsiveLayoutMode();
+    return p1Layout;
+  }
+
+  function syncResponsiveLayoutMode() {
+    if (!p1Layout || !p1Layout.isConnected) return;
+    var isOpen = !!(panel && !panel.hidden);
+    var examWrapper = p1Layout.closest('.exam-wrapper');
+    if (examWrapper) examWrapper.classList.toggle('p1-keypad-open-expanded', isOpen);
+    var availableWidth = p1Layout.getBoundingClientRect().width || p1Layout.clientWidth || 0;
+    var wideEnough = availableWidth >= 900;
+    p1Layout.classList.toggle('has-visible-keypad', isOpen);
+    p1Layout.classList.toggle('is-wide-keypad-layout', isOpen && wideEnough);
+    if (p1KeypadColumn) p1KeypadColumn.hidden = !isOpen;
+  }
 
   function isNativeKeypadDevice() {
     // 所有裝置均使用原本網頁自訂數字鍵盤；不以原生鍵盤取代。
@@ -10293,8 +10360,22 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
   }
 
   function ensurePanel() {
-    if (panel && panel.isConnected) return panel;
-    // 先重用頁尾控制器已建立的面板，避免相同 ID 出現兩個浮動鍵盤。
+    var layout = ensureP1ResponsiveLayout();
+    if (!layout || !p1KeypadColumn) return null;
+    if (panel && panel.isConnected) {
+      if (panel.parentNode !== p1KeypadColumn) p1KeypadColumn.appendChild(panel);
+      panel.style.position = 'static';
+      panel.style.left = '';
+      panel.style.top = '';
+      panel.style.right = '';
+      panel.style.transform = 'none';
+      panel.style.zIndex = 'auto';
+      panel.style.maxHeight = 'none';
+      panel.style.overflowY = 'visible';
+      panel.style.overflowX = 'visible';
+      return panel;
+    }
+
     panel = document.getElementById('p1-number-pad-floating-panel');
     if (panel) {
       var existingHeader = panel.querySelector('.number-pad-float-header');
@@ -10321,15 +10402,29 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
         panelCloseButton.dataset.numericCloseBound = '1';
         panelCloseButton.addEventListener('click', function () { closePanel(true); });
       }
+      panel.setAttribute('role', 'region');
+      panel.removeAttribute('aria-modal');
+      panel.hidden = true;
+      panel.style.position = 'static';
+      panel.style.left = '';
+      panel.style.top = '';
+      panel.style.right = '';
+      panel.style.transform = 'none';
+      panel.style.zIndex = 'auto';
+      panel.style.maxHeight = 'none';
+      panel.style.overflowY = 'visible';
+      panel.style.overflowX = 'visible';
+      p1KeypadColumn.appendChild(panel);
       updatePanelLanguage();
+      syncResponsiveLayoutMode();
       return panel;
     }
 
     panel = document.createElement('section');
-    panel.className = 'number-pad-float';
+    panel.className = 'number-pad-float number-pad-inline-panel';
     panel.id = 'p1-number-pad-floating-panel';
     panel.hidden = true;
-    panel.setAttribute('role', 'dialog');
+    panel.setAttribute('role', 'region');
     panel.setAttribute('aria-label', '網頁自訂數字鍵盤');
 
     var header = document.createElement('div');
@@ -10345,8 +10440,9 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
     header.appendChild(title);
     header.appendChild(panelCloseButton);
     panel.appendChild(header);
-    document.body.appendChild(panel);
+    p1KeypadColumn.appendChild(panel);
     updatePanelLanguage();
+    syncResponsiveLayoutMode();
     return panel;
   }
 
@@ -10376,6 +10472,7 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
   function closePanel(keepFocus) {
     if (panel) panel.hidden = true;
     if (input) input.setAttribute('aria-expanded', 'false');
+    syncResponsiveLayoutMode();
     if (keepFocus && input) {
       // 收起後可把焦點還給輸入框，但不要因 focus 事件立刻再次展開面板。
       suppressNextFocusOpen = true;
@@ -10467,53 +10564,28 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
   }
 
   function positionPanel() {
-    if (!panel || panel.hidden || !input || !input.isConnected) return;
-    var rect = input.getBoundingClientRect();
-    var vv = window.visualViewport || null;
-    var viewportLeft = vv ? Number(vv.offsetLeft || 0) : 0;
-    var viewportTop = vv ? Number(vv.offsetTop || 0) : 0;
-    var viewportW = vv ? Number(vv.width || window.innerWidth) : Math.min(document.documentElement.clientWidth || window.innerWidth, window.innerWidth || 0);
-    var viewportH = vv ? Number(vv.height || window.innerHeight) : (window.innerHeight || document.documentElement.clientHeight || 0);
-    var margin = 12;
-    var safeViewportW = Math.max(180, viewportW || window.innerWidth || 320);
-    var safeViewportH = Math.max(180, viewportH || window.innerHeight || 480);
-    var width = Math.min(328, Math.max(180, safeViewportW - margin * 2));
-    var maxPanelHeight = Math.max(150, safeViewportH - margin * 2);
-    panel.style.position = 'fixed';
-    panel.style.width = width + 'px';
-    panel.style.maxWidth = 'calc(100vw - 24px)';
-    panel.style.maxHeight = maxPanelHeight + 'px';
-    panel.style.overflowY = 'auto';
-    panel.style.overflowX = 'hidden';
-    panel.style.left = (viewportLeft + margin) + 'px';
-    panel.style.top = (viewportTop + margin) + 'px';
-    panel.style.visibility = 'hidden';
-    panel.hidden = false;
-    panel.style.display = 'block';
-    panel.style.zIndex = '2147483000';
-
-    var measuredHeight = Math.min(panel.scrollHeight || panel.getBoundingClientRect().height, maxPanelHeight);
-    var availableBelow = Math.max(0, viewportTop + safeViewportH - margin - (rect.bottom + 8));
-    var availableAbove = Math.max(0, rect.top - (viewportTop + margin) - 8);
-    var placeBelow = availableBelow >= Math.min(measuredHeight, 220) || availableBelow >= availableAbove;
-    var available = placeBelow ? availableBelow : availableAbove;
-    var finalHeight = Math.min(measuredHeight, maxPanelHeight, Math.max(150, available || maxPanelHeight));
-    panel.style.maxHeight = finalHeight + 'px';
-    var top = placeBelow ? rect.bottom + 8 : rect.top - finalHeight - 8;
-    var minTop = viewportTop + margin;
-    var maxTop = viewportTop + safeViewportH - margin - finalHeight;
-    top = Math.max(minTop, Math.min(top, maxTop));
-    var minLeft = viewportLeft + margin;
-    var maxLeft = viewportLeft + safeViewportW - width - margin;
-    var left = Math.max(minLeft, Math.min(rect.left, maxLeft));
-    panel.style.left = Math.round(left) + 'px';
-    panel.style.top = Math.round(top) + 'px';
-    panel.style.visibility = 'visible';
+    // 鍵盤不再依輸入框座標定位；它是 Grid 的正常文件流子項目。
+    if (!panel || panel.hidden) return;
+    syncResponsiveLayoutMode();
+    if (p1Layout && !p1Layout.classList.contains('is-wide-keypad-layout')) {
+      window.requestAnimationFrame(function () {
+        if (!panel || panel.hidden) return;
+        var rect = panel.getBoundingClientRect();
+        var vv = window.visualViewport;
+        var visibleBottom = vv ? (vv.offsetTop + vv.height) : window.innerHeight;
+        // 手機／窄平板讓頁面自然延伸；只有面板超出可視範圍時才輕微捲動頁面。
+        if (rect.bottom > visibleBottom - 12) {
+          try { panel.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+          catch (e) { panel.scrollIntoView(false); }
+        }
+      });
+    }
   }
 
   function openPanel() {
     var config = getNumericConfig();
     if (isNativeKeypadDevice() || !config) return;
+    if (!ensureP1ResponsiveLayout()) return;
     ensureOriginalPadNodes(config);
     buildPanelContent();
     if (!panel || !panel.querySelector('.number-pad-grid')) {
@@ -10522,9 +10594,18 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
     }
     updatePanelLanguage();
     panel.hidden = false;
-    panel.style.display = 'block';
-    panel.style.zIndex = '2147483000';
+    panel.style.display = '';
+    panel.style.position = 'static';
+    panel.style.left = '';
+    panel.style.top = '';
+    panel.style.right = '';
+    panel.style.transform = 'none';
+    panel.style.zIndex = 'auto';
+    panel.style.maxHeight = 'none';
+    panel.style.overflowY = 'visible';
+    panel.style.overflowX = 'visible';
     input.setAttribute('aria-expanded', 'true');
+    syncResponsiveLayoutMode();
     positionPanel();
     if (window.requestAnimationFrame) window.requestAnimationFrame(function () { if (panel && !panel.hidden) positionPanel(); });
   }
@@ -10844,7 +10925,8 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
     if (nativeNow !== lastNativePreference) {
       lastNativePreference = nativeNow;
       if (getNumericConfig()) configureCurrentInput();
-    } else if (panel && !panel.hidden) positionPanel();
+    }
+    syncResponsiveLayoutMode();
   });
   window.addEventListener('orientationchange', function () {
     window.setTimeout(function () {
@@ -10853,7 +10935,7 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
       if (getNumericConfig()) configureCurrentInput();
     }, 100);
   });
-  window.addEventListener('scroll', function () { if (panel && !panel.hidden) positionPanel(); }, true);
+  window.addEventListener('scroll', function () { if (panel && !panel.hidden) syncResponsiveLayoutMode(); }, true);
 
   // 初始狀態只綁定欄位事件；不主動聚焦輸入框。
   bindInputOnce();
@@ -12284,59 +12366,116 @@ html:lang(ko) .choice-btn.active::after {
 
 <!-- Unified custom floating numeric keypad: same original keypad controls on phones, tablets, and computers. -->
 <style id="final-floating-keypad-layout-fix-styles">
-#p1-number-pad-floating-panel[hidden]{display:none!important}
-#p1-number-pad-floating-panel{
-  position:fixed!important;z-index:2147483000!important;display:block!important;
-  box-sizing:border-box;width:328px;max-width:calc(100vw - 24px);
-  max-height:calc(100vh - 24px);overflow-x:hidden;overflow-y:auto;
-  overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
-  padding:12px;background:#FFFFFF;border:2px solid #26392D;border-radius:16px;
-  box-shadow:0 12px 34px rgba(24,40,29,.24);visibility:visible;
+/* 第一關自訂數字鍵盤使用真正的文件流版面，不再固定或絕對定位覆蓋題目。 */
+#p1-number-pad-floating-panel[hidden],
+#step-p1 .p1-keypad-column[hidden] { display:none !important; }
+/* 自訂鍵盤打開時擴大測驗外框，否則原本 720px 的頁面最大寬度容不下側欄。 */
+.exam-wrapper.p1-keypad-open-expanded {
+  width:min(calc(100% - 32px),1200px) !important;
+  max-width:1200px !important;
+  margin-left:auto !important;
+  margin-right:auto !important;
+  box-sizing:border-box !important;
+}
+#step-p1 .p1-responsive-keypad-layout {
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  grid-template-areas:"main" "keypad" "action";
+  gap:16px;
+  align-items:start;
+  width:100%;
+  min-width:0;
+  box-sizing:border-box;
+}
+#step-p1 .p1-main-column { grid-area:main; display:flex; flex-direction:column; gap:16px; min-width:0; width:100%; }
+#step-p1 .p1-keypad-column { grid-area:keypad; display:block; min-width:0; width:100%; align-self:start; }
+#step-p1 .p1-action-area { grid-area:action; position:static !important; inset:auto !important; width:100%; min-width:0; margin:0 !important; }
+#step-p1 .p1-responsive-keypad-layout.is-wide-keypad-layout.has-visible-keypad {
+  grid-template-columns:minmax(0,1fr) minmax(300px,320px);
+  grid-template-areas:"main keypad" "action keypad";
+  column-gap:20px;
+  row-gap:16px;
+}
+#step-p1 .p1-responsive-keypad-layout.is-wide-keypad-layout .p1-keypad-column { grid-area:keypad; }
+#p1-number-pad-floating-panel {
+  position:static !important;
+  inset:auto !important;
+  transform:none !important;
+  z-index:auto !important;
+  display:block;
+  box-sizing:border-box;
+  width:100% !important;
+  min-width:0;
+  max-width:none !important;
+  height:auto !important;
+  min-height:0;
+  max-height:none !important;
+  overflow:visible !important;
+  overscroll-behavior:auto;
+  -webkit-overflow-scrolling:auto;
+  padding:12px;
+  margin:0;
+  background:#FFFFFF;
+  border:2px solid #26392D;
+  border-radius:16px;
+  box-shadow:0 6px 18px rgba(24,40,29,.10);
+  visibility:visible;
 }
 #p1-number-pad-floating-panel .number-pad-float-header{
   display:flex;align-items:center;justify-content:space-between;gap:12px;
-  margin:0 0 8px;color:#17271B;font-size:18px;font-weight:900;line-height:1.5
+  margin:0 0 10px;color:#17271B;font-size:18px;font-weight:900;line-height:1.5
 }
 #p1-number-pad-floating-panel .number-pad-float-close{
   flex:0 0 auto;min-width:64px;min-height:48px;padding:8px 12px;
   border:2px solid #26392D;border-radius:10px;background:#F0F5ED;
-  color:#17271B;font-family:inherit;font-size:16px;font-weight:900;cursor:pointer
+  color:#17271B;font-family:inherit;font-size:16px;font-weight:900;cursor:pointer;
+  white-space:nowrap;touch-action:manipulation
 }
 #p1-number-pad-floating-panel .number-pad-grid{
-  display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
-  gap:8px!important;margin:0!important;width:100%!important
+  display:grid !important;grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+  gap:8px !important;margin:0 !important;width:100% !important
 }
 #p1-number-pad-floating-panel .number-key{
-  min-width:0;min-height:56px!important;padding:7px!important;
-  border:2px solid #26392D!important;border-radius:10px!important;
-  background:#FFFFFF!important;color:#17271B!important;
-  font-family:inherit!important;font-size:23px!important;font-weight:900!important;
-  line-height:1.3!important;cursor:pointer;touch-action:manipulation
+  min-width:0;min-height:56px !important;padding:7px !important;
+  border:2px solid #26392D !important;border-radius:10px !important;
+  background:#FFFFFF !important;color:#17271B !important;
+  font-family:inherit !important;font-size:23px !important;font-weight:900 !important;
+  line-height:1.3 !important;cursor:pointer;touch-action:manipulation
 }
 #p1-number-pad-floating-panel .number-key:active,
-#p1-number-pad-floating-panel .number-pad-action:active{background:#EAF0E7!important}
+#p1-number-pad-floating-panel .number-pad-action:active{background:#EAF0E7 !important}
 #p1-number-pad-floating-panel .number-pad-actions{
-  display:grid!important;grid-template-columns:1fr 1fr!important;
-  gap:8px!important;margin:8px 0 0!important
+  display:grid !important;grid-template-columns:1fr 1fr !important;
+  gap:8px !important;margin:10px 0 0 !important;width:100% !important
 }
 #p1-number-pad-floating-panel .number-pad-action{
-  min-width:0;min-height:54px!important;padding:7px!important;
-  border:2px solid #26392D!important;border-radius:10px!important;
-  background:#F2F2EA!important;color:#17271B!important;
-  font-family:inherit!important;font-size:16px!important;font-weight:900!important;
-  line-height:1.4!important;white-space:normal!important;cursor:pointer;touch-action:manipulation
+  min-width:0;min-height:54px !important;padding:7px !important;
+  border:2px solid #26392D !important;border-radius:10px !important;
+  background:#F2F2EA !important;color:#17271B !important;
+  font-family:inherit !important;font-size:16px !important;font-weight:900 !important;
+  line-height:1.4 !important;white-space:normal !important;cursor:pointer;touch-action:manipulation
 }
 #p1-number-pad-floating-panel .number-pad-feedback{
-  margin:8px 0 0!important;padding:8px 10px!important;
-  border:2px solid #26392D!important;border-radius:9px!important;
-  background:#F0F5ED!important;color:#17271B!important;
-  font-size:16px!important;font-weight:800!important;line-height:1.5!important
+  margin:8px 0 0 !important;padding:8px 10px !important;
+  border:2px solid #26392D !important;border-radius:9px !important;
+  background:#F0F5ED !important;color:#17271B !important;
+  font-size:16px !important;font-weight:800 !important;line-height:1.5 !important
 }
 #p1-number-pad-floating-panel button:focus-visible{outline:3px solid #17271B;outline-offset:2px}
-@media(max-width:480px){
-  #p1-number-pad-floating-panel{width:min(328px,calc(100vw - 20px))!important;padding:10px!important;border-radius:14px!important}
-  #p1-number-pad-floating-panel .number-key{min-height:52px!important;font-size:22px!important}
-  #p1-number-pad-floating-panel .number-pad-action{min-height:52px!important;font-size:15px!important}
+@media (max-width:899px){
+  .exam-wrapper.p1-keypad-open-expanded {
+    width:calc(100% - 28px) !important;
+    max-width:720px !important;
+  }
+  #step-p1 .p1-responsive-keypad-layout.is-wide-keypad-layout.has-visible-keypad {
+    grid-template-columns:minmax(0,1fr);
+    grid-template-areas:"main" "keypad" "action";
+  }
+}
+@media (max-width:480px){
+  #p1-number-pad-floating-panel{padding:10px !important;border-radius:14px !important}
+  #p1-number-pad-floating-panel .number-key{min-height:52px !important;font-size:22px !important}
+  #p1-number-pad-floating-panel .number-pad-action{min-height:52px !important;font-size:15px !important}
 }
 </style>
 <!-- Duplicate keypad controller removed: the original controller above is now the sole owner of the floating panel. -->
