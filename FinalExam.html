@@ -6438,7 +6438,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       renderOfficialLocationNames(activeLocationRecordId);
       renderAliasGroups(safeGroups);
       var summary = document.getElementById('alias-summary');
-      if (summary) summary.textContent = translateExamDisplayText('地點別名管理') + '（' + safeGroups.length + ' / 4）';
+      if (summary) summary.textContent = translateExamDisplayText('地點別名管理');
       var hint = document.getElementById('alias-empty-hint');
       if (hint) hint.textContent = translateExamDisplayText(
         '請依照使用者的作答語言，填寫對應的地點別名。各語言獨立比對，可分別設定。'
@@ -6538,9 +6538,8 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       examState.acceptableAnswerGroups = groups;
       examState.acceptableAnswers = getActiveAliasGroups(groups).map(function(group){ return String(group[getActiveLocationCompareLanguage()] || '').trim(); }).filter(Boolean);
       saveLocationAliasDraft(activeLocationRecordId, groups, false);
-      var completeCount = groups.length;
       var summary = document.getElementById('alias-summary');
-      if (summary) summary.textContent = translateExamDisplayText('地點別名管理') + '（' + completeCount + ' / 4）';
+      if (summary) summary.textContent = translateExamDisplayText('地點別名管理');
     }
 
     function addAliasGroup() {
