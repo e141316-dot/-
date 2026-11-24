@@ -6466,7 +6466,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       }
     }
 
-    function hasPendingLocationAliasChanges(locationId) {
+    function hasPendingLocationAliasChangesInternal(locationId) {
       var id = locationId || activeLocationRecordId;
       if (!id) return false;
       var entry = getLocationAliasLocalStore()[id];
@@ -6478,7 +6478,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       return !aliasGroupsEqual(entry.aliasGroups, baseline);
     }
 
-    function discardPendingLocationAliasChanges(locationId) {
+    function discardPendingLocationAliasChangesInternal(locationId) {
       var id = locationId || activeLocationRecordId;
       if (!id) return false;
       var store = getLocationAliasLocalStore();
@@ -6503,10 +6503,10 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
     }
 
     window.hasPendingLocationAliasChanges = function(locationId) {
-      return hasPendingLocationAliasChanges(locationId);
+      return hasPendingLocationAliasChangesInternal(locationId);
     };
     window.discardPendingLocationAliasChanges = function(locationId) {
-      return discardPendingLocationAliasChanges(locationId);
+      return discardPendingLocationAliasChangesInternal(locationId);
     };
 
     function renderOfficialLocationNames(locationId) {
@@ -6577,7 +6577,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       if (persistDraft && activeLocationRecordId) {
         saveLocationAliasDraft(activeLocationRecordId, safeGroups, false);
       }
-      if (hasPendingLocationAliasChanges(activeLocationRecordId)) {
+      if (hasPendingLocationAliasChangesInternal(activeLocationRecordId)) {
         setAliasSyncStatus(translateExamDisplayText('尚未儲存'));
       } else {
         setAliasSyncStatus('');
@@ -6654,7 +6654,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       examState.acceptableAnswerGroups = groups;
       examState.acceptableAnswers = getActiveAliasGroups(groups).map(function(group){ return String(group[getActiveLocationCompareLanguage()] || '').trim(); }).filter(Boolean);
       saveLocationAliasDraft(activeLocationRecordId, groups, false);
-      setAliasSyncStatus(hasPendingLocationAliasChanges(activeLocationRecordId)
+      setAliasSyncStatus(hasPendingLocationAliasChangesInternal(activeLocationRecordId)
         ? translateExamDisplayText('尚未儲存') : '');
     }
 
@@ -13678,19 +13678,10 @@ html:lang(ko) .choice-btn.active::after {
     };
   }
 
-  // Spoken-answer language changes are also settings transitions while the alias editor is open.
-  var originalSetLanguage = window.setLanguage;
-  if (typeof originalSetLanguage === 'function') {
-    window.setLanguage = function (languageCode) {
-      var exam = typeof window.__getCognitiveExamState === 'function' ? window.__getCognitiveExamState() : null;
-      if (shouldGuard() && exam && languageCode !== exam.language) {
-        var self = this, args = arguments;
-        requestToLeave(function () { originalSetLanguage.apply(self, args); });
-        return;
-      }
-      return originalSetLanguage.apply(this, arguments);
-    };
-  }
+  // Spoken-answer language (國語／臺語／客語／純文字) is a test setting, not navigation away
+  // from the location editor. Do not intercept setLanguage here: doing so makes voice choices
+  // appear unselectable whenever an alias draft is pending. The display-language switch above
+  // remains protected, as requested, and all alias drafts remain stored locally.
 
   // Changing county/district/place leaves the alias editor's current location; intercept before inline handlers run.
   ['countySelect', 'districtSelect', 'placeSelect'].forEach(function (id) {
