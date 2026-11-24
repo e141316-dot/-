@@ -8819,8 +8819,8 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
     var previous=document.body.getAttribute('data-step');
     oldShowStep(id);
     if(id==='step-location' && !examState.locationModeSelected){
-      // The first visit defaults to the safe, non-scored home-practice route.
-      selectPracticeMode('home');
+      // Keep both modes unselected until the user explicitly chooses one.
+      if (typeof updateLocationModeVisibility === 'function') updateLocationModeVisibility();
     }
     if(id==='step-location'){
       var title=byId('test-name-heading'); if(title)title.textContent='請選擇目前的練習地點';
@@ -9355,7 +9355,9 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
 
   // Ensure all mode-dependent replay controls are synchronized after initial page load.
   updateLanguageReplay();syncAudioButtons();setStatusChip();setLocationActionState();
-  if(byId('step-location')&&!examState.locationModeSelected){selectPracticeMode('home');}
+  if(byId('step-location')&&!examState.locationModeSelected){
+    if (typeof updateLocationModeVisibility === 'function') updateLocationModeVisibility();
+  }
 })();
 
 
@@ -12571,5 +12573,235 @@ html:lang(ko) .choice-btn.active::after {
   if (typeof window.applyExamDisplayLanguage === 'function') window.applyExamDisplayLanguage();
 })();
 </script>
+\n\n<script id="practice-mode-state-and-next-button-sync-fix">
+(function () {
+  'use strict';
+
+  function byId(id) { return document.getElementById(id); }
+
+  // examState is the only source of truth for the selected practice mode.
+  function getModeState() {
+    var state = window.examState;
+    if (!state || !state.locationModeSelected) return { mode: '', home: false, staff: false };
+    var home = state.isHomePractice === true && state.examMode === 'practice';
+    var staff = state.isHomePractice === false && state.examMode === 'staff';
+    return { mode: home ? 'home' : staff ? 'staff' : '', home: home, staff: staff };
+  }
+
+  function hasCompleteStaffLocation() {
+    var county = byId('countySelect');
+    var district = byId('districtSelect');
+    var place = byId('placeSelect');
+    return !!(county && county.value && district && district.value && place && place.value);
+  }
+
+  if (typeof EXAM_TEXT_TRANSLATIONS !== 'undefined') {
+    EXAM_TEXT_TRANSLATIONS['請先選擇練習模式'] = [
+      'Choose a practice mode first',
+      '最初に練習モードを選択してください',
+      '먼저 연습 모드를 선택하세요'
+    ];
+    EXAM_TEXT_TRANSLATIONS['下一步：選擇測驗地點 ›'] = [
+      'Next: Choose testing location ›',
+      '次へ：検査場所を選択 ›',
+      '다음: 검사 장소 선택 ›'
+    ];
+  }
+
+  function translated(text) {
+    return typeof window.translateExamDisplayText === 'function'
+      ? window.translateExamDisplayText(text) : text;
+  }
+
+  // The shared source references this placeholder helper in county/district
+  // handlers; define it once so the staff location cascade initializes safely.
+  if (typeof window.setLocationSelectPlaceholder !== 'function') {
+    window.setLocationSelectPlaceholder = function (select, text) {
+      if (!select) return;
+      select.innerHTML = '';
+      var option = document.createElement('option');
+      option.value = '';
+      option.textContent = translated(text || '請選擇');
+      option.selected = true;
+      select.appendChild(option);
+      select.value = '';
+    };
+  }
+
+  function setLocationActionState() {
+    var step = byId('step-location');
+    var btn = step && step.querySelector('.sticky-action-bar .btn-primary');
+    if (!btn) return;
+
+    var state = getModeState();
+    var complete = hasCompleteStaffLocation();
+    var disabled = !state.mode;
+    var label = !state.mode
+      ? '請先選擇練習模式'
+      : (state.staff && !complete)
+        ? '下一步：選擇測驗地點 ›'
+        : '確認選擇，前往測驗介紹 ›';
+
+    btn.disabled = disabled;
+    btn.setAttribute('aria-disabled', disabled ? 'true' : 'false');
+    btn.dataset.practiceMode = state.mode || 'none';
+    btn.textContent = translated(label);
+  }
+
+  function syncPracticeModeUI() {
+    var state = getModeState();
+    var homeButton = byId('mode-home-btn');
+    var staffButton = byId('mode-staff-btn');
+
+    if (homeButton) {
+      homeButton.classList.toggle('active', state.home);
+      homeButton.setAttribute('aria-pressed', state.home ? 'true' : 'false');
+    }
+    if (staffButton) {
+      staffButton.classList.toggle('active', state.staff);
+      staffButton.setAttribute('aria-pressed', state.staff ? 'true' : 'false');
+    }
+
+    // Reuse the existing visibility handler so saved locations, alias editor,
+    // and the staff-only fields continue to follow the selected mode.
+    if (typeof window.updateLocationModeVisibility === 'function') {
+      window.updateLocationModeVisibility();
+    } else {
+      var fields = byId('location-fields');
+      var staffSettings = byId('staff-mode-settings');
+      if (fields) {
+        fields.style.display = state.staff ? '' : 'none';
+        fields.setAttribute('aria-hidden', state.staff ? 'false' : 'true');
+        fields.inert = !state.staff;
+      }
+      if (staffSettings) {
+        staffSettings.style.display = state.staff ? 'block' : 'none';
+        staffSettings.setAttribute('aria-hidden', state.staff ? 'false' : 'true');
+        staffSettings.inert = !state.staff;
+      }
+    }
+
+    setLocationActionState();
+  }
+
+  // Wrap the existing mode transition (it also restores/clears the correct
+  // location data). Then immediately derive all visible states from examState.
+  var originalSelectPracticeMode = window.selectPracticeMode;
+  if (typeof originalSelectPracticeMode === 'function') {
+    window.selectPracticeMode = function (mode) {
+      if (mode !== 'home' && mode !== 'staff') return;
+      var result = originalSelectPracticeMode.apply(this, arguments);
+      syncPracticeModeUI();
+      return result;
+    };
+  }
+
+  // Bind whole-card click/tap handlers explicitly. Remove inline handlers first
+  // so each tap runs exactly once; native button semantics retain keyboard access.
+  var homeButton = byId('mode-home-btn');
+  var staffButton = byId('mode-staff-btn');
+  if (homeButton && !homeButton.dataset.modeClickBound) {
+    homeButton.removeAttribute('onclick');
+    homeButton.dataset.modeClickBound = 'true';
+    homeButton.addEventListener('click', function (event) {
+      event.preventDefault();
+      try {
+        if (typeof window.selectPracticeMode === 'function') window.selectPracticeMode('home');
+      } finally {
+        // Synchronize the card and next button before optional audio playback.
+        syncPracticeModeUI();
+      }
+      try {
+        if (typeof window.playLocationModeChoiceAudio === 'function') window.playLocationModeChoiceAudio('home');
+      } catch (audioError) { console.warn('Home mode choice audio could not start:', audioError); }
+    });
+  }
+  if (staffButton && !staffButton.dataset.modeClickBound) {
+    staffButton.removeAttribute('onclick');
+    staffButton.dataset.modeClickBound = 'true';
+    staffButton.addEventListener('click', function (event) {
+      event.preventDefault();
+      try {
+        if (typeof window.selectPracticeMode === 'function') window.selectPracticeMode('staff');
+      } finally {
+        // Synchronize the card and next button before optional audio playback.
+        syncPracticeModeUI();
+      }
+      try {
+        if (typeof window.playLocationModeChoiceAudio === 'function') window.playLocationModeChoiceAudio('staff');
+      } catch (audioError) { console.warn('Staff mode choice audio could not start:', audioError); }
+    });
+  }
+
+  // Keep the original layout and colors; this only guarantees the complete
+  // native button surface receives mouse, keyboard, and touch interactions.
+  [homeButton, staffButton].forEach(function (button) {
+    if (!button) return;
+    button.style.pointerEvents = 'auto';
+    button.style.touchAction = 'manipulation';
+    button.style.cursor = 'pointer';
+  });
+
+  // Update the single source-of-truth button state when the user returns to
+  // this page, switches languages, or changes any staff location select.
+  var originalShowStep = window.showStep;
+  if (typeof originalShowStep === 'function') {
+    window.showStep = function (stepId) {
+      var result = originalShowStep.apply(this, arguments);
+      if (stepId === 'step-location') syncPracticeModeUI();
+      return result;
+    };
+  }
+  ['countySelect', 'districtSelect', 'placeSelect'].forEach(function (id) {
+    var control = byId(id);
+    if (control) control.addEventListener('change', function () {
+      window.setTimeout(syncPracticeModeUI, 0);
+    });
+  });
+  window.setLocationActionState = setLocationActionState;
+  window.syncPracticeModeUI = syncPracticeModeUI;
+
+  // The next button is active immediately after either mode is selected.
+  // For staff mode, its first click takes the user to the location fields;
+  // only after a valid location is chosen does it enter the test instructions.
+  var originalStartOfficialExam = window.startOfficialExam;
+  if (typeof originalStartOfficialExam === 'function') {
+    window.startOfficialExam = function () {
+      var state = getModeState();
+      syncPracticeModeUI();
+
+      if (!state.mode) {
+        if (typeof window.showCustomAlert === 'function') {
+          window.showCustomAlert('請先選擇「我在家裡練習」或「在監理站、醫院或由專人協助」。');
+        }
+        return;
+      }
+
+      if (state.staff && !hasCompleteStaffLocation()) {
+        var fields = byId('location-fields');
+        var nextField = ['countySelect', 'districtSelect', 'placeSelect']
+          .map(byId).find(function (field) { return field && !field.value && !field.disabled; });
+        if (fields && typeof fields.scrollIntoView === 'function') {
+          fields.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        if (nextField) {
+          window.setTimeout(function () {
+            try { nextField.focus({ preventScroll: true }); }
+            catch (e) { nextField.focus(); }
+          }, 220);
+        }
+        return;
+      }
+
+      return originalStartOfficialExam.apply(this, arguments);
+    };
+  }
+
+  // Initial state: deliberately no default mode is selected. The main button
+  // remains disabled until the user actually activates one of the two cards.
+  syncPracticeModeUI();
+})();
+</script>
+
 </body>
 </html>
