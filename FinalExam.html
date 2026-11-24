@@ -10933,12 +10933,13 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
   var p1KeypadColumn = null;
   var p1ActionArea = null;
 
-  // 輸入框保留在原本作答卡內；寬螢幕開啟鍵盤時，才把既有鍵盤欄移至頁面右側空白欄。
-  // 不移動題目卡、作答方式選項、答案輸入控制或確認按鈕，也不改變輸入區原本預留的欄寬。
+  // 輸入框及數字鍵盤維持左右獨立欄位；桌面版將確認按鈕移到兩欄共同下方。
+  // 題目卡、選項、答案輸入控制及原始按鍵事件均不重建、不改尺寸。
   function ensureP1ResponsiveLayout() {
     var inputGroup = byId('p1-input-group');
     var inputControl = byId('p1-answer-control');
     var wrapper = document.querySelector('.exam-wrapper');
+    p1ActionArea = p1ActionArea || byId('p1-standard-action');
     if (!inputGroup || !inputControl || !wrapper) return null;
     if (p1Layout && p1Layout.isConnected) {
       p1MainColumn = p1Layout.querySelector('.p1-answer-input-column');
@@ -11044,6 +11045,7 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
 
     var isOpen = !!(panel && !panel.hidden);
     var useRightRail = isP1StepActive() && canUseRightKeypadRail(wrapper);
+    p1ActionArea = p1ActionArea || byId('p1-standard-action');
     var changed = false;
 
     if (useRightRail) {
@@ -11059,6 +11061,12 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
       }
       if (p1KeypadColumn.parentNode !== wrapper) {
         wrapper.appendChild(p1KeypadColumn);
+        changed = true;
+      }
+      // 確認按鈕也移到 exam-wrapper 的第三列，跨越左側作答欄與右側鍵盤欄。
+      // 這樣按鈕只會出現在兩個欄位中較高者的下方，不會在左欄先結束。
+      if (p1ActionArea && p1ActionArea.parentNode !== wrapper) {
+        wrapper.appendChild(p1ActionArea);
         changed = true;
       }
       // Keep the right grid track reserved for the whole Stage 1 view. The panel
@@ -11078,6 +11086,11 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
       }
       if (p1KeypadColumn.parentNode !== p1Layout) {
         p1Layout.appendChild(p1KeypadColumn);
+        changed = true;
+      }
+      // 平板／手機或離開第一關時，確認按鈕回到原本 #step-p1 的文件流位置。
+      if (p1ActionArea && step && p1ActionArea.parentNode !== step) {
+        step.appendChild(p1ActionArea);
         changed = true;
       }
       p1KeypadColumn.hidden = !isOpen;
@@ -14417,6 +14430,42 @@ html:lang(ko) .choice-btn.active::after {
     width:100% !important;
     max-width:none !important;
     min-width:0 !important;
+  }
+}
+</style>
+
+<style id="p1-confirm-button-after-two-column-workspace">
+/* 桌面第一關：輸入區與鍵盤同列；確認本題按鈕跨兩欄，放在共同底部。 */
+@media (min-width:1100px) {
+  .exam-wrapper.has-p1-keypad-workspace {
+    grid-template-rows:auto auto auto !important;
+    align-items:start !important;
+  }
+  .exam-wrapper.has-p1-keypad-workspace > #p1-standard-action {
+    grid-column:1 / -1 !important;
+    grid-row:3 !important;
+    position:static !important;
+    inset:auto !important;
+    left:auto !important;
+    right:auto !important;
+    top:auto !important;
+    bottom:auto !important;
+    width:100% !important;
+    max-width:none !important;
+    margin:18px 0 0 !important;
+    padding:0 0 8px !important;
+    box-sizing:border-box !important;
+    display:flex;
+    flex-direction:column !important;
+    gap:14px !important;
+    background:transparent !important;
+    box-shadow:none !important;
+    z-index:auto !important;
+    align-self:start !important;
+  }
+  .exam-wrapper.has-p1-keypad-workspace > #p1-standard-action #p1-submit-btn {
+    width:100% !important;
+    min-height:68px !important;
   }
 }
 </style>
