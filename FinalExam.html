@@ -10969,7 +10969,7 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
     var isOpen = !!(panel && !panel.hidden);
     var useRightRail = isOpen && canUseRightKeypadRail(wrapper);
 
-    p1Layout.classList.toggle('has-visible-keypad', isOpen);
+    p1Layout.classList.toggle('has-visible-keypad', isOpen && !useRightRail);
     if (p1KeypadColumn) {
       if (useRightRail) {
         // 先記錄原本 wrapper 左緣，再只向右延伸工作區；左側測驗卡寬度與位置不變。
@@ -13089,19 +13089,12 @@ html:lang(ko) .choice-btn.active::after {
   width:100%;
   align-self:start;
 }
-/* 桌面及一般平板：只在年份／月份／日期的輸入控制區內左右並排。 */
-@media (min-width:601px) {
-  #step-p1 .p1-answer-keypad-layout.has-visible-keypad {
-    grid-template-columns:minmax(0,1fr) minmax(220px,260px);
-    column-gap:16px;
-    row-gap:0;
-  }
-}
-/* 手機或較窄螢幕：輸入框在上、鍵盤在下，頁面自然向下延伸。 */
-@media (max-width:600px) {
-  #step-p1 .p1-answer-keypad-layout.has-visible-keypad {
-    grid-template-columns:minmax(0,1fr);
-  }
+/* 輸入框維持加入鍵盤前的完整欄寬；內嵌鍵盤只在下方排列。
+   有足夠桌面空間時，鍵盤由 JS 移至 exam-wrapper 的獨立右欄，不占用此輸入欄寬。 */
+#step-p1 .p1-answer-keypad-layout.has-visible-keypad {
+  grid-template-columns:minmax(0,1fr) !important;
+  column-gap:0 !important;
+  row-gap:16px !important;
 }
 #p1-number-pad-floating-panel {
   position:static !important;
@@ -14276,13 +14269,126 @@ html:lang(ko) .choice-btn.active::after {
     max-width:260px !important;
     box-sizing:border-box !important;
   }
-  /* 保留原本輸入欄寬：鍵盤移出後，左側第二欄仍保留原本的鍵盤預留寬度。 */
+  /* 鍵盤已是 exam-wrapper 的獨立右欄；左側答案區不得再預留 260px，
+     否則會在左側欄內重複切欄，讓年份輸入框被壓縮。 */
+  #step-p1 .p1-answer-keypad-layout,
   #step-p1 .p1-answer-keypad-layout.has-visible-keypad {
-    grid-template-columns:minmax(0,1fr) 260px !important;
-    column-gap:16px !important;
+    grid-template-columns:minmax(0,1fr) !important;
+    column-gap:0 !important;
+    width:100% !important;
+  }
+  #step-p1 .p1-answer-input-column,
+  #step-p1 .p1-answer-input-column > #p1-answer-control {
+    display:block !important;
+    width:100% !important;
+    max-width:none !important;
+    min-width:0 !important;
   }
 }
 </style>
+
+
+<script id="location-next-button-explicit-binding-fix">
+(function () {
+  'use strict';
+
+  var button = document.getElementById('location-next-btn');
+  if (!button || button.dataset.explicitPracticeNextBound === 'true') return;
+
+  // Remove the inline handler and bind one explicit listener. This prevents
+  // duplicate/stale wrappers from silently swallowing the next-step action.
+  button.removeAttribute('onclick');
+  button.dataset.explicitPracticeNextBound = 'true';
+  button.style.pointerEvents = 'auto';
+  button.style.touchAction = 'manipulation';
+  button.style.cursor = 'pointer';
+
+  function getState() {
+    try {
+      return typeof window.__getCognitiveExamState === 'function'
+        ? window.__getCognitiveExamState()
+        : (window.examState || null);
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function showError(message, error) {
+    if (error) console.error('[練習方式下一步] 操作失敗：', error);
+    if (typeof window.showCustomAlert === 'function') {
+      window.showCustomAlert(message);
+    } else {
+      window.alert(message);
+    }
+  }
+
+  function enterAssistedSetup(state) {
+    state.staffSetupActive = true;
+    state.practiceMode = 'assisted';
+    state.examMode = 'staff';
+    state.isHomePractice = false;
+
+    var entry = document.getElementById('practice-mode-entry');
+    var setup = document.getElementById('staff-location-setup');
+    if (entry) {
+      entry.hidden = true;
+      entry.setAttribute('aria-hidden', 'true');
+      entry.inert = true;
+    }
+    if (setup) {
+      setup.hidden = false;
+      setup.setAttribute('aria-hidden', 'false');
+      setup.inert = false;
+    }
+
+    // Apply the view transition first, then reuse legacy state synchronizers.
+    if (typeof window.updateLocationModeVisibility === 'function') {
+      window.updateLocationModeVisibility();
+    }
+
+    if (typeof window.syncPracticeModeUI === 'function') {
+      window.syncPracticeModeUI();
+    } else if (typeof window.setLocationActionState === 'function') {
+      window.setLocationActionState();
+    }
+
+    window.scrollTo(0, 0);
+  }
+
+  button.addEventListener('click', function (event) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (button.disabled) return;
+
+    try {
+      var state = getState();
+      if (!state || !state.locationModeSelected) {
+        showError('請先選擇「我在家裡練習」或「在監理站、醫院或由專人協助」。');
+        return;
+      }
+
+      var mode = state.practiceMode ||
+        (state.isHomePractice ? 'self' : (state.examMode === 'staff' ? 'assisted' : ''));
+
+      if (mode === 'assisted' && !state.staffSetupActive) {
+        enterAssistedSetup(state);
+        return;
+      }
+
+      if (typeof window.startOfficialExam !== 'function') {
+        throw new Error('找不到 startOfficialExam 導向函式。');
+      }
+
+      // Self-practice proceeds directly to the shared first-stage introduction.
+      // Assisted mode, after its setup screen is active, runs the original checks.
+      window.startOfficialExam();
+    } catch (error) {
+      showError('無法進入下一步，請重新選擇練習方式或重新整理頁面。', error);
+    }
+  });
+})();
+</script>
 
 </body>
 </html>
