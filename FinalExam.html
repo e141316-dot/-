@@ -5553,6 +5553,17 @@ function getTaiwaneseKey(text) {
       playLocationModeChoiceAudio('staff');
     }
 
+    // 將主控制器中的核心函式明確公開給後續獨立 UI 控制器使用。
+    // 這些函式仍呼叫同一份閉包內的原始實作，不建立第二份 examState，也不複製流程。
+    window.selectPracticeMode = function (mode) { return selectPracticeMode(mode); };
+    window.startHomePractice = function () { return startHomePractice(); };
+    window.startStaffPractice = function () { return startStaffPractice(); };
+    window.playLocationModeChoiceAudio = function (mode) { return playLocationModeChoiceAudio(mode); };
+    window.updateLocationModeVisibility = function () { return updateLocationModeVisibility(); };
+    window.startOfficialExam = function () { return startOfficialExam(); };
+    window.showStep = function (stepId) { return showStep(stepId); };
+    window.handleTopBack = function () { return handleTopBack(); };
+
     function setHakkaAccent(accent) {
       unlockAudioContext();
       examState.hakkaAccent = accent;
