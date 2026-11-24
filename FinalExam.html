@@ -10247,8 +10247,8 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
   var p1ActionArea = null;
   var p1LayoutResizeObserver = null;
 
-  // 將第一關原有內容整理成正常文件流 Grid：作答主區、鍵盤專區、確認按鈕。
-  // 不複製、不重建題目或按鈕，只移動既有 DOM 節點，因此原事件及答案狀態保持不變。
+  // 將第一關原有內容整理成文件流 Grid：左側原寬度作答區、右側鍵盤專區、左側確認按鈕。
+  // 不改 .exam-wrapper 寬度或置中，不複製、不重建題目或按鈕，只移動既有 DOM 節點。
   function ensureP1ResponsiveLayout() {
     var step = byId('step-p1');
     if (!step) return null;
@@ -10279,7 +10279,7 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
     p1KeypadColumn.setAttribute('aria-label', '自訂數字鍵盤區');
     p1KeypadColumn.hidden = true;
 
-    // 題目卡、回答方式、輸入欄位仍依原始順序放在左側主區。
+    // 題目卡、回答方式、輸入欄位及原本確認按鈕留在左側；鍵盤另設右側欄位。
     p1MainColumn.appendChild(questionCard);
     p1MainColumn.appendChild(answerPanel);
     p1Layout.appendChild(p1MainColumn);
@@ -10300,12 +10300,21 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
   function syncResponsiveLayoutMode() {
     if (!p1Layout || !p1Layout.isConnected) return;
     var isOpen = !!(panel && !panel.hidden);
-    var examWrapper = p1Layout.closest('.exam-wrapper');
-    if (examWrapper) examWrapper.classList.toggle('p1-keypad-open-expanded', isOpen);
-    var availableWidth = p1Layout.getBoundingClientRect().width || p1Layout.clientWidth || 0;
-    var wideEnough = availableWidth >= 900;
+    var step = byId('step-p1');
+    var stepWidth = step ? (step.clientWidth || step.getBoundingClientRect().width) : 0;
+    var layoutRect = p1Layout.getBoundingClientRect();
+    var viewportWidth = document.documentElement.clientWidth || window.innerWidth || 0;
+    var keypadWidth = 300;
+    var columnGap = 20;
+    var safeRight = 16;
+    // 以原始 step-p1 可用寬度作左欄寬度，不能用已展開的 Grid 寬度回算，避免反覆切換。
+    var requiredWidth = stepWidth + keypadWidth + columnGap;
+    var availableToRight = viewportWidth - layoutRect.left - safeRight;
+    var wideEnough = viewportWidth >= 900 && stepWidth > 0 && availableToRight >= requiredWidth;
+
     p1Layout.classList.toggle('has-visible-keypad', isOpen);
     p1Layout.classList.toggle('is-wide-keypad-layout', isOpen && wideEnough);
+    if (step) step.classList.toggle('p1-keypad-wide-overflow', isOpen && wideEnough);
     if (p1KeypadColumn) p1KeypadColumn.hidden = !isOpen;
   }
 
@@ -12377,17 +12386,10 @@ html:lang(ko) .choice-btn.active::after {
 
 <!-- Unified custom floating numeric keypad: same original keypad controls on phones, tablets, and computers. -->
 <style id="final-floating-keypad-layout-fix-styles">
-/* 第一關自訂數字鍵盤使用真正的文件流版面，不再固定或絕對定位覆蓋題目。 */
+/* 保留原本 .exam-wrapper 的 720px 寬度、水平置中與內距。
+   桌面空間足夠時，只讓第一關版面向右延伸出鍵盤專區；左側作答區寬度不變。 */
 #p1-number-pad-floating-panel[hidden],
 #step-p1 .p1-keypad-column[hidden] { display:none !important; }
-/* 自訂鍵盤打開時擴大測驗外框，否則原本 720px 的頁面最大寬度容不下側欄。 */
-.exam-wrapper.p1-keypad-open-expanded {
-  width:min(calc(100% - 32px),1200px) !important;
-  max-width:1200px !important;
-  margin-left:auto !important;
-  margin-right:auto !important;
-  box-sizing:border-box !important;
-}
 #step-p1 .p1-responsive-keypad-layout {
   display:grid;
   grid-template-columns:minmax(0,1fr);
@@ -12397,31 +12399,70 @@ html:lang(ko) .choice-btn.active::after {
   width:100%;
   min-width:0;
   box-sizing:border-box;
+  overflow:visible;
 }
-#step-p1 .p1-main-column { grid-area:main; display:flex; flex-direction:column; gap:16px; min-width:0; width:100%; }
-#step-p1 .p1-keypad-column { grid-area:keypad; display:block; min-width:0; width:100%; align-self:start; }
-#step-p1 .p1-action-area { grid-area:action; position:static !important; inset:auto !important; width:100%; min-width:0; margin:0 !important; }
+#step-p1 .p1-main-column {
+  grid-area:main;
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+  min-width:0;
+  width:100%;
+}
+#step-p1 .p1-keypad-column {
+  grid-area:keypad;
+  display:block;
+  min-width:0;
+  width:100%;
+  align-self:start;
+}
+#step-p1 .p1-action-area {
+  grid-area:action;
+  position:static !important;
+  inset:auto !important;
+  width:100%;
+  min-width:0;
+  margin:0 !important;
+}
+/* 只有 JS 確認右側實際剩餘空間足夠時，才啟用並排。
+   左欄維持原本完整寬度，鍵盤專區向右延伸，不擠壓題目或選項。 */
 #step-p1 .p1-responsive-keypad-layout.is-wide-keypad-layout.has-visible-keypad {
-  grid-template-columns:minmax(0,1fr) minmax(300px,320px);
+  width:calc(100% + 320px) !important;
+  grid-template-columns:minmax(0,1fr) 300px;
   grid-template-areas:"main keypad" "action keypad";
   column-gap:20px;
   row-gap:16px;
 }
-#step-p1 .p1-responsive-keypad-layout.is-wide-keypad-layout .p1-keypad-column { grid-area:keypad; }
+#step-p1 .p1-responsive-keypad-layout.is-wide-keypad-layout .p1-keypad-column {
+  grid-area:keypad;
+  width:300px;
+  min-width:300px;
+  max-width:300px;
+  align-self:center;
+}
+/* 原本月份題為防止手機溢出而設定 overflow-x:clip；寬螢幕並排時只解除第一關裁切，
+   因為 JS 已先確認鍵盤完整位於視窗內，不會製造水平捲動。 */
+#step-p1.p1-keypad-wide-overflow { overflow-x:visible !important; }
 #p1-number-pad-floating-panel {
   position:static !important;
   inset:auto !important;
+  left:auto !important;
+  top:auto !important;
+  right:auto !important;
+  bottom:auto !important;
   transform:none !important;
   z-index:auto !important;
   display:block;
   box-sizing:border-box;
   width:100% !important;
   min-width:0;
-  max-width:none !important;
+  max-width:100% !important;
   height:auto !important;
   min-height:0;
   max-height:none !important;
   overflow:visible !important;
+  overflow-y:visible !important;
+  overflow-x:visible !important;
   overscroll-behavior:auto;
   -webkit-overflow-scrolling:auto;
   padding:12px;
@@ -12432,61 +12473,110 @@ html:lang(ko) .choice-btn.active::after {
   box-shadow:0 6px 18px rgba(24,40,29,.10);
   visibility:visible;
 }
-#p1-number-pad-floating-panel .number-pad-float-header{
-  display:flex;align-items:center;justify-content:space-between;gap:12px;
-  margin:0 0 10px;color:#17271B;font-size:18px;font-weight:900;line-height:1.5
+#p1-number-pad-floating-panel .number-pad-float-header {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin:0 0 10px;
+  color:#17271B;
+  font-size:18px;
+  font-weight:900;
+  line-height:1.5;
 }
-#p1-number-pad-floating-panel .number-pad-float-close{
-  flex:0 0 auto;min-width:64px;min-height:48px;padding:8px 12px;
-  border:2px solid #26392D;border-radius:10px;background:#F0F5ED;
-  color:#17271B;font-family:inherit;font-size:16px;font-weight:900;cursor:pointer;
-  white-space:nowrap;touch-action:manipulation
+#p1-number-pad-floating-panel .number-pad-float-close {
+  flex:0 0 auto;
+  min-width:64px;
+  min-height:48px;
+  padding:8px 12px;
+  border:2px solid #26392D;
+  border-radius:10px;
+  background:#F0F5ED;
+  color:#17271B;
+  font-family:inherit;
+  font-size:16px;
+  font-weight:900;
+  cursor:pointer;
+  white-space:nowrap;
+  touch-action:manipulation;
 }
-#p1-number-pad-floating-panel .number-pad-grid{
-  display:grid !important;grid-template-columns:repeat(3,minmax(0,1fr)) !important;
-  gap:8px !important;margin:0 !important;width:100% !important
+#p1-number-pad-floating-panel .number-pad-grid {
+  display:grid !important;
+  grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+  gap:8px !important;
+  margin:0 !important;
+  width:100% !important;
 }
-#p1-number-pad-floating-panel .number-key{
-  min-width:0;min-height:56px !important;padding:7px !important;
-  border:2px solid #26392D !important;border-radius:10px !important;
-  background:#FFFFFF !important;color:#17271B !important;
-  font-family:inherit !important;font-size:23px !important;font-weight:900 !important;
-  line-height:1.3 !important;cursor:pointer;touch-action:manipulation
+#p1-number-pad-floating-panel .number-key {
+  min-width:0;
+  min-height:56px !important;
+  padding:7px !important;
+  border:2px solid #26392D !important;
+  border-radius:10px !important;
+  background:#FFFFFF !important;
+  color:#17271B !important;
+  font-family:inherit !important;
+  font-size:23px !important;
+  font-weight:900 !important;
+  line-height:1.3 !important;
+  cursor:pointer;
+  touch-action:manipulation;
 }
 #p1-number-pad-floating-panel .number-key:active,
-#p1-number-pad-floating-panel .number-pad-action:active{background:#EAF0E7 !important}
-#p1-number-pad-floating-panel .number-pad-actions{
-  display:grid !important;grid-template-columns:1fr 1fr !important;
-  gap:8px !important;margin:10px 0 0 !important;width:100% !important
+#p1-number-pad-floating-panel .number-pad-action:active { background:#EAF0E7 !important; }
+#p1-number-pad-floating-panel .number-pad-actions {
+  display:grid !important;
+  grid-template-columns:1fr 1fr !important;
+  gap:8px !important;
+  margin:10px 0 0 !important;
+  width:100% !important;
 }
-#p1-number-pad-floating-panel .number-pad-action{
-  min-width:0;min-height:54px !important;padding:7px !important;
-  border:2px solid #26392D !important;border-radius:10px !important;
-  background:#F2F2EA !important;color:#17271B !important;
-  font-family:inherit !important;font-size:16px !important;font-weight:900 !important;
-  line-height:1.4 !important;white-space:normal !important;cursor:pointer;touch-action:manipulation
+#p1-number-pad-floating-panel .number-pad-action {
+  min-width:0;
+  min-height:54px !important;
+  padding:7px !important;
+  border:2px solid #26392D !important;
+  border-radius:10px !important;
+  background:#F2F2EA !important;
+  color:#17271B !important;
+  font-family:inherit !important;
+  font-size:16px !important;
+  font-weight:900 !important;
+  line-height:1.4 !important;
+  white-space:normal !important;
+  cursor:pointer;
+  touch-action:manipulation;
 }
-#p1-number-pad-floating-panel .number-pad-feedback{
-  margin:8px 0 0 !important;padding:8px 10px !important;
-  border:2px solid #26392D !important;border-radius:9px !important;
-  background:#F0F5ED !important;color:#17271B !important;
-  font-size:16px !important;font-weight:800 !important;line-height:1.5 !important
+#p1-number-pad-floating-panel .number-pad-feedback {
+  margin:8px 0 0 !important;
+  padding:8px 10px !important;
+  border:2px solid #26392D !important;
+  border-radius:9px !important;
+  background:#F0F5ED !important;
+  color:#17271B !important;
+  font-size:16px !important;
+  font-weight:800 !important;
+  line-height:1.5 !important;
 }
-#p1-number-pad-floating-panel button:focus-visible{outline:3px solid #17271B;outline-offset:2px}
-@media (max-width:899px){
-  .exam-wrapper.p1-keypad-open-expanded {
-    width:calc(100% - 28px) !important;
-    max-width:720px !important;
-  }
+#p1-number-pad-floating-panel button:focus-visible { outline:3px solid #17271B; outline-offset:2px; }
+@media (max-width:899px) {
   #step-p1 .p1-responsive-keypad-layout.is-wide-keypad-layout.has-visible-keypad {
+    width:100% !important;
     grid-template-columns:minmax(0,1fr);
     grid-template-areas:"main" "keypad" "action";
   }
+  #step-p1 .p1-responsive-keypad-layout.is-wide-keypad-layout .p1-keypad-column {
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    align-self:start;
+  }
+  #step-p1.p1-keypad-wide-overflow { overflow-x:clip !important; }
 }
-@media (max-width:480px){
-  #p1-number-pad-floating-panel{padding:10px !important;border-radius:14px !important}
-  #p1-number-pad-floating-panel .number-key{min-height:52px !important;font-size:22px !important}
-  #p1-number-pad-floating-panel .number-pad-action{min-height:52px !important;font-size:15px !important}
+@media (max-width:480px) {
+  #p1-number-pad-floating-panel { padding:10px !important; border-radius:14px !important; }
+  #p1-number-pad-floating-panel .number-key { min-height:52px !important; font-size:22px !important; }
+  #p1-number-pad-floating-panel .number-pad-action { min-height:52px !important; font-size:15px !important; }
 }
 </style>
 <!-- Duplicate keypad controller removed: the original controller above is now the sole owner of the floating panel. -->
