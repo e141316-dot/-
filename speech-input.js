@@ -7,12 +7,31 @@
 (function () {
   'use strict';
 
-  var RECOGNITION_LANG = 'zh-TW';
-  var SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var DEFAULT_RECOGNITION_LANG = 'zh-TW';
   var activeSession = null;
   var observer = null;
-  var syncingControls = false;
-  var syncQueued = false;
+  var diagnostics = [];
+
+  function getRecognitionCtor() {
+    return window.SpeechRecognition || window.webkitSpeechRecognition || null;
+  }
+
+  function logDiagnostic(phase, detail) {
+    var record = { time: new Date().toISOString(), phase: phase, detail: detail || '' };
+    diagnostics.push(record);
+    if (diagnostics.length > 100) diagnostics.shift();
+    try { console.info('[SpeechInput診斷]', record); } catch (error) {}
+    try { window.__speechInputDiagnostics = diagnostics.slice(); } catch (error) {}
+  }
+
+  function getRecognitionLanguage() {
+    var state = null;
+    try { state = typeof window.__getCognitiveExamState === 'function' ? window.__getCognitiveExamState() : window.examState; } catch (error) {}
+    var selected = state && state.language ? String(state.language) : DEFAULT_RECOGNITION_LANG;
+    if (selected === 'nan-TW' || selected === 'hak-TW') return selected;
+    // 純文字呈現模式仍可使用麥克風，辨識語言採國語預設。
+    return DEFAULT_RECOGNITION_LANG;
+  }
 
   var TEXT = {
     start: '使用語音輸入',
@@ -20,7 +39,7 @@
     listening: '正在聆聽，請開始說話。',
     stopping: '正在整理辨識結果…',
     draft: '即時辨識：',
-    success: '已辨識並加入文字，請確認內容。',
+    success: '已辨識文字，請確認內容。',
     noSpeech: '沒有偵測到聲音，請靠近麥克風再說一次。',
     denied: '尚未取得麥克風或語音辨識權限。請允許此網站使用麥克風後再試。',
     noMic: '找不到可用的麥克風，請確認裝置已連接並允許使用。',
@@ -49,6 +68,7 @@
     '尚未取得完整辨識文字，請再說一次。': ['No complete speech result was received. Please try again.', '音声を完全に認識できませんでした。もう一度お試しください。', '완전한 음성 인식 결과를 받지 못했습니다. 다시 말씀해 주세요.'],
     '語音辨識暫時無法使用，請再試一次或改用文字輸入。': ['Speech recognition is temporarily unavailable. Try again or type your answer.', '音声認識を一時的に利用できません。もう一度試すか、文字で入力してください。', '음성 인식을 일시적으로 사용할 수 없습니다. 다시 시도하거나 문자로 입력해 주세요.'],
     '語音輸入不可用': ['Voice input unavailable', '音声入力は利用できません', '음성 입력을 사용할 수 없습니다'],
+    '目前無法使用網頁語音辨識，請點選鍵盤上的麥克風說出答案，或直接輸入文字。': ['Web speech recognition is unavailable. Tap the keyboard microphone to dictate, or type your answer.', 'Web音声認識を利用できません。キーボードのマイクで入力するか、直接入力してください。', '웹 음성 인식을 사용할 수 없습니다. 키보드 마이크로 말하거나 직접 입력해 주세요.'],
     '語音輸入需要使用 HTTPS 網址開啟，請從正式網站進入。': ['Voice input requires HTTPS. Open the secure website URL.', '音声入力にはHTTPSが必要です。安全なサイトURLから開いてください。', '음성 입력은 HTTPS가 필요합니다. 보안 웹사이트 주소로 접속해 주세요.'],
     '已停止另一個錄音，請再點一次開始。': ['The previous recording was stopped. Tap again to start.', '前の録音を停止しました。もう一度タップして開始してください。', '이전 녹음을 중지했습니다. 다시 눌러 시작해 주세요.']
   };
@@ -79,6 +99,16 @@
     var ua = navigator.userAgent || '';
     return /iPhone|iPad|iPod/i.test(ua) ||
       (navigator.platform === 'MacIntel' && Number(navigator.maxTouchPoints || 0) > 1);
+  }
+
+  function isRestrictedIOSContainer() {
+    if (!isIOSDevice()) return false;
+    var ua = navigator.userAgent || '';
+    if (navigator.standalone === true) return true;
+    if (/(Line\/|FBAN|FBAV|Instagram|MicroMessenger|GSA\/|SafariViewService)/i.test(ua)) return true;
+    var hasSafariToken = /Safari\//i.test(ua);
+    var hasKnownBrowserToken = /(CriOS\/|FxiOS\/|EdgiOS\/|OPiOS\/)/i.test(ua);
+    return /AppleWebKit/i.test(ua) && !hasSafariToken && !hasKnownBrowserToken;
   }
 
   function isSecureEnough() {
@@ -164,12 +194,9 @@
     if (!wrapper) return;
     var status = wrapper.querySelector('.native-speech-status');
     if (!status) return;
-    var nextText = message || '';
-    if (status.textContent !== nextText) status.textContent = nextText;
-    var isError = kind === 'error';
-    var isDraft = kind === 'draft';
-    if (status.classList.contains('is-error') !== isError) status.classList.toggle('is-error', isError);
-    if (status.classList.contains('is-draft') !== isDraft) status.classList.toggle('is-draft', isDraft);
+    status.textContent = message || '';
+    status.classList.toggle('is-error', kind === 'error');
+    status.classList.toggle('is-draft', kind === 'draft');
   }
 
   function setButtonState(wrapper, recording) {
@@ -234,6 +261,7 @@
   function stopSession(session, discard) {
     if (!session || !session.recognition) return;
     if (discard) session.discard = true;
+    clearSessionTimers(session);
     session.manualStop = !discard;
     if (!discard) setStatus(session.wrapper, tr(TEXT.stopping));
     try {
@@ -270,105 +298,192 @@
     setStatus(session.wrapper, tr(TEXT.success));
   }
 
+  function clearSessionTimers(session) {
+    if (!session) return;
+    ['startupTimer', 'audioTimer', 'speechTimer', 'resultTimer'].forEach(function (key) {
+      if (session[key]) { clearTimeout(session[key]); session[key] = null; }
+    });
+  }
+
+  function focusKeyboardFallback(input, wrapper, reason) {
+    var message = '目前無法使用網頁語音辨識，請點選鍵盤上的麥克風說出答案，或直接輸入文字。';
+    if (/not-allowed|service-not-allowed|NotAllowedError/i.test(String(reason || ''))) {
+      message = '網站尚未取得麥克風或語音辨識權限。請檢查 iPhone 的網站麥克風權限；也可以點選輸入框，使用鍵盤上的麥克風聽寫。';
+    } else if (/language-not-supported|語言/i.test(String(reason || ''))) {
+      message = '目前瀏覽器不支援所選的語音辨識語言，請改用 iPhone 鍵盤聽寫或直接輸入文字。';
+    } else if (/network/i.test(String(reason || ''))) {
+      message = '瀏覽器語音辨識服務目前無法連線，請確認網路，或改用 iPhone 鍵盤聽寫及文字輸入。';
+    }
+    logDiagnostic('IOS_KEYBOARD_FALLBACK', reason || '網頁辨識不可用');
+    setButtonState(wrapper, false);
+    setStatus(wrapper, tr(message), 'error');
+    if (input && document.documentElement.contains(input) && !input.disabled && !input.readOnly) {
+      try { input.focus({ preventScroll: false }); } catch (error) { try { input.focus(); } catch (ignore) {} }
+    }
+  }
+
   function startRecognition(input, wrapper) {
-    if (!SpeechRecognitionCtor) {
-      setStatus(wrapper, tr(isIOSDevice() ? TEXT.unavailableIOS : TEXT.unavailable), 'error');
+    var isIOS = isIOSDevice();
+    var SpeechRecognitionCtor = getRecognitionCtor();
+    logDiagnostic('CLICK', 'iOS=' + isIOS + ', secure=' + isSecureEnough() + ', api=' + (SpeechRecognitionCtor ? 'present' : 'missing') + ', restrictedContainer=' + isRestrictedIOSContainer());
+
+    if (isIOS && isRestrictedIOSContainer()) {
+      logDiagnostic('A_RESTRICTED_IOS_CONTAINER', '主畫面網頁 App 或 App 內建瀏覽器／WKWebView');
+      focusKeyboardFallback(input, wrapper, 'iOS 受限瀏覽器環境');
       return;
     }
     if (!isSecureEnough()) {
-      setStatus(wrapper, tr('語音輸入需要使用 HTTPS 網址開啟，請從正式網站進入。'), 'error');
+      logDiagnostic('A_SECURE_CONTEXT_FAIL', location.href);
+      if (isIOS) focusKeyboardFallback(input, wrapper, '非 HTTPS 或非安全環境');
+      else setStatus(wrapper, tr('語音輸入需要使用 HTTPS 網址開啟，請從正式網站進入。'), 'error');
+      return;
+    }
+    if (!SpeechRecognitionCtor) {
+      logDiagnostic('A_API_MISSING', 'SpeechRecognition 與 webkitSpeechRecognition 均不存在');
+      if (isIOS) focusKeyboardFallback(input, wrapper, '此 iOS 環境沒有可用的 Web Speech API');
+      else setStatus(wrapper, tr(TEXT.unavailable), 'error');
       return;
     }
     if (activeSession) {
-      if (activeSession.wrapper === wrapper) {
-        stopSession(activeSession, false);
-      } else {
-        stopSession(activeSession, true);
-        setStatus(wrapper, tr('已停止另一個錄音，請再點一次開始。'));
-      }
+      if (activeSession.wrapper === wrapper) stopSession(activeSession, false);
+      else { stopSession(activeSession, true); setStatus(wrapper, tr('已停止另一個錄音，請再點一次開始。')); }
       return;
     }
 
     var recognition;
     try {
       recognition = new SpeechRecognitionCtor();
+      logDiagnostic('B_CONSTRUCTOR_OK', '辨識物件建立成功');
     } catch (error) {
-      setStatus(wrapper, tr(TEXT.generic), 'error');
+      logDiagnostic('B_CONSTRUCTOR_FAIL', (error && error.name || 'Error') + ': ' + (error && error.message || error));
+      if (isIOS) focusKeyboardFallback(input, wrapper, '建立辨識物件失敗');
+      else setStatus(wrapper, tr(TEXT.generic), 'error');
       return;
     }
 
-    var session = {
-      recognition: recognition,
-      input: input,
-      wrapper: wrapper,
-      finalText: '',
-      interimText: '',
-      errorMessage: '',
-      manualStop: false,
-      discard: false
-    };
-
-    recognition.lang = RECOGNITION_LANG;
-    recognition.continuous = false;
-    recognition.interimResults = true;
-    recognition.maxAlternatives = 1;
+    var lang = getRecognitionLanguage();
+    var session = { recognition: recognition, input: input, wrapper: wrapper, finalText: '', interimText: '',
+      errorMessage: '', manualStop: false, discard: false, lang: lang, gotStart: false, gotAudio: false,
+      gotSpeech: false, gotResult: false, errorCode: '', startupTimer: null, audioTimer: null,
+      speechTimer: null, resultTimer: null };
+    try {
+      recognition.lang = lang;
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.maxAlternatives = 1;
+      logDiagnostic('C_LANGUAGE_SET', lang);
+    } catch (error) { logDiagnostic('C_LANGUAGE_SET_FAIL', String(error && error.message || error)); }
 
     recognition.onstart = function () {
       if (activeSession !== session) return;
-      setButtonState(wrapper, true);
-      setStatus(wrapper, tr(TEXT.listening));
+      session.gotStart = true;
+      if (session.startupTimer) { clearTimeout(session.startupTimer); session.startupTimer = null; }
+      logDiagnostic('START_EVENT', '辨識服務回報 onstart');
+      setButtonState(wrapper, true); setStatus(wrapper, tr(TEXT.listening));
+      session.audioTimer = setTimeout(function () {
+        if (activeSession !== session || session.gotAudio) return;
+        logDiagnostic('D_NO_AUDIOSTART', 'onstart 後 8 秒未收到 audiostart');
+        stopSession(session, true);
+        if (isIOS) focusKeyboardFallback(input, wrapper, '辨識啟動後沒有 audio 音訊事件');
+        else setStatus(wrapper, tr(TEXT.generic), 'error');
+      }, 8000);
     };
-
+    recognition.onaudiostart = function () {
+      if (activeSession !== session) return;
+      session.gotAudio = true;
+      if (session.audioTimer) { clearTimeout(session.audioTimer); session.audioTimer = null; }
+      logDiagnostic('D_AUDIOSTART', '已收到音訊開始事件');
+      session.speechTimer = setTimeout(function () {
+        if (activeSession !== session || session.gotSpeech) return;
+        logDiagnostic('E_NO_SPEECHSTART', '收到 audiostart，12 秒內沒有 speechstart');
+        stopSession(session, true);
+        if (isIOS) focusKeyboardFallback(input, wrapper, '有音訊但沒有偵測到語音');
+        else setStatus(wrapper, tr(TEXT.noSpeech), 'error');
+      }, 12000);
+    };
+    recognition.onspeechstart = function () {
+      if (activeSession !== session) return;
+      session.gotSpeech = true;
+      if (session.speechTimer) { clearTimeout(session.speechTimer); session.speechTimer = null; }
+      logDiagnostic('E_SPEECHSTART', '已收到語音開始事件');
+      session.resultTimer = setTimeout(function () {
+        if (activeSession !== session || session.gotResult) return;
+        logDiagnostic('F_NO_RESULT', '收到 speechstart，20 秒內沒有 result');
+        stopSession(session, true);
+        if (isIOS) focusKeyboardFallback(input, wrapper, '已偵測到說話，但沒有辨識結果');
+        else setStatus(wrapper, tr(TEXT.empty), 'error');
+      }, 20000);
+    };
     recognition.onresult = function (event) {
       if (activeSession !== session) return;
-      var finalParts = [];
-      var interimParts = [];
+      session.gotResult = true;
+      if (session.resultTimer) { clearTimeout(session.resultTimer); session.resultTimer = null; }
+      var finalParts = [], interimParts = [];
       for (var i = 0; i < event.results.length; i++) {
         var item = event.results[i];
         var phrase = item && item[0] ? String(item[0].transcript || '') : '';
         if (!phrase) continue;
-        if (item.isFinal) finalParts.push(phrase);
-        else interimParts.push(phrase);
+        if (item.isFinal) finalParts.push(phrase); else interimParts.push(phrase);
       }
       session.finalText = finalParts.join('').trim();
       session.interimText = interimParts.join('').trim();
-      if (session.interimText) {
-        setStatus(wrapper, tr(TEXT.draft) + session.interimText, 'draft');
-      } else if (session.finalText) {
-        setStatus(wrapper, tr(TEXT.stopping));
-      }
+      logDiagnostic('F_RESULT', '收到 result；final=' + !!session.finalText + '；lang=' + session.lang);
+      if (session.interimText) setStatus(wrapper, tr(TEXT.draft) + session.interimText, 'draft');
+      else if (session.finalText) setStatus(wrapper, tr(TEXT.stopping));
     };
-
-    recognition.onspeechend = function () {
-      // continuous=false returns one utterance; stop after the browser detects the end of speech.
-      try { recognition.stop(); } catch (error) {}
-    };
-
+    recognition.onspeechend = function () { logDiagnostic('SPEECH_END', '收到 onspeechend'); try { recognition.stop(); } catch (error) {} };
     recognition.onerror = function (event) {
       if (activeSession !== session) return;
-      session.errorMessage = getErrorMessage(event && event.error);
+      session.errorCode = event && event.error ? String(event.error) : 'unknown';
+      session.errorMessage = getErrorMessage(session.errorCode);
+      logDiagnostic('ERROR_EVENT', session.errorCode + (event && event.message ? ': ' + event.message : ''));
+      if (session.errorCode === 'language-not-supported') logDiagnostic('C_LANGUAGE_UNSUPPORTED', session.lang);
       if (session.errorMessage) setStatus(wrapper, tr(session.errorMessage), 'error');
     };
-
     recognition.onend = function () {
       if (activeSession === session) activeSession = null;
-      clearSessionUI(session);
-      commitSession(session);
+      clearSessionTimers(session); clearSessionUI(session);
+      logDiagnostic('END_EVENT', 'audio=' + session.gotAudio + ', speech=' + session.gotSpeech + ', result=' + session.gotResult + ', error=' + (session.errorCode || 'none'));
+      if (session.discard) return;
+      if (session.finalText) {
+        commitSession(session);
+        var confirmed = input && input.value.indexOf(session.finalText) !== -1;
+        logDiagnostic(confirmed ? 'G_INPUT_WRITE_OK' : 'G_INPUT_WRITE_FAIL', '輸入框寫入確認=' + confirmed);
+        if (!confirmed && isIOS) focusKeyboardFallback(input, wrapper, '辨識結果未能寫入輸入框');
+      } else if (isIOS && !session.manualStop) {
+        focusKeyboardFallback(input, wrapper, session.errorCode || (!session.gotAudio ? '未取得音訊事件' : (!session.gotSpeech ? '未偵測到語音' : '沒有辨識結果')));
+      } else if (!session.errorCode && !session.manualStop) setStatus(wrapper, tr(TEXT.empty), 'error');
     };
 
-    activeSession = session;
-    setButtonState(wrapper, true);
-    setStatus(wrapper, tr(TEXT.listening));
+    // TTS 與語音辨識不可同時占用音訊工作階段；如前一段播放尚未結束，先停止播放。
+    try {
+      var audioState = typeof window.__getExamAudioPlaybackState === 'function' ? window.__getExamAudioPlaybackState() : null;
+      if (audioState && audioState.playing) {
+        logDiagnostic('TTS_CONFLICT', JSON.stringify({ synthesis: audioState.synthesis, globalAudio: audioState.globalAudio, hakkaAudio: audioState.hakkaAudio }));
+        if (typeof audioState.stop === 'function') audioState.stop();
+      } else logDiagnostic('TTS_IDLE', audioState ? JSON.stringify(audioState) : '未提供主程式音訊狀態');
+    } catch (error) { logDiagnostic('TTS_STATE_CHECK_FAIL', String(error && error.message || error)); }
 
-    // start() is called synchronously inside the user's button click for iOS permission rules.
+    activeSession = session;
+    setButtonState(wrapper, true); setStatus(wrapper, tr(TEXT.listening));
     try {
       recognition.start();
+      logDiagnostic('C_START_CALL_RETURNED', 'start() 同步返回；仍須等待 onstart/audio/result 確認');
     } catch (error) {
-      activeSession = null;
-      clearSessionUI(session);
-      var message = error && error.name === 'NotAllowedError' ? TEXT.denied : TEXT.generic;
-      setStatus(wrapper, tr(message), 'error');
+      activeSession = null; clearSessionTimers(session); clearSessionUI(session);
+      var name = error && error.name ? error.name : 'Error';
+      logDiagnostic('C_START_THROW', name + ': ' + (error && error.message || error));
+      if (isIOS) focusKeyboardFallback(input, wrapper, 'recognition.start() 同步失敗：' + name);
+      else setStatus(wrapper, tr(name === 'NotAllowedError' ? TEXT.denied : TEXT.generic), 'error');
+      return;
     }
+    session.startupTimer = setTimeout(function () {
+      if (activeSession !== session || session.gotStart) return;
+      logDiagnostic('C_NO_START_EVENT', 'start() 返回後 8 秒未收到 onstart');
+      stopSession(session, true);
+      if (isIOS) focusKeyboardFallback(input, wrapper, 'start() 已呼叫但辨識服務沒有啟動');
+      else setStatus(wrapper, tr(TEXT.generic), 'error');
+    }, 8000);
   }
 
   function handleButtonClick(wrapper) {
@@ -386,9 +501,7 @@
     if (!input || !anchor || !anchor.parentNode) return null;
     var wrapper = document.getElementById(id);
     if (!wrapper) wrapper = createTools(id);
-    if (wrapper.getAttribute('data-input-id') !== input.id) {
-      wrapper.setAttribute('data-input-id', input.id);
-    }
+    wrapper.setAttribute('data-input-id', input.id);
     if (wrapper.previousElementSibling !== anchor) {
       anchor.insertAdjacentElement('afterend', wrapper);
     }
@@ -413,17 +526,11 @@
 
   function setWrapperVisible(wrapper, visible) {
     if (!wrapper) return;
-    var shouldHide = !visible;
-    if (wrapper.hidden !== shouldHide) wrapper.hidden = shouldHide;
-    var nextDisplay = visible ? 'flex' : 'none';
-    if (wrapper.style.display !== nextDisplay) wrapper.style.display = nextDisplay;
+    wrapper.hidden = !visible;
+    wrapper.style.display = visible ? 'flex' : 'none';
   }
 
   function syncControls() {
-    // Prevent overlapping calls when several question controls change together.
-    if (syncingControls) return;
-    syncingControls = true;
-    try {
     var p1Input = document.getElementById('p1-answer-input');
     var p1Control = document.getElementById('p1-answer-control');
     var p1Group = document.getElementById('p1-input-group');
@@ -453,43 +560,20 @@
         : currentStep === 'step-p2-sop5';
       if (!stillInTargetStep) stopSession(activeSession, true);
     }
-    } finally {
-      syncingControls = false;
-    }
-  }
-
-  function queueSyncControls() {
-    if (syncQueued) return;
-    syncQueued = true;
-    Promise.resolve().then(function () {
-      syncQueued = false;
-      syncControls();
-    });
   }
 
   function configureSupport(wrapper) {
     if (!wrapper) return;
     var button = wrapper.querySelector('.native-speech-button');
     if (!button) return;
-    if (!SpeechRecognitionCtor || !isSecureEnough()) {
-      if (!button.disabled) button.disabled = true;
-      var unavailableTitle = tr(isIOSDevice() ? TEXT.unavailableIOS : TEXT.unavailable);
-      if (button.title !== unavailableTitle) button.title = unavailableTitle;
-      var label = wrapper.querySelector('.native-speech-label');
-      if (label && label.textContent !== tr('語音輸入不可用')) {
-        label.textContent = tr('語音輸入不可用');
-      }
-      setStatus(wrapper, tr(!isSecureEnough() ? '語音輸入需要使用 HTTPS 網址開啟，請從正式網站進入。' :
-        (isIOSDevice() ? TEXT.unavailableIOS : TEXT.unavailable)), 'error');
-    } else {
-      if (button.disabled) button.disabled = false;
-      var startTitle = tr(TEXT.start);
-      if (button.title !== startTitle) button.title = startTitle;
-      var label2 = wrapper.querySelector('.native-speech-label');
-      if (label2 && !activeSession && label2.textContent !== startTitle) {
-        label2.textContent = startTitle;
-      }
-    }
+    var supported = !!getRecognitionCtor() && isSecureEnough();
+    button.disabled = !supported && !isIOSDevice();
+    button.title = tr(supported ? TEXT.start : (isIOSDevice() ? TEXT.unavailableIOS : TEXT.unavailable));
+    var label = wrapper.querySelector('.native-speech-label');
+    if (label && !activeSession) label.textContent = tr(supported || isIOSDevice() ? TEXT.start : '語音輸入不可用');
+    if (!supported && !isIOSDevice()) {
+      setStatus(wrapper, tr(!isSecureEnough() ? '語音輸入需要使用 HTTPS 網址開啟，請從正式網站進入。' : TEXT.unavailable), 'error');
+    } else if (supported && !activeSession) setStatus(wrapper, '');
   }
 
   function init() {
@@ -498,7 +582,7 @@
     syncControls();
 
     var bodyObserver = new MutationObserver(function () {
-      queueSyncControls();
+      syncControls();
     });
     bodyObserver.observe(document.body, {
       attributes: true,
@@ -507,14 +591,10 @@
       subtree: false
     });
 
-    // IMPORTANT: observe only the original answer-control subtree.
-    // The microphone toolbar is inserted beside #p1-answer-control, not inside it.
-    // Observing the whole #p1-input-group also observes our own toolbar updates,
-    // which can create an endless MutationObserver -> syncControls -> DOM-write loop.
-    var p1Control = document.getElementById('p1-answer-control');
-    if (p1Control) {
-      observer = new MutationObserver(function () { queueSyncControls(); });
-      observer.observe(p1Control, {
+    var p1Group = document.getElementById('p1-input-group');
+    if (p1Group) {
+      observer = new MutationObserver(function () { syncControls(); });
+      observer.observe(p1Group, {
         childList: true,
         subtree: true,
         attributes: true,
@@ -522,11 +602,12 @@
       });
     }
 
-    // Observe only the original P2 input itself. The microphone toolbar is its sibling.
-    var p2Input = document.getElementById('p2-recall-input');
-    if (p2Input) {
-      var p2Observer = new MutationObserver(function () { queueSyncControls(); });
-      p2Observer.observe(p2Input, {
+    var p2Entry = document.querySelector('#step-p2-sop5 .p2-recall-entry');
+    if (p2Entry) {
+      var p2Observer = new MutationObserver(function () { syncControls(); });
+      p2Observer.observe(p2Entry, {
+        childList: true,
+        subtree: true,
         attributes: true,
         attributeFilter: ['type', 'readonly', 'disabled', 'style', 'class']
       });
