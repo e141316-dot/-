@@ -3,9 +3,9 @@
 <script id="page-diagnostics-early-probe">
 (function () {
   'use strict';
-  var enabled = false;
-  try { enabled = new URLSearchParams(window.location.search || '').get('diag') === '1'; } catch (e) {}
-  if (!enabled) return;
+  // This is a dedicated diagnostic copy, so instrumentation is always enabled.
+  // It does not affect the production FinalExam.html.
+  var enabled = true;
 
   var startedAt = performance.now();
   var records = [];
@@ -3264,7 +3264,134 @@ body.text-only-mode .mode-status-chip {
 </style>
 
 </head>
+
 <body>
+<!-- Diagnostic panel is mounted immediately after the actual body element opens. -->
+<!-- Diagnostic panel moved to the start of body so it remains visible even if later initialization stalls. -->
+<script id="page-diagnostics-visible-panel">
+(function () {
+  'use strict';
+  var diag = window.__PAGE_DIAG__;
+  if (!diag || !diag.enabled) return;
+
+  function mountPanel() {
+    if (!document.body || document.getElementById('page-diag-visible-panel')) return;
+
+    var panel = document.createElement('section');
+    panel.id = 'page-diag-visible-panel';
+    panel.setAttribute('aria-label', '頁面診斷工具');
+    panel.style.cssText = [
+      'position:fixed', 'right:12px', 'bottom:12px', 'z-index:2147483647',
+      'width:min(390px,calc(100vw - 24px))', 'max-height:48vh', 'overflow:auto',
+      'box-sizing:border-box', 'padding:12px', 'border:1px solid #4F7058',
+      'border-radius:12px', 'background:#FCFBF7', 'color:#35473C',
+      'box-shadow:0 4px 18px rgba(0,0,0,.18)',
+      'font:14px/1.5 Arial,"Microsoft JhengHei",sans-serif'
+    ].join(';');
+
+    var heading = document.createElement('div');
+    heading.textContent = '頁面診斷工具';
+    heading.style.cssText = 'font-size:16px;font-weight:700;margin-bottom:8px';
+
+    var note = document.createElement('div');
+    note.textContent = '不會播放語音、不會發送額外請求。請先讓頁面停留在目前狀態，再產生紀錄。';
+    note.style.cssText = 'margin-bottom:8px;color:#5D6D62';
+
+    var actions = document.createElement('div');
+    actions.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px';
+
+    function makeButton(label) {
+      var button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = label;
+      button.style.cssText = 'min-height:38px;padding:7px 11px;border:1px solid #4F7058;border-radius:8px;background:#FFFFFF;color:#35473C;font:inherit;font-weight:700;cursor:pointer';
+      return button;
+    }
+
+    var summaryButton = makeButton('顯示診斷摘要');
+    var downloadButton = makeButton('下載完整紀錄');
+    var copyButton = makeButton('複製摘要');
+    actions.appendChild(summaryButton);
+    actions.appendChild(downloadButton);
+    actions.appendChild(copyButton);
+
+    var status = document.createElement('div');
+    status.setAttribute('role', 'status');
+    status.textContent = '診斷紀錄已啟動，尚未產生摘要。';
+    status.style.cssText = 'margin-bottom:6px;color:#4F7058;font-weight:700';
+
+    var output = document.createElement('textarea');
+    output.id = 'page-diag-visible-output';
+    output.readOnly = true;
+    output.setAttribute('aria-label', '診斷摘要內容');
+    output.placeholder = '按「顯示診斷摘要」後，資料會顯示在這裡。';
+    output.style.cssText = 'display:block;width:100%;min-height:100px;max-height:24vh;box-sizing:border-box;padding:8px;border:1px solid #D8E1D6;border-radius:8px;background:#FFFFFF;color:#35473C;font:12px/1.45 Consolas,monospace;resize:vertical';
+
+    panel.appendChild(heading);
+    panel.appendChild(note);
+    panel.appendChild(actions);
+    panel.appendChild(status);
+    panel.appendChild(output);
+    document.body.appendChild(panel);
+
+    function getSummaryText() {
+      var summary = diag.getSummary();
+      return JSON.stringify(summary, null, 2);
+    }
+
+    summaryButton.addEventListener('click', function () {
+      try {
+        output.value = getSummaryText();
+        status.textContent = '摘要已產生；紀錄筆數：' + diag.records.length;
+      } catch (error) {
+        status.textContent = '產生摘要失敗：' + String(error && error.message || error);
+      }
+    });
+
+    downloadButton.addEventListener('click', function () {
+      try {
+        var payload = diag.exportJSON();
+        var blob = new Blob([payload], { type: 'application/json;charset=utf-8' });
+        var url = URL.createObjectURL(blob);
+        var link = document.createElement('a');
+        var stamp = new Date().toISOString().replace(/[:.]/g, '-');
+        link.href = url;
+        link.download = 'FinalExam_page_diagnostic_' + stamp + '.json';
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.setTimeout(function () { URL.revokeObjectURL(url); }, 5000);
+        status.textContent = '已要求下載完整 JSON 診斷紀錄。';
+      } catch (error) {
+        status.textContent = '下載失敗：' + String(error && error.message || error);
+      }
+    });
+
+    copyButton.addEventListener('click', function () {
+      try {
+        var value = getSummaryText();
+        output.value = value;
+        output.focus();
+        output.select();
+        var copied = false;
+        try { copied = document.execCommand('copy'); } catch (e) {}
+        status.textContent = copied
+          ? '摘要已複製。'
+          : '瀏覽器未允許自動複製；摘要已選取，請按 Ctrl+C。';
+      } catch (error) {
+        status.textContent = '複製摘要失敗：' + String(error && error.message || error);
+      }
+    });
+
+    diag.add('diagnostic_panel_mounted', { at: Math.round(performance.now() * 100) / 100 });
+  }
+
+  // The script is placed immediately after <body>; mount now, before later page scripts run.
+  mountPanel();
+})();
+</script>
+
   <div class="exam-wrapper">
 
     <!-- 頂部頁頭區塊 -->
@@ -16261,132 +16388,5 @@ body.p1-native-keypad-device #step-p1 #p1-answer-input {
 })();
 
 </script>
-<script id="page-diagnostics-visible-panel">
-(function () {
-  'use strict';
-  var diag = window.__PAGE_DIAG__;
-  if (!diag || !diag.enabled) return;
-
-  function mountPanel() {
-    if (!document.body || document.getElementById('page-diag-visible-panel')) return;
-
-    var panel = document.createElement('section');
-    panel.id = 'page-diag-visible-panel';
-    panel.setAttribute('aria-label', '頁面診斷工具');
-    panel.style.cssText = [
-      'position:fixed', 'right:12px', 'bottom:12px', 'z-index:2147483647',
-      'width:min(390px,calc(100vw - 24px))', 'max-height:48vh', 'overflow:auto',
-      'box-sizing:border-box', 'padding:12px', 'border:1px solid #4F7058',
-      'border-radius:12px', 'background:#FCFBF7', 'color:#35473C',
-      'box-shadow:0 4px 18px rgba(0,0,0,.18)',
-      'font:14px/1.5 Arial,"Microsoft JhengHei",sans-serif'
-    ].join(';');
-
-    var heading = document.createElement('div');
-    heading.textContent = '頁面診斷工具';
-    heading.style.cssText = 'font-size:16px;font-weight:700;margin-bottom:8px';
-
-    var note = document.createElement('div');
-    note.textContent = '不會播放語音、不會發送額外請求。請先讓頁面停留在目前狀態，再產生紀錄。';
-    note.style.cssText = 'margin-bottom:8px;color:#5D6D62';
-
-    var actions = document.createElement('div');
-    actions.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px';
-
-    function makeButton(label) {
-      var button = document.createElement('button');
-      button.type = 'button';
-      button.textContent = label;
-      button.style.cssText = 'min-height:38px;padding:7px 11px;border:1px solid #4F7058;border-radius:8px;background:#FFFFFF;color:#35473C;font:inherit;font-weight:700;cursor:pointer';
-      return button;
-    }
-
-    var summaryButton = makeButton('顯示診斷摘要');
-    var downloadButton = makeButton('下載完整紀錄');
-    var copyButton = makeButton('複製摘要');
-    actions.appendChild(summaryButton);
-    actions.appendChild(downloadButton);
-    actions.appendChild(copyButton);
-
-    var status = document.createElement('div');
-    status.setAttribute('role', 'status');
-    status.textContent = '診斷紀錄已啟動，尚未產生摘要。';
-    status.style.cssText = 'margin-bottom:6px;color:#4F7058;font-weight:700';
-
-    var output = document.createElement('textarea');
-    output.id = 'page-diag-visible-output';
-    output.readOnly = true;
-    output.setAttribute('aria-label', '診斷摘要內容');
-    output.placeholder = '按「顯示診斷摘要」後，資料會顯示在這裡。';
-    output.style.cssText = 'display:block;width:100%;min-height:100px;max-height:24vh;box-sizing:border-box;padding:8px;border:1px solid #D8E1D6;border-radius:8px;background:#FFFFFF;color:#35473C;font:12px/1.45 Consolas,monospace;resize:vertical';
-
-    panel.appendChild(heading);
-    panel.appendChild(note);
-    panel.appendChild(actions);
-    panel.appendChild(status);
-    panel.appendChild(output);
-    document.body.appendChild(panel);
-
-    function getSummaryText() {
-      var summary = diag.getSummary();
-      return JSON.stringify(summary, null, 2);
-    }
-
-    summaryButton.addEventListener('click', function () {
-      try {
-        output.value = getSummaryText();
-        status.textContent = '摘要已產生；紀錄筆數：' + diag.records.length;
-      } catch (error) {
-        status.textContent = '產生摘要失敗：' + String(error && error.message || error);
-      }
-    });
-
-    downloadButton.addEventListener('click', function () {
-      try {
-        var payload = diag.exportJSON();
-        var blob = new Blob([payload], { type: 'application/json;charset=utf-8' });
-        var url = URL.createObjectURL(blob);
-        var link = document.createElement('a');
-        var stamp = new Date().toISOString().replace(/[:.]/g, '-');
-        link.href = url;
-        link.download = 'FinalExam_page_diagnostic_' + stamp + '.json';
-        link.style.display = 'none';
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        window.setTimeout(function () { URL.revokeObjectURL(url); }, 5000);
-        status.textContent = '已要求下載完整 JSON 診斷紀錄。';
-      } catch (error) {
-        status.textContent = '下載失敗：' + String(error && error.message || error);
-      }
-    });
-
-    copyButton.addEventListener('click', function () {
-      try {
-        var value = getSummaryText();
-        output.value = value;
-        output.focus();
-        output.select();
-        var copied = false;
-        try { copied = document.execCommand('copy'); } catch (e) {}
-        status.textContent = copied
-          ? '摘要已複製。'
-          : '瀏覽器未允許自動複製；摘要已選取，請按 Ctrl+C。';
-      } catch (error) {
-        status.textContent = '複製摘要失敗：' + String(error && error.message || error);
-      }
-    });
-
-    diag.add('diagnostic_panel_mounted', { at: Math.round(performance.now() * 100) / 100 });
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', mountPanel, { once: true });
-  } else {
-    mountPanel();
-  }
-})();
-</script>
-
 </body>
 </html>
