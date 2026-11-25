@@ -668,6 +668,7 @@
     .p2-progress-dots { display:flex; justify-content:center; gap:7px; margin:8px auto 12px; }
     .p2-progress-dots span { width:10px; height:10px; border-radius:50%; background:#DDE4DC; }
     .p2-progress-dots span.done { background:var(--color-green); }
+    .p2-progress-dots span.active { background:var(--color-green); box-shadow:0 0 0 3px #EAF0E7; }
     body[data-step="step-p2-sop2"] .platform-title { display:none; }
     .img-display-box { position:relative; overflow:hidden; }
     .img-countdown-track { height:6px; background:#EAF0E7; border-radius:6px; overflow:hidden; margin-top:14px; }
@@ -2970,6 +2971,95 @@ body.text-only-mode .mode-status-chip {
 
 </style>
 
+
+<style id="p2-prep-countdown-styles">
+/* 第二關準備倒數放在原圖卡容器內；正式播放時不套用這些尺寸。 */
+#step-p2-sop2.is-preparing #p2-img-counter,
+#step-p2-sop2.is-preparing .p2-progress-dots,
+#step-p2-sop2.is-preparing #p2-img-name,
+#step-p2-sop2.is-preparing .img-countdown-track,
+#step-p2-sop2.is-preparing #p2-auto-play-note {
+  visibility: hidden !important;
+}
+#step-p2-sop2.is-preparing #p2-card-img {
+  display: none !important;
+}
+#step-p2-sop2 .p2-progress-dots { min-height: 10px; }
+#step-p2-sop2 .p2-prep-countdown[hidden] {
+  display: none !important;
+}
+#step-p2-sop2.is-preparing .img-display-box {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+#step-p2-sop2.is-preparing .p2-prep-countdown {
+  display: flex;
+  flex: 1 1 auto;
+  box-sizing: border-box;
+  min-height: calc(clamp(250px, 42vh, 360px) + 47px);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px 12px;
+  text-align: center;
+}
+#step-p2-sop2 .p2-prep-countdown h2 {
+  margin: 0;
+  color: var(--color-green);
+  font-size: calc(26px * var(--font-scale));
+  font-weight: 900;
+  line-height: 1.35;
+}
+#step-p2-sop2 .p2-prep-countdown p {
+  margin: 0;
+  color: var(--color-dark);
+  font-size: calc(19px * var(--font-scale));
+  font-weight: 700;
+  line-height: 1.55;
+}
+#step-p2-sop2 .p2-prep-countdown strong {
+  display: block;
+  min-width: 1.3em;
+  color: var(--color-green);
+  font-size: clamp(76px, 11vw, 104px);
+  font-weight: 900;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 600px) {
+  #step-p2-sop2.is-preparing .p2-prep-countdown {
+    min-height: calc(clamp(220px, 38vh, 300px) + 47px);
+    gap: 10px;
+  }
+  #step-p2-sop2 .p2-prep-countdown h2 { font-size: calc(24px * var(--font-scale)); }
+  #step-p2-sop2 .p2-prep-countdown p { font-size: calc(18px * var(--font-scale)); }
+  #step-p2-sop2 .p2-prep-countdown strong { font-size: clamp(72px, 20vw, 96px); }
+}
+</style>
+
+<style id="result-page-detail-readability-local-fix">
+/* 結果頁局部資訊優化：只作用於三關明細，不更動成績、評分或導向。 */
+#step-result .p1-judged-summary{margin:10px 0 4px;padding:10px 12px;border-radius:10px;background:#EAF0E7}
+#step-result .p1-q5-summary{margin:4px 0 12px;padding:10px 12px;border-left:4px solid #B9A46B;background:#F5F2E8;border-radius:8px}
+#step-result .detail-answer-match-list{display:flex;flex-direction:column;gap:8px;margin:8px 0 14px;min-width:0}
+#step-result .detail-answer-match-row{display:grid;grid-template-columns:32px minmax(0,1fr) minmax(150px,auto);align-items:center;gap:10px;min-width:0;padding:10px 12px;border:1px solid #C6D4C5;border-radius:11px;background:#FFFFFF;box-sizing:border-box}
+#step-result .detail-answer-match-number{font-size:18px;line-height:1.6;font-weight:900;color:#35473C}
+#step-result .detail-answer-match-text{min-width:0;font-size:18px;line-height:1.65;color:#1F3325;overflow-wrap:anywhere;word-break:break-word}
+#step-result .detail-answer-match-row .detail-status{justify-self:start;max-width:100%;white-space:normal;overflow-wrap:anywhere}
+#step-result .p3-score-category.not-reported{background:#EEF0ED}
+#step-result .p3-no-earned-items{margin:8px 0;padding:10px 12px;border-radius:10px;background:#F3F1E9;font-weight:800}
+#step-result .p3-practice-reminder{margin-top:16px;background:#EAF0E7;border:1px solid #C8D7C8}
+#step-result .p3-scoring-method{margin-top:12px;font-weight:800}
+#step-result .p3-technical-source{margin-top:4px}
+@media(max-width:520px){
+  #step-result .detail-answer-match-row{grid-template-columns:28px minmax(0,1fr);align-items:start;gap:6px 8px;padding:11px 10px}
+  #step-result .detail-answer-match-row .detail-status{grid-column:2;justify-self:start}
+  #step-result .p1-judged-summary,#step-result .p1-q5-summary{padding:10px}
+}
+</style>
+
 </head>
 <body>
   <div class="exam-wrapper">
@@ -3181,7 +3271,7 @@ body.text-only-mode .mode-status-chip {
       <section class="guide-card exam-guide-card">
         <div class="guide-intro-top">
           <div class="guide-avatar guide-illustrated" aria-hidden="true"></div>
-          <p class="guide-main guide-greeting">第一關共有 5 題，請仔細聽題目，依照記憶回答。</p>
+          <p class="guide-main guide-greeting">第一關共有 5 題，請仔細閱讀題目，依照您目前知道的情況回答。</p>
         </div>
         <div class="guide-reminder">
           <span class="reminder-icon" aria-hidden="true">!</span>
@@ -3277,6 +3367,11 @@ body.text-only-mode .mode-status-chip {
       <div id="p2-img-counter" style="font-size:calc(20px * var(--font-scale));font-weight:900;margin:6px 0 12px;">第 1 / 10 張</div>
       <div id="p2-progress-dots" class="p2-progress-dots" aria-label="圖片展示進度"></div>
       <div class="img-display-box">
+        <div id="p2-prep-countdown" class="p2-prep-countdown" hidden aria-live="off">
+          <h2>圖片即將開始</h2>
+          <p>請準備好，接下來請專心觀看圖片。</p>
+          <strong id="p2-prep-countdown-number">5</strong>
+        </div>
         <img id="p2-card-img" class="p2-card-img" src="" alt="圖卡圖片" style="display:none;" />
         <div id="p2-img-name" class="img-title-text" aria-live="polite"></div>
         <div class="img-countdown-track"><div id="p2-img-progress-fill" class="img-countdown-fill"></div></div>
@@ -3374,7 +3469,7 @@ body.text-only-mode .mode-status-chip {
           </button>
         </div>
 
-        <div class="canvas-wrap"><canvas id="clockCanvas" width="340" height="340" aria-label="時鐘繪圖畫布"></canvas></div>
+        <div class="canvas-wrap"><canvas id="clockCanvas" width="340" height="340" aria-label="時鐘繪圖畫布"></canvas><span class="p3-center-marker" aria-hidden="true"></span></div>
         <div class="p3-submit-wrap"><button type="button" id="p3-submit-btn" class="btn-primary" onclick="submitP3Canvas()">完成時鐘，送出答案 ›</button></div>
         <p id="p3-ai-status" class="helper-note" role="status" aria-live="polite" style="display:none;text-align:center;margin:12px 0 4px;"></p>
       </div>
@@ -3993,6 +4088,9 @@ window.closeCustomAlert = closeCustomAlert;
     var screenWakeLock = null;
     var p2DisplayProgressInterval = null;
     var p2DisplayToken = 0;
+    var p2DisplayRunning = false;
+    var p2PrepCountdownInterval = null;
+    var p2PrepCountdownResolve = null;
     var p2PreparationToken = 0;
     var p2PreparedBankId = null;
     var p2ImagePreparationPromise = null;
@@ -5866,7 +5964,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
         'step-location': [examState.staffSetupActive ? '返回練習方式' : '返回語言設定', true],
         'step-intro': ['返回練習方式', true],
         'step-p1-intro': ['返回三關總說明', true],
-        'step-p2-intro': ['返回第一關說明', true],
+        'step-p2-intro': ['返回第一關說明', false],
         'step-p3-intro': ['返回第二關說明', true],
         'step-p3': ['返回第三關說明', true]
       };
@@ -6002,6 +6100,8 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
     function showStep(id) {
       if (id !== 'step-p2-sop2') {
         p2DisplayToken++;
+        clearP2PrepCountdown(true);
+        p2DisplayRunning = false;
         if (p2CurrentAudio) { stopP2SlideAudio(p2CurrentAudio); p2CurrentAudio = null; }
       }
       document.body.setAttribute('data-step', id);
@@ -7772,7 +7872,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       if (mode === 'solar') {
         input.placeholder = getExamGenericAnswerPlaceholder();
         label.innerText = '請輸入國曆日期：';
-        if (!allowLocalizedDateWords) unitWrap.insertAdjacentHTML('beforeend', '<span class="input-unit">號</span>');
+        if (!allowLocalizedDateWords) unitWrap.insertAdjacentHTML('beforeend', '<span class="input-unit">日</span>');
       } else {
         input.placeholder = getExamGenericAnswerPlaceholder();
         label.innerText = '請輸入農曆日期數字：';
@@ -7853,7 +7953,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
         resetAnswerInput.autocomplete='off';
         resetAnswerInput.autocapitalize='off';
         resetAnswerInput.spellcheck=false;
-        resetAnswerInput.placeholder=getExamGenericAnswerPlaceholder();
+        resetAnswerInput.placeholder=translateExamDisplayText('請輸入星期名稱');
       } else {
         label.innerText='請輸入地點名稱：';
         var answerInput = document.getElementById('p1-answer-input');
@@ -8408,7 +8508,65 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       }
     }
 
+    function clearP2PrepCountdown(cancelPending) {
+      if (p2PrepCountdownInterval !== null) {
+        clearInterval(p2PrepCountdownInterval);
+        p2PrepCountdownInterval = null;
+      }
+      var pendingResolve = p2PrepCountdownResolve;
+      p2PrepCountdownResolve = null;
+      if (cancelPending && pendingResolve) pendingResolve(false);
+      var playbackPage = document.getElementById('step-p2-sop2');
+      if (playbackPage) playbackPage.classList.remove('is-preparing');
+      var prepPanel = document.getElementById('p2-prep-countdown');
+      if (prepPanel) prepPanel.hidden = true;
+      var countdownNumber = document.getElementById('p2-prep-countdown-number');
+      if (countdownNumber) countdownNumber.textContent = '5';
+    }
+
+    function runP2PrepCountdown(runToken) {
+      clearP2PrepCountdown(false);
+      var playbackPage = document.getElementById('step-p2-sop2');
+      var prepPanel = document.getElementById('p2-prep-countdown');
+      var countdownNumber = document.getElementById('p2-prep-countdown-number');
+      if (!playbackPage || !prepPanel || !countdownNumber) return Promise.resolve(false);
+
+      playbackPage.classList.add('is-preparing');
+      prepPanel.hidden = false;
+      countdownNumber.textContent = '5';
+
+      return new Promise(function(resolve) {
+        var remaining = 5;
+        var settled = false;
+        function finish(ok) {
+          if (settled) return;
+          settled = true;
+          if (p2PrepCountdownInterval !== null) {
+            clearInterval(p2PrepCountdownInterval);
+            p2PrepCountdownInterval = null;
+          }
+          p2PrepCountdownResolve = null;
+          resolve(!!ok);
+        }
+        p2PrepCountdownResolve = finish;
+        p2PrepCountdownInterval = setInterval(function() {
+          if (runToken !== p2DisplayToken || document.body.getAttribute('data-step') !== 'step-p2-sop2') {
+            finish(false);
+            return;
+          }
+          remaining -= 1;
+          if (remaining <= 0) {
+            finish(true);
+            return;
+          }
+          countdownNumber.textContent = String(remaining);
+        }, 1000);
+      });
+    }
+
     async function startP2SOP2Display() {
+      if (p2DisplayRunning) return;
+      p2DisplayRunning = true;
       unlockAudioContext();
       var runToken = ++p2DisplayToken;
       var bankId = examState.p2.bankId;
@@ -8458,6 +8616,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
             : EXAM_DISPLAY_LANG === 'ko'
               ? '업로드한 사진에 다음 그림 카드가 없습니다: ' + missingCardsLabel + '. 이번 검사는 아직 시작되지 않았습니다. 이 플랫폼은 사용자가 업로드한 사진만 사용하며 Google Drive 등 클라우드에서 이미지를 불러오지 않습니다. 누락된 사진을 추가한 후 다시 시도하세요.'
               : '你提供的照片中尚未包含以下圖卡：' + missingCardsLabel + '。本輪測驗尚未開始；系統只使用你上傳的照片，不會改讀 Google Drive 或其他雲端圖片。請補上缺少的照片後再試一次。';
+        p2DisplayRunning = false;
         showCustomAlert(missingCardsMessage);
         return;
       }
@@ -8468,6 +8627,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
           startButton.disabled = false;
           startButton.innerText = originalButtonText;
         }
+        p2DisplayRunning = false;
         showCustomAlert('圖卡圖片準備不完整，請重新開始本輪測驗。');
         return;
       }
@@ -8476,12 +8636,14 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
         startButton.disabled = false;
         startButton.innerText = originalButtonText;
       }
-      // 只有在本輪圖片已經可顯示後才切換到圖片畫面，避免長時間停留在「準備中」。
+      // 圖片已預載完成才進入原本播放頁；先在同一個圖卡容器內執行一次 5 秒準備倒數。
+      // 倒數期間隱藏圖片、名稱、單張進度及十個進度圓點，不啟動任何正式播放計時。
       showStep('step-p2-sop2');
       var playNotice = document.getElementById('p2-auto-play-note');
-      if (playNotice) playNotice.textContent = '請準備，即將開始顯示圖片…';
-      await sleep(1500);
-      if (runToken !== p2DisplayToken || document.body.getAttribute('data-step') !== 'step-p2-sop2') return;
+      var countdownCompleted = await runP2PrepCountdown(runToken);
+      if (!countdownCompleted || runToken !== p2DisplayToken ||
+          document.body.getAttribute('data-step') !== 'step-p2-sop2') return;
+      clearP2PrepCountdown(false);
       if (playNotice) playNotice.textContent = '系統自動播放中，請專心記憶，不需點擊螢幕。';
 
       var imgCardElem = document.getElementById('p2-card-img');
@@ -8570,14 +8732,20 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       }
 
       if (runToken === p2DisplayToken && document.body.getAttribute('data-step') === 'step-p2-sop2') {
+        renderP2ProgressDots(examState.p2.items.length, true);
         startP2SOP4Rest();
       }
     }
 
-    function renderP2ProgressDots(current) {
+    function renderP2ProgressDots(current, allCompleted) {
       var holder = document.getElementById('p2-progress-dots'); if (!holder) return;
       holder.innerHTML = '';
-      for (var i=1;i<=10;i++) { var dot=document.createElement('span'); if (i<=current) dot.className='done'; holder.appendChild(dot); }
+      for (var i=1;i<=10;i++) {
+        var dot = document.createElement('span');
+        if (allCompleted || i < current) dot.className = 'done';
+        else if (i === current) dot.className = 'active';
+        holder.appendChild(dot);
+      }
     }
 
     async function requestScreenWakeLock() {
@@ -9445,6 +9613,8 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
     function restartExam() {
       stopAllSpeech();
       p2DisplayToken++;
+      clearP2PrepCountdown(true);
+      p2DisplayRunning = false;
       p2PreparationToken++;
       p2PreparedBankId = null;
       p2ImagePreparationPromise = null;
@@ -9612,7 +9782,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       var main=p&&p.querySelector('.guide-main');
       if(main){
         var p1IntroCopy = (examState && examState.language==='text')
-          ? '第一關共有 5 題，請仔細閱讀題目，依照記憶回答。'
+          ? '第一關共有 5 題，請仔細閱讀題目，依照您目前知道的情況回答。'
           : '第一關共有 5 題，請仔細聽題目，依照記憶回答。';
         main.textContent = typeof window.translateExamDisplayText === 'function'
           ? window.translateExamDisplayText(p1IntroCopy) : p1IntroCopy;
@@ -9708,7 +9878,11 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
     var input=byId('p1-answer-input'),label=byId('p1-input-label');
     if(input){input.type='tel';input.inputMode='numeric';input.setAttribute('pattern','[0-9]*');input.maxLength=2;input.placeholder='請輸入數字';}
     if(label)label.style.display='none';
-    if(input && announce)input.focus();
+    var ua = (navigator && navigator.userAgent) || '';
+    var usePhoneKeypad = /iPhone|iPod|Android.*Mobile|Windows Phone|IEMobile|iPad|Tablet|Android(?!.*Mobile)/i.test(ua) ||
+      (navigator.platform === 'MacIntel' && Number(navigator.maxTouchPoints || 0) > 1);
+    try { usePhoneKeypad = usePhoneKeypad || !!(window.matchMedia && window.matchMedia('(max-width: 1024px) and (pointer: coarse)').matches); } catch(e) {}
+    if(input && announce && !usePhoneKeypad)input.focus();
     updateP1SubmitButton();
   };
   var oldSetP1Q3Mode=window.setP1Q3Mode;
@@ -9836,8 +10010,19 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
   window.initClockCanvas=function(){
     var canvas=byId('clockCanvas');if(!canvas)return;
     if(!p3CanvasBound){
-      var cssWidth=Math.min(330,Math.max(260,Math.floor(Math.min(window.innerWidth*0.82,330))));
-      canvas.style.width=cssWidth+'px';canvas.style.height=cssWidth+'px';
+      var wrap=canvas.parentElement;
+      var availableWidth=Math.floor(Math.min(window.innerWidth-28,(wrap&&wrap.clientWidth)?wrap.clientWidth:window.innerWidth-28));
+      var cssWidth=Math.max(200,Math.min(440,availableWidth));
+      function fitP3CanvasDisplay(){
+        var currentWrapWidth=(wrap&&wrap.clientWidth)?wrap.clientWidth:window.innerWidth-28;
+        var fitWidth=Math.max(200,Math.min(440,Math.floor(Math.min(window.innerWidth-28,currentWrapWidth))));
+        canvas.style.width=fitWidth+'px';canvas.style.height=fitWidth+'px';
+      }
+      fitP3CanvasDisplay();
+      if(!canvas.__p3ResizeHandler){
+        canvas.__p3ResizeHandler=fitP3CanvasDisplay;
+        window.addEventListener('resize',canvas.__p3ResizeHandler,{passive:true});
+      }
       var dpr=Math.max(1,Math.min(3,window.devicePixelRatio||1));
       canvas.width=Math.round(cssWidth*dpr);canvas.height=Math.round(cssWidth*dpr);
       var ctx=canvas.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);ctx.lineWidth=3.5;ctx.strokeStyle='#35473C';ctx.lineCap='round';ctx.lineJoin='round';
@@ -9906,6 +10091,25 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       var dateText=isNaN(d.getTime())?testDate:(d.getFullYear()+' 年 '+String(d.getMonth()+1).padStart(2,'0')+' 月 '+String(d.getDate()).padStart(2,'0')+' 日');
       p1.appendChild(makeEl('div','detail-date','測驗日期：'+dateText));
     }
+    // 前四題是第一關唯一計分項目；第五題的現場核對永遠不增加或扣除分數。
+    var p1JudgedScore=Number(examState.p1.score||0);
+    p1.appendChild(makeEl('div','detail-answer detail-strong-line p1-judged-summary',
+      '已判定題目：4 題；答對 '+p1JudgedScore+' 題（'+p1JudgedScore+' / 4）。'));
+    var q5StatusForDetail=examState.p1.q5Status||(answers[4]&&answers[4].status)||'';
+    var q5StatusText;
+    if(examState.isHomePractice||q5StatusForDetail==='HOME_UNVERIFIED'){
+      q5StatusText='未經現場核對';
+    }else if(q5StatusForDetail==='LOCATION_CONFIRMED'){
+      q5StatusText='工作人員已核對：地點相符';
+    }else if(q5StatusForDetail==='LOCATION_NOT_CONFIRMED'){
+      q5StatusText='工作人員已核對：地點不符';
+    }else if(q5StatusForDetail==='MANUAL_REVIEW'||examState.p1.q5ReviewPending){
+      q5StatusText='等待工作人員現場核對';
+    }else{
+      q5StatusText='核對狀態尚未提供';
+    }
+    p1.appendChild(makeEl('div','detail-answer p1-q5-summary',
+      '第五題：'+q5StatusText+'；不列入第一關正式計分。'));
     answers.forEach(function(item,i){
       var index=i+1;
       var row=makeEl('div','detail-item');
@@ -9984,6 +10188,43 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
     }
     var p2Items=examState.p2.items||[];
     var matchedItems=examState.p2.matchedItems||[];
+
+    // 每筆使用者答案依 submitP2Recall() 原封不動的別名、正規化及一張圖片僅配對一次規則呈現；不改寫 score/matchedItems。
+    p2.appendChild(makeEl('div','detail-subheading','逐筆答案比對結果'));
+    if(userAnswers.length&&p2Items.length){
+      var comparisonList=makeEl('div','detail-answer-match-list');
+      var detailUsedItemIndexes=new Set();
+      userAnswers.forEach(function(userAnswer,answerIndex){
+        var answerText=String(userAnswer);
+        var normalizedUserAnswer=normalizeAnswerText(userAnswer);
+        var foundItem=null;
+        var foundItemIndex=-1;
+        p2Items.forEach(function(item,itemIndex){
+          if(foundItem||detailUsedItemIndexes.has(itemIndex))return;
+          var aliases=getItemSynonyms(item).map(normalizeAnswerText).filter(Boolean);
+          var isMatch=aliases.some(function(alias){
+            return normalizedUserAnswer===alias || (normalizedUserAnswer.length>=2 && (normalizedUserAnswer.indexOf(alias)!==-1 || alias.indexOf(normalizedUserAnswer)!==-1));
+          });
+          if(isMatch){foundItem=item;foundItemIndex=itemIndex;}
+        });
+        var row=makeEl('div','detail-answer-match-row');
+        row.appendChild(makeEl('span','detail-answer-match-number',String(answerIndex+1)+'.'));
+        row.appendChild(makeEl('span','detail-answer-match-text',answerText));
+        if(foundItem){
+          detailUsedItemIndexes.add(foundItemIndex);
+          row.appendChild(makeEl('span','detail-status pass','答對：'+String(foundItem.displayName||foundItem.name||'')));
+        }else{
+          row.appendChild(makeEl('span','detail-status miss','未能對應圖片'));
+        }
+        comparisonList.appendChild(row);
+      });
+      p2.appendChild(comparisonList);
+    }else if(userAnswers.length){
+      p2.appendChild(makeEl('div','detail-answer','目前無法讀取本次圖片題組，因此只呈現原始輸入，不另行推定答案對錯。'));
+    }else{
+      p2.appendChild(makeEl('div','detail-answer','目前沒有可供比對的輸入答案。'));
+    }
+
     p2.appendChild(makeEl('div','detail-subheading','十張圖片的回想結果'));
     if(p2Items.length){
       var recalledNames=[],missedNames=[];
@@ -10032,41 +10273,55 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
     var earnedItems=[];
     var zeroItems=[];
     var breakdownCount=0;
+    var unreportedItems=[];
     if(breakdown&&typeof breakdown==='object'){
       Object.keys(namesMap).forEach(function(key){
-        if(!Object.prototype.hasOwnProperty.call(breakdown,key))return;
+        if(!Object.prototype.hasOwnProperty.call(breakdown,key)){
+          unreportedItems.push(namesMap[key]+'（未提供判定）');
+          return;
+        }
         var rawScore=breakdown[key];
         var numericScore;
         if(typeof rawScore==='boolean')numericScore=rawScore?1:0;
         else if(typeof rawScore==='number')numericScore=rawScore;
         else if(typeof rawScore==='string'&&rawScore.trim()!=='')numericScore=Number(rawScore);
         else numericScore=NaN;
-        if(!Number.isFinite(numericScore))return;
-        if(numericScore>0)earnedItems.push(namesMap[key]);
-        else if(numericScore===0)zeroItems.push(namesMap[key]);
+        if(!Number.isFinite(numericScore)){
+          unreportedItems.push(namesMap[key]+'（判定值無法辨識）');
+          return;
+        }
+        var scoreSuffix=(typeof rawScore==='boolean')?'':'（評分值：'+String(rawScore)+'）';
+        if(numericScore>0)earnedItems.push(namesMap[key]+scoreSuffix);
+        else if(numericScore===0)zeroItems.push(namesMap[key]+scoreSuffix);
+        else unreportedItems.push(namesMap[key]+'（判定值未能分類：'+String(rawScore)+'）');
         breakdownCount++;
       });
+    }else{
+      Object.keys(namesMap).forEach(function(key){unreportedItems.push(namesMap[key]+'（未提供判定）');});
     }
     function appendScoreCategory(title,items,className){
+      if(!items.length)return;
       var category=makeEl('section','p3-score-category '+className);
       category.appendChild(makeEl('h5','p3-score-category-title',title));
-      if(items.length){
-        var list=makeEl('ul','p3-score-category-list');
-        items.forEach(function(item){list.appendChild(makeEl('li','',item));});
-        category.appendChild(list);
-      }else{
-        category.appendChild(makeEl('div','p3-score-category-empty','目前沒有項目。'));
-      }
+      var list=makeEl('ul','p3-score-category-list');
+      items.forEach(function(item){list.appendChild(makeEl('li','',item));});
+      category.appendChild(list);
       p3.appendChild(category);
     }
-    if(breakdownCount){
-      appendScoreCategory('有得分',earnedItems,'has-points');
-      appendScoreCategory('沒得分',zeroItems,'no-points');
+    if(!earnedItems.length){
+      p3.appendChild(makeEl('div','detail-answer p3-no-earned-items','本次尚未取得得分項目。'));
     }else{
-      p3.appendChild(makeEl('div','detail-answer','評分系統未提供可顯示的逐項評分資料。'));
+      appendScoreCategory('有得分',earnedItems,'has-points');
+    }
+    appendScoreCategory('沒得分',zeroItems,'no-points');
+    appendScoreCategory('尚未提供判定',unreportedItems,'not-reported');
+    if(!breakdownCount&&!earnedItems.length&&!zeroItems.length){
+      p3.appendChild(makeEl('div','detail-answer','評分系統未提供可辨識的逐項評分資料；以上項目不代表已判定為答錯。'));
     }
     if(examState.p3.scoreReason)p3.appendChild(makeEl('div','detail-answer','評分系統評語：'+String(examState.p3.scoreReason)));
-    if(examState.p3.scoreProvider)p3.appendChild(makeEl('div','detail-date','評分來源：'+String(examState.p3.scoreProvider)));
+    p3.appendChild(makeEl('div','detail-note p3-practice-reminder','練習提醒：下次練習時，可以先畫出完整的圓形，再依序寫上 1 到 12 的數字，最後畫出時針和分針。'));
+    p3.appendChild(makeEl('div','detail-answer p3-scoring-method','評分方式：AI 輔助辨識。本結果僅作本次測驗評分參考，不等同臨床診斷。'));
+    if(examState.p3.scoreProvider)p3.appendChild(makeEl('div','detail-date p3-technical-source','技術評分來源紀錄：'+String(examState.p3.scoreProvider)));
     p3Host.appendChild(p3);
 
     // 每次產生成績明細時，三關預設全部收合；不更動任何分數或作答資料。
@@ -11092,6 +11347,19 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
     var inputControl = byId('p1-answer-control');
     if (!step || !inputGroup || !inputControl) return false;
 
+    var nativeKeypad = isNativeKeypadDevice();
+    if (document.body) document.body.classList.toggle('p1-native-keypad-device', nativeKeypad);
+    if (nativeKeypad) {
+      if (panel) panel.hidden = true;
+      if (input) input.setAttribute('aria-expanded', 'false');
+      p1KeypadColumn.hidden = true;
+      p1KeypadColumn.classList.remove('p1-keypad-rail-absolute');
+      p1KeypadColumn.style.removeProperty('--p1-keypad-fixed-left');
+      p1KeypadColumn.style.removeProperty('--p1-keypad-fixed-top');
+      p1KeypadColumn.style.top = '';
+      return false;
+    }
+
     var isOpen = !!(panel && !panel.hidden);
     var useRightRail = isP1StepActive() && canUseRightKeypadRail(step);
     var changed = false;
@@ -11120,9 +11388,18 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
   }
 
   function isNativeKeypadDevice() {
-    // 所有裝置均使用原本網頁自訂數字鍵盤；不以原生鍵盤取代。
-    // input.readOnly=false，電腦實體鍵盤與外接鍵盤仍可輸入。
-    return false;
+    // 手機及觸控平板（包含採桌面 UA 的 iPadOS）使用系統數字鍵盤；桌面維持網頁自訂鍵盤。
+    var ua = (navigator && navigator.userAgent) || '';
+    var phoneUA = /iPhone|iPod|Android.*Mobile|Windows Phone|IEMobile/i.test(ua);
+    var tabletUA = /iPad|Tablet|Android(?!.*Mobile)/i.test(ua);
+    // iPadOS 13+ Safari may report a Mac desktop UA; detect it by touch capability.
+    var ipadOS = navigator.platform === 'MacIntel' && Number(navigator.maxTouchPoints || 0) > 1;
+    var narrowTouch = false;
+    try {
+      narrowTouch = !!(window.matchMedia &&
+        window.matchMedia('(max-width: 1024px) and (pointer: coarse)').matches);
+    } catch (e) {}
+    return phoneUA || tabletUA || ipadOS || narrowTouch;
   }
 
   function getAppState() {
@@ -11566,22 +11843,37 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
       input.dataset.lastAcceptedValue = String(input.value || '');
     }
 
-    // 把原本在欄位下方建立的按鍵節點收進浮動面板，絕不留在頁面文件流中。
+    // 移除舊版欄位下方的鍵盤說明；原始按鍵只在桌面版收進浮動面板。
     var helpNodes = getPadNodesFrom(control).filter(function (node) { return node.classList.contains('number-pad-help'); });
     helpNodes.forEach(function (node) { if (node.parentNode) node.parentNode.removeChild(node); });
-    ensureOriginalPadNodes(config);
 
     var statusHelp = ensureFeedback();
     setFeedback('');
-    // 手機、平板與電腦統一使用網頁自訂浮動鍵盤；實體鍵盤輸入仍保持啟用。
     input.readOnly = false;
     input.disabled = false;
-    input.setAttribute('inputmode', 'none');
     input.removeAttribute('enterkeyhint');
-    input.setAttribute('aria-haspopup', 'dialog');
-    addDesktopHint();
     input.setAttribute('aria-describedby', statusHelp.id);
-    if (cachedPadNodes.length) buildPanelContent();
+
+    if (nativeMode) {
+      // iPhone／手機：讓點擊欄位直接呼叫系統數字鍵盤；不建立或顯示網頁自製按鍵。
+      captureCurrentPadNodes();
+      if (panel) panel.hidden = true;
+      if (p1KeypadColumn) p1KeypadColumn.hidden = true;
+      input.setAttribute('inputmode', 'numeric');
+      input.setAttribute('pattern', '[0-9]*');
+      input.removeAttribute('aria-haspopup');
+      input.setAttribute('aria-expanded', 'false');
+      removeTriggerHelp();
+      if (document.body) document.body.classList.add('p1-native-keypad-device');
+    } else {
+      // 桌面：維持原本網頁自製數字鍵盤及輸入框右側的定位方式。
+      ensureOriginalPadNodes(config);
+      input.setAttribute('inputmode', 'none');
+      input.setAttribute('aria-haspopup', 'dialog');
+      addDesktopHint();
+      if (document.body) document.body.classList.remove('p1-native-keypad-device');
+      if (cachedPadNodes.length) buildPanelContent();
+    }
   }
 
   var keypadReconcileTimer = null;
@@ -11824,6 +12116,7 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
     '請輸入農曆月份：': ['Enter the lunar month:', '旧暦の月を入力してください：', '음력 월을 입력하세요:'],
     '請輸入國曆日期：': ['Enter the Gregorian date:', '西暦の日付を入力してください：', '양력 날짜를 입력하세요:'],
     '請輸入農曆日期：': ['Enter the lunar date:', '旧暦の日付を入力してください：', '음력 날짜를 입력하세요:'],
+    '請輸入星期名稱': ['Enter the day of the week', '曜日の名前を入力してください', '요일 이름을 입력하세요'],
     '請輸入日期': ['Enter the date', '日付を入力', '날짜를 입력하세요'],
     '號': ['day', '日', '일'],
     '您的答案': ['Your answer', 'あなたの回答', '답변'],
@@ -11974,8 +12267,8 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
       if (label) { label.classList.remove('date-input-label', 'q5-answer-label'); label.style.display = 'none'; }
       if (input) {
         input.classList.add('p1-open-text-input', 'weekday-text-input');
-        input.placeholder = getExamGenericAnswerPlaceholder();
-        input.setAttribute('aria-label', t('您的答案'));
+        input.placeholder = t('請輸入星期名稱');
+        input.setAttribute('aria-label', t('請輸入星期名稱'));
         input.type = 'text'; input.readOnly = false;
         input.setAttribute('inputmode', 'text'); input.setAttribute('lang', EXAM_DISPLAY_LANG === 'en' ? 'en' : EXAM_DISPLAY_LANG === 'ja' ? 'ja' : EXAM_DISPLAY_LANG === 'ko' ? 'ko' : 'zh-Hant');
         input.removeAttribute('maxlength'); input.removeAttribute('pattern');
@@ -12135,8 +12428,13 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
 (function () {
   'use strict';
   function isTouchInputDevice() {
-    // 保留舊函式名稱供相容使用，但數字欄位不再切換為原生螢幕鍵盤。
-    return false;
+    var ua = (navigator && navigator.userAgent) || '';
+    var phoneUA = /iPhone|iPod|Android.*Mobile|Windows Phone|IEMobile/i.test(ua);
+    var tabletUA = /iPad|Tablet|Android(?!.*Mobile)/i.test(ua);
+    var ipadOS = navigator.platform === 'MacIntel' && Number(navigator.maxTouchPoints || 0) > 1;
+    var narrowTouch = false;
+    try { narrowTouch = !!(window.matchMedia && window.matchMedia('(max-width: 1024px) and (pointer: coarse)').matches); } catch (e) {}
+    return phoneUA || tabletUA || ipadOS || narrowTouch;
   }
   function applyMonthInputMode() {
     var q = window.examState && examState.p1 && examState.p1.questions
@@ -12147,11 +12445,12 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
     input.disabled = false;
     input.readOnly = false; // 不鎖定欄位，保留電腦實體鍵盤／外接鍵盤輸入能力。
     input.type = 'text';
-    input.setAttribute('inputmode', 'none'); // 手機與平板也使用網頁自訂數字鍵盤，不跳出原生鍵盤。
+    input.setAttribute('inputmode', isTouchInputDevice() ? 'numeric' : 'none'); // 手機使用系統數字鍵盤；桌面沿用網頁自訂鍵盤。
     var multilingual = typeof EXAM_DISPLAY_LANG !== 'undefined' && EXAM_DISPLAY_LANG !== 'zh-TW';
     if (multilingual) {
       input.removeAttribute('pattern');
       input.removeAttribute('maxlength');
+      if (isTouchInputDevice()) input.setAttribute('pattern', '[0-9]*');
     } else {
       input.setAttribute('pattern', '[0-9]*');
       input.maxLength = 2;
@@ -12267,10 +12566,10 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
       "第1段階は全5問です。問題をよく聞き、記憶を頼りに回答してください。",
       "1단계는 5문항입니다. 문제를 잘 듣고 기억을 바탕으로 답하세요."
     ],
-    "第一關共有 5 題，請仔細閱讀題目，依照記憶回答。":[
-      "Stage 1 has 5 questions. Read each question carefully and answer from memory.",
-      "第1段階は全5問です。問題をよく読み、記憶を頼りに回答してください。",
-      "1단계는 5문항입니다. 문제를 잘 읽고 기억을 바탕으로 답하세요."
+    "第一關共有 5 題，請仔細閱讀題目，依照您目前知道的情況回答。":[
+      "Stage 1 has 5 questions. Read each question carefully and answer based on what you currently know.",
+      "第1段階は全5問です。問題をよく読み、現在わかっていることに基づいて回答してください。",
+      "1단계는 5문항입니다. 문제를 잘 읽고 현재 알고 있는 내용을 바탕으로 답하세요."
     ],
     "作答時請不要查看日曆或時鐘，也不要請別人提示。":[
       "Do not look at a calendar or clock while answering, and do not ask anyone for hints.",
@@ -12551,7 +12850,7 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
   /* 只列出原本確實提供返回操作的頁面；正式作答頁不新增返回按鈕。 */
   var BACK_STEPS = [
     'step-lang', 'step-location', 'step-intro',
-    'step-p1-intro', 'step-p2-intro', 'step-p3-intro'
+    'step-p1-intro', 'step-p3-intro'
   ];
 
   function byId(id) { return document.getElementById(id); }
@@ -12708,6 +13007,17 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
   if(!input||!control)return;
 
   var PROMPT='點擊輸入框即可使用數字鍵盤。';
+  var MOBILE_PROMPT='點擊輸入框，使用手機內建數字鍵盤輸入。';
+  function isPhoneNativeInput(){
+    var ua=(navigator&&navigator.userAgent)||'';
+    var phoneUA=/iPhone|iPod|Android.*Mobile|Windows Phone|IEMobile/i.test(ua);
+    var tabletUA=/iPad|Tablet|Android(?!.*Mobile)/i.test(ua);
+    var ipadOS=navigator.platform==='MacIntel'&&Number(navigator.maxTouchPoints||0)>1;
+    var narrowTouch=false;
+    try{narrowTouch=!!(window.matchMedia&&window.matchMedia('(max-width: 1024px) and (pointer: coarse)').matches);}catch(e){}
+    return phoneUA||tabletUA||ipadOS||narrowTouch;
+  }
+  function getPrompt(){return isPhoneNativeInput()?MOBILE_PROMPT:PROMPT;}
   var instruction=null;
   var errorNode=null;
   var lastQuestionKey='';
@@ -12723,6 +13033,11 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
         'Tap the input field to use the numeric keypad.',
         '入力欄をタップして数字キーパッドを使用してください。',
         '입력란을 눌러 숫자 키패드를 사용하세요.'
+      ],
+      '點擊輸入框，使用手機內建數字鍵盤輸入。':[
+        "Tap the input field and use your phone\'s built-in numeric keypad.",
+        '入力欄をタップして、端末内蔵の数字キーパッドを使用してください。',
+        '입력란을 누른 후 휴대전화에 내장된 숫자 키패드를 사용하세요.'
       ],
       '數字鍵盤': ['Numeric keypad', '数字キーパッド', '숫자 키패드'],
       '收起': ['Close', '閉じる', '닫기'],
@@ -12824,7 +13139,7 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
   function showError(message){
     ensureNodes();
     removeLegacyHints();
-    instruction.textContent=t(PROMPT);
+    instruction.textContent=t(getPrompt());
     // 保留原本依年份／月份／日期設定的輸入框 placeholder。
     var anchor=input.closest?input.closest('.input-unit-wrap'):null;
     if(!anchor||!control.contains(anchor))anchor=input;
@@ -12865,7 +13180,7 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
       return;
     }
     ensureNodes();
-    instruction.textContent=t(PROMPT);
+    instruction.textContent=t(getPrompt());
     // 保留原本依年份／月份／日期設定的輸入框 placeholder。
     var anchor=input.closest?input.closest('.input-unit-wrap'):null;
     if(!anchor||!control.contains(anchor))anchor=input;
@@ -14474,5 +14789,163 @@ body[data-step="step-location"] .test-name-heading {
   }
 })();
 </script>
+
+<style id="p1-mobile-native-numeric-keypad-styles">
+/* 手機版只使用 iOS／Android 系統數字鍵盤；桌面版自製鍵盤樣式及位置完全不變。 */
+body.p1-native-keypad-device #step-p1 .p1-keypad-column,
+body.p1-native-keypad-device .p1-keypad-column,
+body.p1-native-keypad-device #p1-number-pad-floating-panel,
+body.p1-native-keypad-device #step-p1 #p1-answer-control .number-pad-grid,
+body.p1-native-keypad-device #step-p1 #p1-answer-control .number-pad-actions,
+body.p1-native-keypad-device #step-p1 #p1-answer-control .number-pad-help {
+  display:none !important;
+}
+body.p1-native-keypad-device #step-p1 #p1-answer-input {
+  scroll-margin-top: 88px;
+  scroll-margin-bottom: 120px;
+  -webkit-appearance: none;
+}
+</style>
+
+
+<script id="p2-recall-submit-once-guard">
+(function () {
+  'use strict';
+
+  // 僅防止第二關回想頁重複提交；不改變原本答案收集、比對或計分。
+  var submitting = false;
+  var baseSubmit = window.submitP2Recall;
+  var baseAdd = window.addP2RecallAnswer;
+  var baseStartP2Intro = window.startP2Intro;
+
+  function setSubmitLocked(locked) {
+    var button = document.getElementById('p2-recall-submit-btn');
+    if (!button) return;
+    button.disabled = !!locked;
+    if (locked) {
+      button.setAttribute('aria-disabled', 'true');
+      button.setAttribute('aria-busy', 'true');
+    } else {
+      button.removeAttribute('aria-disabled');
+      button.removeAttribute('aria-busy');
+    }
+  }
+
+  function resetSubmitLock() {
+    submitting = false;
+    setSubmitLocked(false);
+  }
+
+  // 新一輪第二關初始化時才解除上一輪提交鎖。
+  if (typeof baseStartP2Intro === 'function') {
+    window.startP2Intro = function () {
+      resetSubmitLock();
+      return baseStartP2Intro.apply(this, arguments);
+    };
+  }
+
+  // 以實際進入回想頁作為第二層重設點，涵蓋休息倒數結束後的再次進入。
+  var baseShowStep = window.showStep;
+  if (typeof baseShowStep === 'function') {
+    window.showStep = function (stepId) {
+      if (stepId === 'step-p2-sop5' && document.body.getAttribute('data-step') !== 'step-p2-sop5') {
+        resetSubmitLock();
+      }
+      return baseShowStep.apply(this, arguments);
+    };
+  }
+
+  if (typeof baseSubmit !== 'function') return;
+
+  window.submitP2Recall = function () {
+    if (submitting) return;
+    if (document.body.getAttribute('data-step') !== 'step-p2-sop5') return;
+
+    var input = document.getElementById('p2-recall-input');
+
+    // 保留原本編輯中不可直接送出的防呆。
+    if (typeof window.p2RecallEditingIndex !== 'undefined' && window.p2RecallEditingIndex !== null) {
+      baseSubmit.apply(this, arguments);
+      return;
+    }
+
+    // 保留原本「送出前若輸入框仍有文字，先嘗試加入」的操作流程。
+    // 語音辨識本身仍只寫入輸入框，不會呼叫此函式或自動加入清單。
+    if (input && String(input.value || '').trim()) {
+      if (typeof baseAdd === 'function') {
+        baseAdd.call(window, String(input.value).trim());
+      }
+      if (String(input.value || '').trim()) return;
+    }
+
+    var answers = window.examState && examState.p2 && Array.isArray(examState.p2.recalledAnswers)
+      ? examState.p2.recalledAnswers.filter(function (answer) {
+          return typeof answer === 'string' && answer.trim().length > 0;
+        })
+      : [];
+
+    // 空白與超過原本十筆上限的情況，交由既有驗證函式顯示原提示。
+    if (!answers.length || answers.length > 10) {
+      baseSubmit.apply(this, arguments);
+      return;
+    }
+
+    // 在呼叫原始判分函式前同步鎖定，避免快速連點產生重複提交。
+    submitting = true;
+    setSubmitLocked(true);
+    try {
+      baseSubmit.apply(this, arguments);
+      // 原函式正常執行會立即切換到第三關說明頁；若仍停留在回想頁，代表未完成，允許重試。
+      if (document.body.getAttribute('data-step') === 'step-p2-sop5') {
+        resetSubmitLock();
+      }
+    } catch (error) {
+      resetSubmitLock();
+      throw error;
+    }
+  };
+})();
+</script>
+
+
+<style id="p3-canvas-layout-optimization">
+/* 第三關局部調整：只放大畫布並收緊不必要的垂直間距，不改工具按鈕尺寸。 */
+#step-p3 .p3-guide-card { margin-bottom:8px !important; }
+#step-p3 .p3-time-strip { margin:3px 0 4px !important; }
+#step-p3 .p3-toolbar { margin-bottom:8px !important; }
+#step-p3 .canvas-wrap {
+  position:relative !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  width:100% !important;
+  margin:2px auto 6px !important;
+  box-sizing:border-box !important;
+}
+#step-p3 #clockCanvas {
+  display:block !important;
+  flex:none !important;
+  max-width:100% !important;
+  max-height:none !important;
+  aspect-ratio:1 / 1 !important;
+  box-sizing:border-box !important;
+}
+/* 中心點是非互動式視覺定位標記，不繪入 Canvas，也不納入 AI 評分圖片。 */
+#step-p3 .p3-center-marker {
+  position:absolute;
+  left:50%; top:50%;
+  width:8px; height:8px;
+  transform:translate(-50%,-50%);
+  border:1px solid #FFFFFF;
+  border-radius:50%;
+  background:#4F7058;
+  box-shadow:0 0 0 1px rgba(53,71,60,.55);
+  opacity:.9;
+  pointer-events:none;
+  z-index:2;
+}
+#step-p3 .p3-submit-wrap { width:100%; margin:0 auto; }
+</style>
+
 </body>
 </html>
