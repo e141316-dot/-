@@ -3128,11 +3128,14 @@ body.text-only-mode .mode-status-chip {
             <button type="button" id="btn-hak-hailu" class="accent-btn" onclick="setHakkaAccent('hailu')">海陸腔</button>
           </div>
         </div>
-        <p id="language-audio-status" class="audio-status" role="status" aria-live="polite"></p>
-        <button type="button" id="language-preview-repeat" class="language-preview-repeat" onclick="repeatLanguagePreview()">再聽一次試聽</button>
       </section>
+      <!-- 手機版先呈現主要前進操作；試聽音訊不會鎖住測驗流程。 -->
       <div class="sticky-action-bar step-action">
         <button type="button" class="btn-primary" onclick="goToLocationSetup()">下一步：選擇練習方式 ›</button>
+      </div>
+      <div class="language-preview-feedback" aria-label="語音試聽狀態">
+        <p id="language-audio-status" class="audio-status" role="status" aria-live="polite"></p>
+        <button type="button" id="language-preview-repeat" class="language-preview-repeat" onclick="repeatLanguagePreview()">再聽一次試聽</button>
       </div>
     </div>
 
@@ -4277,6 +4280,11 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
     "A voice preview will play automatically after you choose. Please make sure you can hear it.",
     "音声を選ぶと試聴が自動再生されます。音が聞こえることを確認してください。",
     "음성을 선택하면 미리 듣기가 자동 재생됩니다. 소리가 들리는지 확인하세요."
+  ],
+  "已選擇語音模式。試聽不會阻擋測驗進行，您可以直接按下「下一步」繼續。": [
+    "Voice mode selected. The preview will not block the test. You can select Next to continue.",
+    "音声モードが選択されました。試聴を待たずに「次へ」を選択して続行できます。",
+    "음성 모드가 선택되었습니다. 미리 듣기가 끝날 때까지 기다리지 않고 ‘다음’을 눌러 계속할 수 있습니다."
   ],
   "正在播放試聽語音，請確認是否聽得到聲音。若沒有聲音，請檢查裝置音量或喇叭設定。":[
     "The audio preview is playing. Please check whether you can hear it. If there is no sound, check your device volume or speaker settings.",
@@ -10455,7 +10463,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       setLiveStatus('language-audio-status','已選擇純文字模式，練習時不會播放聲音。','check');
       if(btn)btn.style.display='none';
     }else{
-      setLiveStatus('language-audio-status','正在播放試聽語音，請確認是否聽得到聲音。若沒有聲音，請檢查裝置音量或喇叭設定。','speaker');
+      setLiveStatus('language-audio-status','已選擇語音模式。試聽不會阻擋測驗進行，您可以直接按下「下一步」繼續。','speaker');
       if(btn)btn.style.display='flex';
     }
   }
