@@ -2867,13 +2867,49 @@ body[data-step="step-p1"] #test-status-sub {
 
         return function () {
           var args = Array.prototype.slice.call(arguments);
-          fetch(BACKEND_API_URL, {
+          var settled = false;
+          var controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+          // Worker has its own upstream timeout. This is a final client-side guard for a stalled bridge.
+          var timeoutId = setTimeout(function () {
+            if (settled) return;
+            settled = true;
+            if (controller) {
+              try { controller.abort(); } catch (abortError) {}
+            }
+            var timeoutError = new Error('後臺請求逾時，請確認網路連線後再試。');
+            timeoutError.name = 'BackendRequestTimeout';
+            if (failureHandler) failureHandler(timeoutError, userObject);
+            else console.error('[後臺橋接] ' + property + ' 請求逾時。');
+          }, 50000);
+
+          function finishSuccess(result) {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timeoutId);
+            if (successHandler) {
+              try { successHandler(result, userObject); }
+              catch (handlerError) { console.error('[後臺橋接] 成功 callback 發生錯誤：', handlerError); }
+            }
+          }
+
+          function finishFailure(error) {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timeoutId);
+            if (failureHandler) failureHandler(error, userObject);
+            else console.error('[後臺橋接] ' + property + ' 呼叫失敗：', error);
+          }
+
+          var requestOptions = {
             method: 'POST',
             mode: 'cors',
             credentials: 'omit',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ action: property, args: args })
-          })
+          };
+          if (controller) requestOptions.signal = controller.signal;
+
+          fetch(BACKEND_API_URL, requestOptions)
             .then(function (response) {
               return response.text().then(function (rawText) {
                 var data;
@@ -2891,13 +2927,8 @@ body[data-step="step-p1"] #test-status-sub {
                 return data;
               });
             })
-            .then(function (result) {
-              if (successHandler) successHandler(result, userObject);
-            })
-            .catch(function (error) {
-              if (failureHandler) failureHandler(error, userObject);
-              else console.error('[後臺橋接] ' + property + ' 呼叫失敗：', error);
-            });
+            .then(finishSuccess)
+            .catch(finishFailure);
 
           return runnerCore;
         };
@@ -3038,6 +3069,28 @@ body.text-only-mode .mode-status-chip {
   #step-p2-sop2 .p2-prep-countdown strong { font-size: clamp(72px, 20vw, 96px); }
 }
 </style>
+
+<style id="result-page-detail-readability-local-fix">
+/* 結果頁局部資訊優化：只作用於三關明細，不更動成績、評分或導向。 */
+#step-result .p1-judged-summary{margin:10px 0 4px;padding:10px 12px;border-radius:10px;background:#EAF0E7}
+#step-result .p1-q5-summary{margin:4px 0 12px;padding:10px 12px;border-left:4px solid #B9A46B;background:#F5F2E8;border-radius:8px}
+#step-result .detail-answer-match-list{display:flex;flex-direction:column;gap:8px;margin:8px 0 14px;min-width:0}
+#step-result .detail-answer-match-row{display:grid;grid-template-columns:32px minmax(0,1fr) minmax(150px,auto);align-items:center;gap:10px;min-width:0;padding:10px 12px;border:1px solid #C6D4C5;border-radius:11px;background:#FFFFFF;box-sizing:border-box}
+#step-result .detail-answer-match-number{font-size:18px;line-height:1.6;font-weight:900;color:#35473C}
+#step-result .detail-answer-match-text{min-width:0;font-size:18px;line-height:1.65;color:#1F3325;overflow-wrap:anywhere;word-break:break-word}
+#step-result .detail-answer-match-row .detail-status{justify-self:start;max-width:100%;white-space:normal;overflow-wrap:anywhere}
+#step-result .p3-score-category.not-reported{background:#EEF0ED}
+#step-result .p3-no-earned-items{margin:8px 0;padding:10px 12px;border-radius:10px;background:#F3F1E9;font-weight:800}
+#step-result .p3-practice-reminder{margin-top:16px;background:#EAF0E7;border:1px solid #C8D7C8}
+#step-result .p3-scoring-method{margin-top:12px;font-weight:800}
+#step-result .p3-technical-source{margin-top:4px}
+@media(max-width:520px){
+  #step-result .detail-answer-match-row{grid-template-columns:28px minmax(0,1fr);align-items:start;gap:6px 8px;padding:11px 10px}
+  #step-result .detail-answer-match-row .detail-status{grid-column:2;justify-self:start}
+  #step-result .p1-judged-summary,#step-result .p1-q5-summary{padding:10px}
+}
+</style>
+
 </head>
 <body>
   <div class="exam-wrapper">
@@ -3447,7 +3500,7 @@ body.text-only-mode .mode-status-chip {
           </button>
         </div>
 
-        <div class="canvas-wrap"><canvas id="clockCanvas" width="340" height="340" aria-label="時鐘繪圖畫布"></canvas></div>
+        <div class="canvas-wrap"><canvas id="clockCanvas" width="340" height="340" aria-label="時鐘繪圖畫布"></canvas><span class="p3-center-marker" aria-hidden="true"></span></div>
         <div class="p3-submit-wrap"><button type="button" id="p3-submit-btn" class="btn-primary" onclick="submitP3Canvas()">完成時鐘，送出答案 ›</button></div>
         <p id="p3-ai-status" class="helper-note" role="status" aria-live="polite" style="display:none;text-align:center;margin:12px 0 4px;"></p>
       </div>
@@ -4005,6 +4058,7 @@ window.closeCustomAlert = closeCustomAlert;
     var HAKKA_SIXIAN_AUDIO_CACHE = {};
     var HAKKA_SIXIAN_AUDIO_PENDING = {};
     var currentHakkaAudioPlayer = null;
+    var activeManagedAudioPlayback = null;
     var HAKKA_SIXIAN_P1_KEYS = [
       'exam_intro', 'p1_intro', 'q1_roc', 'q1_western', 'q1_zodiac',
       'q2_solar', 'q2_lunar', 'q3_solar', 'q3_lunar', 'q4_weekday', 'q5_location'
@@ -4033,6 +4087,15 @@ window.closeCustomAlert = closeCustomAlert;
     ];
     var HAKKA_SIXIAN_P3_KEYS = ['p3_intro', 'p3_quiz', 'exam_end'];
     var HAKKA_SIXIAN_LOCATION_KEYS = ['location_intro', 'location_home', 'location_staff'];
+
+
+    // 離開測驗頁或切換瀏覽器頁面時，停止所有播放並讓舊 callback 失效。
+    window.addEventListener('pagehide', function() {
+      try { stopAllSpeech('pagehide'); } catch (error) {}
+      try {
+        if (p2CurrentAudio) { stopP2SlideAudio(p2CurrentAudio); p2CurrentAudio = null; }
+      } catch (error) {}
+    });
 
     function createExamSessionId() {
       return 'EXAM-' + Date.now() + '-' + Math.random().toString(36).slice(2, 10);
@@ -4101,82 +4164,566 @@ window.closeCustomAlert = closeCustomAlert;
 
     const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-    /* Mandarin Speech Control Engine */
+
+    // 國語語音選擇：優先使用裝置實際提供的 zh-TW voice；若不存在，記錄實際 fallback。
+    var preferredMandarinVoice = null;
+    function refreshMandarinVoiceSelection() {
+      var voices = [];
+      try { voices = ('speechSynthesis' in window) ? window.speechSynthesis.getVoices() : []; } catch (e) {}
+      var normalized = voices.map(function(voice) {
+        return { voice: voice, lang: String(voice && voice.lang || '').replace(/_/g, '-').toLowerCase() };
+      });
+      var taiwanVoice = normalized.find(function(item) { return item.lang === 'zh-tw'; });
+      var mandarinFallback = normalized.find(function(item) { return /^zh(?:-|$)/.test(item.lang); });
+      preferredMandarinVoice = taiwanVoice ? taiwanVoice.voice : (mandarinFallback ? mandarinFallback.voice : null);
+      var diagnostic = {
+        requestedLang: 'zh-TW',
+        availableVoices: normalized.map(function(item) {
+          return { name: String(item.voice.name || ''), lang: String(item.voice.lang || ''), localService: !!item.voice.localService };
+        }),
+        selectedName: preferredMandarinVoice ? String(preferredMandarinVoice.name || '') : '',
+        selectedLang: preferredMandarinVoice ? String(preferredMandarinVoice.lang || '') : '',
+        exactZhTWAvailable: !!taiwanVoice,
+        fallbackUsed: !taiwanVoice,
+        selection: taiwanVoice ? 'zh-TW' : (mandarinFallback ? 'other-zh' : 'browser-default')
+      };
+      window.__MANDARIN_VOICE_DIAGNOSTIC = diagnostic;
+      if (!taiwanVoice) {
+        console.warn('[國語 voice 檢查] 裝置未提供 zh-TW voice；目前選用：', diagnostic.selectedName || '瀏覽器預設語音', diagnostic.selectedLang || '未提供語系資訊');
+      } else {
+        console.info('[國語 voice 檢查] 已選用 zh-TW：', diagnostic.selectedName, diagnostic.selectedLang);
+      }
+      return preferredMandarinVoice;
+    }
+    if ('speechSynthesis' in window) {
+      refreshMandarinVoiceSelection();
+      if (typeof window.speechSynthesis.addEventListener === 'function') {
+        window.speechSynthesis.addEventListener('voiceschanged', refreshMandarinVoiceSelection);
+      } else {
+        window.speechSynthesis.onvoiceschanged = refreshMandarinVoiceSelection;
+      }
+    }
+
+    /* 國語語音診斷：僅保存在目前頁面記憶體，不寫入測驗資料、不影響評分。 */
+    var mandarinDiagnosticSequence = 0;
+    var mandarinDiagnosticRecords = [];
+    var MANDARIN_DIAGNOSTIC_LIMIT = 250;
+
+    function getMandarinSpeechContext(rawText, suppliedContext) {
+      var context = {};
+      if (suppliedContext && typeof suppliedContext === 'object') {
+        Object.keys(suppliedContext).forEach(function(key) { context[key] = suppliedContext[key]; });
+      }
+      var step = '';
+      try { step = document.body.getAttribute('data-step') || ''; } catch (e) {}
+      context.step = context.step || step;
+      context.language = context.language || (typeof examState !== 'undefined' ? examState.language : 'unknown');
+      context.displayQuestionText = context.displayQuestionText || '';
+
+      if (!context.stage) {
+        // P1 的說明頁不是 P1 題目頁；必須精確區分，避免拿第 1 題台詞去比對關卡說明。
+        if (step === 'step-p1') context.stage = 'P1';
+        else if (step === 'step-p1-intro') context.stage = 'P1_INTRO';
+        else if (step.indexOf('step-p2') === 0) context.stage = 'P2';
+        else if (step.indexOf('step-p3') === 0) context.stage = 'P3';
+        else if (step === 'step-lang') context.stage = 'language_selection';
+        else context.stage = 'other';
+      }
+
+      if (context.stage === 'P1' && typeof examState !== 'undefined' && examState.p1) {
+        var p1Index = Number(examState.p1.currentIndex || 0);
+        var p1Question = examState.p1.questions && examState.p1.questions[p1Index];
+        var p1Mode = examState.p1.currentMode || '';
+        context.questionId = context.questionId || ('P1-Q' + (p1Index + 1));
+        context.questionIndex = p1Index + 1;
+        context.questionType = context.questionType || (p1Question ? p1Question.type : 'unknown');
+        context.mode = context.mode || p1Mode;
+        try {
+          var titleNode = document.getElementById('p1-question-title');
+          context.displayQuestionText = context.displayQuestionText || (titleNode ? String(titleNode.textContent || '').trim() : '');
+          if (p1Question && typeof getP1QuestionText === 'function') {
+            context.effectiveQuestionText = getP1QuestionText(p1Question, p1Mode);
+          }
+          var activeModeButton = document.querySelector('#p1-type-selector-wrapper .type-btn.active');
+          context.displayModeLabel = activeModeButton ? String(activeModeButton.textContent || '').trim() : '';
+        } catch (e) {}
+        if (!Object.prototype.hasOwnProperty.call(context, 'expectedText') &&
+            p1Question && typeof getP1AudioText === 'function') {
+          try {
+            var p1Expected = getP1AudioText(p1Question, p1Mode);
+            // Q1/Q2/Q3 尚未選擇回答模式時，預期台詞明確為空；
+            // 不可讓後面的白名單查找把任何合法台詞反向標成「正確」。
+            var p1NeedsMode = p1Question && ['q1', 'q2', 'q3'].indexOf(p1Question.type) !== -1;
+            if (p1Expected || p1NeedsMode) context.expectedText = p1Expected || '';
+          } catch (e) {}
+        }
+      } else if (context.stage === 'P2' && typeof examState !== 'undefined' && examState.p2) {
+        var p2Items = Array.isArray(examState.p2.items) ? examState.p2.items : [];
+        var p2Index = -1;
+        for (var p2i = 0; p2i < p2Items.length; p2i++) {
+          if (p2Items[p2i] && String(p2Items[p2i].name || '') === String(rawText || '')) {
+            p2Index = p2i;
+            break;
+          }
+        }
+        if (p2Index >= 0) {
+          context.questionId = context.questionId || ('P2-CARD-' + (p2Index + 1));
+          context.questionIndex = context.questionIndex || (p2Index + 1);
+          context.questionType = context.questionType || 'picture_card_name';
+          context.mode = context.mode || 'image_name';
+          context.expectedText = context.expectedText || String(p2Items[p2Index].name || '');
+          context.cardName = context.cardName || String(p2Items[p2Index].name || '');
+          try {
+            var p2VisibleName = document.getElementById('p2-img-name');
+            var p2Counter = document.getElementById('p2-img-counter');
+            var p2Image = document.getElementById('p2-card-img');
+            context.displayQuestionText = context.displayQuestionText || (p2VisibleName ? String(p2VisibleName.textContent || '').trim() : '');
+            context.displayModeLabel = context.displayModeLabel || (p2Counter ? String(p2Counter.textContent || '').trim() : '');
+            context.displayedCardAlt = p2Image ? String(p2Image.alt || '') : '';
+          } catch (e) {}
+        } else {
+          if (step === 'step-p2-sop4') {
+            context.questionId = context.questionId || 'P2-REST';
+            context.questionType = context.questionType || 'rest_instruction';
+          } else if (step === 'step-p2-sop5') {
+            context.questionId = context.questionId || 'P2-RECALL';
+            context.questionType = context.questionType || 'recall_instruction';
+          } else {
+            context.questionId = context.questionId || 'P2-INSTRUCTION';
+            context.questionType = context.questionType || 'stage_instruction';
+          }
+          // 即使送入的名稱不在圖卡清單內，仍須記錄當前畫面上的卡片與計數器，供 A 類錯段比對。
+          try {
+            var unmatchedVisibleName = document.getElementById('p2-img-name');
+            var unmatchedCounter = document.getElementById('p2-img-counter');
+            var unmatchedImage = document.getElementById('p2-card-img');
+            context.displayQuestionText = context.displayQuestionText || (unmatchedVisibleName ? String(unmatchedVisibleName.textContent || '').trim() : '');
+            context.displayModeLabel = context.displayModeLabel || (unmatchedCounter ? String(unmatchedCounter.textContent || '').trim() : '');
+            context.displayedCardAlt = unmatchedImage ? String(unmatchedImage.alt || '') : '';
+          } catch (e) {}
+        }
+      } else if (context.stage === 'P3' && typeof examState !== 'undefined' && examState.p3) {
+        var targetTime = String(examState.p3.targetTime || '');
+        var p3SpeechByTime = {
+          '11:10': '十一點十分',
+          '1:45': '一點四十五分',
+          '8:20': '八點二十分',
+          '2:45': '兩點四十五分'
+        };
+        context.targetTime = context.targetTime || targetTime;
+        context.questionId = context.questionId || (targetTime ? 'P3-TIME-' + targetTime : 'P3-INSTRUCTION');
+        context.questionType = context.questionType || (step === 'step-p3' ? 'clock_target_time' : 'clock_instruction');
+        try {
+          var p3VisibleTarget = document.getElementById('p3-target-time-label');
+          context.displayQuestionText = context.displayQuestionText || (p3VisibleTarget ? String(p3VisibleTarget.textContent || '').trim() : '');
+        } catch (e) {}
+        if (!Object.prototype.hasOwnProperty.call(context, 'expectedText') && typeof MANDARIN_VOICE_SCRIPTS !== 'undefined') {
+          var p3ExpectedTargetText = p3SpeechByTime[targetTime]
+            ? MANDARIN_VOICE_SCRIPTS.p3StartLead + p3SpeechByTime[targetTime] + MANDARIN_VOICE_SCRIPTS.p3StartTail
+            : null;
+          if (step === 'step-p3' && p3ExpectedTargetText && String(rawText || '') === p3ExpectedTargetText) {
+            context.expectedText = p3ExpectedTargetText;
+          } else if (step === 'step-p3' && String(rawText || '') === MANDARIN_VOICE_SCRIPTS.p3TimeUp) {
+            context.questionId = 'P3-TIME-UP';
+            context.questionType = 'clock_time_up_notice';
+            context.expectedText = MANDARIN_VOICE_SCRIPTS.p3TimeUp;
+          } else if (step === 'step-p3-intro') {
+            context.expectedText = MANDARIN_VOICE_SCRIPTS.p3Intro;
+          } else if (step === 'step-p3' && p3ExpectedTargetText) {
+            context.expectedText = p3ExpectedTargetText;
+          }
+        }
+      }
+
+      if (!Object.prototype.hasOwnProperty.call(context, 'expectedText') &&
+          typeof MANDARIN_VOICE_SCRIPTS !== 'undefined') {
+        function searchScripts(obj, prefix) {
+          if (!obj || typeof obj !== 'object') return null;
+          var keys = Object.keys(obj);
+          for (var i = 0; i < keys.length; i++) {
+            var key = keys[i];
+            var value = obj[key];
+            var nextPrefix = prefix ? prefix + '.' + key : key;
+            if (typeof value === 'string' && value === rawText) return nextPrefix;
+            if (value && typeof value === 'object') {
+              var found = searchScripts(value, nextPrefix);
+              if (found) return found;
+            }
+          }
+          return null;
+        }
+        var scriptKey = searchScripts(MANDARIN_VOICE_SCRIPTS, '');
+        if (scriptKey) {
+          context.scriptKey = context.scriptKey || scriptKey;
+          context.expectedText = rawText;
+          if (!context.questionId || context.questionId === 'P2-INSTRUCTION' || context.stage === 'P1_INTRO') {
+            context.questionId = scriptKey;
+            context.questionType = context.questionType || 'scripted_instruction';
+          }
+        }
+      }
+      if (!context.questionId && context.scriptKey) context.questionId = context.scriptKey;
+      return context;
+    }
+
+    function addMandarinDiagnosticEvent(record, eventName, detail) {
+      if (!record) return;
+      var now = Date.now();
+      var eventRecord = { event: eventName, timestamp: new Date(now).toISOString(), elapsedMs: record.createdAt ? now - record.createdAt : 0 };
+      if (detail !== undefined && detail !== null) eventRecord.detail = detail;
+      record.events.push(eventRecord);
+      if (eventName === 'onstart') record.onstartAt = eventRecord.timestamp;
+      if (eventName === 'onend') record.onendAt = eventRecord.timestamp;
+      if (eventName === 'onerror') record.onerror = detail || 'SpeechSynthesis error';
+      if (eventName === 'cancelled' || eventName === 'timeout') record.cancelReason = detail || eventName;
+    }
+
+    function createMandarinDiagnosticRecord(controller, text, rate, options, playMode) {
+      var context = getMandarinSpeechContext(text, options && options.context);
+      var synth = null;
+      try { synth = window.speechSynthesis; } catch (e) {}
+      var record = {
+        requestId: 'MDN-' + Date.now() + '-' + (++mandarinDiagnosticSequence),
+        generation: controller.playbackGeneration,
+        speechRequestToken: typeof speechRequestToken !== 'undefined' ? speechRequestToken : null,
+        language: context.language || 'zh-TW',
+        stage: context.stage || 'other',
+        questionId: context.questionId || '',
+        questionIndex: context.questionIndex || null,
+        questionType: context.questionType || '',
+        mode: context.mode || '',
+        targetTime: context.targetTime || '',
+        cardName: context.cardName || '',
+        displayQuestionText: context.displayQuestionText || '',
+        effectiveQuestionText: context.effectiveQuestionText || '',
+        displayModeLabel: context.displayModeLabel || '',
+        displayedCardAlt: context.displayedCardAlt || '',
+        expectedText: Object.prototype.hasOwnProperty.call(context, 'expectedText') ? context.expectedText : null,
+        sourceText: String(text || ''),
+        smoothedText: '',
+        utteranceText: '',
+        utteranceLang: 'zh-TW',
+        selectedVoiceName: '',
+        selectedVoiceLang: '',
+        voiceSelection: (window.__MANDARIN_VOICE_DIAGNOSTIC ? {
+          selection: window.__MANDARIN_VOICE_DIAGNOSTIC.selection || '',
+          exactZhTWAvailable: !!window.__MANDARIN_VOICE_DIAGNOSTIC.exactZhTWAvailable,
+          fallbackUsed: !!window.__MANDARIN_VOICE_DIAGNOSTIC.fallbackUsed,
+          selectedName: window.__MANDARIN_VOICE_DIAGNOSTIC.selectedName || '',
+          selectedLang: window.__MANDARIN_VOICE_DIAGNOSTIC.selectedLang || ''
+        } : null),
+        rate: rate || 0.85,
+        playMode: playMode,
+        queueDepthAtRequest: controller.queue.length,
+        hadActiveUtteranceAtRequest: !!controller.activeRecord,
+        nativeSpeakingAtRequest: !!(synth && (synth.speaking || synth.pending)),
+        possibleExternalQueueInterference: !!(synth && (synth.speaking || synth.pending) && !controller.activeRecord),
+        createdAt: Date.now(),
+        startedAt: null,
+        onstartAt: null,
+        onendAt: null,
+        onerror: null,
+        cancelReason: '',
+        expectedTextMatches: Object.prototype.hasOwnProperty.call(context, 'expectedText')
+          ? String(context.expectedText) === String(text || '') : null,
+        duplicateOfRequestId: null,
+        events: []
+      };
+      for (var i = mandarinDiagnosticRecords.length - 1; i >= 0; i--) {
+        var previous = mandarinDiagnosticRecords[i];
+        if (record.createdAt - previous.createdAt > 1500) break;
+        if (previous.sourceText === record.sourceText && previous.stage === record.stage &&
+            previous.questionId === record.questionId && previous.language === record.language) {
+          record.duplicateOfRequestId = previous.requestId;
+          break;
+        }
+      }
+      mandarinDiagnosticRecords.push(record);
+      if (mandarinDiagnosticRecords.length > MANDARIN_DIAGNOSTIC_LIMIT) mandarinDiagnosticRecords.shift();
+      addMandarinDiagnosticEvent(record, playMode === 'enqueue' && controller.activeRecord ? 'queued' : 'requested');
+      if (record.expectedTextMatches === false) {
+        console.warn('[國語播放診斷 A：呼叫端台詞與目前題目不符]', record);
+      }
+      if (record.duplicateOfRequestId) {
+        console.warn('[國語播放診斷 D：短時間重複呼叫]', record.requestId, '重複於', record.duplicateOfRequestId);
+      }
+      return record;
+    }
+
+    window.__MANDARIN_PLAYBACK_DIAGNOSTICS = {
+      version: 'mandarin-p0-diagnostics-2026-11-25-v1',
+      records: mandarinDiagnosticRecords,
+      getRecords: function() { return mandarinDiagnosticRecords.slice(); },
+      clear: function() { mandarinDiagnosticRecords.length = 0; },
+      exportJSON: function() { return JSON.stringify(mandarinDiagnosticRecords, null, 2); }
+    };
+
+    /* Mandarin Speech Control Engine
+     * replace：取代舊播放；enqueue：接續目前佇列，不取消正在播放的語音。
+     * 所有事件均由同一個控制器管理，舊 generation 不得觸發新播放 callback。
+     */
     var mandarinSpeechControl = {
       activeUtterance: null,
+      activeRecord: null,
+      activeCancel: null,
       keepAliveTimer: null,
+      finishTimer: null,
+      playbackGeneration: 0,
+      queue: [],
 
-      stop: function() {
-        if (this.keepAliveTimer) {
-          clearInterval(this.keepAliveTimer);
-          this.keepAliveTimer = null;
-        }
-        this.activeUtterance = null;
-        if ('speechSynthesis' in window) {
-          window.speechSynthesis.cancel();
+      _call: function(callback, arg) {
+        if (typeof callback !== 'function') return;
+        try { callback(arg); } catch (callbackError) { console.warn('[國語語音 callback 錯誤]', callbackError); }
+      },
+
+      _cancelQueued: function(reason) {
+        var queued = this.queue.splice(0);
+        for (var i = 0; i < queued.length; i++) {
+          var record = queued[i];
+          if (!record || record.settled) continue;
+          record.settled = true;
+          var error = new Error('國語語音佇列已取消：' + String(reason || 'cancelled'));
+          error.name = 'AbortError';
+          error.cancelReason = String(reason || 'cancelled');
+          addMandarinDiagnosticEvent(record, 'cancelled', error.cancelReason);
+          this._call(record.onError, error);
         }
       },
 
-      playText: function(text, rate, onComplete, onError) {
-        this.stop();
+      stop: function(reason) {
+        var cancelReason = String(reason || 'explicit_stop');
+        var oldRecord = this.activeRecord;
+        var oldUtterance = this.activeUtterance;
+        var queuedRecords = this.queue.splice(0);
+        this.playbackGeneration++;
+
+        if (this.keepAliveTimer) { clearInterval(this.keepAliveTimer); this.keepAliveTimer = null; }
+        if (this.finishTimer) { clearTimeout(this.finishTimer); this.finishTimer = null; }
+
+        this.activeRecord = null;
+        this.activeUtterance = null;
+        this.activeCancel = null;
+        if (oldUtterance) {
+          oldUtterance.onstart = null;
+          oldUtterance.onend = null;
+          oldUtterance.onerror = null;
+        }
+        if (window.currentUtterance === oldUtterance) window.currentUtterance = null;
+
+        // 先取消瀏覽器原生佇列，再通知舊 callback；callback 即使啟動新播放也不會被這次 cancel 誤傷。
+        if ('speechSynthesis' in window) {
+          try { window.speechSynthesis.cancel(); } catch (cancelError) {}
+        }
+
+        if (oldRecord && !oldRecord.settled) {
+          oldRecord.settled = true;
+          var oldError = new Error('國語語音已取消：' + cancelReason);
+          oldError.name = 'AbortError';
+          oldError.cancelReason = cancelReason;
+          addMandarinDiagnosticEvent(oldRecord, 'cancelled', cancelReason);
+          this._call(oldRecord.onError, oldError);
+        }
+        for (var i = 0; i < queuedRecords.length; i++) {
+          var queuedRecord = queuedRecords[i];
+          if (!queuedRecord || queuedRecord.settled) continue;
+          queuedRecord.settled = true;
+          var queuedError = new Error('國語語音佇列已取消：' + cancelReason);
+          queuedError.name = 'AbortError';
+          queuedError.cancelReason = cancelReason;
+          addMandarinDiagnosticEvent(queuedRecord, 'cancelled', cancelReason);
+          this._call(queuedRecord.onError, queuedError);
+        }
+        return !!(oldRecord || oldUtterance || queuedRecords.length);
+      },
+
+      playText: function(text, rate, onComplete, onError, onStart, options) {
+        options = options || {};
+        var playMode = options.mode === 'enqueue' ? 'enqueue' : 'replace';
+        if (playMode === 'replace') this.stop(options.cancelReason || 'replaced_by_new_request');
+
+        var record = createMandarinDiagnosticRecord(this, text, rate, options, playMode);
+        record.generation = this.playbackGeneration;
+        record.requestToken = Object.prototype.hasOwnProperty.call(options, 'requestToken')
+          ? options.requestToken : (typeof speechRequestToken !== 'undefined' ? speechRequestToken : null);
+        record.isCurrent = typeof options.isCurrent === 'function' ? options.isCurrent : null;
+        record.onComplete = onComplete;
+        record.onError = onError;
+        record.onStart = onStart;
+        record.settled = false;
+        record.smoothedText = String(text || '').replace(/[。！\n]+/g, '，').replace(/；/g, '，');
 
         if (!text || typeof text !== 'string') {
-          if (onComplete) onComplete();
-          return;
+          record.settled = true;
+          var emptyError = new Error('國語語音台詞為空。');
+          emptyError.name = 'EmptySpeechText';
+          addMandarinDiagnosticEvent(record, 'onerror', emptyError.message);
+          this._call(onError, emptyError);
+          return record.requestId;
         }
-
         if (!('speechSynthesis' in window) || typeof SpeechSynthesisUtterance === 'undefined') {
-          if (onError) onError(new Error('此裝置不支援語音播放'));
-          else if (onComplete) onComplete();
+          record.settled = true;
+          var unsupportedError = new Error('此裝置不支援 SpeechSynthesis。');
+          unsupportedError.name = 'SpeechSynthesisUnavailable';
+          addMandarinDiagnosticEvent(record, 'onerror', unsupportedError.message);
+          this._call(onError, unsupportedError);
+          return record.requestId;
+        }
+
+        this.queue.push(record);
+        this._startNext();
+        return record.requestId;
+      },
+
+      _recordIsCurrent: function(record) {
+        if (!record || record.generation !== this.playbackGeneration) return false;
+        if (record.requestToken !== null && typeof speechRequestToken !== 'undefined' &&
+            record.requestToken !== speechRequestToken) return false;
+        if (record.isCurrent) {
+          try { if (!record.isCurrent()) return false; } catch (e) { return false; }
+        }
+        return true;
+      },
+
+      recordRejected: function(text, error, suppliedContext) {
+        var record = createMandarinDiagnosticRecord(this, text, 0.85, { context: suppliedContext || {} }, 'blocked');
+        record.settled = true;
+        addMandarinDiagnosticEvent(record, 'blocked', error && error.message ? error.message : String(error || 'blocked'));
+        return record.requestId;
+      },
+
+      _startNext: function() {
+        if (this.activeRecord || !this.queue.length) return;
+        var record = this.queue.shift();
+        if (!this._recordIsCurrent(record)) {
+          if (record && !record.settled) {
+            record.settled = true;
+            var staleError = new Error('此國語語音請求已過期，不再播放。');
+            staleError.name = 'AbortError';
+            staleError.cancelReason = 'stale_request_before_start';
+            addMandarinDiagnosticEvent(record, 'cancelled', staleError.cancelReason);
+            this._call(record.onError, staleError);
+          }
+          this._startNext();
           return;
         }
 
-        var smoothedText = text.replace(/[。！\n]+/g, '，').replace(/；/g, '，');
-
-        var utterance = new SpeechSynthesisUtterance(smoothedText);
-        utterance.rate = rate || 0.85;
-        utterance.lang = 'zh-TW';
-
-        this.activeUtterance = utterance;
-        window.currentUtterance = utterance;
+        var utterance;
+        try {
+          utterance = new SpeechSynthesisUtterance(record.smoothedText);
+          utterance.rate = record.rate || 0.85;
+          utterance.lang = 'zh-TW';
+          var selectedMandarinVoice = refreshMandarinVoiceSelection();
+          if (selectedMandarinVoice) utterance.voice = selectedMandarinVoice;
+          var currentVoiceDiagnostic = window.__MANDARIN_VOICE_DIAGNOSTIC || null;
+          if (currentVoiceDiagnostic) {
+            record.voiceSelection = {
+              selection: currentVoiceDiagnostic.selection || '',
+              exactZhTWAvailable: !!currentVoiceDiagnostic.exactZhTWAvailable,
+              fallbackUsed: !!currentVoiceDiagnostic.fallbackUsed,
+              selectedName: currentVoiceDiagnostic.selectedName || '',
+              selectedLang: currentVoiceDiagnostic.selectedLang || ''
+            };
+          }
+          record.utteranceText = String(utterance.text || record.smoothedText);
+          record.utteranceLang = String(utterance.lang || '');
+          record.selectedVoiceName = utterance.voice ? String(utterance.voice.name || '') : '';
+          record.selectedVoiceLang = utterance.voice ? String(utterance.voice.lang || '') : '';
+        } catch (createError) {
+          record.settled = true;
+          addMandarinDiagnosticEvent(record, 'onerror', createError.message || String(createError));
+          this._call(record.onError, createError);
+          this._startNext();
+          return;
+        }
 
         var self = this;
         var hasFinished = false;
+        this.activeRecord = record;
+        this.activeUtterance = utterance;
+        window.currentUtterance = utterance;
+        record.startedAt = new Date().toISOString();
 
-        var done = function(error) {
-          if (!hasFinished) {
-            hasFinished = true;
-            if (self.keepAliveTimer) {
-              clearInterval(self.keepAliveTimer);
-              self.keepAliveTimer = null;
-            }
-            self.activeUtterance = null;
-            if (error) {
-              if (onError) onError(error);
-            } else if (onComplete) {
-              onComplete();
-            }
+        function clearPlaybackTimers() {
+          if (self.finishTimer) { clearTimeout(self.finishTimer); self.finishTimer = null; }
+          if (self.keepAliveTimer) { clearInterval(self.keepAliveTimer); self.keepAliveTimer = null; }
+        }
+        function finish(status, error, cancelNativeQueue) {
+          if (hasFinished || record.settled || self.activeRecord !== record ||
+              record.generation !== self.playbackGeneration) return;
+          if (!self._recordIsCurrent(record)) {
+            addMandarinDiagnosticEvent(record, 'stale_callback_suppressed', 'request_or_stage_token_changed');
+            self.stop('stale_request');
+            return;
           }
+          hasFinished = true;
+          record.settled = true;
+          clearPlaybackTimers();
+          utterance.onstart = null;
+          utterance.onend = null;
+          utterance.onerror = null;
+          self.activeRecord = null;
+          self.activeUtterance = null;
+          self.activeCancel = null;
+          if (window.currentUtterance === utterance) window.currentUtterance = null;
+
+          if (status === 'ended') {
+            addMandarinDiagnosticEvent(record, 'onend');
+            self._call(record.onComplete);
+            // onComplete 可能接續新增下一段；若沒有新增，也會接著執行既有佇列。
+            self._startNext();
+            return;
+          }
+
+          if (status === 'timeout') {
+            addMandarinDiagnosticEvent(record, 'timeout', error && error.message);
+          } else {
+            addMandarinDiagnosticEvent(record, 'onerror', error && (error.message || error.name) || status);
+          }
+          if (cancelNativeQueue && 'speechSynthesis' in window) {
+            try { window.speechSynthesis.cancel(); } catch (cancelError) {}
+          }
+          self._call(record.onError, error || new Error('國語語音播放失敗。'));
+          // 一段語音發生錯誤後，不讓後續排隊內容錯位接著唸出。
+          self._cancelQueued('previous_utterance_failed');
+        }
+
+        this.activeCancel = function(reason) { self.stop(reason || 'explicit_cancel'); };
+        utterance.onstart = function() {
+          if (hasFinished || self.activeRecord !== record || !self._recordIsCurrent(record)) return;
+          addMandarinDiagnosticEvent(record, 'onstart');
+          setExamAudioPlaybackStatus('playing', 'zh-TW');
+          self._call(record.onStart);
+        };
+        utterance.onend = function() {
+          finish('ended');
+        };
+        utterance.onerror = function(event) {
+          var error = new Error(event && event.error ? '語音播放中斷：' + event.error : '語音播放失敗');
+          error.name = 'SpeechSynthesisError';
+          error.browserError = event && event.error ? event.error : '';
+          // 原生佇列一旦報錯也同步清空，避免瀏覽器殘留的後續 utterance 在新題後補播。
+          finish('failed', error, true);
         };
 
-        utterance.onend = function() { done(); };
-        utterance.onerror = function(err) { done(err || new Error('語音播放失敗')); };
+        var timeoutMs = Math.min(120000, Math.max(12000, record.smoothedText.length * 700 + 6000));
+        this.finishTimer = setTimeout(function() {
+          var timeoutError = new Error('語音播放逾時，已停止本次播放。');
+          timeoutError.name = 'SpeechSynthesisTimeout';
+          finish('timeout', timeoutError, true);
+        }, timeoutMs);
 
-        this.keepAliveTimer = setInterval(function() {
-          if ('speechSynthesis' in window && window.speechSynthesis.speaking) {
-            window.speechSynthesis.pause();
-            window.speechSynthesis.resume();
-          } else {
-            clearInterval(self.keepAliveTimer);
-            self.keepAliveTimer = null;
+        try {
+          window.speechSynthesis.resume();
+          window.speechSynthesis.speak(utterance);
+          if (record.expectedTextMatches === false) {
+            console.warn('[國語播放診斷 A：實際送入語音的台詞與當下題目不符]', record);
           }
-        }, 4000);
-
-        var maxDuration = Math.max(3000, smoothedText.length * 600 + 2000);
-        setTimeout(done, maxDuration);
-
-        window.speechSynthesis.resume();
-        window.speechSynthesis.speak(utterance);
+          if (record.selectedVoiceLang && String(record.selectedVoiceLang).replace(/_/g, '-').toLowerCase() !== 'zh-tw') {
+            console.warn('[國語播放診斷 E：所選 voice 不是 zh-TW]', record.selectedVoiceName, record.selectedVoiceLang);
+          }
+        } catch (playError) {
+          finish('failed', playError, true);
+        }
       }
     };
 
@@ -5015,97 +5562,196 @@ function getTaiwaneseKey(text) {
 
   return cleanText;
 }
+    function isValidPrerecordedAudioDataUrl(dataUrl) {
+      return typeof dataUrl === 'string' &&
+        /^data:audio\/(?:mpeg|mp3);base64,[A-Za-z0-9+/]+={0,2}$/i.test(dataUrl.trim());
+    }
+
+    function createReadyAudioFromDataUrl(dataUrl, audioKey, timeoutMs) {
+      return new Promise(function(resolve) {
+        var audio;
+        var finished = false;
+        var timeoutId = null;
+        var maxWait = Math.max(5000, Number(timeoutMs) || 12000);
+        try {
+          if (!isValidPrerecordedAudioDataUrl(dataUrl)) {
+            resolve({ success: false, error: new Error('預錄音檔 Data URL 格式無效。'), key: audioKey });
+            return;
+          }
+          audio = new Audio();
+          audio.preload = 'auto';
+        } catch (createError) {
+          resolve({ success: false, error: createError, key: audioKey });
+          return;
+        }
+
+        function cleanup() {
+          if (timeoutId) { clearTimeout(timeoutId); timeoutId = null; }
+          audio.removeEventListener('loadeddata', onReady);
+          audio.removeEventListener('canplay', onReady);
+          audio.removeEventListener('canplaythrough', onReady);
+          audio.removeEventListener('error', onError);
+          audio.removeEventListener('abort', onAbort);
+        }
+        function finish(result) {
+          if (finished) return;
+          finished = true;
+          cleanup();
+          resolve(result);
+        }
+        function onReady() {
+          if (audio.error) {
+            finish({ success: false, error: new Error('瀏覽器回報音檔載入錯誤。'), key: audioKey });
+            return;
+          }
+          // HAVE_CURRENT_DATA (2) 代表至少已有目前可播放資料；Audio 物件存在本身不算 ready。
+          if (Number(audio.readyState || 0) >= 2) {
+            finish({ success: true, audio: audio, dataUrl: dataUrl, ready: true, key: audioKey });
+          }
+        }
+        function onError() {
+          finish({ success: false, error: new Error('預錄音檔載入失敗。'), key: audioKey });
+        }
+        function onAbort() {
+          finish({ success: false, error: new Error('預錄音檔載入遭中止。'), key: audioKey });
+        }
+
+        // 先註冊監聽器，再設定 src/load；最後另檢查 readyState，以涵蓋事件先於監聽器發生的情況。
+        audio.addEventListener('loadeddata', onReady);
+        audio.addEventListener('canplay', onReady);
+        audio.addEventListener('canplaythrough', onReady);
+        audio.addEventListener('error', onError);
+        audio.addEventListener('abort', onAbort);
+        timeoutId = setTimeout(function() {
+          finish({ success: false, error: new Error('預錄音檔載入逾時。'), key: audioKey, timedOut: true });
+        }, maxWait);
+        try {
+          audio.src = dataUrl;
+          audio.load();
+          onReady();
+        } catch (loadError) {
+          finish({ success: false, error: loadError, key: audioKey });
+        }
+      });
+    }
+
     function preloadHakkaSixianAudioClips(keys) {
       var requested = Array.from(new Set((keys || []).map(function(key) {
         return String(key || '').trim();
       }).filter(function(key) { return /^[A-Za-z0-9_]+$/.test(key); })));
       if (!requested.length) return Promise.resolve(HAKKA_SIXIAN_AUDIO_CACHE);
 
-      var missing = [];
-      var waiting = [];
+      var keyPromises = [];
+      var newKeys = [];
+      var resolveByKey = {};
+
       requested.forEach(function(key) {
-        if (HAKKA_SIXIAN_AUDIO_CACHE[key]) return;
-        if (HAKKA_SIXIAN_AUDIO_PENDING[key]) waiting.push(HAKKA_SIXIAN_AUDIO_PENDING[key]);
-        else missing.push(key);
+        var cached = HAKKA_SIXIAN_AUDIO_CACHE[key];
+        if (cached && cached.ready === true && cached.audio &&
+            !cached.audio.error && Number(cached.audio.readyState || 0) >= 2) {
+          keyPromises.push(Promise.resolve(cached));
+          return;
+        }
+
+        if (HAKKA_SIXIAN_AUDIO_PENDING[key]) {
+          keyPromises.push(HAKKA_SIXIAN_AUDIO_PENDING[key]);
+          return;
+        }
+
+        // failed cache 不永久阻止使用者稍後重試；但同一次載入只會發一個 request。
+        if (cached && cached.status === 'failed') delete HAKKA_SIXIAN_AUDIO_CACHE[key];
+
+        var resolveKey;
+        var pendingPromise = new Promise(function(resolve) { resolveKey = resolve; });
+        HAKKA_SIXIAN_AUDIO_PENDING[key] = pendingPromise;
+        resolveByKey[key] = resolveKey;
+        newKeys.push(key);
+        keyPromises.push(pendingPromise);
       });
 
-      if (missing.length) {
-        var batchPromise = new Promise(function(resolve) {
-          var finished = false;
-          var finish = function(result) {
-            if (finished) return;
-            finished = true;
-            resolve(result || { success: false, audios: {} });
-          };
-          var timeoutId = setTimeout(function() {
-            missing.forEach(function(key) { delete HAKKA_SIXIAN_AUDIO_PENDING[key]; });
-            finish({ success: false, timedOut: true, audios: {} });
-          }, 20000);
-
-          if (typeof google === 'undefined' || !google.script || !google.script.run) {
-            clearTimeout(timeoutId);
-            missing.forEach(function(key) { delete HAKKA_SIXIAN_AUDIO_PENDING[key]; });
-            finish({ success: false, audios: {} });
-            return;
-          }
-
-          try {
-            google.script.run
-              .withSuccessHandler(function(result) {
-                clearTimeout(timeoutId);
-                var audioMap = result && result.success && result.audios ? result.audios : {};
-                Object.keys(audioMap).forEach(function(key) {
-                  var dataUrl = audioMap[key];
-                  if (!dataUrl || typeof dataUrl !== 'string') return;
-                  try {
-                    var audio = new Audio();
-                    audio.preload = 'auto';
-                    audio.src = dataUrl;
-                    audio.load();
-                    HAKKA_SIXIAN_AUDIO_CACHE[key] = { audio: audio, dataUrl: dataUrl, ready: false };
-                    var markReady = function() {
-                      if (HAKKA_SIXIAN_AUDIO_CACHE[key]) HAKKA_SIXIAN_AUDIO_CACHE[key].ready = true;
-                    };
-                    audio.addEventListener('loadeddata', markReady, { once: true });
-                    audio.addEventListener('canplaythrough', markReady, { once: true });
-                    if (audio.readyState >= 2) markReady();
-                  } catch (audioError) {
-                    HAKKA_SIXIAN_AUDIO_CACHE[key] = { audio: null, dataUrl: dataUrl, ready: false };
-                  }
-                });
-                missing.forEach(function(key) { delete HAKKA_SIXIAN_AUDIO_PENDING[key]; });
-                finish(result || { success: false, audios: {} });
-              })
-              .withFailureHandler(function(error) {
-                clearTimeout(timeoutId);
-                missing.forEach(function(key) { delete HAKKA_SIXIAN_AUDIO_PENDING[key]; });
-                console.warn('四縣腔音檔預載失敗，播放時將使用原本備援流程。', error);
-                finish({ success: false, audios: {} });
-              })
-              .getHakkaSixianAudioBatch(missing);
-          } catch (error) {
-            clearTimeout(timeoutId);
-            missing.forEach(function(key) { delete HAKKA_SIXIAN_AUDIO_PENDING[key]; });
-            finish({ success: false, audios: {} });
-          }
-        });
-
-        missing.forEach(function(key) { HAKKA_SIXIAN_AUDIO_PENDING[key] = batchPromise; });
-        waiting.push(batchPromise);
+      if (!newKeys.length) {
+        return Promise.all(keyPromises).then(function() { return HAKKA_SIXIAN_AUDIO_CACHE; });
       }
 
-      return Promise.all(waiting).then(function() { return HAKKA_SIXIAN_AUDIO_CACHE; });
+      var requestSettled = false;
+      var requestTimer = setTimeout(function() {
+        finishBatch({ success: false, timedOut: true, audios: {}, message: '四縣腔預錄音檔後端請求逾時。' });
+      }, 40000);
+
+      function finishOne(key, cacheEntry) {
+        HAKKA_SIXIAN_AUDIO_CACHE[key] = cacheEntry;
+        var resolver = resolveByKey[key];
+        if (resolver) {
+          resolver(cacheEntry);
+          delete resolveByKey[key];
+        }
+        delete HAKKA_SIXIAN_AUDIO_PENDING[key];
+      }
+
+      function finishBatch(result) {
+        if (requestSettled) return;
+        requestSettled = true;
+        clearTimeout(requestTimer);
+        var audioMap = result && result.success && result.audios ? result.audios : {};
+        newKeys.forEach(function(key) {
+          var dataUrl = audioMap[key];
+          if (!result || result.success !== true || !isValidPrerecordedAudioDataUrl(dataUrl)) {
+            var backendMissingKeys = result && Array.isArray(result.missingKeys) ? result.missingKeys : [];
+            var keyIsActuallyMissing = backendMissingKeys.indexOf(key) !== -1;
+            var loadErrorMessage = result && result.message
+              ? String(result.message)
+              : (keyIsActuallyMissing ? 'HakkaAudioLib 缺少預錄音檔 key：' + key : '四縣腔預錄音檔請求失敗或回傳格式無效：' + key);
+            finishOne(key, {
+              status: 'failed', ready: false, audio: null, dataUrl: '',
+              error: new Error(loadErrorMessage),
+              missing: keyIsActuallyMissing
+            });
+            return;
+          }
+          createReadyAudioFromDataUrl(dataUrl, key, 12000).then(function(loadResult) {
+            if (loadResult && loadResult.success) {
+              finishOne(key, {
+                status: 'ready', ready: true, audio: loadResult.audio,
+                dataUrl: dataUrl, key: key, error: null
+              });
+            } else {
+              finishOne(key, {
+                status: 'failed', ready: false, audio: null, dataUrl: dataUrl,
+                key: key, error: loadResult && loadResult.error ? loadResult.error : new Error('四縣腔音檔載入失敗。'),
+                timedOut: !!(loadResult && loadResult.timedOut)
+              });
+            }
+          }).catch(function(loadError) {
+            finishOne(key, { status: 'failed', ready: false, audio: null, dataUrl: dataUrl, key: key, error: loadError });
+          });
+        });
+      }
+
+      if (typeof google === 'undefined' || !google.script || !google.script.run) {
+        finishBatch({ success: false, audios: {}, message: '找不到後端通訊橋接。' });
+      } else {
+        try {
+          google.script.run
+            .withSuccessHandler(function(result) { finishBatch(result); })
+            .withFailureHandler(function(error) {
+              finishBatch({ success: false, audios: {}, message: String(error && error.message || error || '後端請求失敗。') });
+            })
+            .getHakkaSixianAudioBatch(newKeys);
+        } catch (requestError) {
+          finishBatch({ success: false, audios: {}, message: String(requestError && requestError.message || requestError) });
+        }
+      }
+
+      return Promise.all(keyPromises).then(function() { return HAKKA_SIXIAN_AUDIO_CACHE; });
     }
 
-    // 與後端 getHakkaSixianAudioKey() 保持相同判斷順序，讓前端可直接命中已預載錄音。
+    // 與後端 getHakkaSixianAudioKey() 保持相同順序；變動時間只能使用明確指定的 key。
     function getHakkaSixianClipKeyFromText(text) {
       var raw = String(text || '').trim();
       var explicit = raw.match(/^__HAKKA_CLIP__:([A-Za-z0-9_]+)$/);
       if (explicit) return explicit[1];
       var t = raw.replace(/\s+/g, '');
-      if (Object.prototype.hasOwnProperty.call(P2_HAKKA_CARD_AUDIO_KEY_BY_NAME, t)) {
-        return P2_HAKKA_CARD_AUDIO_KEY_BY_NAME[t];
-      }
+      if (Object.prototype.hasOwnProperty.call(P2_HAKKA_CARD_AUDIO_KEY_BY_NAME, t)) return P2_HAKKA_CARD_AUDIO_KEY_BY_NAME[t];
       if (t.indexOf('語言選擇頁') !== -1 || t.indexOf('選擇語言') !== -1 ||
           t.indexOf('請選擇語言') !== -1 || t.indexOf('已選擇客語') !== -1 ||
           t.indexOf('客語試聽') !== -1 || t.indexOf('選擇客語') !== -1) return 'language_select';
@@ -5124,134 +5770,166 @@ function getTaiwaneseKey(text) {
       if (t.indexOf('回想') !== -1 && (t.indexOf('圖片') !== -1 || t.indexOf('相仔') !== -1)) return 'p2_recall';
       if (t.indexOf('安靜休息') !== -1 || t.indexOf('休息期間') !== -1 || t.indexOf('靜候兩分鐘') !== -1 || t.indexOf('放輕鬆休息') !== -1) return 'p2_rest';
       if (t.indexOf('接下來會看到10張圖片') !== -1 || t.indexOf('10張圖片') !== -1 || t.indexOf('逐一向您展示') !== -1 || t.indexOf('第二關') !== -1 || t.indexOf('每張圖片會顯示') !== -1) return 'p2_intro';
-      if (t.indexOf('兩點四十五分') !== -1 || t.indexOf('2點45分') !== -1 || t.indexOf('顯示指定時間') !== -1) return 'p3_quiz';
-      if (t.indexOf('第三關') !== -1 || t.indexOf('短時針') !== -1 || t.indexOf('長分針') !== -1 ||
-          t.indexOf('畫出完整時鐘') !== -1 || t.indexOf('畫出完整的時鐘') !== -1) return 'p3_intro';
+      // 第三關指定時間必須明確對應錄音：目前只確認既有 p3_quiz 對應 2:45。
+      // 其他三種指定時間直接回傳空 key，絕不可落入 p3_intro 或被當成相同錄音。
+      var hasTwoFortyFive = t.indexOf('兩點四十五分') !== -1 || t.indexOf('2點45分') !== -1 || t.indexOf('2:45') !== -1;
+      if (hasTwoFortyFive) return 'p3_quiz';
+      var hasOtherP3Time = ['十一點十分', '一點四十五分', '八點二十分', '11:10', '1:45', '8:20'].some(function(token) {
+        return t.indexOf(token) !== -1;
+      });
+      if (hasOtherP3Time) return '';
+      if (t.indexOf('畫出完整時鐘') !== -1 || t.indexOf('畫出完整的時鐘') !== -1 ||
+          (t.indexOf('第三關') !== -1 && t.indexOf('短時針') !== -1)) return 'p3_intro';
       return '';
     }
 
-    function playCachedHakkaSixianAudio(key, requestId, expectedLanguage, isPreview, onEnded) {
+    function playCachedHakkaSixianAudio(key, requestId, expectedLanguage, isPreview, onEnded, onError) {
       var cached = HAKKA_SIXIAN_AUDIO_CACHE[key];
-      if (!cached) return false;
-      if (requestId !== speechRequestToken || examState.language !== expectedLanguage) return true;
-      if (!cached.audio) {
-        if (cached.dataUrl) playRemoteAudioData(cached.dataUrl, requestId, expectedLanguage, isPreview, onEnded);
-        else if (isPreview) reportPreviewAudioFailure(requestId, expectedLanguage);
+      function fail(error, missing) {
+        var playbackError = error || new Error('四縣腔預錄音檔無法播放：' + key);
+        playbackError.name = missing ? 'HakkaPrerecordedAudioMissing' : (playbackError.name || 'HakkaAudioPlaybackError');
+        if (isPreview && requestId === speechRequestToken && examState.language === expectedLanguage) {
+          setLanguageAudioStatusState(missing ? 'missing' : 'failed', expectedLanguage, playbackError.message);
+        }
+        setExamAudioPlaybackStatus('failed', expectedLanguage, playbackError);
+        if (typeof onError === 'function') onError(playbackError);
+      }
+      if (requestId !== speechRequestToken || examState.language !== expectedLanguage) return false;
+      if (!cached || cached.status !== 'ready' || cached.ready !== true || !cached.audio) {
+        fail(cached && cached.error ? cached.error : new Error('四縣腔預錄音檔尚未載入完成：' + key), !!(cached && cached.missing));
         return true;
       }
-
       var audio = cached.audio;
-      audio.onended = null;
-      audio.onerror = null;
+      if (audio.error || Number(audio.readyState || 0) < 2) {
+        fail(new Error('四縣腔音檔尚未達到可播放狀態：' + key), false);
+        return true;
+      }
       if (currentHakkaAudioPlayer && currentHakkaAudioPlayer !== audio) {
-        try { currentHakkaAudioPlayer.pause(); currentHakkaAudioPlayer.currentTime = 0; } catch (e) {}
+        try { currentHakkaAudioPlayer.pause(); currentHakkaAudioPlayer.currentTime = 0; } catch (stopError) {}
       }
       currentHakkaAudioPlayer = audio;
+      try { audio.pause(); audio.currentTime = 0; } catch (resetError) {}
       audio.playbackRate = examState.speechRate || 0.85;
-      try { audio.currentTime = 0; } catch (e) {}
-      audio.onended = function() {
-        if (requestId !== speechRequestToken || examState.language !== expectedLanguage) return;
-        audio.onended = null;
-        currentHakkaAudioPlayer = null;
-        if (typeof onEnded === 'function') onEnded();
-      };
-      audio.onerror = function() {
-        if (requestId !== speechRequestToken || examState.language !== expectedLanguage) return;
-        currentHakkaAudioPlayer = null;
-        if (isPreview) reportPreviewAudioFailure(requestId, expectedLanguage);
-      };
-      try {
-        var result = audio.play();
-        if (result && typeof result.catch === 'function') {
-          result.catch(function() {
-            if (requestId !== speechRequestToken || examState.language !== expectedLanguage) return;
-            // 若專用 Audio 元素未能播放，使用同一份已快取 Data URL 作為備援，不再呼叫伺服器。
-            currentHakkaAudioPlayer = null;
-            playRemoteAudioData(cached.dataUrl, requestId, expectedLanguage, isPreview, onEnded);
-          });
-        }
-      } catch (error) {
-        currentHakkaAudioPlayer = null;
-        playRemoteAudioData(cached.dataUrl, requestId, expectedLanguage, isPreview, onEnded);
-      }
+      playManagedAudioElement(audio, {
+        alreadyLoaded: true,
+        requestId: requestId,
+        expectedLanguage: expectedLanguage,
+        isPreview: !!isPreview,
+        isHakka: true,
+        playbackRate: examState.speechRate || 0.85,
+        onComplete: onEnded,
+        onError: function(error) { fail(error, false); }
+      });
       return true;
     }
 
-    // 臺語音檔統一由 Apps Script 的 TaiwaneseAudioLib Library 取得。
-    // 此處只傳回 Library 內嵌錄音的 Data URL，不讀取 Google Drive、不呼叫 TTS。
+
+    // 臺語音檔統一由 Apps Script 的 TaiwaneseAudioLib Library 取得；只接受有效預錄 MP3 Data URL。
     function requestTaiwaneseAudioClip(key, callback) {
       var audioKey = String(key || '').trim();
       if (!audioKey || audioKey.length > 100) {
-        if (typeof callback === 'function') callback(null);
+        if (typeof callback === 'function') callback(null, { missing: true, message: '臺語音檔 key 不正確。' });
         return;
       }
-
-      if (TAIWANESE_AUDIO_CACHE[audioKey]) {
-        if (typeof callback === 'function') callback(TAIWANESE_AUDIO_CACHE[audioKey]);
+      if (TAIWANESE_AUDIO_CACHE[audioKey] && isValidPrerecordedAudioDataUrl(TAIWANESE_AUDIO_CACHE[audioKey])) {
+        if (typeof callback === 'function') callback(TAIWANESE_AUDIO_CACHE[audioKey], null);
         return;
       }
-
       if (TAIWANESE_AUDIO_PENDING[audioKey]) {
         if (typeof callback === 'function') TAIWANESE_AUDIO_PENDING[audioKey].push(callback);
         return;
       }
       TAIWANESE_AUDIO_PENDING[audioKey] = typeof callback === 'function' ? [callback] : [];
+      var settled = false;
+      var timeoutId = setTimeout(function() {
+        finish(null, { timedOut: true, message: '臺語預錄音檔請求逾時。' });
+      }, 40000);
 
-      var finish = function(audioDataUrl) {
+      function finish(audioDataUrl, errorInfo) {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeoutId);
         var waitingCallbacks = TAIWANESE_AUDIO_PENDING[audioKey] || [];
         delete TAIWANESE_AUDIO_PENDING[audioKey];
-        if (audioDataUrl) TAIWANESE_AUDIO_CACHE[audioKey] = audioDataUrl;
+        if (audioDataUrl && isValidPrerecordedAudioDataUrl(audioDataUrl)) {
+          TAIWANESE_AUDIO_CACHE[audioKey] = audioDataUrl;
+        } else {
+          delete TAIWANESE_AUDIO_CACHE[audioKey];
+          audioDataUrl = null;
+        }
         waitingCallbacks.forEach(function(fn) {
-          try { fn(audioDataUrl || null); } catch (callbackError) { console.warn(callbackError); }
+          try { fn(audioDataUrl, errorInfo || null); } catch (callbackError) { console.warn(callbackError); }
         });
-      };
-
-      if (typeof google === 'undefined' || !google.script || !google.script.run) {
-        finish(null);
-        return;
       }
 
+      if (typeof google === 'undefined' || !google.script || !google.script.run) {
+        finish(null, { message: '找不到後端通訊橋接。' });
+        return;
+      }
       try {
         google.script.run
           .withSuccessHandler(function(result) {
-            if (!result || !result.success || !result.audioDataUrl) {
-              console.warn('臺語預錄音檔不存在或讀取失敗：', audioKey, result && result.message ? result.message : '');
-              finish(null);
+            if (!result || !result.success || !isValidPrerecordedAudioDataUrl(result.audioDataUrl)) {
+              var message = String(result && (result.message || result.reason) || ('臺語 Library 未回傳預錄音檔 key：' + audioKey));
+              var missing = result && result.missing === true || /找不到|不存在|尚未內嵌|缺少|not found|missing/i.test(message);
+              finish(null, { missing: missing, message: message, key: audioKey });
               return;
             }
-            finish(result.audioDataUrl);
+            finish(result.audioDataUrl, null);
           })
           .withFailureHandler(function(error) {
-            console.warn('臺語 Library 音檔讀取失敗：', audioKey, error);
-            finish(null);
+            finish(null, { message: String(error && error.message || error || '臺語 Library 讀取失敗。') });
           })
           .getTaiwaneseAudioClip(audioKey);
       } catch (error) {
-        console.warn('臺語 Library 音檔呼叫失敗：', audioKey, error);
-        finish(null);
+        finish(null, { message: String(error && error.message || error) });
       }
     }
 
     function startPreloadTaiwaneseAudios() {
       if (isTaiwanesePreloading) return;
       isTaiwanesePreloading = true;
-
+      var settled = false;
+      var timeoutId = setTimeout(function() {
+        if (settled) return;
+        settled = true;
+        isTaiwanesePreloading = false;
+        console.warn('[臺語 Library 預載] 請求逾時；各題播放仍會逐 key 讀取並有獨立逾時。');
+      }, 40000);
       try {
         if (typeof google !== 'undefined' && google.script && google.script.run) {
           google.script.run
             .withSuccessHandler(function(res) {
+              if (settled) return;
+              settled = true;
+              clearTimeout(timeoutId);
+              isTaiwanesePreloading = false;
               if (res && res.success && res.cache) {
-                for (var k in res.cache) {
-                  if (res.cache[k]) TAIWANESE_AUDIO_CACHE[k] = res.cache[k];
+                Object.keys(res.cache).forEach(function(key) {
+                  if (isValidPrerecordedAudioDataUrl(res.cache[key])) TAIWANESE_AUDIO_CACHE[key] = res.cache[key];
+                });
+                if (Array.isArray(res.missingKeys) && res.missingKeys.length) {
+                  console.warn('[臺語 Library 線上版本缺少錄音 key]', res.missingKeys);
                 }
-                console.log("⚡ [預載完成] 核心台語指導語已載入快取。");
+                console.log('臺語預錄音檔快取請求完成。');
               }
             })
-            .withFailureHandler(function(err){ console.warn("預載跳過：", err); })
+            .withFailureHandler(function(err) {
+              if (settled) return;
+              settled = true;
+              clearTimeout(timeoutId);
+              isTaiwanesePreloading = false;
+              console.warn('臺語預載失敗；實際播放仍會逐 key 請求。', err);
+            })
             .getFastInitialTaiwaneseCache();
+        } else {
+          settled = true;
+          clearTimeout(timeoutId);
+          isTaiwanesePreloading = false;
         }
       } catch(e) {
-        console.warn("預載觸發異常：", e);
+        if (!settled) { settled = true; clearTimeout(timeoutId); isTaiwanesePreloading = false; }
+        console.warn('臺語預載觸發異常：', e);
       }
     }
 
@@ -5278,10 +5956,11 @@ function getTaiwaneseKey(text) {
       var supportedLanguages = ['zh-TW', 'nan-TW', 'hak-TW', 'text'];
       if (supportedLanguages.indexOf(langCode) === -1) return;
 
-      stopAllSpeech();
+      stopAllSpeech('language_switch');
       if (langCode !== 'text') unlockAudioContext();
       examState.language = langCode;
-
+      setLanguageAudioStatusState(langCode === 'text' ? 'text' : 'loading', langCode);
+      setExamAudioPlaybackStatus(langCode === 'text' ? 'skipped' : 'loading', langCode);
       syncLanguageSelectionUI();
 
       var accentBox = document.getElementById('hakka-accent-box');
@@ -5289,149 +5968,69 @@ function getTaiwaneseKey(text) {
       syncAudioButtons();
 
       if (langCode === 'text') return;
-
       if (langCode === 'nan-TW') {
-        // 臺語正式測驗與語言試聽皆只使用 TaiwaneseAudioLib 內的預錄音檔。
         startPreloadTaiwaneseAudios();
         playTaiwaneseLanguagePreview();
         return;
       }
-
       if (langCode === 'hak-TW' && (examState.hakkaAccent || 'sixian') === 'sixian') {
-        // 只預載第一關會用到的固定錄音；第二、三關會在前一階段背景預載。
         preloadHakkaSixianAudioClips(HAKKA_SIXIAN_P1_KEYS);
       }
-
-      var preview = langCode === 'zh-TW' ? MANDARIN_VOICE_SCRIPTS.languagePreview : '已選擇客語。';
+      var preview = langCode === 'zh-TW' ? MANDARIN_VOICE_SCRIPTS.languagePreview : '__HAKKA_CLIP__:language_select';
       speakPrompt(preview, true);
     }
 
-    // 臺語語言選擇試聽：只從 TaiwaneseAudioLib 取得內嵌預錄音檔，不使用 HTML Base64 或 Google Drive。
     function playTaiwaneseLanguagePreview() {
       var currentLang = 'nan-TW';
       var requestId = speechRequestToken;
-      requestTaiwaneseAudioClip('language_select', function(audioDataUrl) {
+      setLanguageAudioStatusState('loading', currentLang);
+      requestTaiwaneseAudioClip('language_select', function(audioDataUrl, errorInfo) {
         if (requestId !== speechRequestToken || examState.language !== currentLang) return;
         if (!audioDataUrl) {
-          reportPreviewAudioFailure(requestId, currentLang);
+          setLanguageAudioStatusState(errorInfo && errorInfo.missing ? 'missing' : 'failed', currentLang, errorInfo && errorInfo.message);
+          reportPreviewAudioFailure(requestId, currentLang, errorInfo);
           return;
         }
         playRemoteAudioData(audioDataUrl, requestId, currentLang, true, null, true);
       });
     }
 
-    // 語言卡片左側喇叭只負責試聽，不修改 examState.language 或卡片選取狀態。
-    function showIndependentLanguagePreviewError() {
+    function showIndependentLanguagePreviewError(message, state) {
+      setLanguageAudioStatusState(state || 'failed', examState.language, message);
       var status = document.getElementById('language-audio-status');
-      if (!status) return;
-      status.textContent = translateExamDisplayText('目前無法播放語音，請確認裝置音量或稍後再試。');
-      status.classList.add('is-visible');
+      if (status) status.classList.add('is-visible');
     }
 
     function playIndependentPreviewData(audioDataUrl, requestId) {
       if (requestId !== speechRequestToken) return;
       if (!audioDataUrl || !globalAudioPlayer) {
-        showIndependentLanguagePreviewError();
+        showIndependentLanguagePreviewError('預錄音檔資料不存在。');
         return;
       }
-      globalAudioPlayer.onended = null;
-      globalAudioPlayer.onerror = function() {
-        if (requestId === speechRequestToken) showIndependentLanguagePreviewError();
-      };
-      globalAudioPlayer.src = audioDataUrl;
-      globalAudioPlayer.playbackRate = 1;
-      try {
-        var playResult = globalAudioPlayer.play();
-        if (playResult && typeof playResult.catch === 'function') {
-          playResult.catch(function() {
-            if (requestId === speechRequestToken) showIndependentLanguagePreviewError();
-          });
-        }
-      } catch (error) {
-        showIndependentLanguagePreviewError();
-      }
+      playRemoteAudioData(audioDataUrl, requestId, examState.language, true, null, true,
+        function(error) { showIndependentLanguagePreviewError(error && error.message); });
     }
 
     function playIndependentHakkaPreview(requestId) {
       var accent = examState.hakkaAccent || 'sixian';
-      var previewText = '已選擇客語。';
-
-      function useOriginalHakkaFallback() {
-        if (requestId !== speechRequestToken) return;
-        if (typeof google === 'undefined' || !google.script || !google.script.run) {
-          showIndependentLanguagePreviewError();
-          return;
-        }
-        try {
-          google.script.run
-            .withSuccessHandler(function(result) {
-              if (requestId !== speechRequestToken) return;
-              if (!result || !result.success || !result.audioDataUrl) {
-                showIndependentLanguagePreviewError();
-                return;
-              }
-              playIndependentPreviewData(result.audioDataUrl, requestId);
-            })
-            .withFailureHandler(function() {
-              if (requestId === speechRequestToken) showIndependentLanguagePreviewError();
-            })
-            .synthesizeDynamicSpeech(previewText, 'hak-TW', accent);
-        } catch (error) {
-          showIndependentLanguagePreviewError();
-        }
-      }
-
-      // 四縣腔先使用原本的語音資料庫；沒有快取時才沿用原本 API 備援。
       if (accent !== 'sixian') {
-        useOriginalHakkaFallback();
+        setLanguageAudioStatusState('missing', 'hak-TW', '海陸腔目前沒有可確認的預錄音檔。');
         return;
       }
+      setLanguageAudioStatusState('loading', 'hak-TW');
       preloadHakkaSixianAudioClips(['language_select']).then(function() {
-        if (requestId !== speechRequestToken) return;
-        var cached = HAKKA_SIXIAN_AUDIO_CACHE['language_select'];
-        if (!cached) {
-          useOriginalHakkaFallback();
+        if (requestId !== speechRequestToken || examState.language !== 'hak-TW') return;
+        var cached = HAKKA_SIXIAN_AUDIO_CACHE.language_select;
+        if (!cached || cached.status !== 'ready' || !cached.ready || !cached.audio) {
+          var missingState = cached && cached.missing ? 'missing' : 'failed';
+          showIndependentLanguagePreviewError('四縣腔 language_select 預錄音檔無法載入。', missingState);
           return;
         }
-        if (cached.audio) {
-          var audio = cached.audio;
-          if (currentHakkaAudioPlayer && currentHakkaAudioPlayer !== audio) {
-            try { currentHakkaAudioPlayer.pause(); currentHakkaAudioPlayer.currentTime = 0; } catch (error) {}
-          }
-          currentHakkaAudioPlayer = audio;
-          try { audio.pause(); audio.currentTime = 0; } catch (error) {}
-          audio.playbackRate = examState.speechRate || 0.85;
-          audio.onended = function() {
-            if (requestId !== speechRequestToken) return;
-            audio.onended = null;
-            currentHakkaAudioPlayer = null;
-          };
-          audio.onerror = function() {
-            if (requestId !== speechRequestToken) return;
-            currentHakkaAudioPlayer = null;
-            if (cached.dataUrl) playIndependentPreviewData(cached.dataUrl, requestId);
-            else useOriginalHakkaFallback();
-          };
-          try {
-            var playResult = audio.play();
-            if (playResult && typeof playResult.catch === 'function') {
-              playResult.catch(function() {
-                if (requestId !== speechRequestToken) return;
-                currentHakkaAudioPlayer = null;
-                if (cached.dataUrl) playIndependentPreviewData(cached.dataUrl, requestId);
-                else useOriginalHakkaFallback();
-              });
-            }
-          } catch (error) {
-            currentHakkaAudioPlayer = null;
-            if (cached.dataUrl) playIndependentPreviewData(cached.dataUrl, requestId);
-            else useOriginalHakkaFallback();
-          }
-          return;
-        }
-        if (cached.dataUrl) playIndependentPreviewData(cached.dataUrl, requestId);
-        else useOriginalHakkaFallback();
-      }).catch(useOriginalHakkaFallback);
+        playCachedHakkaSixianAudio('language_select', requestId, 'hak-TW', true, null,
+          function(error) { showIndependentLanguagePreviewError(error && error.message); });
+      }).catch(function(error) {
+        if (requestId === speechRequestToken) showIndependentLanguagePreviewError(error && error.message);
+      });
     }
 
     window.previewLanguageAudio = function(langCode) {
@@ -5439,29 +6038,35 @@ function getTaiwaneseKey(text) {
       unlockAudioContext();
       stopAllSpeech();
       var requestId = speechRequestToken;
+      setLanguageAudioStatusState('loading', langCode);
 
       if (langCode === 'zh-TW') {
         if (!mandarinSpeechControl || !mandarinSpeechControl.playText) {
-          showIndependentLanguagePreviewError();
+          showIndependentLanguagePreviewError('此裝置不支援 SpeechSynthesis。');
           return;
         }
         try {
-          mandarinSpeechControl.playText(MANDARIN_VOICE_SCRIPTS.languagePreview, examState.speechRate || 0.85, null, showIndependentLanguagePreviewError);
-        } catch (error) {
-          showIndependentLanguagePreviewError();
-        }
+          mandarinSpeechControl.playText(MANDARIN_VOICE_SCRIPTS.languagePreview, examState.speechRate || 0.85,
+            function() { if (requestId === speechRequestToken) setLanguageAudioStatusState('success', langCode); },
+            function(error) { if (requestId === speechRequestToken) showIndependentLanguagePreviewError(error && error.message); },
+            function() { if (requestId === speechRequestToken) setLanguageAudioStatusState('playing', langCode); },
+            { mode: 'enqueue', requestToken: requestId, cancelReason: 'language_preview', context: { stage: 'language_selection', questionId: 'LANGUAGE-PREVIEW', questionType: 'voice_preview', expectedText: MANDARIN_VOICE_SCRIPTS.languagePreview } }
+          );
+        } catch (error) { showIndependentLanguagePreviewError(error && error.message); }
         return;
       }
 
       if (langCode === 'nan-TW') {
-        // 臺語試聽只讀取 TaiwaneseAudioLib 的 language_select 預錄音檔，不更動選取語言。
-        requestTaiwaneseAudioClip('language_select', function(audioDataUrl) {
+        requestTaiwaneseAudioClip('language_select', function(audioDataUrl, errorInfo) {
           if (requestId !== speechRequestToken) return;
+          if (!audioDataUrl) {
+            setLanguageAudioStatusState(errorInfo && errorInfo.missing ? 'missing' : 'failed', langCode, errorInfo && errorInfo.message);
+            return;
+          }
           playIndependentPreviewData(audioDataUrl, requestId);
         });
         return;
       }
-
       playIndependentHakkaPreview(requestId);
     };
 
@@ -5672,11 +6277,19 @@ function getTaiwaneseKey(text) {
     }
 
     function setHakkaAccent(accent) {
-      unlockAudioContext();
+      if (accent !== 'sixian' && accent !== 'hailu') return;
+      stopAllSpeech('accent_switch');
       examState.hakkaAccent = accent;
-      document.getElementById('btn-hak-sixian').className = "accent-btn " + (accent === 'sixian' ? "active" : "");
-      document.getElementById('btn-hak-hailu').className = "accent-btn " + (accent === 'hailu' ? "active" : "");
+      var sixianButton = document.getElementById('btn-hak-sixian');
+      var hailuButton = document.getElementById('btn-hak-hailu');
+      if (sixianButton) sixianButton.className = 'accent-btn ' + (accent === 'sixian' ? 'active' : '');
+      if (hailuButton) hailuButton.className = 'accent-btn ' + (accent === 'hailu' ? 'active' : '');
+      if (examState.language === 'hak-TW') {
+        setLanguageAudioStatusState(accent === 'hailu' ? 'missing' : 'idle', 'hak-TW',
+          accent === 'hailu' ? '海陸腔目前沒有可確認的預錄音檔。' : '四縣腔已選擇，請點選試聽。');
+      }
     }
+
 
     function repeatCurrentAudio() {
       unlockAudioContext();
@@ -5691,155 +6304,466 @@ function getTaiwaneseKey(text) {
         speakPrompt(MANDARIN_VOICE_SCRIPTS.p2RestRepeat);
         return;
       }
+      // 第一關重播必須依「目前題目＋目前已選模式」重新取台詞，不沿用 currentAudioText 舊值。
+      if (examState.language === 'zh-TW' && document.body.getAttribute('data-step') === 'step-p1') {
+        var currentP1Question = examState.p1 && examState.p1.questions
+          ? examState.p1.questions[examState.p1.currentIndex] : null;
+        var currentP1Mode = examState.p1 ? (examState.p1.currentMode || '') : '';
+        var selectedP1Script = currentP1Question ? getP1AudioText(currentP1Question, currentP1Mode) : '';
+        if (selectedP1Script) speakPrompt(selectedP1Script);
+        return;
+      }
       if (currentAudioText) speakPrompt(currentAudioText);
     }
 
-    function stopSpeechPlayback() {
-  if (typeof mandarinSpeechControl !== 'undefined' && mandarinSpeechControl && mandarinSpeechControl.stop) {
-    mandarinSpeechControl.stop();
+    function setLanguageAudioStatusState(state, languageCode, detail) {
+  window.__LANGUAGE_AUDIO_STATE = {
+    state: state || 'idle',
+    language: languageCode || (typeof examState !== 'undefined' ? examState.language : 'zh-TW'),
+    detail: detail ? String(detail) : '',
+    updatedAt: Date.now()
+  };
+  if (typeof window.__renderLanguageAudioStatus === 'function') {
+    window.__renderLanguageAudioStatus(window.__LANGUAGE_AUDIO_STATE);
   }
-  if ('speechSynthesis' in window) window.speechSynthesis.cancel();
-  if (currentHakkaAudioPlayer) {
+}
+
+function setExamAudioPlaybackStatus(state, languageCode, error) {
+  var record = {
+    state: state || 'idle',
+    language: languageCode || (typeof examState !== 'undefined' ? examState.language : ''),
+    error: error ? String(error.message || error) : '',
+    updatedAt: Date.now()
+  };
+  window.__EXAM_AUDIO_PLAYBACK_STATE = record;
+  // 隱藏的 aria-live 狀態不改動版面，只讓正式測驗的音訊狀態可被輔助技術及除錯讀取。
+  var live = document.getElementById('exam-audio-live-status');
+  if (!live) {
+    live = document.createElement('span');
+    live.id = 'exam-audio-live-status';
+    live.setAttribute('role', 'status');
+    live.setAttribute('aria-live', 'polite');
+    live.style.position = 'absolute';
+    live.style.width = '1px';
+    live.style.height = '1px';
+    live.style.padding = '0';
+    live.style.margin = '-1px';
+    live.style.overflow = 'hidden';
+    live.style.clip = 'rect(0,0,0,0)';
+    live.style.whiteSpace = 'nowrap';
+    live.style.border = '0';
+    document.body.appendChild(live);
+  }
+  live.textContent = state === 'playing' ? '語音播放中' :
+    state === 'success' ? '語音播放完成' :
+    state === 'cancelled' ? '語音播放已取消' :
+    state === 'missing' ? '沒有可播放的預錄音檔' :
+    state === 'skipped' ? '目前為純文字模式，已略過語音' :
+    state === 'failed' ? '語音播放失敗' :
+    state === 'loading' ? '語音準備中' : '尚未播放語音';
+}
+
+function playManagedAudioElement(audio, options) {
+  var cfg = options || {};
+  var settled = false;
+  var loadTimer = null;
+  var playbackTimer = null;
+  var listeners = [];
+  var started = false;
+  var session;
+  var requestId = cfg.requestId;
+  var expectedLanguage = cfg.expectedLanguage;
+
+  function isCurrentRequest() {
+    if (requestId === undefined || requestId === null) return true;
+    return requestId === speechRequestToken &&
+      (expectedLanguage === undefined || examState.language === expectedLanguage);
+  }
+  function clearTimers() {
+    if (loadTimer) { clearTimeout(loadTimer); loadTimer = null; }
+    if (playbackTimer) { clearTimeout(playbackTimer); playbackTimer = null; }
+  }
+  function removeListeners() {
+    listeners.forEach(function(entry) {
+      try { audio.removeEventListener(entry.type, entry.fn); } catch (e) {}
+    });
+    listeners = [];
+  }
+  function finish(status, error) {
+    if (settled) return;
+    settled = true;
+    clearTimers();
+    removeListeners();
+    if (activeManagedAudioPlayback === session) activeManagedAudioPlayback = null;
+    if (currentHakkaAudioPlayer === audio) currentHakkaAudioPlayer = null;
+    if (status !== 'ended') {
+      try { audio.pause(); } catch (pauseError) {}
+    }
+    if (status === 'ended') {
+      setExamAudioPlaybackStatus('success', expectedLanguage);
+      if (cfg.isPreview && isCurrentRequest()) setLanguageAudioStatusState('success', expectedLanguage);
+      if (typeof cfg.onComplete === 'function') {
+        try { cfg.onComplete(); } catch (callbackError) { console.error('語音完成 callback 錯誤：', callbackError); }
+      }
+      return;
+    }
+    if (status === 'cancelled') {
+      var cancelError = error || new Error('語音播放已取消。');
+      cancelError.name = 'AbortError';
+      setExamAudioPlaybackStatus('cancelled', expectedLanguage, cancelError);
+      if (cfg.isPreview && isCurrentRequest()) setLanguageAudioStatusState('cancelled', expectedLanguage);
+      if (typeof cfg.onCancelled === 'function') {
+        try { cfg.onCancelled(cancelError); } catch (callbackError) { console.error(callbackError); }
+      }
+      return;
+    }
+    var playbackError = error || new Error('音訊播放失敗。');
+    setExamAudioPlaybackStatus('failed', expectedLanguage, playbackError);
+    if (cfg.isPreview && isCurrentRequest()) setLanguageAudioStatusState('failed', expectedLanguage, playbackError.message);
+    if (typeof cfg.onError === 'function') {
+      try { cfg.onError(playbackError); } catch (callbackError) { console.error('語音失敗 callback 錯誤：', callbackError); }
+    } else {
+      console.warn('[語音播放失敗]', playbackError.message || playbackError);
+    }
+  }
+  function listen(type, fn) {
+    audio.addEventListener(type, fn);
+    listeners.push({ type: type, fn: fn });
+  }
+  function markPlaying() {
+    if (settled || !isCurrentRequest()) {
+      finish('cancelled', new Error('語音請求已被新請求取代。'));
+      return;
+    }
+    if (!started) {
+      started = true;
+      if (loadTimer) { clearTimeout(loadTimer); loadTimer = null; }
+      setExamAudioPlaybackStatus('loading', expectedLanguage);
+      if (cfg.isPreview) setLanguageAudioStatusState('loading', expectedLanguage);
+      var duration = Number(audio.duration);
+      var maxPlaybackMs = Number.isFinite(duration) && duration > 0
+        ? Math.min(240000, Math.max(20000, duration * 1000 + 15000))
+        : 120000;
+      playbackTimer = setTimeout(function() {
+        var timeoutError = new Error('音訊播放逾時，已結束本次播放。');
+        timeoutError.name = 'AudioPlaybackTimeout';
+        finish('failed', timeoutError);
+      }, maxPlaybackMs);
+      var playResult;
+      try {
+        playResult = audio.play();
+      } catch (playError) {
+        finish('failed', playError);
+        return;
+      }
+      if (playResult && typeof playResult.then === 'function') {
+        playResult.then(function() {
+          if (!settled && isCurrentRequest()) {
+            setExamAudioPlaybackStatus('playing', expectedLanguage);
+            if (cfg.isPreview) setLanguageAudioStatusState('playing', expectedLanguage);
+          }
+        }).catch(function(playError) {
+          finish('failed', playError || new Error('audio.play() 拒絕播放。'));
+        });
+      }
+    }
+  }
+
+  if (!audio || typeof audio.addEventListener !== 'function') {
+    var invalidAudioError = new Error('目前瀏覽器無法建立 HTMLAudioElement。');
+    if (cfg.isPreview) setLanguageAudioStatusState('failed', expectedLanguage, invalidAudioError.message);
+    if (typeof cfg.onError === 'function') cfg.onError(invalidAudioError);
+    return null;
+  }
+  if (activeManagedAudioPlayback) activeManagedAudioPlayback.cancel('replaced');
+
+  session = {
+    audio: audio,
+    cancel: function(reason) {
+      if (settled) return;
+      var cancelError = new Error(reason === 'replaced' ? '語音已由新請求取代。' : '語音播放已取消。');
+      cancelError.name = 'AbortError';
+      finish('cancelled', cancelError);
+    }
+  };
+  activeManagedAudioPlayback = session;
+  if (cfg.isHakka) currentHakkaAudioPlayer = audio;
+
+  listen('ended', function() { finish('ended'); });
+  listen('playing', function() {
+    if (settled || !isCurrentRequest()) return;
+    setExamAudioPlaybackStatus('playing', expectedLanguage);
+    if (cfg.isPreview) setLanguageAudioStatusState('playing', expectedLanguage);
+  });
+  listen('error', function() {
+    var mediaError = audio.error;
+    finish('failed', new Error(mediaError ? '音訊載入或播放失敗（MediaError ' + mediaError.code + '）。' : '音訊載入或播放失敗。'));
+  });
+  listen('abort', function() { finish('failed', new Error('音訊載入遭瀏覽器中止。')); });
+  listen('loadeddata', function() {
+    if (!cfg.alreadyLoaded && Number(audio.readyState || 0) >= 2) markPlaying();
+  });
+  listen('canplay', function() {
+    if (!cfg.alreadyLoaded && Number(audio.readyState || 0) >= 2) markPlaying();
+  });
+
+  if (!isCurrentRequest()) {
+    finish('cancelled', new Error('語音請求已失效。'));
+    return session;
+  }
+  if (cfg.alreadyLoaded) {
+    if (audio.error || Number(audio.readyState || 0) < 2) {
+      finish('failed', new Error('預載音檔目前不可播放（readyState=' + Number(audio.readyState || 0) + '）。'));
+      return session;
+    }
+    markPlaying();
+  } else {
+    loadTimer = setTimeout(function() {
+      var loadError = new Error('音訊載入逾時。');
+      loadError.name = 'AudioLoadTimeout';
+      finish('failed', loadError);
+    }, Number(cfg.loadTimeoutMs) || 15000);
     try {
-      currentHakkaAudioPlayer.pause();
-      currentHakkaAudioPlayer.currentTime = 0;
-      currentHakkaAudioPlayer.onended = null;
-      currentHakkaAudioPlayer.onerror = null;
-    } catch (e) {}
+      audio.preload = 'auto';
+      audio.playbackRate = Number(cfg.playbackRate) || 1;
+      audio.src = cfg.src || '';
+      audio.load();
+      if (!audio.error && Number(audio.readyState || 0) >= 2) markPlaying();
+    } catch (loadError) {
+      finish('failed', loadError);
+    }
+  }
+  return session;
+}
+
+function stopSpeechPlayback(reason) {
+  if (typeof mandarinSpeechControl !== 'undefined' && mandarinSpeechControl && mandarinSpeechControl.stop) {
+    mandarinSpeechControl.stop(reason || 'stop_speech_playback');
+  } else if ('speechSynthesis' in window) {
+    try { window.speechSynthesis.cancel(); } catch (e) {}
+  }
+  if (activeManagedAudioPlayback) activeManagedAudioPlayback.cancel('cancelled');
+  if (currentHakkaAudioPlayer) {
+    try { currentHakkaAudioPlayer.pause(); currentHakkaAudioPlayer.currentTime = 0; } catch (e) {}
     currentHakkaAudioPlayer = null;
   }
-  if (typeof globalAudioPlayer !== 'undefined' && globalAudioPlayer) {
-    globalAudioPlayer.pause();
-    try { globalAudioPlayer.currentTime = 0; } catch(e) {}
+  if (globalAudioPlayer) {
+    try { globalAudioPlayer.pause(); globalAudioPlayer.currentTime = 0; } catch (e) {}
+  }
+  if (p2CurrentAudio) {
+    try { stopP2SlideAudio(p2CurrentAudio); } catch (e) {}
+    p2CurrentAudio = null;
+  }
+  if (currentBlobObjectUrl) {
+    try { if (window.URL && typeof window.URL.revokeObjectURL === 'function') window.URL.revokeObjectURL(currentBlobObjectUrl); } catch (e) {}
+    currentBlobObjectUrl = null;
   }
 }
 
-function stopAllSpeech() {
+function stopAllSpeech(reason) {
   speechRequestToken++;
-  stopSpeechPlayback();
+  stopSpeechPlayback(reason || 'stop_all_speech');
 }
 
-function reportPreviewAudioFailure(requestId, expectedLanguage) {
-  if (requestId !== speechRequestToken || examState.language !== expectedLanguage) return;
-  var status = document.getElementById('language-audio-status');
-  if (!status) return;
-  status.textContent = translateExamDisplayText('目前無法播放語音，請確認裝置音量或稍後再試。');
-  status.classList.add('is-visible');
-}
-
-function playRemoteAudioData(url, requestId, expectedLanguage, isPreview, onEnded, useOriginalRate) {
-  if (!url || !globalAudioPlayer) {
-    if (isPreview) reportPreviewAudioFailure(requestId, expectedLanguage);
-    return;
-  }
-  if (requestId !== speechRequestToken || examState.language !== expectedLanguage) return;
-
-  globalAudioPlayer.onended = null;
-  globalAudioPlayer.onerror = function() {
-    if (isPreview) reportPreviewAudioFailure(requestId, expectedLanguage);
-  };
-  if (typeof onEnded === 'function') {
-    globalAudioPlayer.onended = function() {
-      if (requestId !== speechRequestToken || examState.language !== expectedLanguage) return;
-      globalAudioPlayer.onended = null;
-      onEnded();
-    };
-  }
-  globalAudioPlayer.src = url;
-  globalAudioPlayer.playbackRate = useOriginalRate ? 1 : (examState.speechRate || 0.85);
-
+/* 提供 speech-input.js 查詢目前是否仍有測驗語音播放。
+ * 使用者開始語音輸入時，若 TTS／MP3 還在播放，先統一停止，避免辨識與播放搶占音訊。
+ */
+window.__getExamAudioPlaybackState = function() {
+  var synthesisPlaying = false;
+  var globalAudioPlaying = false;
+  var hakkaAudioPlaying = false;
   try {
-    var playResult = globalAudioPlayer.play();
-    if (playResult && typeof playResult.catch === 'function') {
-      playResult.catch(function() {
-        if (isPreview) reportPreviewAudioFailure(requestId, expectedLanguage);
-      });
-    }
-  } catch(e) {
-    if (isPreview) reportPreviewAudioFailure(requestId, expectedLanguage);
-  }
+    synthesisPlaying = !!(window.speechSynthesis && (window.speechSynthesis.speaking || window.speechSynthesis.pending));
+  } catch (error) {}
+  try { globalAudioPlaying = !!(globalAudioPlayer && !globalAudioPlayer.paused && !globalAudioPlayer.ended); } catch (error) {}
+  try { hakkaAudioPlaying = !!(currentHakkaAudioPlayer && !currentHakkaAudioPlayer.paused && !currentHakkaAudioPlayer.ended); } catch (error) {}
+  return {
+    playing: synthesisPlaying || globalAudioPlaying || hakkaAudioPlaying,
+    synthesis: synthesisPlaying,
+    globalAudio: globalAudioPlaying,
+    hakkaAudio: hakkaAudioPlaying,
+    stop: function() { stopAllSpeech(); }
+  };
+};
+
+var notifiedMissingVoiceKeys = Object.create(null);
+function notifyMissingVoiceOnce(languageCode, audioKey, message) {
+  var noticeKey = String(languageCode || '') + ':' + String(audioKey || 'unknown');
+  if (notifiedMissingVoiceKeys[noticeKey]) return;
+  notifiedMissingVoiceKeys[noticeKey] = true;
+  var noticeText = String(message || '目前沒有可播放的預錄語音。') + '畫面題目文字仍會保留，請依照畫面作答；系統不會改用其他語音來源。';
+  if (typeof window.showCustomAlert === 'function') window.showCustomAlert(noticeText);
+  else console.warn('[預錄語音缺檔]', noticeText);
 }
+
+function reportPreviewAudioFailure(requestId, expectedLanguage, errorInfo) {
+  if (requestId !== speechRequestToken || examState.language !== expectedLanguage) return;
+  var missing = errorInfo && errorInfo.missing;
+  setLanguageAudioStatusState(missing ? 'missing' : 'failed', expectedLanguage, errorInfo && errorInfo.message);
+  var status = document.getElementById('language-audio-status');
+  if (status) status.classList.add('is-visible');
+}
+
+function playRemoteAudioData(url, requestId, expectedLanguage, isPreview, onEnded, useOriginalRate, onError) {
+  if (requestId !== speechRequestToken || examState.language !== expectedLanguage) return null;
+  if (!isValidPrerecordedAudioDataUrl(url) || !globalAudioPlayer) {
+    var invalidError = new Error('預錄音檔資料不存在或格式不正確。');
+    if (isPreview) setLanguageAudioStatusState('failed', expectedLanguage, invalidError.message);
+    setExamAudioPlaybackStatus('failed', expectedLanguage, invalidError);
+    if (typeof onError === 'function') onError(invalidError);
+    else console.warn(invalidError.message);
+    return null;
+  }
+  try { globalAudioPlayer.pause(); globalAudioPlayer.currentTime = 0; } catch (e) {}
+  return playManagedAudioElement(globalAudioPlayer, {
+    src: url,
+    loadTimeoutMs: 15000,
+    playbackRate: useOriginalRate ? 1 : (examState.speechRate || 0.85),
+    requestId: requestId,
+    expectedLanguage: expectedLanguage,
+    isPreview: !!isPreview,
+    onComplete: onEnded,
+    onError: onError
+  });
+}
+
 
 // =========================================================================
 // 2. 語音播放控制器：依所選語言使用原有語音引擎，不以國語替代臺語或客語。
 // =========================================================================
-function speakPrompt(text, isPreview, onComplete) {
-  if (!text || typeof examState === 'undefined' || examState.language === 'text') return;
+function speakPrompt(text, isPreview, onComplete, onError) {
+  if (typeof examState === 'undefined') return;
+  if (examState.language === 'text') {
+    if (typeof onComplete === 'function') onComplete();
+    return;
+  }
+  if (!text || typeof text !== 'string') {
+    var emptyError = new Error('語音台詞為空，已略過播放。');
+    setExamAudioPlaybackStatus('failed', examState.language, emptyError);
+    if (typeof onError === 'function') onError(emptyError);
+    return;
+  }
 
   var currentLang = examState.language;
-  // 國語只允許本次指定的新台詞；任何舊版／未核定的國語句子都不會進入語音引擎。
-  // 第二關逐張圖片名稱不走 speakPrompt，故不受此白名單影響。
   if (currentLang === 'zh-TW' && !isApprovedMandarinScript(text)) {
+    var whitelistError = new Error('國語台詞未通過既有白名單，未送入語音引擎。');
+    if (mandarinSpeechControl && typeof mandarinSpeechControl.recordRejected === 'function') {
+      mandarinSpeechControl.recordRejected(text, whitelistError, getMandarinSpeechContext(text));
+    }
     console.warn('[國語舊台詞已阻擋，未播放]', text);
+    setExamAudioPlaybackStatus('failed', currentLang, whitelistError);
+    if (typeof onError === 'function') onError(whitelistError);
     return;
   }
 
-  stopAllSpeech();
+  stopAllSpeech('replace_prompt');
   currentAudioText = text;
   var requestId = speechRequestToken;
-  var failPreview = function() {
-    if (isPreview) reportPreviewAudioFailure(requestId, currentLang);
+  var fail = function(error, missing) {
+    if (requestId !== speechRequestToken || examState.language !== currentLang) return;
+    var failure = error || new Error('語音播放失敗。');
+    if (isPreview) setLanguageAudioStatusState(missing ? 'missing' : 'failed', currentLang, failure.message);
+    setExamAudioPlaybackStatus('failed', currentLang, failure);
+    if (missing && !isPreview) {
+      if (currentLang === 'hak-TW') {
+        var noHakkaAccentKey = (examState.hakkaAccent || 'sixian') === 'hailu' ? 'hailu' : getHakkaSixianClipKeyFromText(text);
+        notifyMissingVoiceOnce('hak-TW', noHakkaAccentKey || 'unmapped', failure.message);
+      } else if (currentLang === 'nan-TW') {
+        notifyMissingVoiceOnce('nan-TW', getTaiwaneseKey(text) || 'unmapped', failure.message);
+      }
+    }
+    if (typeof onError === 'function') {
+      try { onError(failure); } catch (callbackError) { console.error(callbackError); }
+    } else {
+      console.warn('[正式測驗語音失敗]', currentLang, failure.message || failure);
+    }
   };
 
-  /* (A) 國語：沿用瀏覽器 SpeechSynthesis。 */
   if (currentLang === 'zh-TW') {
-    if (!('speechSynthesis' in window) || typeof SpeechSynthesisUtterance === 'undefined' || !mandarinSpeechControl || !mandarinSpeechControl.playText) {
-      failPreview();
+    if (!('speechSynthesis' in window) || typeof SpeechSynthesisUtterance === 'undefined' ||
+        !mandarinSpeechControl || !mandarinSpeechControl.playText) {
+      fail(new Error('此裝置不支援 SpeechSynthesis。'));
       return;
     }
+    if (isPreview) setLanguageAudioStatusState('loading', currentLang);
+    setExamAudioPlaybackStatus('loading', currentLang);
     try {
-      mandarinSpeechControl.playText(text, examState.speechRate || 0.85, null, function() {
-        failPreview();
-      });
-    } catch(e) {
-      failPreview();
-    }
+      mandarinSpeechControl.playText(text, examState.speechRate || 0.85, function() {
+        if (requestId !== speechRequestToken || examState.language !== currentLang) return;
+        setExamAudioPlaybackStatus('success', currentLang);
+        if (isPreview) setLanguageAudioStatusState('success', currentLang);
+        if (typeof onComplete === 'function') onComplete();
+      }, function(error) {
+        if (requestId !== speechRequestToken || examState.language !== currentLang) return;
+        if (error && error.name === 'AbortError') {
+          setExamAudioPlaybackStatus('cancelled', currentLang, error);
+          if (isPreview) setLanguageAudioStatusState('cancelled', currentLang);
+          return;
+        }
+        fail(error || new Error('國語語音播放失敗。'));
+      }, function() {
+        if (requestId !== speechRequestToken || examState.language !== currentLang) return;
+        setExamAudioPlaybackStatus('playing', currentLang);
+        if (isPreview) setLanguageAudioStatusState('playing', currentLang);
+      }, { mode: 'enqueue', requestToken: requestId, cancelReason: 'speak_prompt', context: getMandarinSpeechContext(text), isCurrent: function() {
+        return requestId === speechRequestToken && examState.language === currentLang;
+      } });
+    } catch (error) { fail(error); }
     return;
   }
 
-  /* (B) 臺語：只讀取獨立 TaiwaneseAudioLib 預錄音檔，不連接 Google Drive 或動態 TTS。 */
   if (currentLang === 'nan-TW') {
     var taiwaneseKey = getTaiwaneseKey(text);
-    requestTaiwaneseAudioClip(taiwaneseKey, function(audioDataUrl) {
+    if (!taiwaneseKey) {
+      fail(new Error('臺語找不到此台詞對應的預錄音檔 key。'), true);
+      return;
+    }
+    if (isPreview) setLanguageAudioStatusState('loading', currentLang);
+    requestTaiwaneseAudioClip(taiwaneseKey, function(audioDataUrl, errorInfo) {
       if (requestId !== speechRequestToken || examState.language !== currentLang) return;
       if (!audioDataUrl) {
-        console.warn('臺語 Library 找不到對應預錄音檔：', taiwaneseKey);
-        failPreview();
+        fail(new Error((errorInfo && errorInfo.message) || ('臺語 Library 缺少預錄音檔：' + taiwaneseKey)), !!(errorInfo && errorInfo.missing));
         return;
       }
-      playRemoteAudioData(audioDataUrl, requestId, currentLang, !!isPreview, onComplete, false);
+      playRemoteAudioData(audioDataUrl, requestId, currentLang, !!isPreview, onComplete, false, fail);
     });
     return;
   }
 
-  /* (C) 客語：四縣腔優先播放瀏覽器預載快取；只有非內嵌音檔才走原本伺服器備援。 */
   if (currentLang === 'hak-TW') {
     var activeAccent = examState.hakkaAccent || 'sixian';
-    if (activeAccent === 'sixian') {
-      var clipKey = getHakkaSixianClipKeyFromText(text);
-      if (clipKey) {
-        if (HAKKA_SIXIAN_AUDIO_CACHE[clipKey]) {
-          playCachedHakkaSixianAudio(clipKey, requestId, currentLang, !!isPreview, onComplete);
-          return;
-        }
-        // 若音檔尚在背景預載，等同一個批次完成；不再為相同 key 另外發出單段請求。
-        preloadHakkaSixianAudioClips([clipKey]).then(function() {
-          if (requestId !== speechRequestToken || examState.language !== currentLang) return;
-          if (HAKKA_SIXIAN_AUDIO_CACHE[clipKey]) {
-            playCachedHakkaSixianAudio(clipKey, requestId, currentLang, !!isPreview, onComplete);
-            return;
-          }
-          requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, currentLang, !!isPreview, onComplete, failPreview);
-        });
+    if (activeAccent !== 'sixian') {
+      fail(new Error('海陸腔目前沒有可確認的預錄音檔；系統不會改用即時 TTS。'), true);
+      return;
+    }
+    var clipKey = getHakkaSixianClipKeyFromText(text);
+    if (!clipKey) {
+      fail(new Error('四縣腔找不到此台詞對應的預錄音檔 key；未呼叫動態 TTS。'), true);
+      return;
+    }
+    if (isPreview) setLanguageAudioStatusState('loading', currentLang);
+    var cached = HAKKA_SIXIAN_AUDIO_CACHE[clipKey];
+    if (cached && cached.status === 'ready') {
+      playCachedHakkaSixianAudio(clipKey, requestId, currentLang, !!isPreview, onComplete, fail);
+      return;
+    }
+    preloadHakkaSixianAudioClips([clipKey]).then(function() {
+      if (requestId !== speechRequestToken || examState.language !== currentLang) return;
+      var readyEntry = HAKKA_SIXIAN_AUDIO_CACHE[clipKey];
+      if (readyEntry && readyEntry.status === 'ready' && readyEntry.ready && readyEntry.audio) {
+        playCachedHakkaSixianAudio(clipKey, requestId, currentLang, !!isPreview, onComplete, fail);
         return;
       }
-    }
-    requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, currentLang, !!isPreview, onComplete, failPreview);
+      fail(readyEntry && readyEntry.error ? readyEntry.error : new Error('四縣腔預錄音檔無法播放：' + clipKey), !!(readyEntry && readyEntry.missing));
+    }).catch(function(error) {
+      if (requestId === speechRequestToken) fail(error || new Error('四縣腔預錄音檔預載失敗。'));
+    });
     return;
   }
 
-  failPreview();
+  fail(new Error('目前語言沒有可用的語音播放路徑。'));
 }
+
 
 // VOICE_SCRIPT_BUILD: mandarin-2026-11-23-v2 | 第二關逐張圖片名稱維持原本動態播報。
 // 國語新台詞集中管理；臺語與客語仍沿用原本音檔／語音資料庫，不共用這份文字覆蓋。
@@ -5905,27 +6829,20 @@ function speakMandarinOrLegacy(mandarinText, legacyText, isPreview, onComplete) 
   if (textToSpeak) speakPrompt(textToSpeak, isPreview, onComplete);
 }
 
-function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, currentLang, isPreview, onComplete, failPreview) {
-    if (typeof google === 'undefined' || !google.script || !google.script.run) {
-      failPreview();
-      return;
-    }
-    try {
-      google.script.run
-        .withSuccessHandler(function(res) {
-          if (requestId !== speechRequestToken || examState.language !== currentLang) return;
-          if (!res || !res.success || !res.audioDataUrl) {
-            failPreview();
-            return;
-          }
-          playRemoteAudioData(res.audioDataUrl, requestId, currentLang, !!isPreview, onComplete);
-        })
-        .withFailureHandler(function() { failPreview(); })
-        .synthesizeDynamicSpeech(text, 'hak-TW', activeAccent);
-    } catch(e) {
-      failPreview();
-    }
+function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, currentLang, isPreview, onComplete, failPreview, onError) {
+  var error = new Error(activeAccent === 'hailu'
+    ? '海陸腔目前沒有可確認的預錄音檔。'
+    : '四縣腔預錄音檔不存在或無法載入。');
+  error.name = 'HakkaPrerecordedAudioUnavailable';
+  if (requestId !== speechRequestToken || examState.language !== currentLang) return;
+  console.warn('[客語動態語音路徑已封鎖；僅允許 HakkaAudioLib 預錄音檔]', text);
+  if (isPreview) setLanguageAudioStatusState('missing', currentLang, error.message);
+  setExamAudioPlaybackStatus('failed', currentLang, error);
+  if (typeof onError === 'function') onError(error);
+  else if (typeof failPreview === 'function') failPreview(error);
+  // 刻意不呼叫 synthesizeDynamicSpeech，也不以文字回傳給 Web Speech。
 }
+
 
     function updateHeader(id) {
       var nav = document.getElementById('exam-progress-nav');
@@ -6010,38 +6927,24 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       return preloadHakkaSixianAudioClips(HAKKA_SIXIAN_LOCATION_KEYS);
     }
 
-    // 臺語練習方式錄音：從 TaiwaneseAudioLib 取得專用 MP3，原速播放。
+    // 臺語練習方式錄音：僅由 TaiwaneseAudioLib 取得預錄音檔，請求與播放均有逾時及失敗結果。
     function playTaiwaneseLocationAudio(audioKey) {
       if (examState.language !== 'nan-TW') return;
-
       stopAllSpeech();
       var expectedLanguage = 'nan-TW';
       var requestId = speechRequestToken;
-
-      if (typeof google === 'undefined' || !google.script || !google.script.run) {
-        console.warn('臺語練習方式錄音無法連線取得。');
-        return;
-      }
-
-      try {
-        google.script.run
-          .withSuccessHandler(function(res) {
-            if (requestId !== speechRequestToken || examState.language !== expectedLanguage) return;
-            if (!res || !res.success || !res.audioDataUrl) {
-              console.warn('臺語練習方式錄音讀取失敗：', res && res.message ? res.message : '未知錯誤');
-              return;
-            }
-            // 保留使用者錄音原始速度，不套用測驗語速設定。
-            playRemoteAudioData(res.audioDataUrl, requestId, expectedLanguage, false, null, true);
-          })
-          .withFailureHandler(function(error) {
-            console.warn('臺語練習方式錄音讀取失敗：', error);
-          })
-          .getTaiwaneseLocationModeAudio(audioKey);
-      } catch (error) {
-        console.warn('臺語練習方式錄音呼叫失敗：', error);
-      }
+      requestTaiwaneseAudioClip(audioKey, function(audioDataUrl, errorInfo) {
+        if (requestId !== speechRequestToken || examState.language !== expectedLanguage) return;
+        if (!audioDataUrl) {
+          console.warn('臺語練習方式預錄音檔讀取失敗：', audioKey, errorInfo && errorInfo.message);
+          setExamAudioPlaybackStatus('failed', expectedLanguage, errorInfo && errorInfo.message);
+          return;
+        }
+        playRemoteAudioData(audioDataUrl, requestId, expectedLanguage, false, null, true,
+          function(error) { console.warn('臺語練習方式音訊播放失敗：', error); });
+      });
     }
+
 
     function playLocationModeIntroAudio() {
       if (examState.language === 'zh-TW') {
@@ -7672,6 +8575,22 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       return q.title;
     }
 
+    // 僅供使用者實際切換第一關第 1 題回答類型時使用。
+    // renderP1Question() 內部初始化仍呼叫 setP1Q1Mode()，不會重複朗讀。
+    function selectP1Q1ModeAndAnnounce(mode) {
+      if (['roc', 'western', 'zodiac'].indexOf(mode) === -1) return;
+      var q = examState.p1 && examState.p1.questions
+        ? examState.p1.questions[examState.p1.currentIndex] : null;
+      if (!q || q.type !== 'q1') return;
+      var previousMode = examState.p1.currentMode || '';
+      var setMode = window.setP1Q1Mode || setP1Q1Mode;
+      if (typeof setMode === 'function') setMode.call(window, mode);
+      if (examState.language !== 'zh-TW' || previousMode === mode) return;
+      var selectedScript = getP1AudioText(q, mode);
+      if (selectedScript) speakPrompt(selectedScript, false);
+    }
+    window.selectP1Q1ModeAndAnnounce = selectP1Q1ModeAndAnnounce;
+
     function buildP1Questions() {
       var snapshot = getTaipeiDateSnapshot();
       if (!snapshot) {
@@ -7883,6 +8802,10 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
     }
 
     function renderP1Question() {
+      // 換題時先讓上一題國語 utterance 與 callback 失效，避免舊題目跨題繼續播放。
+      if (examState.language === 'zh-TW') stopAllSpeech('p1_question_changed');
+      // 新題尚未選擇日曆／回答模式前，不可沿用上一題的重播台詞。
+      currentAudioText = '';
       var q = examState.p1.questions[examState.p1.currentIndex];
       document.getElementById('test-status-sub').innerText = '第 ' + (examState.p1.currentIndex+1) + ' 題／共 5 題';
       document.getElementById('p1-question-title').innerText = getP1QuestionText(q, q.type === 'q2' || q.type === 'q3' ? '' : examState.p1.currentMode);
@@ -7904,7 +8827,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       wrapper.style.display='none'; group.style.display='block';
       if (q.type === 'q1') {
         wrapper.style.display='block';
-        wrapper.innerHTML = '<div class="option-caption">請選擇一種回答方式，答對即可。</div><div class="type-selector-grid"><button type="button" class="type-btn active" data-mode="roc" onclick="setP1Q1Mode(this.dataset.mode)">民國年</button><button type="button" class="type-btn" data-mode="western" onclick="setP1Q1Mode(this.dataset.mode)">西元年</button><button type="button" class="type-btn" data-mode="zodiac" onclick="setP1Q1Mode(this.dataset.mode)">生肖</button></div><div id="p1-choice-grid" class="choice-grid"></div>';
+        wrapper.innerHTML = '<div class="option-caption">請選擇一種回答方式，答對即可。</div><div class="type-selector-grid"><button type="button" class="type-btn active" data-mode="roc" onclick="selectP1Q1ModeAndAnnounce(this.dataset.mode)">民國年</button><button type="button" class="type-btn" data-mode="western" onclick="selectP1Q1ModeAndAnnounce(this.dataset.mode)">西元年</button><button type="button" class="type-btn" data-mode="zodiac" onclick="selectP1Q1ModeAndAnnounce(this.dataset.mode)">生肖</button></div><div id="p1-choice-grid" class="choice-grid"></div>';
         setP1Q1Mode('roc');
       } else if (q.type === 'q2') {
         wrapper.style.display='block';
@@ -7946,7 +8869,14 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       document.getElementById('p1-submit-btn').innerText = q.isQ5 ? '確認地點答案 ❯' : '確認本題 ❯';
       updateP1SubmitButton();
       syncAudioButtons();
-      speakPrompt(getP1AudioText(q, examState.p1.currentMode));
+      var initialQuestionAudioText = getP1AudioText(q, examState.p1.currentMode);
+      // 國語第 1 題必須先由使用者選擇民國／西元／生肖，不可在畫面尚未選定時預先朗讀民國題。
+      if ((q.type === 'q1' || q.type === 'q3') && examState.language === 'zh-TW') {
+        initialQuestionAudioText = '';
+        currentAudioText = '';
+      }
+      // 第 2 題尚未選國曆／農曆時沒有對應台詞；等使用者選擇後再由模式按鈕播放。
+      if (initialQuestionAudioText) speakPrompt(initialQuestionAudioText);
     }
 
     function getP1ExpectedAnswer(q) {
@@ -8242,112 +9172,207 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
     }
 
     function batchPreloadAudioItems(itemNames) {
-      // 四縣腔優先使用第二關已批次載入的 25 段使用者錄音；其餘圖卡仍沿用原本 TTS 備援。
-      if (examState.language === 'hak-TW' && (examState.hakkaAccent || 'sixian') === 'sixian') {
+      var names = itemNames || [];
+      if (examState.language === 'hak-TW') {
+        if ((examState.hakkaAccent || 'sixian') !== 'sixian') {
+          console.warn('[第二關客語] 海陸腔沒有已確認的預錄音檔；不呼叫 TTS。');
+          var hailuEmptyMap = {};
+          names.forEach(function(name) { hailuEmptyMap[name] = null; });
+          return Promise.resolve(hailuEmptyMap);
+        }
         return preloadHakkaSixianAudioClips(HAKKA_SIXIAN_P2_KEYS).then(function() {
           var audioObjMap = {};
-          var missingNames = [];
-          (itemNames || []).forEach(function(name) {
+          var missingCardNames = [];
+          names.forEach(function(name) {
             var key = P2_HAKKA_CARD_AUDIO_KEY_BY_NAME[name];
             var cached = key ? HAKKA_SIXIAN_AUDIO_CACHE[key] : null;
-            if (cached && cached.audio) audioObjMap[name] = cached.audio;
-            else missingNames.push(name);
+            audioObjMap[name] = (cached && cached.status === 'ready' && cached.ready && cached.audio &&
+              !cached.audio.error && Number(cached.audio.readyState || 0) >= 2) ? cached.audio : null;
+            if (!audioObjMap[name]) {
+              missingCardNames.push(name);
+              console.warn('[第二關四縣腔缺少可播放預錄音檔]', name, key || '(無對應 key)');
+            }
           });
-          if (!missingNames.length) return audioObjMap;
-          return batchPreloadDynamicAudioItems(missingNames).then(function(fallbackMap) {
-            Object.keys(fallbackMap || {}).forEach(function(name) {
-              if (!audioObjMap[name] && fallbackMap[name]) audioObjMap[name] = fallbackMap[name];
-            });
-            return audioObjMap;
-          });
+          if (missingCardNames.length) {
+            notifyMissingVoiceOnce('hak-TW', 'p2-cards', '第二關部分圖卡缺少可播放的四縣腔預錄音檔（' + missingCardNames.join('、') + '）。');
+          }
+          return audioObjMap;
         }).catch(function(error) {
-          console.warn('四縣腔圖卡錄音預載失敗，改用原本備援語音。', error);
-          return batchPreloadDynamicAudioItems(itemNames);
+          console.warn('四縣腔圖卡預錄音檔載入失敗；本輪圖卡照原本圖片節奏繼續，不改用 TTS。', error);
+          var failedMap = {};
+          names.forEach(function(name) { failedMap[name] = null; });
+          return failedMap;
         });
       }
-      return batchPreloadDynamicAudioItems(itemNames);
+      return batchPreloadDynamicAudioItems(names);
     }
 
+    // 此路徑保留給臺語 Library 圖卡預錄音檔；客語會在上層直接隔離，不得由此進入 TTS。
     function batchPreloadDynamicAudioItems(itemNames) {
       return new Promise(function(resolve) {
-        if (examState.language === 'zh-TW' || examState.language === 'text') { resolve({}); return; }
+        var names = itemNames || [];
+        if (examState.language === 'zh-TW' || examState.language === 'text' || examState.language === 'hak-TW') {
+          var empty = {};
+          names.forEach(function(name) { empty[name] = null; });
+          resolve(empty);
+          return;
+        }
         var settled = false;
-        var timeoutId = setTimeout(function() { if (!settled) { settled = true; resolve({}); } }, 15000);
-        var finish = function(value) {
+        var timeoutId = setTimeout(function() { finish({}); }, 40000);
+        function finish(value) {
           if (settled) return;
           settled = true;
           clearTimeout(timeoutId);
           resolve(value || {});
-        };
+        }
         if (typeof google !== 'undefined' && google.script && google.script.run) {
           google.script.run
             .withSuccessHandler(function(resMap) {
+              var audioJobs = [];
               var audioObjMap = {};
-              if (resMap) {
-                Object.keys(resMap).forEach(function(name) {
-                  var res = resMap[name];
-                  if (res && res.success && res.audioDataUrl) {
-                    try {
-                      var blob = base64ToBlob(res.audioDataUrl);
-                      var audio = new Audio(URL.createObjectURL(blob));
-                      audio.preload = "auto";
-                      audioObjMap[name] = audio;
-                    } catch(e) { audioObjMap[name] = null; }
-                  } else { audioObjMap[name] = null; }
-                });
-              }
-              finish(audioObjMap);
+              Object.keys(resMap || {}).forEach(function(name) {
+                var itemResult = resMap[name];
+                if (!itemResult || !itemResult.success || !isValidPrerecordedAudioDataUrl(itemResult.audioDataUrl)) {
+                  audioObjMap[name] = null;
+                  return;
+                }
+                audioJobs.push(createReadyAudioFromDataUrl(itemResult.audioDataUrl, 'taiwanese-p2-' + name, 10000)
+                  .then(function(loadResult) { audioObjMap[name] = loadResult && loadResult.success ? loadResult.audio : null; })
+                  .catch(function() { audioObjMap[name] = null; }));
+              });
+              Promise.all(audioJobs).then(function() {
+                names.forEach(function(name) { if (!Object.prototype.hasOwnProperty.call(audioObjMap, name)) audioObjMap[name] = null; });
+                finish(audioObjMap);
+              });
             })
-            .withFailureHandler(function(){ finish({}); })
-            .getBatchPictureAudios(itemNames, examState.language, examState.hakkaAccent);
-        } else { finish({}); }
+            .withFailureHandler(function(error) {
+              console.warn('臺語圖卡預錄音檔批次讀取失敗：', error);
+              finish({});
+            })
+            .getBatchPictureAudios(names, examState.language, examState.hakkaAccent);
+        } else {
+          finish({});
+        }
       });
     }
 
-    function playAudioItemPromise(text, audioObj) {
+    function playAudioItemPromise(text, audioObj, runToken, displayedQuestionIndex) {
       return new Promise(function(resolve) {
-        if (examState.language === 'text') { resolve(); return; }
+        if (examState.language === 'text') { resolve({ status: 'skipped' }); return; }
         currentAudioText = text;
+        if (typeof setExamAudioPlaybackStatus === 'function') setExamAudioPlaybackStatus('loading', examState.language);
+        var settled = false;
+        var safetyTimer = null;
+        var listeners = [];
+        var capturedToken = typeof runToken === 'number' ? runToken : p2DisplayToken;
+        var capturedSpeechToken = speechRequestToken;
+        var playbackLanguage = examState.language;
 
-        var isResolved = false;
-        var safeResolve = function() {
-          if (!isResolved) {
-            isResolved = true;
-            resolve();
+        function cleanup() {
+          if (safetyTimer) { clearTimeout(safetyTimer); safetyTimer = null; }
+          if (audioObj) listeners.forEach(function(entry) {
+            try { audioObj.removeEventListener(entry.type, entry.fn); } catch (e) {}
+          });
+          listeners = [];
+          if (audioObj && audioObj.__p2FinishOnce === finishOnce) delete audioObj.__p2FinishOnce;
+        }
+        function finishOnce(status, error) {
+          if (settled) return;
+          settled = true;
+          cleanup();
+          if (audioObj && status !== 'ended') {
+            try { audioObj.pause(); audioObj.currentTime = 0; } catch (pauseError) {}
           }
-        };
-
-        var safetyTimer = setTimeout(safeResolve, 3500);
+          // 只有目前這張圖卡所在的播放輪次可以更新正式語音狀態，舊輪次不能覆蓋新狀態。
+          if (capturedToken === p2DisplayToken && capturedSpeechToken === speechRequestToken &&
+              examState.language === playbackLanguage &&
+              document.body.getAttribute('data-step') === 'step-p2-sop2') {
+            var formalState = status === 'ended' ? 'success' :
+              status === 'cancelled' ? 'cancelled' :
+              status === 'missing' ? 'missing' :
+              status === 'skipped' ? 'skipped' : 'failed';
+            setExamAudioPlaybackStatus(formalState, playbackLanguage, error || null);
+          }
+          if (error) console.warn('[第二關圖卡語音結束]', text, status, error.message || error);
+          resolve({ status: status || 'ended', error: error || null });
+        }
+        if (audioObj) audioObj.__p2FinishOnce = function() { finishOnce('cancelled'); };
 
         if (examState.language === 'zh-TW') {
-          mandarinSpeechControl.playText(text, 0.85, function() {
-            clearTimeout(safetyTimer);
-            safeResolve();
-          });
+          safetyTimer = setTimeout(function() {
+            var timeoutError = new Error('圖卡國語語音等待逾時。');
+            finishOnce('timeout', timeoutError);
+            // finishOnce 先設 settled，後續 stop() 產生的 AbortError 不會覆蓋 timeout 結果。
+            mandarinSpeechControl.stop('p2_audio_watchdog_timeout');
+          }, Math.min(30000, Math.max(12000, String(text || '').length * 700 + 6000)));
+          mandarinSpeechControl.playText(text, 0.85,
+            function() { finishOnce('ended'); },
+            function(error) { finishOnce(error && error.name === 'AbortError' ? 'cancelled' : 'failed', error); },
+            function() {
+              if (capturedToken === p2DisplayToken && capturedSpeechToken === speechRequestToken && playbackLanguage === examState.language) {
+                setExamAudioPlaybackStatus('playing', 'zh-TW');
+              }
+            },
+            { mode: 'enqueue', requestToken: capturedSpeechToken, context: (function() {
+                var p2ExpectedIndex = Number.isInteger(displayedQuestionIndex) ? displayedQuestionIndex :
+                  (examState.p2.items || []).findIndex(function(item) { return item && item.name === text; });
+                var p2ExpectedItem = p2ExpectedIndex >= 0 ? (examState.p2.items || [])[p2ExpectedIndex] : null;
+                return getMandarinSpeechContext(text, {
+                  stage: 'P2', questionId: p2ExpectedIndex >= 0 ? 'P2-CARD-' + (p2ExpectedIndex + 1) : 'P2-CARD-UNKNOWN',
+                  questionIndex: p2ExpectedIndex >= 0 ? p2ExpectedIndex + 1 : null,
+                  questionType: 'picture_card_name',
+                  cardName: p2ExpectedItem ? String(p2ExpectedItem.name || '') : '',
+                  expectedText: p2ExpectedItem ? String(p2ExpectedItem.name || '') : ''
+                });
+              })(), isCurrent: function() {
+                return capturedToken === p2DisplayToken && capturedSpeechToken === speechRequestToken &&
+                  playbackLanguage === examState.language && document.body.getAttribute('data-step') === 'step-p2-sop2';
+              }
+            }
+          );
           return;
         }
 
-        mandarinSpeechControl.stop();
+        if (!audioObj) {
+          finishOnce('missing', new Error('目前沒有可播放的圖卡預錄音檔。'));
+          return;
+        }
+        if (capturedToken !== p2DisplayToken || document.body.getAttribute('data-step') !== 'step-p2-sop2') {
+          finishOnce('cancelled');
+          return;
+        }
+        if (audioObj.error || Number(audioObj.readyState || 0) < 2) {
+          finishOnce('failed', new Error('圖卡預錄音檔尚未達可播放狀態。'));
+          return;
+        }
 
-        if (audioObj) {
+        function listen(type, fn) {
+          audioObj.addEventListener(type, fn);
+          listeners.push({ type: type, fn: fn });
+        }
+        listen('ended', function() { finishOnce('ended'); });
+        listen('playing', function() {
+          if (capturedToken === p2DisplayToken) setExamAudioPlaybackStatus('playing', examState.language);
+        });
+        listen('error', function() { finishOnce('failed', new Error('圖卡預錄音檔播放失敗。')); });
+        listen('abort', function() { finishOnce('cancelled'); });
+        safetyTimer = setTimeout(function() { finishOnce('timeout', new Error('圖卡語音播放逾時。')); }, 3500);
+
+        try {
           audioObj.currentTime = 0;
           audioObj.playbackRate = 0.85;
-          audioObj.onended = function() { clearTimeout(safetyTimer); safeResolve(); };
-          audioObj.onerror = function() { clearTimeout(safetyTimer); safeResolve(); };
-          var p = audioObj.play();
-          if (p !== undefined) {
-            p.catch(function(e) {
-              clearTimeout(safetyTimer);
-              safeResolve();
-            });
+          var playResult = audioObj.play();
+          if (playResult && typeof playResult.then === 'function') {
+            playResult.then(function() {
+              if (!settled && capturedToken === p2DisplayToken) setExamAudioPlaybackStatus('playing', examState.language);
+            }).catch(function(error) { finishOnce('failed', error || new Error('圖卡 audio.play() 失敗。')); });
           }
-        } else {
-          var langLabel = (examState.language === 'hak-TW') ? '客語' : '臺語';
-          console.warn("【" + langLabel + "圖卡音檔缺失】項目: " + text + "，靜音展示。");
-          setTimeout(function() { clearTimeout(safetyTimer); safeResolve(); }, 2000);
+        } catch (playError) {
+          finishOnce('failed', playError);
         }
       });
     }
+
 
     function createP2BankItems(sourceItems, bankId) {
       return (sourceItems || []).map(function(sourceItem, index) {
@@ -8476,13 +9501,16 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
 
     function stopP2SlideAudio(audioObj) {
       try {
+        if (audioObj && typeof audioObj.__p2FinishOnce === 'function') audioObj.__p2FinishOnce();
+      } catch (finishError) {}
+      try {
         if (audioObj && typeof audioObj.pause === 'function') {
           audioObj.pause();
           audioObj.currentTime = 0;
         }
       } catch(e) {}
       if (examState.language === 'zh-TW' && mandarinSpeechControl) {
-        try { mandarinSpeechControl.stop(); } catch(e) {}
+        try { mandarinSpeechControl.stop('p2_card_transition'); } catch(e) {}
       }
     }
 
@@ -8548,7 +9576,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       unlockAudioContext();
       var runToken = ++p2DisplayToken;
       var bankId = examState.p2.bankId;
-      stopAllSpeech();
+      stopAllSpeech('p2_display_start');
 
       var startButton = document.getElementById('p2-start-display-btn');
       var originalButtonText = '開始觀看圖片 ❯';
@@ -8677,7 +9705,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
           itemAudioStarted = true;
           itemAudioObject = audioToPlay || null;
           p2CurrentAudio = itemAudioObject;
-          currentItemAudioPromise = Promise.resolve(playAudioItemPromise(item.name, itemAudioObject)).catch(function() {});
+          currentItemAudioPromise = Promise.resolve(playAudioItemPromise(item.name, itemAudioObject, runToken, i)).catch(function() {});
         }
 
         if (examState.language === 'zh-TW') {
@@ -8776,10 +9804,13 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
         return;
       }
       if (examState.language === 'hak-TW' && (examState.hakkaAccent || 'sixian') === 'sixian') {
-        speakPrompt('__HAKKA_CLIP__:p2_time_up', false, function() {
+        var continueToRecallPrompt = function() {
           if (document.body.getAttribute('data-step') === 'step-p2-sop5') {
             speakPrompt('請回想剛才看過的十張圖片名稱，順序不限。');
           }
+        };
+        speakPrompt('__HAKKA_CLIP__:p2_time_up', false, continueToRecallPrompt, function(error) {
+          if (error && error.name !== 'AbortError') continueToRecallPrompt();
         });
       } else {
         speakPrompt('請回想剛才看過的十張圖片名稱，順序不限。');
@@ -9025,7 +10056,23 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       initClockCanvas();
       clearCanvas();
       startP3Timer();
-      speakMandarinOrLegacy(MANDARIN_VOICE_SCRIPTS.p3StartLead + selectedTime.speech + MANDARIN_VOICE_SCRIPTS.p3StartTail, '請畫出一個完整的時鐘，顯示' + selectedTime.speech + '。');
+      if (examState.language === 'hak-TW' && (examState.hakkaAccent || 'sixian') === 'sixian') {
+        if (selectedTime.value === '2:45') {
+          // 後端既有 mapping 將 p3_quiz 明確對應「兩點四十五分」；只在這個時間使用該既存 key。
+          speakPrompt('__HAKKA_CLIP__:p3_quiz');
+        } else {
+          var missingTimeMessage = '客語四縣腔目前沒有「' + selectedTime.value + '」對應的預錄音檔；請依畫面指定時間作答。';
+          console.warn('[客語第三關缺少時間專屬預錄音檔]', selectedTime.value, '目前 HakkaAudioLib 僅確認 p3_intro、p3_quiz，未找到此時間專屬 key。');
+          setExamAudioPlaybackStatus('failed', 'hak-TW', new Error(missingTimeMessage));
+          showCustomAlert(missingTimeMessage);
+        }
+      } else if (examState.language === 'hak-TW' && (examState.hakkaAccent || 'sixian') === 'hailu') {
+        var hailuTimeMessage = '海陸腔目前沒有可確認的預錄音檔，請依畫面指定時間作答。';
+        setExamAudioPlaybackStatus('failed', 'hak-TW', new Error(hailuTimeMessage));
+        showCustomAlert(hailuTimeMessage);
+      } else {
+        speakMandarinOrLegacy(MANDARIN_VOICE_SCRIPTS.p3StartLead + selectedTime.speech + MANDARIN_VOICE_SCRIPTS.p3StartTail, '請畫出一個完整的時鐘，顯示' + selectedTime.speech + '。');
+      }
     }
 
     function startP3Timer() {
@@ -9988,8 +11035,19 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
   window.initClockCanvas=function(){
     var canvas=byId('clockCanvas');if(!canvas)return;
     if(!p3CanvasBound){
-      var cssWidth=Math.min(330,Math.max(260,Math.floor(Math.min(window.innerWidth*0.82,330))));
-      canvas.style.width=cssWidth+'px';canvas.style.height=cssWidth+'px';
+      var wrap=canvas.parentElement;
+      var availableWidth=Math.floor(Math.min(window.innerWidth-28,(wrap&&wrap.clientWidth)?wrap.clientWidth:window.innerWidth-28));
+      var cssWidth=Math.max(200,Math.min(440,availableWidth));
+      function fitP3CanvasDisplay(){
+        var currentWrapWidth=(wrap&&wrap.clientWidth)?wrap.clientWidth:window.innerWidth-28;
+        var fitWidth=Math.max(200,Math.min(440,Math.floor(Math.min(window.innerWidth-28,currentWrapWidth))));
+        canvas.style.width=fitWidth+'px';canvas.style.height=fitWidth+'px';
+      }
+      fitP3CanvasDisplay();
+      if(!canvas.__p3ResizeHandler){
+        canvas.__p3ResizeHandler=fitP3CanvasDisplay;
+        window.addEventListener('resize',canvas.__p3ResizeHandler,{passive:true});
+      }
       var dpr=Math.max(1,Math.min(3,window.devicePixelRatio||1));
       canvas.width=Math.round(cssWidth*dpr);canvas.height=Math.round(cssWidth*dpr);
       var ctx=canvas.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);ctx.lineWidth=3.5;ctx.strokeStyle='#35473C';ctx.lineCap='round';ctx.lineJoin='round';
@@ -10058,6 +11116,25 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       var dateText=isNaN(d.getTime())?testDate:(d.getFullYear()+' 年 '+String(d.getMonth()+1).padStart(2,'0')+' 月 '+String(d.getDate()).padStart(2,'0')+' 日');
       p1.appendChild(makeEl('div','detail-date','測驗日期：'+dateText));
     }
+    // 前四題是第一關唯一計分項目；第五題的現場核對永遠不增加或扣除分數。
+    var p1JudgedScore=Number(examState.p1.score||0);
+    p1.appendChild(makeEl('div','detail-answer detail-strong-line p1-judged-summary',
+      '已判定題目：4 題；答對 '+p1JudgedScore+' 題（'+p1JudgedScore+' / 4）。'));
+    var q5StatusForDetail=examState.p1.q5Status||(answers[4]&&answers[4].status)||'';
+    var q5StatusText;
+    if(examState.isHomePractice||q5StatusForDetail==='HOME_UNVERIFIED'){
+      q5StatusText='未經現場核對';
+    }else if(q5StatusForDetail==='LOCATION_CONFIRMED'){
+      q5StatusText='工作人員已核對：地點相符';
+    }else if(q5StatusForDetail==='LOCATION_NOT_CONFIRMED'){
+      q5StatusText='工作人員已核對：地點不符';
+    }else if(q5StatusForDetail==='MANUAL_REVIEW'||examState.p1.q5ReviewPending){
+      q5StatusText='等待工作人員現場核對';
+    }else{
+      q5StatusText='核對狀態尚未提供';
+    }
+    p1.appendChild(makeEl('div','detail-answer p1-q5-summary',
+      '第五題：'+q5StatusText+'；不列入第一關正式計分。'));
     answers.forEach(function(item,i){
       var index=i+1;
       var row=makeEl('div','detail-item');
@@ -10136,6 +11213,43 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
     }
     var p2Items=examState.p2.items||[];
     var matchedItems=examState.p2.matchedItems||[];
+
+    // 每筆使用者答案依 submitP2Recall() 原封不動的別名、正規化及一張圖片僅配對一次規則呈現；不改寫 score/matchedItems。
+    p2.appendChild(makeEl('div','detail-subheading','逐筆答案比對結果'));
+    if(userAnswers.length&&p2Items.length){
+      var comparisonList=makeEl('div','detail-answer-match-list');
+      var detailUsedItemIndexes=new Set();
+      userAnswers.forEach(function(userAnswer,answerIndex){
+        var answerText=String(userAnswer);
+        var normalizedUserAnswer=normalizeAnswerText(userAnswer);
+        var foundItem=null;
+        var foundItemIndex=-1;
+        p2Items.forEach(function(item,itemIndex){
+          if(foundItem||detailUsedItemIndexes.has(itemIndex))return;
+          var aliases=getItemSynonyms(item).map(normalizeAnswerText).filter(Boolean);
+          var isMatch=aliases.some(function(alias){
+            return normalizedUserAnswer===alias || (normalizedUserAnswer.length>=2 && (normalizedUserAnswer.indexOf(alias)!==-1 || alias.indexOf(normalizedUserAnswer)!==-1));
+          });
+          if(isMatch){foundItem=item;foundItemIndex=itemIndex;}
+        });
+        var row=makeEl('div','detail-answer-match-row');
+        row.appendChild(makeEl('span','detail-answer-match-number',String(answerIndex+1)+'.'));
+        row.appendChild(makeEl('span','detail-answer-match-text',answerText));
+        if(foundItem){
+          detailUsedItemIndexes.add(foundItemIndex);
+          row.appendChild(makeEl('span','detail-status pass','答對：'+String(foundItem.displayName||foundItem.name||'')));
+        }else{
+          row.appendChild(makeEl('span','detail-status miss','未能對應圖片'));
+        }
+        comparisonList.appendChild(row);
+      });
+      p2.appendChild(comparisonList);
+    }else if(userAnswers.length){
+      p2.appendChild(makeEl('div','detail-answer','目前無法讀取本次圖片題組，因此只呈現原始輸入，不另行推定答案對錯。'));
+    }else{
+      p2.appendChild(makeEl('div','detail-answer','目前沒有可供比對的輸入答案。'));
+    }
+
     p2.appendChild(makeEl('div','detail-subheading','十張圖片的回想結果'));
     if(p2Items.length){
       var recalledNames=[],missedNames=[];
@@ -10184,41 +11298,55 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
     var earnedItems=[];
     var zeroItems=[];
     var breakdownCount=0;
+    var unreportedItems=[];
     if(breakdown&&typeof breakdown==='object'){
       Object.keys(namesMap).forEach(function(key){
-        if(!Object.prototype.hasOwnProperty.call(breakdown,key))return;
+        if(!Object.prototype.hasOwnProperty.call(breakdown,key)){
+          unreportedItems.push(namesMap[key]+'（未提供判定）');
+          return;
+        }
         var rawScore=breakdown[key];
         var numericScore;
         if(typeof rawScore==='boolean')numericScore=rawScore?1:0;
         else if(typeof rawScore==='number')numericScore=rawScore;
         else if(typeof rawScore==='string'&&rawScore.trim()!=='')numericScore=Number(rawScore);
         else numericScore=NaN;
-        if(!Number.isFinite(numericScore))return;
-        if(numericScore>0)earnedItems.push(namesMap[key]);
-        else if(numericScore===0)zeroItems.push(namesMap[key]);
+        if(!Number.isFinite(numericScore)){
+          unreportedItems.push(namesMap[key]+'（判定值無法辨識）');
+          return;
+        }
+        var scoreSuffix=(typeof rawScore==='boolean')?'':'（評分值：'+String(rawScore)+'）';
+        if(numericScore>0)earnedItems.push(namesMap[key]+scoreSuffix);
+        else if(numericScore===0)zeroItems.push(namesMap[key]+scoreSuffix);
+        else unreportedItems.push(namesMap[key]+'（判定值未能分類：'+String(rawScore)+'）');
         breakdownCount++;
       });
+    }else{
+      Object.keys(namesMap).forEach(function(key){unreportedItems.push(namesMap[key]+'（未提供判定）');});
     }
     function appendScoreCategory(title,items,className){
+      if(!items.length)return;
       var category=makeEl('section','p3-score-category '+className);
       category.appendChild(makeEl('h5','p3-score-category-title',title));
-      if(items.length){
-        var list=makeEl('ul','p3-score-category-list');
-        items.forEach(function(item){list.appendChild(makeEl('li','',item));});
-        category.appendChild(list);
-      }else{
-        category.appendChild(makeEl('div','p3-score-category-empty','目前沒有項目。'));
-      }
+      var list=makeEl('ul','p3-score-category-list');
+      items.forEach(function(item){list.appendChild(makeEl('li','',item));});
+      category.appendChild(list);
       p3.appendChild(category);
     }
-    if(breakdownCount){
-      appendScoreCategory('有得分',earnedItems,'has-points');
-      appendScoreCategory('沒得分',zeroItems,'no-points');
+    if(!earnedItems.length){
+      p3.appendChild(makeEl('div','detail-answer p3-no-earned-items','本次尚未取得得分項目。'));
     }else{
-      p3.appendChild(makeEl('div','detail-answer','評分系統未提供可顯示的逐項評分資料。'));
+      appendScoreCategory('有得分',earnedItems,'has-points');
+    }
+    appendScoreCategory('沒得分',zeroItems,'no-points');
+    appendScoreCategory('尚未提供判定',unreportedItems,'not-reported');
+    if(!breakdownCount&&!earnedItems.length&&!zeroItems.length){
+      p3.appendChild(makeEl('div','detail-answer','評分系統未提供可辨識的逐項評分資料；以上項目不代表已判定為答錯。'));
     }
     if(examState.p3.scoreReason)p3.appendChild(makeEl('div','detail-answer','評分系統評語：'+String(examState.p3.scoreReason)));
-    if(examState.p3.scoreProvider)p3.appendChild(makeEl('div','detail-date','評分來源：'+String(examState.p3.scoreProvider)));
+    p3.appendChild(makeEl('div','detail-note p3-practice-reminder','練習提醒：下次練習時，可以先畫出完整的圓形，再依序寫上 1 到 12 的數字，最後畫出時針和分針。'));
+    p3.appendChild(makeEl('div','detail-answer p3-scoring-method','評分方式：AI 輔助辨識。本結果僅作本次測驗評分參考，不等同臨床診斷。'));
+    if(examState.p3.scoreProvider)p3.appendChild(makeEl('div','detail-date p3-technical-source','技術評分來源紀錄：'+String(examState.p3.scoreProvider)));
     p3Host.appendChild(p3);
 
     // 每次產生成績明細時，三關預設全部收合；不更動任何分數或作答資料。
@@ -10331,21 +11459,37 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
     if(code==='zh-TW')return '國語';
     return '純文字模式';
   }
-  function updateLanguageStatus(code){
-    var status=byId('language-audio-status');
-    var btn=byId('language-preview-repeat');
-    var isText=code==='text';
-    if(isText){
-      setLiveStatus('language-audio-status','已選擇純文字模式，練習時不會播放聲音。','check');
-      if(btn)btn.style.display='none';
-    }else{
-      setLiveStatus('language-audio-status','正在播放試聽語音，請確認是否聽得到聲音。若沒有聲音，請檢查裝置音量或喇叭設定。','speaker');
-      if(btn)btn.style.display='flex';
+  function updateLanguageStatus(code) {
+    var status = byId('language-audio-status');
+    var btn = byId('language-preview-repeat');
+    var state = window.__LANGUAGE_AUDIO_STATE || { state: 'idle', language: code };
+    var languageCode = code || state.language || 'zh-TW';
+    var messages = {
+      idle: '尚未播放：請點選試聽。',
+      loading: '正在準備語音，請稍候。',
+      playing: '正在播放試聽語音，請確認是否聽得到聲音。',
+      success: '試聽播放完成。',
+      failed: '語音播放失敗，請確認音訊資料或重新選擇語言。',
+      missing: '此腔調目前沒有可播放的預錄語音。',
+      cancelled: '已停止播放。',
+      text: '已選擇純文字模式，練習時不會播放聲音。'
+    };
+    if (status) {
+      status.textContent = messages[state.state] || messages.idle;
+      status.classList.add('is-visible');
+      status.setAttribute('data-audio-state', state.state || 'idle');
+      if (state.detail && (state.state === 'failed' || state.state === 'missing')) status.setAttribute('title', state.detail);
+      else status.removeAttribute('title');
     }
+    if (btn) btn.style.display = languageCode === 'text' ? 'none' : 'flex';
   }
-  var previousSetLanguage=window.setLanguage;
-  if(typeof previousSetLanguage==='function'){
-    window.setLanguage=function(code){
+  window.__renderLanguageAudioStatus = function(state) {
+    updateLanguageStatus(state && state.language);
+  };
+
+  var previousSetLanguage = window.setLanguage;
+  if (typeof previousSetLanguage === 'function') {
+    window.setLanguage = function(code) {
       previousSetLanguage(code);
       updateLanguageStatus(code);
       updateTopLanguageLabel();
@@ -10626,7 +11770,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
   }
 
   // Initialize the active language indication on first render.
-  if(typeof examState!=='undefined')updateLanguageStatus(examState.language||'zh-TW');
+  if(typeof examState!=='undefined'){ window.__LANGUAGE_AUDIO_STATE = {state:'idle', language:examState.language||'zh-TW'}; updateLanguageStatus(examState.language||'zh-TW'); }
   updateTopLanguageLabel();
   updateSingleProgress(document.body.getAttribute('data-step'));
 })();
@@ -10722,6 +11866,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       if(!q||!input||!group)return;
       if(q.type==='q1'||q.type==='q3'){
         examState.p1.currentMode='';
+        if(examState.language==='zh-TW') currentAudioText='';
         input.value='';
         group.style.display='none';
         if(wrapper){
@@ -14803,6 +15948,46 @@ body.p1-native-keypad-device #step-p1 #p1-answer-input {
   };
 })();
 </script>
+
+
+<style id="p3-canvas-layout-optimization">
+/* 第三關局部調整：只放大畫布並收緊不必要的垂直間距，不改工具按鈕尺寸。 */
+#step-p3 .p3-guide-card { margin-bottom:8px !important; }
+#step-p3 .p3-time-strip { margin:3px 0 4px !important; }
+#step-p3 .p3-toolbar { margin-bottom:8px !important; }
+#step-p3 .canvas-wrap {
+  position:relative !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  width:100% !important;
+  margin:2px auto 6px !important;
+  box-sizing:border-box !important;
+}
+#step-p3 #clockCanvas {
+  display:block !important;
+  flex:none !important;
+  max-width:100% !important;
+  max-height:none !important;
+  aspect-ratio:1 / 1 !important;
+  box-sizing:border-box !important;
+}
+/* 中心點是非互動式視覺定位標記，不繪入 Canvas，也不納入 AI 評分圖片。 */
+#step-p3 .p3-center-marker {
+  position:absolute;
+  left:50%; top:50%;
+  width:8px; height:8px;
+  transform:translate(-50%,-50%);
+  border:1px solid #FFFFFF;
+  border-radius:50%;
+  background:#4F7058;
+  box-shadow:0 0 0 1px rgba(53,71,60,.55);
+  opacity:.9;
+  pointer-events:none;
+  z-index:2;
+}
+#step-p3 .p3-submit-wrap { width:100%; margin:0 auto; }
+</style>
 
 </body>
 </html>
