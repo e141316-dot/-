@@ -5741,6 +5741,19 @@ function stopAllSpeech() {
   stopSpeechPlayback();
 }
 
+// 提供語音輸入模組唯讀檢查上一段題目語音是否仍在播放；不改動原有 TTS 播放函式。
+window.__getExamAudioPlaybackState = function () {
+  var synthesisPlaying = false;
+  try { synthesisPlaying = !!('speechSynthesis' in window && (window.speechSynthesis.speaking || window.speechSynthesis.pending)); } catch (e) {}
+  var globalAudioPlaying = false;
+  var hakkaAudioPlaying = false;
+  try { globalAudioPlaying = !!(globalAudioPlayer && !globalAudioPlayer.paused && !globalAudioPlayer.ended); } catch (e) {}
+  try { hakkaAudioPlaying = !!(currentHakkaAudioPlayer && !currentHakkaAudioPlayer.paused && !currentHakkaAudioPlayer.ended); } catch (e) {}
+  return { playing: synthesisPlaying || globalAudioPlaying || hakkaAudioPlaying,
+    synthesis: synthesisPlaying, globalAudio: globalAudioPlaying, hakkaAudio: hakkaAudioPlaying,
+    stop: function () { stopAllSpeech(); } };
+};
+
 function reportPreviewAudioFailure(requestId, expectedLanguage) {
   if (requestId !== speechRequestToken || examState.language !== expectedLanguage) return;
   var status = document.getElementById('language-audio-status');
