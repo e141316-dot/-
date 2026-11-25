@@ -4123,19 +4123,45 @@ window.closeCustomAlert = closeCustomAlert;
 
     const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-    /* Mandarin Speech Control Engine */
+    /* Mandarin Speech Control Engine
+     * 修正語音被中斷後的連鎖完成問題：
+     * 1. 每次播放使用獨立 token，舊 utterance 的事件不得影響新播放。
+     * 2. stop() 會清除 watchdog 並解除舊事件，取消播放不會誤觸 onComplete。
+     * 3. 只有真正收到 onend 才算播放完成；onerror／逾時只走錯誤分支。
+     * 4. 移除定時 pause()/resume()，避免瀏覽器音訊中斷時被反覆喚醒。
+     */
     var mandarinSpeechControl = {
       activeUtterance: null,
       keepAliveTimer: null,
+      finishTimer: null,
+      playbackGeneration: 0,
 
       stop: function() {
+        this.playbackGeneration++;
+
         if (this.keepAliveTimer) {
           clearInterval(this.keepAliveTimer);
           this.keepAliveTimer = null;
         }
+        if (this.finishTimer) {
+          clearTimeout(this.finishTimer);
+          this.finishTimer = null;
+        }
+
+        var oldUtterance = this.activeUtterance;
         this.activeUtterance = null;
+        if (oldUtterance) {
+          // cancel() 在部分瀏覽器會額外派發 onerror/onend；
+          // 先解除舊事件，避免取消動作被誤認為播放完成。
+          oldUtterance.onend = null;
+          oldUtterance.onerror = null;
+        }
+        if (window.currentUtterance === oldUtterance) {
+          window.currentUtterance = null;
+        }
+
         if ('speechSynthesis' in window) {
-          window.speechSynthesis.cancel();
+          try { window.speechSynthesis.cancel(); } catch (error) {}
         }
       },
 
@@ -4149,56 +4175,89 @@ window.closeCustomAlert = closeCustomAlert;
 
         if (!('speechSynthesis' in window) || typeof SpeechSynthesisUtterance === 'undefined') {
           if (onError) onError(new Error('此裝置不支援語音播放'));
-          else if (onComplete) onComplete();
           return;
         }
 
         var smoothedText = text.replace(/[。！\n]+/g, '，').replace(/；/g, '，');
+        var utterance;
 
-        var utterance = new SpeechSynthesisUtterance(smoothedText);
-        utterance.rate = rate || 0.85;
-        utterance.lang = 'zh-TW';
+        try {
+          utterance = new SpeechSynthesisUtterance(smoothedText);
+          utterance.rate = rate || 0.85;
+          utterance.lang = 'zh-TW';
+        } catch (createError) {
+          if (onError) onError(createError);
+          return;
+        }
+
+        var self = this;
+        var playbackId = this.playbackGeneration;
+        var hasFinished = false;
 
         this.activeUtterance = utterance;
         window.currentUtterance = utterance;
 
-        var self = this;
-        var hasFinished = false;
+        function done(error, cancelEngine) {
+          if (hasFinished ||
+              playbackId !== self.playbackGeneration ||
+              self.activeUtterance !== utterance) return;
 
-        var done = function(error) {
-          if (!hasFinished) {
-            hasFinished = true;
-            if (self.keepAliveTimer) {
-              clearInterval(self.keepAliveTimer);
-              self.keepAliveTimer = null;
-            }
-            self.activeUtterance = null;
-            if (error) {
-              if (onError) onError(error);
-            } else if (onComplete) {
-              onComplete();
-            }
+          hasFinished = true;
+
+          if (self.finishTimer) {
+            clearTimeout(self.finishTimer);
+            self.finishTimer = null;
           }
-        };
-
-        utterance.onend = function() { done(); };
-        utterance.onerror = function(err) { done(err || new Error('語音播放失敗')); };
-
-        this.keepAliveTimer = setInterval(function() {
-          if ('speechSynthesis' in window && window.speechSynthesis.speaking) {
-            window.speechSynthesis.pause();
-            window.speechSynthesis.resume();
-          } else {
+          if (self.keepAliveTimer) {
             clearInterval(self.keepAliveTimer);
             self.keepAliveTimer = null;
           }
-        }, 4000);
 
-        var maxDuration = Math.max(3000, smoothedText.length * 600 + 2000);
-        setTimeout(done, maxDuration);
+          utterance.onend = null;
+          utterance.onerror = null;
+          self.activeUtterance = null;
+          if (window.currentUtterance === utterance) window.currentUtterance = null;
 
-        window.speechSynthesis.resume();
-        window.speechSynthesis.speak(utterance);
+          if (error) {
+            if (cancelEngine && 'speechSynthesis' in window) {
+              try { window.speechSynthesis.cancel(); } catch (cancelError) {}
+            }
+            if (onError) onError(error);
+            return;
+          }
+
+          // 僅真正播放結束才允許呼叫完成 callback，不以逾時或取消代替成功。
+          if (onComplete) onComplete();
+        }
+
+        utterance.onend = function() {
+          done(null, false);
+        };
+        utterance.onerror = function(event) {
+          var error = new Error(
+            event && event.error ? '語音播放中斷：' + event.error : '語音播放失敗'
+          );
+          error.name = 'SpeechSynthesisError';
+          done(error, false);
+        };
+
+        // Watchdog 只能報告逾時，絕不可當成成功完成，避免中斷後自動連鎖執行。
+        var maxDuration = Math.min(
+          120000,
+          Math.max(12000, smoothedText.length * 700 + 6000)
+        );
+        this.finishTimer = setTimeout(function() {
+          var timeoutError = new Error('語音播放逾時，已停止本次播放。');
+          timeoutError.name = 'SpeechSynthesisTimeout';
+          done(timeoutError, true);
+        }, maxDuration);
+
+        try {
+          window.speechSynthesis.resume();
+          window.speechSynthesis.speak(utterance);
+        } catch (playError) {
+          done(playError, true);
+        }
       }
     };
 
@@ -5718,9 +5777,11 @@ function getTaiwaneseKey(text) {
 
     function stopSpeechPlayback() {
   if (typeof mandarinSpeechControl !== 'undefined' && mandarinSpeechControl && mandarinSpeechControl.stop) {
+    // mandarinSpeechControl.stop() 已負責取消 SpeechSynthesis；避免重複 cancel 觸發舊事件。
     mandarinSpeechControl.stop();
+  } else if ('speechSynthesis' in window) {
+    try { window.speechSynthesis.cancel(); } catch (e) {}
   }
-  if ('speechSynthesis' in window) window.speechSynthesis.cancel();
   if (currentHakkaAudioPlayer) {
     try {
       currentHakkaAudioPlayer.pause();
@@ -5740,6 +5801,46 @@ function stopAllSpeech() {
   speechRequestToken++;
   stopSpeechPlayback();
 }
+
+/* 提供 speech-input.js 查詢目前是否仍有測驗語音播放。
+ * 使用者開始語音輸入時，若 TTS／MP3 還在播放，先統一停止，避免辨識與播放搶占音訊。
+ */
+window.__getExamAudioPlaybackState = function() {
+  var synthesisPlaying = false;
+  var globalAudioPlaying = false;
+  var hakkaAudioPlaying = false;
+
+  try {
+    synthesisPlaying = !!(
+      window.speechSynthesis &&
+      (window.speechSynthesis.speaking || window.speechSynthesis.pending)
+    );
+  } catch (error) {}
+
+  try {
+    globalAudioPlaying = !!(
+      globalAudioPlayer &&
+      !globalAudioPlayer.paused &&
+      !globalAudioPlayer.ended
+    );
+  } catch (error) {}
+
+  try {
+    hakkaAudioPlaying = !!(
+      currentHakkaAudioPlayer &&
+      !currentHakkaAudioPlayer.paused &&
+      !currentHakkaAudioPlayer.ended
+    );
+  } catch (error) {}
+
+  return {
+    playing: synthesisPlaying || globalAudioPlaying || hakkaAudioPlaying,
+    synthesis: synthesisPlaying,
+    globalAudio: globalAudioPlaying,
+    hakkaAudio: hakkaAudioPlaying,
+    stop: function() { stopAllSpeech(); }
+  };
+};
 
 function reportPreviewAudioFailure(requestId, expectedLanguage) {
   if (requestId !== speechRequestToken || examState.language !== expectedLanguage) return;
@@ -8344,6 +8445,11 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
         if (examState.language === 'zh-TW') {
           mandarinSpeechControl.playText(text, 0.85, function() {
             clearTimeout(safetyTimer);
+            safeResolve();
+          }, function(error) {
+            // 語音中斷時結束本張語音等待，不重播、不觸發額外的播放完成鏈。
+            clearTimeout(safetyTimer);
+            if (error) console.warn('圖卡國語語音已中斷，依原本圖片顯示節奏繼續：', error.message || error);
             safeResolve();
           });
           return;
