@@ -5443,6 +5443,9 @@ function getTaiwaneseKey(text) {
       speakPrompt(preview, true);
     }
 
+    // inline onclick 需要從 window 全域作用域呼叫；保留函式原本閉包中的 examState 與播放邏輯。
+    window.setLanguage = setLanguage;
+
     // 臺語語言選擇試聽：只從 TaiwaneseAudioLib 取得內嵌預錄音檔，不使用 HTML Base64 或 Google Drive。
     function playTaiwaneseLanguagePreview() {
       var currentLang = 'nan-TW';
@@ -5814,6 +5817,9 @@ function getTaiwaneseKey(text) {
       document.getElementById('btn-hak-sixian').className = "accent-btn " + (accent === 'sixian' ? "active" : "");
       document.getElementById('btn-hak-hailu').className = "accent-btn " + (accent === 'hailu' ? "active" : "");
     }
+
+    // 客語腔調按鈕使用 inline onclick，必須公開到 window。
+    window.setHakkaAccent = setHakkaAccent;
 
     function repeatCurrentAudio() {
       unlockAudioContext();
@@ -6253,6 +6259,9 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       updateLocationModeVisibility();
       showStep('step-location');
     }
+
+    // 語言選擇頁的「下一步」按鈕使用 inline onclick。
+    window.goToLocationSetup = goToLocationSetup;
 
     function getLocationRecordId(county, district, placeName) {
       return [String(county || ''), String(district || ''), String(placeName || '')].join('::');
@@ -10874,4 +10883,4345 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
             : '您還沒輸入年份數字喔，請先點選下方的數字再按確認。');
           return;
         }
- 
+      }
+      if(q&&q.type==='q3'){
+        if(!examState.p1.currentMode){
+          window.showCustomAlert('您還沒選擇國曆或農曆喔，請先點選上方的日曆。');
+          return;
+        }
+        if(!value){
+          window.showCustomAlert('您還沒輸入幾號喔，請先點選下方的數字再按確認。');
+          return;
+        }
+      }
+      previousSubmit();
+    };
+  }
+})();
+
+
+/* 單一進度橫幅在三關正式作答時也保持顯示，內容仍為純閱讀文字。 */
+window.updateSingleProgress=function(id){
+  var banner=document.getElementById('single-progress-banner');
+  if(!banner)return;
+  var stages={
+    'step-p1-intro':{progress:'第 1 關',name:'時間、空間認知'},
+    'step-p1':{progress:'第 1 關',name:'時間、空間認知'},
+    'step-p2-intro':{progress:'第 2 關',name:'圖卡記憶'},
+    'step-p2-sop2':{progress:'第 2 關',name:'圖卡記憶'},
+    'step-p2-sop4':{progress:'第 2 關',name:'圖卡記憶'},
+    'step-p2-sop5':{progress:'第 2 關',name:'圖卡記憶'},
+    'step-p3-intro':{progress:'第 3 關',name:'徒手繪畫時鐘'},
+    'step-p3':{progress:'第 3 關',name:'徒手繪畫時鐘'}
+  };
+  var stage=stages[id];
+  if(stage){
+    renderStageProgressBanner(banner,stage.progress,stage.name);
+  }else{
+    banner.textContent='';
+    banner.hidden=true;
+  }
+};
+
+
+Object.assign(EXAM_TEXT_TRANSLATIONS, {
+  "目前進度：第 1 關（共 3 關）":[
+    "Current progress: Stage 1 of 3",
+    "現在の進行状況：全3段階中第1段階",
+    "현재 진행: 3단계 중 1단계"
+  ],
+  "目前進度：第 2 關（共 3 關）":[
+    "Current progress: Stage 2 of 3",
+    "現在の進行状況：全3段階中第2段階",
+    "현재 진행: 3단계 중 2단계"
+  ],
+  "目前進度：第 3 關（共 3 關）":[
+    "Current progress: Stage 3 of 3",
+    "現在の進行状況：全3段階中第3段階",
+    "현재 진행: 3단계 중 3단계"
+  ],
+  "請問今年是民國幾年？":[
+    "What is the current Minguo year?",
+    "今年は民国何年ですか？",
+    "올해는 민국 몇 년인가요?"
+  ],
+  "請問今天是幾號？":[
+    "What is today's date?",
+    "今日は何日ですか？",
+    "오늘은 며칠인가요?"
+  ],
+  "您好！第一關共有 5 個問題，請仔細聽題目，再輸入或點選答案，憑現在的記憶回答就好。":[
+    "Hello! Stage 1 has 5 questions. Listen carefully to each question, enter or select your answer, and answer using your memory.",
+    "こんにちは。第1段階は全5問です。問題をよく聞き、回答を入力または選択し、今の記憶をもとに答えてください。",
+    "안녕하세요! 1단계는 총 5문항입니다. 문제를 잘 듣고 답을 입력하거나 선택한 뒤, 현재 기억을 바탕으로 답하세요."
+  ],
+});
+
+
+/* 第一關第 2 題（月分題）修復：沿用年份題的三欄大數字鍵盤。
+ * 根因：第 1 題會將共用輸入框設為唯讀（數字鍵盤模式），生肖模式更會設為隱藏；
+ * 第 2 題原本只切換 type/inputMode，沒有還原 display/readOnly，也沒有建立數字鍵盤，
+ * 因此輸入框可能隱藏或無法輸入，而且月份題沒有可點擊的網頁數字鍵盤。
+ */
+(function () {
+  'use strict';
+  var byId = function (id) { return document.getElementById(id); };
+  var originalSetP1Q2Mode = window.setP1Q2Mode;
+  if (typeof originalSetP1Q2Mode !== 'function') return;
+
+  function removeMonthPad(control) {
+    if (!control) return;
+    Array.prototype.slice.call(control.querySelectorAll(
+      '.number-pad-help, .number-pad-grid, .number-pad-actions, .number-pad-feedback'
+    )).forEach(function (node) { node.remove(); });
+  }
+
+  function renderMonthNumberPad(control, input) {
+    if (!control || !input) return;
+    removeMonthPad(control);
+
+      // 月份題沿用共用數字輸入提示，不另產生第二行固定說明。
+
+    var grid = document.createElement('div');
+    grid.className = 'number-pad-grid';
+    grid.setAttribute('role', 'group');
+    grid.setAttribute('aria-label', '月份數字按鍵');
+
+    var feedback = document.createElement('p');
+    feedback.className = 'number-pad-feedback';
+    feedback.id = 'p1-month-number-pad-feedback';
+    feedback.setAttribute('role', 'status');
+    feedback.setAttribute('aria-live', 'polite');
+    feedback.hidden = true;
+
+    function syncValue(message) {
+      if (typeof examState !== 'undefined' && examState.p1) {
+        examState.p1.currentAnswer = String(input.value || '');
+      }
+      if (message) {
+        feedback.textContent = message;
+        feedback.hidden = false;
+      } else {
+        feedback.textContent = '';
+        feedback.hidden = true;
+      }
+      if (typeof window.updateP1SubmitButton === 'function') {
+        window.updateP1SubmitButton();
+      } else if (typeof window.onP1AnswerInputChanged === 'function') {
+        window.onP1AnswerInputChanged();
+      }
+    }
+
+    function addNumber(number) {
+      var button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'number-key';
+      button.textContent = String(number);
+      button.setAttribute('aria-label', '輸入月份數字 ' + number);
+      button.addEventListener('click', function () {
+        var current = String(input.value || '');
+        if (current.length >= 2) {
+          feedback.textContent = '月份最多輸入兩個數字，請清除後重新輸入。';
+          feedback.hidden = false;
+          return;
+        }
+        var candidate = current + String(number);
+        var numeric = Number(candidate);
+        // 首位不可為 0；每次按鍵後都即時限制在 1 至 12。
+        if (!/^[1-9][0-9]?$/.test(candidate) || !Number.isInteger(numeric) || numeric < 1 || numeric > 12) {
+          // 第二位數字若使月份超過 12，清空整組輸入，避免留下「1」而被誤送出。
+          if (current) {
+            input.value = '';
+            syncValue('月份只能輸入 1 到 12，已清空，請重新輸入。');
+          } else {
+            feedback.textContent = '月份只能輸入 1 到 12，不能從 0 開始。';
+            feedback.hidden = false;
+          }
+          return;
+        }
+        input.value = candidate;
+        syncValue('');
+      });
+      grid.appendChild(button);
+    }
+
+    for (var number = 1; number <= 9; number += 1) addNumber(number);
+    var blankLeft = document.createElement('span');
+    blankLeft.setAttribute('aria-hidden', 'true');
+    grid.appendChild(blankLeft);
+    addNumber(0);
+    var blankRight = document.createElement('span');
+    blankRight.setAttribute('aria-hidden', 'true');
+    grid.appendChild(blankRight);
+    control.appendChild(grid);
+
+    var actions = document.createElement('div');
+    actions.className = 'number-pad-actions';
+
+    var clear = document.createElement('button');
+    clear.type = 'button';
+    clear.className = 'number-pad-action';
+    clear.textContent = '全部清除';
+    clear.setAttribute('aria-label', '全部清除月份數字');
+    clear.addEventListener('click', function () {
+      input.value = '';
+      syncValue('');
+    });
+
+    var backspace = document.createElement('button');
+    backspace.type = 'button';
+    backspace.className = 'number-pad-action';
+    backspace.textContent = '刪除一位';
+    backspace.setAttribute('aria-label', '刪除一位月份數字');
+    backspace.addEventListener('click', function () {
+      input.value = String(input.value || '').slice(0, -1);
+      syncValue('');
+    });
+
+    actions.appendChild(clear);
+    actions.appendChild(backspace);
+    control.appendChild(actions);
+    control.appendChild(feedback);
+
+    input.setAttribute('aria-describedby', 'p1-number-pad-instruction ' + feedback.id);
+  }
+
+  // 月份專用的原始 1–12 按鍵同樣保留，供浮動面板在節點遺失時恢復。
+  window.__renderOriginalP1MonthNumberPad = renderMonthNumberPad;
+
+  window.setP1Q2Mode = function (mode, announce) {
+    if (mode !== 'solar' && mode !== 'lunar') return;
+    var input = byId('p1-answer-input');
+    var control = byId('p1-answer-control');
+
+    // 先還原共用輸入框的顯示狀態，避免前一題生肖模式留下 display:none。
+    if (input) {
+      input.style.display = 'block';
+      input.type = 'text';
+      input.readOnly = true;
+      input.setAttribute('inputmode', 'none');
+    }
+
+    // 保留既有國曆／農曆切換、題目文字及語音播放流程。
+    originalSetP1Q2Mode.call(window, mode, announce);
+
+    input = byId('p1-answer-input');
+    control = byId('p1-answer-control');
+    if (!input || !control) return;
+
+    // 舊版切換函式會將欄位改為 tel 並嘗試聚焦；這裡重新固定為可見的唯讀欄位，
+    // 由網頁內建數字鍵盤輸入，避免手機原生鍵盤遮住題目或造成畫面跳動。
+    input.style.display = 'block';
+    input.type = 'text';
+    input.readOnly = true;
+    input.setAttribute('inputmode', 'none');
+    input.removeAttribute('pattern');
+    input.maxLength = 2;
+    input.placeholder = '請用下方按鍵輸入月份數字';
+    input.setAttribute('aria-label', (mode === 'lunar' ? '農曆月份' : '國曆月份') + '，請使用下方數字按鍵輸入');
+
+    var unit = control.querySelector('.input-unit-wrap');
+    if (!unit) {
+      unit = document.createElement('div');
+      unit.className = 'input-unit-wrap';
+      control.insertBefore(unit, control.firstChild);
+    }
+    if (!unit.contains(input)) unit.appendChild(input);
+    var monthUnit = unit.querySelector('.input-unit');
+    if (!monthUnit) {
+      monthUnit = document.createElement('span');
+      monthUnit.className = 'input-unit';
+      unit.appendChild(monthUnit);
+    }
+    monthUnit.textContent = '月';
+
+    renderMonthNumberPad(control, input);
+    if (typeof examState !== 'undefined' && examState.p1) examState.p1.currentAnswer = '';
+    if (typeof window.updateP1SubmitButton === 'function') window.updateP1SubmitButton();
+  };
+
+  // 送出前再做一次範圍檢查，避免舊資料或其他輸入路徑繞過按鍵驗證。
+  var originalSubmit = window.submitP1StandardQuestion;
+  if (typeof originalSubmit === 'function') {
+    window.submitP1StandardQuestion = function () {
+      var question = (typeof examState !== 'undefined' && examState.p1 && examState.p1.questions)
+        ? examState.p1.questions[examState.p1.currentIndex] : null;
+      if (question && question.type === 'q2') {
+        var value = String((byId('p1-answer-input') || {}).value || '').trim();
+        if (examState.p1.currentMode !== 'solar' && examState.p1.currentMode !== 'lunar') {
+          if (typeof window.showCustomAlert === 'function') window.showCustomAlert('請先選擇國曆或農曆。');
+          return;
+        }
+        if (!/^[1-9][0-9]?$/.test(value) || Number(value) < 1 || Number(value) > 12) {
+          if (typeof window.showCustomAlert === 'function') window.showCustomAlert('請輸入 1 到 12 的月份數字。');
+          return;
+        }
+      }
+      return originalSubmit.apply(this, arguments);
+    };
+  }
+})();
+
+</script>
+
+
+<style id="numeric-keypad-device-switch-styles">
+/* 電腦版：數字鍵盤以浮動面板顯示，不佔用頁面文件流空間。 */
+.number-pad-trigger-help{margin:7px 0 0;color:#26392D;font-size:16px;font-weight:800;line-height:1.5}
+.number-pad-float[hidden]{display:none!important}
+.number-pad-float{position:static;z-index:auto;box-sizing:border-box;width:100%;max-width:none;padding:12px;background:#FFFFFF;border:2px solid #26392D;border-radius:16px;box-shadow:0 6px 18px rgba(24,40,29,.10);overflow:visible;overscroll-behavior:auto}
+.number-pad-float-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 8px;color:#17271B;font-size:18px;font-weight:900;line-height:1.5}
+.number-pad-float-close{flex:0 0 auto;min-width:56px;min-height:56px;padding:8px 12px;border:2px solid #26392D;border-radius:10px;background:#F0F5ED;color:#17271B;font-family:inherit;font-size:17px;font-weight:900;cursor:pointer}
+.number-pad-float .number-pad-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:0}
+.number-pad-float .number-key{min-width:0;min-height:56px!important;padding:7px;border:2px solid #26392D;border-radius:10px;background:#FFFFFF;color:#17271B;font-family:inherit;font-size:23px;font-weight:900;line-height:1.3;cursor:pointer}
+.number-pad-float .number-key:active,.number-pad-float .number-pad-action:active{background:#EAF0E7}
+.number-pad-float .number-pad-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0 0}
+.number-pad-float .number-pad-action{min-width:0;min-height:56px!important;padding:7px;border:2px solid #26392D;border-radius:10px;background:#F2F2EA;color:#17271B;font-family:inherit;font-size:16px;font-weight:900;line-height:1.4;white-space:normal;cursor:pointer}
+.number-pad-float-close:focus-visible{outline:3px solid #17271B;outline-offset:3px}
+.number-pad-float .number-pad-feedback{margin:8px 0 0;padding:8px 10px;border:2px solid #26392D;border-radius:9px;background:#F0F5ED;color:#17271B;font-size:16px;font-weight:800;line-height:1.5;overflow-wrap:anywhere}
+.numeric-input-feedback{margin:8px 0 0;padding:8px 10px;border:2px solid #26392D;border-radius:9px;background:#F0F5ED;color:#17271B;font-size:17px;font-weight:800;line-height:1.5;overflow-wrap:anywhere}
+.numeric-input-feedback[hidden]{display:none!important}
+#step-p1 #p1-answer-input{cursor:text}
+#step-p1 #p1-answer-input:focus-visible{outline:3px solid #26392D;outline-offset:3px}
+/* 浮動面板是否使用由裝置判斷函式決定；不再單靠 pointer:coarse 隱藏觸控筆電的浮動鍵盤。 */
+
+/* 第一題生肖：單一文字輸入框 */
+#step-p1 #p1-answer-input.zodiac-text-input{display:block!important;box-sizing:border-box;width:100%!important;max-width:none;flex:none;height:66px!important;min-height:66px;font-size:22px!important;background:#FFFFFF!important;border:2px solid var(--color-dark,#2F4F3A)!important;border-radius:12px;padding:0 16px;color:var(--color-dark,#2F4F3A)}
+#step-p1 #p1-input-label.zodiac-input-title{display:block!important;font-size:20px!important;font-weight:900;color:var(--color-dark,#2F4F3A);margin:16px 0 10px}
+</style>
+
+
+<style id="final-requirements-fixes">
+/* 三關共用進度框：目前進度｜關卡名稱 同一排 */
+.single-progress-banner{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;text-align:center;column-gap:8px;row-gap:2px;line-height:1.6}
+.single-progress-banner .progress-banner-progress,.single-progress-banner .progress-banner-stage{white-space:nowrap}
+.single-progress-banner .progress-banner-sep{white-space:nowrap}
+/* 第一關第 4 題：單一文字輸入框 */
+#step-p1 .weekday-answer-label{display:block;margin:4px 0 10px;color:var(--color-dark);font-size:20px;font-weight:900;line-height:1.6}
+#step-p1 #p1-answer-input.weekday-text-input{display:block!important;box-sizing:border-box;width:100%!important;flex:none;min-height:64px!important;font-size:22px!important;text-align:left!important;padding:12px 16px!important;background:#FFFFFF!important;border:2px solid var(--color-dark)!important;border-radius:12px!important}
+/* 第二關回想作答：輸入框＋加入答案 */
+#step-p2-sop5 .p2-recall-count{font-size:20px;font-weight:900;color:var(--color-dark);line-height:1.6;margin:4px 0 0}
+#step-p2-sop5 .p2-recall-entry{display:flex;flex-direction:row;flex-wrap:nowrap;align-items:stretch;gap:12px;margin:8px 0 4px;width:100%}
+#step-p2-sop5 #p2-recall-input{flex:1 1 72%!important;width:auto!important;min-width:0;min-height:60px!important;height:auto;box-sizing:border-box;background:#FFFFFF!important;border:2px solid var(--color-dark)!important;border-radius:12px!important;font-size:20px!important;line-height:1.6!important;text-align:left}
+#step-p2-sop5 #p2-recall-add-btn{flex:0 0 28%!important;width:auto!important;min-width:0!important;min-height:60px!important;font-size:20px!important;font-weight:900!important;white-space:nowrap!important;border:2px solid var(--color-dark)!important;background:#F0F5ED!important;color:var(--color-dark)!important;border-radius:12px!important}
+#step-p2-sop5 #p2-recall-cancel-edit{flex:0 0 auto;min-height:60px;font-size:20px;color:var(--color-dark);border:2px solid var(--color-dark)}
+#step-p2-sop5 .recall-tags{display:flex;flex-direction:column;gap:10px;min-height:0;padding:10px;border:2px solid var(--color-dark);border-radius:12px;background:#FFFFFF}
+#step-p2-sop5 .recall-tags.is-empty{padding:0;border:0;background:transparent;min-height:0}
+#step-p2-sop5 .recall-empty-note{margin:0;color:var(--color-dark);font-size:18px;line-height:1.6}
+#step-p2-sop5 .recall-answer-text{font-size:20px;color:var(--color-dark);line-height:1.6}
+#step-p2-sop5 .recall-answer-actions button{min-height:56px;min-width:72px;font-size:20px;color:var(--color-dark);border:2px solid var(--color-dark)}
+#step-p2-sop5 #p2-recall-submit-btn{min-height:64px!important;font-size:22px!important;width:100%}
+@media (max-width:820px){
+  #step-p2-sop5 .p2-recall-entry{flex-direction:column}
+  #step-p2-sop5 #p2-recall-input,#step-p2-sop5 #p2-recall-add-btn,#step-p2-sop5 #p2-recall-cancel-edit{flex:none!important;width:100%!important}
+}
+#step-result .detail-question{font-size:20px;font-weight:900;line-height:1.6;color:#1F3325}#step-result .p1-result-line .detail-status{margin:0 0 0 4px;font-size:18px}#step-result .p1-result-line .detail-status.miss,#step-result .p1-result-line .detail-status.pending{color:#3D3418}
+
+/* 第一關：目前語音資訊保留，但視覺層級低於題目與作答提示。 */
+.mode-status-chip{
+  min-height:34px!important;
+  font-size:18px!important;
+  font-weight:600!important;
+  line-height:1.35!important;
+  color:var(--color-muted)!important;
+}
+.mode-status-chip svg{width:20px!important;height:20px!important;flex:0 0 20px!important}
+#step-location .practice-mode-state,
+#step-location .practice-mode-selected-label { display:none !important; }
+/* 僅在已選取的練習方式卡片顯示原有勾選符號；不建立第二套選取機制。 */
+#step-location .practice-mode-btn.active .practice-mode-state { display:inline-flex !important; }
+</style>
+<script id="numeric-keypad-device-switch-patch">
+/* 數字鍵盤依主要操作裝置切換：桌面使用網頁鍵盤，觸控手機／平板使用原生數字鍵盤。
+ * 保留既有題目、答案欄位、鍵盤按鍵事件、驗證及送出流程；只調整顯示方式與輸入欄位屬性。
+ */
+(function () {
+  'use strict';
+
+  var byId = function (id) { return document.getElementById(id); };
+  var input = byId('p1-answer-input');
+  var control = byId('p1-answer-control');
+  if (!input || !control) return;
+
+  var selector = '.number-pad-help, .number-pad-grid, .number-pad-actions, .number-pad-feedback';
+  var cachedPadNodes = [];
+  var cachedPadMode = '';
+  var panel = null;
+  var panelCloseButton = null;
+  var triggerHelp = null;
+  var feedback = null;
+  var lastNativePreference = null;
+  var suppressNextFocusOpen = false;
+  var p1Layout = null;
+  var p1KeypadColumn = null;
+
+  // 輸入框及數字鍵盤維持左右獨立欄位；確認按鈕留在原本 #step-p1 文件流位置。
+  // 題目卡、選項、答案輸入控制及原始按鍵事件均不重建、不改尺寸。
+  // Keep the original Stage 1 DOM and document flow intact.
+  // The keypad is a fixed-position viewport sibling on wide screens, or a
+  // temporary in-flow accessory immediately after the input on narrow screens.
+  function ensureP1ResponsiveLayout() {
+    var step = byId('step-p1');
+    var inputGroup = byId('p1-input-group');
+    var inputControl = byId('p1-answer-control');
+    if (!step || !inputGroup || !inputControl) return null;
+
+    p1Layout = step;
+    if (!p1KeypadColumn || !p1KeypadColumn.isConnected) {
+      p1KeypadColumn = step.querySelector(':scope > .p1-keypad-column') ||
+        inputGroup.querySelector('.p1-keypad-column') ||
+        document.querySelector('.exam-wrapper > .p1-keypad-column');
+    }
+    if (!p1KeypadColumn) {
+      p1KeypadColumn = document.createElement('aside');
+      p1KeypadColumn.className = 'p1-keypad-column';
+      p1KeypadColumn.setAttribute('aria-label', '自訂數字鍵盤區');
+      p1KeypadColumn.hidden = true;
+    }
+    return p1Layout;
+  }
+
+  function canUseRightKeypadRail(step) {
+    if (!step || window.innerWidth < 1100) return false;
+    var rect = step.getBoundingClientRect();
+    var rightSpace = document.documentElement.clientWidth - rect.right;
+    // 260px keypad + 24px gap + 8px viewport safety margin.
+    // Use the available right-side whitespace without expanding the exam wrapper.
+    return rightSpace >= 292;
+  }
+
+  var p1RailAlignmentFrame = 0;
+
+  function isP1StepActive() {
+    var step = byId('step-p1');
+    return !!(step && document.body.getAttribute('data-step') === 'step-p1' &&
+      !step.hidden && step.style.display !== 'none');
+  }
+
+  // 桌面版鍵盤固定在視窗座標，避免右側較高的鍵盤擴大文件可捲動高度。
+  // 每次捲動或縮放時，重新讀取答案框與第一關卡片的視窗座標，維持相鄰及上緣對齊。
+  function alignRightKeypadRail() {
+    var step = byId('step-p1');
+    var target = byId('p1-answer-control') || byId('p1-answer-input');
+    if (!step || !target || !p1KeypadColumn ||
+        p1KeypadColumn.parentNode !== step ||
+        !p1KeypadColumn.classList.contains('p1-keypad-rail-absolute') ||
+        p1KeypadColumn.hidden) return;
+
+    var targetRect = target.getBoundingClientRect();
+    var stepRect = step.getBoundingClientRect();
+    // 24px 是 CSS 實際間距；在瀏覽器縮放下會自然跟隨相同比例。
+    var left = Math.round(stepRect.right + 24);
+
+    // 優先與答案輸入區上緣對齊；若鍵盤完整高度會超出視窗，
+    // 僅將右側鍵盤向上移到視窗內，不縮小按鍵、不製造鍵盤內部捲軸。
+    var idealTop = targetRect.top;
+    var viewportHeight = Math.max(0, window.innerHeight || document.documentElement.clientHeight || 0);
+    var panelRect = p1KeypadColumn.getBoundingClientRect();
+    var panelHeight = Math.max(panelRect.height || 0, p1KeypadColumn.scrollHeight || 0);
+    var viewportMargin = 12;
+    var maxTop = viewportHeight - panelHeight - viewportMargin;
+    var top = maxTop >= viewportMargin
+      ? Math.min(Math.max(viewportMargin, idealTop), maxTop)
+      : viewportMargin;
+
+    p1KeypadColumn.style.setProperty('--p1-keypad-fixed-left', left + 'px');
+    p1KeypadColumn.style.setProperty('--p1-keypad-fixed-top', Math.round(top) + 'px');
+  }
+
+  function scheduleRightKeypadAlignment() {
+    if (p1RailAlignmentFrame) return;
+    if (window.requestAnimationFrame) {
+      p1RailAlignmentFrame = window.requestAnimationFrame(function () {
+        p1RailAlignmentFrame = 0;
+        alignRightKeypadRail();
+      });
+    } else {
+      window.setTimeout(function () {
+        p1RailAlignmentFrame = 0;
+        alignRightKeypadRail();
+      }, 32);
+    }
+  }
+
+  function syncResponsiveLayoutMode() {
+    if (!p1Layout || !p1Layout.isConnected || !p1KeypadColumn) return false;
+
+    var step = byId('step-p1');
+    var inputGroup = byId('p1-input-group');
+    var inputControl = byId('p1-answer-control');
+    if (!step || !inputGroup || !inputControl) return false;
+
+    var isOpen = !!(panel && !panel.hidden);
+    var useRightRail = isP1StepActive() && canUseRightKeypadRail(step);
+    var changed = false;
+
+    if (useRightRail) {
+      if (p1KeypadColumn.parentNode !== step) {
+        step.appendChild(p1KeypadColumn);
+        changed = true;
+      }
+      p1KeypadColumn.classList.add('p1-keypad-rail-absolute');
+      p1KeypadColumn.hidden = !isOpen;
+      if (isOpen) scheduleRightKeypadAlignment();
+    } else {
+      if (p1KeypadColumn.parentNode !== inputGroup ||
+          p1KeypadColumn.previousElementSibling !== inputControl) {
+        inputGroup.insertBefore(p1KeypadColumn, inputControl.nextSibling);
+        changed = true;
+      }
+      p1KeypadColumn.classList.remove('p1-keypad-rail-absolute');
+      p1KeypadColumn.style.top = '';
+      p1KeypadColumn.style.removeProperty('--p1-keypad-fixed-left');
+      p1KeypadColumn.style.removeProperty('--p1-keypad-fixed-top');
+      p1KeypadColumn.hidden = !isOpen;
+    }
+    return changed;
+  }
+
+  function isNativeKeypadDevice() {
+    // 所有裝置均使用原本網頁自訂數字鍵盤；不以原生鍵盤取代。
+    // input.readOnly=false，電腦實體鍵盤與外接鍵盤仍可輸入。
+    return false;
+  }
+
+  function getAppState() {
+    try {
+      if (typeof window.__getCognitiveExamState === 'function') return window.__getCognitiveExamState();
+      if (window.examState) return window.examState;
+      if (typeof examState !== 'undefined') return examState;
+    } catch (e) {}
+    return null;
+  }
+
+  function getQuestion() {
+    var state = getAppState();
+    return state && state.p1 && state.p1.questions
+      ? state.p1.questions[state.p1.currentIndex] : null;
+  }
+
+  function getNumericConfig() {
+    var q = getQuestion();
+    var state = getAppState();
+    if (!q || !state || !state.p1) return null;
+    var mode = state.p1.currentMode;
+    var lang = (typeof window.EXAM_DISPLAY_LANG === 'string' && window.EXAM_DISPLAY_LANG) ||
+      (typeof EXAM_DISPLAY_LANG !== 'undefined' && EXAM_DISPLAY_LANG) || 'zh-TW';
+    // 四種介面語言都保留自訂數字鍵盤；英／日／韓亦可由實體鍵盤輸入文字答案。
+    var allowWords = lang !== 'zh-TW';
+    if (q.type === 'q1') {
+      if (mode === 'roc') return { key: 'q1-roc', kind: 'year', maxDigits: 3, placeholder: '點此輸入年份數字', label: '民國年份', allowWords: allowWords };
+      if (mode === 'western') return { key: 'q1-western', kind: 'year', maxDigits: 4, placeholder: '點此輸入年份數字', label: '西元年份', allowWords: allowWords };
+      return null; // 生肖維持一般文字輸入，不顯示數字鍵盤。
+    }
+    if (q.type === 'q2' && (mode === 'solar' || mode === 'lunar')) {
+      return { key: 'q2-' + mode, kind: 'month', maxDigits: 2, placeholder: '點此輸入月份數字', label: mode === 'lunar' ? '農曆月份' : '國曆月份', allowWords: allowWords };
+    }
+    if (q.type === 'q3' && (mode === 'solar' || mode === 'lunar')) {
+      return { key: 'q3-' + mode, kind: 'date', maxDigits: 2, placeholder: '請輸入日期數字', label: mode === 'lunar' ? '農曆日期數字' : '國曆日期數字', allowWords: allowWords };
+    }
+    return null;
+  }
+
+  function updatePanelLanguage() {
+    if (!panel) return;
+    var lang = (typeof EXAM_DISPLAY_LANG !== 'undefined' && EXAM_DISPLAY_LANG) || 'zh-TW';
+    var copy = lang === 'en'
+      ? { title: 'Numeric keypad', close: 'Close', aria: 'Close numeric keypad' }
+      : lang === 'ja'
+        ? { title: '数字キーパッド', close: '閉じる', aria: '数字キーパッドを閉じる' }
+        : lang === 'ko'
+          ? { title: '숫자 키패드', close: '닫기', aria: '숫자 키패드 닫기' }
+          : { title: '數字鍵盤', close: '收起', aria: '收起數字鍵盤' };
+    var title = panel.querySelector('[data-keypad-title], .number-pad-float-header strong');
+    var close = panel.querySelector('[data-keypad-close], .number-pad-float-close');
+    if (title) title.textContent = copy.title;
+    if (close) { close.textContent = copy.close; close.setAttribute('aria-label', copy.aria); }
+    panel.setAttribute('aria-label', copy.title);
+  }
+
+  function ensurePanel() {
+    var layout = ensureP1ResponsiveLayout();
+    if (!layout || !p1KeypadColumn) return null;
+    if (panel && panel.isConnected) {
+      if (panel.parentNode !== p1KeypadColumn) p1KeypadColumn.appendChild(panel);
+      panel.style.position = 'static';
+      panel.style.left = '';
+      panel.style.top = '';
+      panel.style.right = '';
+      panel.style.transform = 'none';
+      panel.style.zIndex = 'auto';
+      panel.style.maxHeight = 'none';
+      panel.style.overflowY = 'visible';
+      panel.style.overflowX = 'visible';
+      return panel;
+    }
+
+    panel = document.getElementById('p1-number-pad-floating-panel');
+    if (panel) {
+      var existingHeader = panel.querySelector('.number-pad-float-header');
+      if (!existingHeader) {
+        existingHeader = document.createElement('div');
+        existingHeader.className = 'number-pad-float-header';
+        panel.insertBefore(existingHeader, panel.firstChild);
+      }
+      var existingTitle = existingHeader.querySelector('[data-keypad-title], strong');
+      if (!existingTitle) {
+        existingTitle = document.createElement('strong');
+        existingHeader.insertBefore(existingTitle, existingHeader.firstChild);
+      }
+      existingTitle.setAttribute('data-keypad-title', '1');
+      panelCloseButton = existingHeader.querySelector('.number-pad-float-close');
+      if (!panelCloseButton) {
+        panelCloseButton = document.createElement('button');
+        panelCloseButton.type = 'button';
+        panelCloseButton.className = 'number-pad-float-close';
+        existingHeader.appendChild(panelCloseButton);
+      }
+      panelCloseButton.setAttribute('data-keypad-close', '1');
+      if (panelCloseButton.dataset.numericCloseBound !== '1') {
+        panelCloseButton.dataset.numericCloseBound = '1';
+        panelCloseButton.addEventListener('click', function () { closePanel(true); });
+      }
+      panel.setAttribute('role', 'region');
+      panel.removeAttribute('aria-modal');
+      panel.hidden = true;
+      panel.style.position = 'static';
+      panel.style.left = '';
+      panel.style.top = '';
+      panel.style.right = '';
+      panel.style.transform = 'none';
+      panel.style.zIndex = 'auto';
+      panel.style.maxHeight = 'none';
+      panel.style.overflowY = 'visible';
+      panel.style.overflowX = 'visible';
+      p1KeypadColumn.appendChild(panel);
+      updatePanelLanguage();
+      syncResponsiveLayoutMode();
+      return panel;
+    }
+
+    panel = document.createElement('section');
+    panel.className = 'number-pad-float number-pad-inline-panel';
+    panel.id = 'p1-number-pad-floating-panel';
+    panel.hidden = true;
+    panel.setAttribute('role', 'region');
+    panel.setAttribute('aria-label', '網頁自訂數字鍵盤');
+
+    var header = document.createElement('div');
+    header.className = 'number-pad-float-header';
+    var title = document.createElement('strong');
+    title.setAttribute('data-keypad-title', '1');
+    panelCloseButton = document.createElement('button');
+    panelCloseButton.type = 'button';
+    panelCloseButton.className = 'number-pad-float-close';
+    panelCloseButton.setAttribute('data-keypad-close', '1');
+    panelCloseButton.dataset.numericCloseBound = '1';
+    panelCloseButton.addEventListener('click', function () { closePanel(true); });
+    header.appendChild(title);
+    header.appendChild(panelCloseButton);
+    panel.appendChild(header);
+    p1KeypadColumn.appendChild(panel);
+    updatePanelLanguage();
+    syncResponsiveLayoutMode();
+    return panel;
+  }
+
+  function ensureFeedback() {
+    if (feedback && feedback.isConnected) return feedback;
+    feedback = document.createElement('p');
+    feedback.className = 'numeric-input-feedback';
+    feedback.id = 'p1-numeric-input-feedback';
+    feedback.setAttribute('role', 'status');
+    feedback.setAttribute('aria-live', 'polite');
+    feedback.hidden = true;
+    if (control) control.appendChild(feedback);
+    return feedback;
+  }
+
+  function setFeedback(message) {
+    var el = ensureFeedback();
+    el.textContent = message || '';
+    el.hidden = !message;
+  }
+
+  function removeTriggerHelp() {
+    if (triggerHelp && triggerHelp.parentNode) triggerHelp.parentNode.removeChild(triggerHelp);
+    triggerHelp = null;
+  }
+
+  function closePanel(keepFocus) {
+    if (panel) panel.hidden = true;
+    if (input) input.setAttribute('aria-expanded', 'false');
+    syncResponsiveLayoutMode();
+    if (keepFocus && input) {
+      // 收起後可把焦點還給輸入框，但不要因 focus 事件立刻再次展開面板。
+      suppressNextFocusOpen = true;
+      try { input.focus({ preventScroll: true }); } catch (e) { try { input.focus(); } catch (ignore) {} }
+      window.setTimeout(function () { suppressNextFocusOpen = false; }, 0);
+    }
+  }
+
+  function getPadNodesFrom(source) {
+    if (!source) return [];
+    return Array.prototype.slice.call(source.querySelectorAll(selector));
+  }
+
+  function clearPanelPadNodes() {
+    if (!panel) return;
+    getPadNodesFrom(panel).forEach(function (node) {
+      if (node.parentNode) node.parentNode.removeChild(node);
+    });
+  }
+
+  function captureCurrentPadNodes() {
+    var liveNodes = getPadNodesFrom(control);
+    if (!liveNodes.length && panel) liveNodes = getPadNodesFrom(panel);
+    if (liveNodes.length) {
+      cachedPadNodes = liveNodes.filter(function (node) { return !node.classList.contains('number-pad-help'); });
+      cachedPadMode = (getNumericConfig() || {}).key || cachedPadMode;
+      cachedPadNodes.forEach(function (node) { if (node.parentNode) node.parentNode.removeChild(node); });
+    }
+  }
+
+  function ensureOriginalPadNodes(config) {
+    if (!config) return false;
+    captureCurrentPadNodes();
+    if (cachedPadNodes.length && cachedPadMode === config.key) return true;
+
+    // 模式切換後若沒有捕捉到新節點，先清除舊模式節點，再呼叫專案原有的鍵盤渲染器。
+    if (cachedPadMode && cachedPadMode !== config.key) {
+      cachedPadNodes = [];
+      clearPanelPadNodes();
+    }
+    cachedPadMode = config.key;
+    var renderer = config.kind === 'month'
+      ? window.__renderOriginalP1MonthNumberPad
+      : window.__renderOriginalP1NumberPad;
+    if (!cachedPadNodes.length && typeof renderer === 'function') {
+      try {
+        if (config.kind === 'month') renderer(control, input);
+        else renderer(control, input, config.maxDigits, '');
+      } catch (renderError) {
+        console.error('[數字鍵盤] 原始鍵盤渲染器執行失敗：', renderError);
+      }
+      captureCurrentPadNodes();
+      if (cachedPadNodes.length) cachedPadMode = config.key;
+    }
+    return cachedPadNodes.length > 0;
+  }
+
+  function buildPanelContent() {
+    var host = ensurePanel();
+    var config = getNumericConfig();
+    ensureOriginalPadNodes(config);
+    captureCurrentPadNodes();
+    var header = host.querySelector('.number-pad-float-header');
+    var nodes = cachedPadNodes.slice();
+    Array.prototype.slice.call(host.children).forEach(function (child) {
+      if (child !== header) host.removeChild(child);
+    });
+    nodes.forEach(function (node) {
+      if (node.parentNode) node.parentNode.removeChild(node);
+      host.appendChild(node);
+    });
+    bindPadButtons();
+  }
+
+  function bindPadButtons() {
+    if (!panel) return;
+    Array.prototype.slice.call(panel.querySelectorAll('.number-key, .number-pad-action')).forEach(function (button) {
+      if (button.dataset.deviceBridgeBound === '1') return;
+      button.dataset.deviceBridgeBound = '1';
+      button.addEventListener('click', function () {
+        // 原始按鈕事件先更新 input.value；此監聽器隨即同步同一欄位的輸入事件與 examState，
+        // 不使用 setTimeout，避免畫面已顯示新數字、答案狀態卻短暫落後一拍。
+        if (!input) return;
+        try { input.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) {}
+        input.dataset.lastAcceptedValue = String(input.value || '');
+        syncAnswerState();
+      });
+    });
+  }
+
+  function openPanel() {
+    var config = getNumericConfig();
+    if (isNativeKeypadDevice() || !config) return;
+
+    // Focus and click often fire in the same interaction. Do not rebuild/reflow
+    // the keypad a second time if it is already open.
+    if (panel && !panel.hidden) {
+      input.setAttribute('aria-expanded', 'true');
+      return;
+    }
+
+    if (!ensureP1ResponsiveLayout()) return;
+    ensureOriginalPadNodes(config);
+    buildPanelContent();
+    if (!panel || !panel.querySelector('.number-pad-grid')) {
+      console.error('[數字鍵盤] 未找到原始數字按鍵節點，請檢查第一關渲染器。');
+      return;
+    }
+
+    updatePanelLanguage();
+    panel.hidden = false;
+    panel.style.display = '';
+    panel.style.position = 'static';
+    panel.style.left = 'auto';
+    panel.style.top = 'auto';
+    panel.style.right = 'auto';
+    panel.style.transform = 'none';
+    panel.style.zIndex = 'auto';
+    panel.style.maxHeight = 'none';
+    panel.style.overflowY = 'visible';
+    panel.style.overflowX = 'visible';
+    input.setAttribute('aria-expanded', 'true');
+
+    // 桌面版只顯示視窗固定的右側鍵盤，不改變左欄文件流高度。
+    // 較窄螢幕則保留原本輸入框下方的響應式鍵盤。
+    syncResponsiveLayoutMode();
+    scheduleRightKeypadAlignment();
+  }
+
+  function syncAnswerState() {
+    var state = getAppState();
+    if (state && state.p1) state.p1.currentAnswer = String(input.value || '');
+    if (typeof window.updateP1SubmitButton === 'function') window.updateP1SubmitButton();
+    else if (typeof window.onP1AnswerInputChanged === 'function') window.onP1AnswerInputChanged();
+  }
+
+  function handleNumericInput() {
+    var config = getNumericConfig();
+    if (!config) return;
+    var oldValue = String(input.dataset.lastAcceptedValue || '');
+    var raw = String(input.value || '');
+
+    // 英／日／韓介面：實體鍵盤可輸入完整文字（例如 March、17th、二千二十六年），不可被數字過濾器清空。
+    // 若使用者輸入的是數字，仍套用原本位數與月份範圍檢查；浮動鍵盤按鍵也走同一條路徑。
+    var containsLocalizedText = config.allowWords && /[A-Za-z぀-ヿ㐀-鿿가-힯]/.test(raw);
+    if (containsLocalizedText) {
+      input.dataset.lastAcceptedValue = raw;
+      setFeedback('');
+      syncAnswerState();
+      return;
+    }
+
+    var digits = raw.replace(/[^0-9０-９]/g, '').replace(/[０-９]/g, function (ch) {
+      return String(ch.charCodeAt(0) - 0xFF10);
+    }).slice(0, config.maxDigits);
+
+    if (config.kind === 'month' && digits && (!/^[1-9][0-9]?$/.test(digits) || Number(digits) < 1 || Number(digits) > 12)) {
+      input.value = oldValue;
+      setFeedback('月份只能輸入 1 到 12，請重新輸入。');
+    } else {
+      input.value = digits;
+      input.dataset.lastAcceptedValue = digits;
+      setFeedback('');
+    }
+    syncAnswerState();
+  }
+
+  function bindInputOnce() {
+    if (input.dataset.numericDeviceBound === '1') return;
+    input.dataset.numericDeviceBound = '1';
+    input.addEventListener('input', handleNumericInput);
+    input.addEventListener('focus', function () {
+      if (!suppressNextFocusOpen && !isNativeKeypadDevice() && getNumericConfig()) openPanel();
+    });
+    input.addEventListener('click', function () {
+      // 收起後輸入框可能仍保有焦點，因此不能只依賴 focus；每次實際點擊都重新開啟。
+      if (!isNativeKeypadDevice() && getNumericConfig()) openPanel();
+    });
+    input.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape' && panel && !panel.hidden) {
+        event.preventDefault(); closePanel(true);
+      } else if (event.key === 'Enter' && panel && !panel.hidden) {
+        closePanel(false);
+      }
+    });
+  }
+
+  function addDesktopHint() {
+    // 全平台只顯示 unified-numeric-keypad-guidance 建立的單一提示，不再另外建立第二行。
+    removeTriggerHelp();
+  }
+
+  function configureCurrentInput() {
+    var config = getNumericConfig();
+    var nativeMode = isNativeKeypadDevice();
+    var q = getQuestion();
+    var lang = (typeof EXAM_DISPLAY_LANG !== 'undefined' ? EXAM_DISPLAY_LANG : 'zh-TW');
+    var allowWords = !!(config && config.allowWords);
+
+    if (!config) {
+      closePanel(false);
+      removeTriggerHelp();
+      cachedPadNodes = [];
+      cachedPadMode = '';
+      clearPanelPadNodes();
+      if (feedback) feedback.hidden = true;
+      input.removeAttribute('aria-describedby');
+
+      // 只有生肖與非數字題目不使用自訂數字鍵盤。
+      var currentState = getAppState();
+      if (q && q.type === 'q1' && currentState && currentState.p1.currentMode === 'zodiac') {
+        input.type = 'text';
+        input.style.display = 'block';
+        input.readOnly = false;
+        input.removeAttribute('inputmode');
+        input.removeAttribute('pattern');
+        input.removeAttribute('maxlength');
+        input.placeholder = lang === 'en' ? 'Enter the zodiac animal' :
+          (lang === 'ja' ? '十二支を入力してください' : (lang === 'ko' ? '띠 동물을 입력하세요' : '請輸入生肖'));
+        input.setAttribute('aria-label', input.placeholder);
+        showZodiacTitle();
+        syncAnswerState();
+      }
+      return;
+    }
+
+    bindInputOnce();
+    input.type = 'text';
+    input.style.display = 'block';
+    input.readOnly = false; // 一定允許實體鍵盤輸入，不鎖定欄位。
+    input.removeAttribute('min');
+    input.removeAttribute('max');
+    input.removeAttribute('step');
+    input.autocomplete = 'off';
+    input.autocapitalize = 'off';
+    input.spellcheck = false;
+    input.setAttribute('aria-haspopup', 'dialog');
+    input.setAttribute('aria-expanded', 'false');
+    input.dataset.numericKind = config.kind;
+
+    if (allowWords) {
+      // 多語系欄位可輸入單字或數字；不設定 maxlength/pattern，避免 March、17th 等文字被截掉。
+      input.removeAttribute('maxlength');
+      input.removeAttribute('pattern');
+      input.setAttribute('lang', lang === 'en' ? 'en' : (lang === 'ja' ? 'ja' : 'ko'));
+      input.setAttribute('aria-label', config.label);
+      if (q.type === 'q1') {
+        input.placeholder = getExamGenericAnswerPlaceholder(lang);
+      } else if (q.type === 'q2') {
+        input.placeholder = getExamGenericAnswerPlaceholder(lang);
+      } else if (q.type === 'q3') {
+        var currentState = getAppState();
+        var lunarDate = !!(currentState && currentState.p1.currentMode === 'lunar');
+        input.placeholder = getExamGenericAnswerPlaceholder(lang);
+      }
+    } else {
+      // 繁體中文保留原本數字輸入限制與自訂鍵盤規則。
+      input.maxLength = config.maxDigits;
+      input.setAttribute('pattern', '[0-9]*');
+      input.setAttribute('aria-label', config.label + '，請輸入數字');
+      input.placeholder = getExamGenericAnswerPlaceholder(lang);
+      input.setAttribute('lang', 'zh-Hant');
+    }
+
+    var unit = control.querySelector('.input-unit-wrap');
+    if (unit && unit.querySelector('.input-unit')) {
+      // 保留目前題目的單位文字（民國／西元、月、號）。
+    }
+    if (!input.dataset.lastAcceptedValue || input.dataset.lastAcceptedValue !== String(input.value || '')) {
+      input.dataset.lastAcceptedValue = String(input.value || '');
+    }
+
+    // 把原本在欄位下方建立的按鍵節點收進浮動面板，絕不留在頁面文件流中。
+    var helpNodes = getPadNodesFrom(control).filter(function (node) { return node.classList.contains('number-pad-help'); });
+    helpNodes.forEach(function (node) { if (node.parentNode) node.parentNode.removeChild(node); });
+    ensureOriginalPadNodes(config);
+
+    var statusHelp = ensureFeedback();
+    setFeedback('');
+    // 手機、平板與電腦統一使用網頁自訂浮動鍵盤；實體鍵盤輸入仍保持啟用。
+    input.readOnly = false;
+    input.disabled = false;
+    input.setAttribute('inputmode', 'none');
+    input.removeAttribute('enterkeyhint');
+    input.setAttribute('aria-haspopup', 'dialog');
+    addDesktopHint();
+    input.setAttribute('aria-describedby', statusHelp.id);
+    if (cachedPadNodes.length) buildPanelContent();
+  }
+
+  var keypadReconcileTimer = null;
+  function scheduleKeypadReconcile() {
+    if (keypadReconcileTimer) window.clearTimeout(keypadReconcileTimer);
+    keypadReconcileTimer = window.setTimeout(function () {
+      keypadReconcileTimer = null;
+      if (!input || !input.isConnected) return;
+      var current = getQuestion();
+      var currentState = getAppState();
+      if (current && current.type === 'q1' && currentState && currentState.p1.currentMode === 'zodiac') {
+        restoreZodiacTextInput();
+        return;
+      }
+      configureCurrentInput();
+      syncResponsiveLayoutMode();
+      if (isP1StepActive()) scheduleRightKeypadAlignment();
+    }, 0);
+  }
+
+  // 若其他題目渲染器在同一個事件週期稍後才插入按鍵，仍會在下一個 tick 收進浮動面板。
+  if (window.MutationObserver && control) {
+    var keypadObserver = new MutationObserver(function (records) {
+      var hasNewPad = records.some(function (record) {
+        return Array.prototype.some.call(record.addedNodes || [], function (node) {
+          return node.nodeType === 1 && (
+            (node.matches && node.matches('.number-pad-grid, .number-pad-actions, .number-pad-feedback')) ||
+            (node.querySelector && node.querySelector('.number-pad-grid, .number-pad-actions, .number-pad-feedback'))
+          );
+        });
+      });
+      if (hasNewPad && getNumericConfig()) scheduleKeypadReconcile();
+    });
+    keypadObserver.observe(control, { childList: true, subtree: true });
+  }
+
+  function restoreZodiacTextInput() {
+    var q = getQuestion();
+    var state = getAppState();
+    if (!q || q.type !== 'q1' || !state || state.p1.currentMode !== 'zodiac') return;
+    closePanel(false);
+    removeTriggerHelp();
+    cachedPadNodes = [];
+    cachedPadMode = '';
+    clearPanelPadNodes();
+    Array.prototype.slice.call(control.querySelectorAll('.number-pad-help, .number-pad-grid, .number-pad-actions')).forEach(function (node) { node.remove(); });
+    input.type = 'text';
+    input.style.display = 'block';
+    input.readOnly = false;
+    input.removeAttribute('inputmode');
+    input.removeAttribute('pattern');
+    input.removeAttribute('maxlength');
+    input.placeholder = '請輸入生肖';
+    input.setAttribute('aria-label', '請輸入生肖');
+    input.removeAttribute('aria-describedby');
+    input.value = '';
+    showZodiacTitle();
+    syncAnswerState();
+  }
+
+  function showZodiacTitle() {
+    input.type = 'text';
+    input.readOnly = false;
+    input.removeAttribute('inputmode');
+    input.setAttribute('lang', 'zh-Hant');
+    input.setAttribute('autocomplete', 'off');
+    input.placeholder = '請輸入生肖';
+    input.classList.add('zodiac-text-input');
+    var label = document.getElementById('p1-input-label');
+    if (label) { label.textContent = '請輸入您的生肖'; label.style.display = 'block'; label.classList.add('zodiac-input-title'); }
+  }
+
+  // 以既有切換函式完成題目、語音、模式及按鍵建立，再接手欄位裝置屬性。
+  var originalSetQ1 = window.setP1Q1Mode;
+  if (typeof originalSetQ1 === 'function') {
+    window.setP1Q1Mode = function (mode) {
+      closePanel(false);
+      var result = originalSetQ1.apply(this, arguments);
+      if (mode === 'zodiac') restoreZodiacTextInput();
+      else { input.classList.remove('zodiac-text-input'); var lb = document.getElementById('p1-input-label'); if (lb) lb.classList.remove('zodiac-input-title'); configureCurrentInput(); }
+      scheduleKeypadReconcile();
+      return result;
+    };
+  }
+
+  var originalSetQ2 = window.setP1Q2Mode;
+  if (typeof originalSetQ2 === 'function') {
+    window.setP1Q2Mode = function () {
+      closePanel(false);
+      var result = originalSetQ2.apply(this, arguments);
+      configureCurrentInput();
+      scheduleKeypadReconcile();
+      return result;
+    };
+  }
+
+  var originalSetQ3 = window.setP1Q3Mode;
+  if (typeof originalSetQ3 === 'function') {
+    window.setP1Q3Mode = function () {
+      closePanel(false);
+      var result = originalSetQ3.apply(this, arguments);
+      configureCurrentInput();
+      scheduleKeypadReconcile();
+      return result;
+    };
+  }
+
+  var originalRender = window.renderP1Question;
+  if (typeof originalRender === 'function') {
+    window.renderP1Question = function () {
+      closePanel(false);
+      var result = originalRender.apply(this, arguments);
+      var q = getQuestion();
+      var currentState = getAppState();
+      if (q && q.type === 'q1' && currentState && currentState.p1.currentMode === 'zodiac') restoreZodiacTextInput();
+      else if (getNumericConfig()) configureCurrentInput();
+      else {
+        configureCurrentInput();
+        removeTriggerHelp();
+        if (q && q.type !== 'q2') closePanel(false);
+      }
+      scheduleKeypadReconcile();
+      return result;
+    };
+  }
+
+  var originalShowStep = window.showStep;
+  if (typeof originalShowStep === 'function') {
+    window.showStep = function (id) {
+      if (id !== 'step-p1') closePanel(false);
+      var result = originalShowStep.apply(this, arguments);
+      // Establish the right rail once when Stage 1 becomes visible; restore the
+      // normal page wrapper only when leaving Stage 1.
+      syncResponsiveLayoutMode();
+      if (id === 'step-p1') scheduleKeypadReconcile();
+      return result;
+    };
+  }
+
+  // 送出前收起浮動鍵盤，但不碰欄位值或原有答案驗證。
+  var originalSubmit = window.submitP1StandardQuestion;
+  if (typeof originalSubmit === 'function') {
+    window.submitP1StandardQuestion = function () {
+      closePanel(false);
+      return originalSubmit.apply(this, arguments);
+    };
+  }
+
+  document.addEventListener('pointerdown', function (event) {
+    if (!panel || panel.hidden) return;
+    if (panel.contains(event.target) || event.target === input || (triggerHelp && triggerHelp.contains(event.target))) return;
+    closePanel(false);
+  }, true);
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape' && panel && !panel.hidden) closePanel(true);
+  });
+  // 頁面捲動時同步固定鍵盤座標；鍵盤自身不再增加文件的可捲動高度。
+  window.addEventListener('scroll', scheduleRightKeypadAlignment, { passive: true });
+  window.addEventListener('resize', function () {
+    var nativeNow = isNativeKeypadDevice();
+    if (nativeNow !== lastNativePreference) {
+      lastNativePreference = nativeNow;
+      if (getNumericConfig()) configureCurrentInput();
+    }
+    syncResponsiveLayoutMode();
+    scheduleRightKeypadAlignment();
+  }, { passive: true });
+  window.addEventListener('orientationchange', function () {
+    window.setTimeout(function () {
+      var nativeNow = isNativeKeypadDevice();
+      if (nativeNow !== lastNativePreference) lastNativePreference = nativeNow;
+      if (getNumericConfig()) configureCurrentInput();
+      syncResponsiveLayoutMode();
+      scheduleRightKeypadAlignment();
+    }, 100);
+  });
+
+  // 初始狀態只綁定欄位事件；不主動聚焦輸入框。
+  bindInputOnce();
+  lastNativePreference = isNativeKeypadDevice();
+  if (getNumericConfig()) configureCurrentInput();
+  else if (getQuestion() && getQuestion().type === 'q1' && getAppState() && getAppState().p1.currentMode === 'zodiac') restoreZodiacTextInput();
+  scheduleKeypadReconcile();
+})();
+
+
+
+/* 第一關年份／生肖輸入欄位補齊英、日、韓動態提示，避免模式切換後殘留中文。 */
+Object.assign(EXAM_TEXT_TRANSLATIONS, {
+  "民國": ["Minguo", "民国", "민국"],
+  "西元": ["Gregorian", "西暦", "서기"],
+  "年": ["year", "年", "년"],
+  "點此輸入年份數字": ["Tap to enter the year", "ここをタップして年を入力", "연도를 입력하려면 여기를 누르세요"],
+  "民國年份，請輸入數字": ["Enter the Minguo year as a number", "民国年を数字で入力してください", "민국 연도를 숫자로 입력하세요"],
+  "西元年份，請輸入數字": ["Enter the Gregorian year as a number", "西暦年を数字で入力してください", "서기 연도를 숫자로 입력하세요"],
+  "網頁自訂數字鍵盤": ["On-screen numeric keypad", "画面上の数字キーパッド", "화면 숫자 키패드"]
+});
+</script>
+<style id="p1-q2-q5-copy-layout-fixes">
+/* 第一關第 2～5 題：精簡文案後仍維持高齡友善字級與清楚操作層級。 */
+#step-p1 .option-caption{font-size:18px!important;line-height:1.6!important;font-weight:900!important}
+#step-p1 #p1-input-label.date-input-label,
+#step-p1 #p1-input-label.q5-answer-label{display:block!important;margin:4px 0 10px!important;color:var(--color-dark)!important;font-size:20px!important;font-weight:900!important;line-height:1.6!important}
+#step-p1 .input-unit-wrap{align-items:center!important;flex-wrap:nowrap!important;gap:12px!important;width:100%!important;min-width:0!important}
+#step-p1 .input-unit-wrap .form-input{flex:1 1 auto!important;width:100%!important;min-width:0!important;min-height:64px!important;box-sizing:border-box!important;font-size:22px!important}
+#step-p1 .input-unit-wrap .input-unit{flex:0 0 auto!important;align-self:center!important;font-size:22px!important;line-height:1.6!important;white-space:nowrap!important}
+#step-p1 #p1-answer-input.p1-open-text-input{display:block!important;width:100%!important;min-width:0!important;min-height:64px!important;box-sizing:border-box!important;padding:12px 16px!important;background:#FFFFFF!important;border:2px solid var(--color-dark)!important;border-radius:12px!important;color:var(--color-dark)!important;font-size:22px!important;line-height:1.6!important;text-align:left!important}
+#step-p1 .p1-date-keypad-hint{display:block!important;margin:8px 0 0!important;padding:0!important;border:0!important;background:transparent!important;color:var(--color-dark)!important;font-size:18px!important;font-weight:700!important;line-height:1.6!important}
+#step-p1 #p1-submit-hint.is-copy-suppressed{display:none!important;margin:0!important;padding:0!important;border:0!important;height:0!important;min-height:0!important}
+#step-p1 .weekday-answer-label{font-size:20px!important;line-height:1.6!important}
+#step-p1 .type-btn[data-mode="solar"]:focus-visible,
+#step-p1 .type-btn[data-mode="lunar"]:focus-visible{outline:3px solid #4F7058!important;outline-offset:3px!important;box-shadow:none!important}
+#step-p1 .type-btn[data-mode="solar"]:focus:not(:focus-visible),
+#step-p1 .type-btn[data-mode="lunar"]:focus:not(:focus-visible){outline:none!important}
+/* 第 2～5 題只保留深綠色焦點提示；一般選取狀態不再被全站舊版棕色雙框覆蓋。 */
+#step-p1 .type-btn[data-mode="solar"][aria-pressed="true"]:not(:focus-visible),
+#step-p1 .type-btn[data-mode="lunar"][aria-pressed="true"]:not(:focus-visible){outline:none!important;outline-offset:0!important}
+#step-p1 .type-btn[data-mode="solar"]:focus-visible,
+#step-p1 .type-btn[data-mode="lunar"]:focus-visible{outline:3px solid #4F7058!important;outline-offset:3px!important;box-shadow:none!important}
+#step-p1 #p1-answer-input.p1-q2-q5-input:focus-visible{outline:3px solid #4F7058!important;outline-offset:3px!important;box-shadow:none!important}
+</style>
+<script id="p1-q2-q5-copy-runtime-fixes">
+(function () {
+  'use strict';
+  var byId = function (id) { return document.getElementById(id); };
+  var t = function (value) {
+    return typeof window.translateExamDisplayText === 'function'
+      ? window.translateExamDisplayText(value) : value;
+  };
+  var calendarCaption = '請選擇您習慣使用的日曆：';
+
+  Object.assign(EXAM_TEXT_TRANSLATIONS, {
+    '請選擇您習慣使用的日曆：': [
+      'Choose your preferred calendar:',
+      '普段お使いの暦を選択してください：',
+      '평소 사용하는 달력을 선택하세요:'
+    ],
+    '請輸入國曆月份：': ['Enter the Gregorian month:', '西暦の月を入力してください：', '양력 월을 입력하세요:'],
+    '點此輸入月份數字': ['Tap to enter the month', 'ここをタップして月を入力', '월을 입력하려면 여기를 누르세요'],
+    '請輸入農曆月份：': ['Enter the lunar month:', '旧暦の月を入力してください：', '음력 월을 입력하세요:'],
+    '請輸入國曆日期：': ['Enter the Gregorian date:', '西暦の日付を入力してください：', '양력 날짜를 입력하세요:'],
+    '請輸入農曆日期：': ['Enter the lunar date:', '旧暦の日付を入力してください：', '음력 날짜를 입력하세요:'],
+    '請輸入日期': ['Enter the date', '日付を入力', '날짜를 입력하세요'],
+    '號': ['day', '日', '일'],
+    '您的答案': ['Your answer', 'あなたの回答', '답변'],
+    '例如：星期一': ['Enter your answer', '回答を入力してください', '답변을 입력하세요'],
+    '例如：衛生所、醫院或診所': [
+      'Enter your answer',
+      '回答を入力してください',
+      '답변을 입력하세요'
+    ],
+    '請輸入答案': ['Enter your answer', '回答を入力してください', '답변을 입력하세요'],
+    '請先輸入答案，再確認本題。': [
+      'Please enter an answer before confirming.',
+      '回答を入力してから、この問題を確定してください。',
+      '답변을 입력한 후 이 문항을 확인하세요.'
+    ],
+    '請先輸入地點名稱，再確認本題。': [
+      'Please enter a place name before confirming.',
+      '確認する前に場所の名前を入力してください。',
+      '확인하기 전에 장소 이름을 입력하세요.'
+    ],
+    '請輸入星期幾': ['Enter the day of the week', '曜日を入力してください', '요일을 입력하세요'],
+    '請用下方按鍵點選日期數字': [
+      'Use the number keys below to enter the date.',
+      '下の数字キーで日付を入力してください。',
+      '아래 숫자 키로 날짜를 입력하세요.'
+    ],
+    '請先在上方輸入日期數字，再按確認。': [
+      'Enter the date above, then confirm.',
+      '上に日付を入力してから確認してください。',
+      '위에 날짜를 입력한 후 확인하세요.'
+    ],
+    '請輸入今天是星期幾，再確認本題。': [
+      'Enter the day of the week before confirming.',
+      '確認する前に曜日を入力してください。',
+      '확인하기 전에 요일을 입력하세요.'
+    ]
+  });
+
+  function getCurrentQuestion() {
+    try {
+      return examState && examState.p1 && examState.p1.questions
+        ? examState.p1.questions[examState.p1.currentIndex] : null;
+    } catch (e) { return null; }
+  }
+
+  function setCalendarButtons(mode) {
+    var buttons = document.querySelectorAll('#p1-type-selector-wrapper .type-btn[data-mode="solar"], #p1-type-selector-wrapper .type-btn[data-mode="lunar"]');
+    Array.prototype.forEach.call(buttons, function (button) {
+      var active = !!mode && button.getAttribute('data-mode') === mode;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+  }
+
+  function setCalendarCaption() {
+    var wrapper = byId('p1-type-selector-wrapper');
+    var caption = wrapper && wrapper.querySelector('.option-caption');
+    if (caption) caption.textContent = t(calendarCaption);
+  }
+
+  function removeDateOnlyHints(control) {
+    if (!control) return;
+    Array.prototype.forEach.call(control.querySelectorAll(
+      '.number-pad-help, .lunar-month-note'
+    ), function (node) { node.remove(); });
+  }
+
+  function ensureDateKeypadHint(control) {
+    // 日期題不再建立獨立提示；由全平台共用數字輸入提示統一處理。
+    removeDateOnlyHints(control);
+    var oldHint = byId('p1-date-keypad-hint');
+    if (oldHint) oldHint.remove();
+  }
+
+  function removeDateKeypadHint() {
+    var hint = byId('p1-date-keypad-hint');
+    if (hint) hint.remove();
+  }
+
+  function setSubmitHintSuppressed(question) {
+    var hint = byId('p1-submit-hint');
+    if (!hint) return;
+    var suppress = question && ['q2', 'q3', 'q4'].indexOf(question.type) !== -1 || question && question.isQ5;
+    if (suppress) {
+      hint.textContent = '';
+      hint.classList.add('is-copy-suppressed');
+      hint.style.display = 'none';
+    } else {
+      hint.classList.remove('is-copy-suppressed');
+      hint.style.display = '';
+    }
+  }
+
+  function applyCurrentQuestionCopy() {
+    var q = getCurrentQuestion();
+    if (!q) return;
+    var wrapper = byId('p1-type-selector-wrapper');
+    var group = byId('p1-input-group');
+    var label = byId('p1-input-label');
+    var input = byId('p1-answer-input');
+    var control = byId('p1-answer-control');
+    var questionHint = byId('p1-question-hint');
+    if (input) {
+      var usesSimplifiedQuestionUI = q.type === 'q2' || q.type === 'q3' || q.type === 'q4' || !!q.isQ5;
+      input.classList.toggle('p1-q2-q5-input', usesSimplifiedQuestionUI);
+    }
+
+    setSubmitHintSuppressed(q);
+
+    if (q.type === 'q2' || q.type === 'q3') {
+      setCalendarCaption();
+      var currentMode = examState.p1.currentMode;
+      setCalendarButtons(currentMode === 'solar' || currentMode === 'lunar' ? currentMode : '');
+      if (questionHint) { questionHint.textContent = ''; questionHint.style.display = 'none'; }
+    }
+
+    if (q.type === 'q2') {
+      removeDateKeypadHint();
+      if (label) { label.classList.remove('date-input-label', 'q5-answer-label'); label.style.display = 'none'; }
+      return;
+    }
+
+    if (q.type === 'q3') {
+      if (questionHint) { questionHint.textContent = ''; questionHint.style.display = 'none'; }
+      var selected = examState.p1.currentMode === 'solar' || examState.p1.currentMode === 'lunar';
+      if (group) group.style.display = selected ? 'block' : 'none';
+      if (label) {
+        label.textContent = t(examState.p1.currentMode === 'lunar' ? '請輸入農曆日期：' : '請輸入國曆日期：');
+        label.classList.add('date-input-label');
+        label.classList.remove('q5-answer-label');
+        label.style.display = selected ? 'block' : 'none';
+      }
+      if (input && selected) {
+        input.placeholder = getExamGenericAnswerPlaceholder();
+        input.setAttribute('aria-label', label ? label.textContent : t('請輸入日期'));
+      }
+      var q3LunarNote = byId('p1-lunar-month-note');
+      if (q3LunarNote) q3LunarNote.style.display = 'none';
+      if (selected) ensureDateKeypadHint(control);
+      else removeDateKeypadHint();
+      return;
+    }
+
+    if (q.type === 'q4') {
+      removeDateKeypadHint();
+      if (wrapper) wrapper.style.display = 'none';
+      if (questionHint) { questionHint.textContent = ''; questionHint.style.display = 'none'; }
+      if (label) { label.classList.remove('date-input-label', 'q5-answer-label'); label.style.display = 'none'; }
+      if (input) {
+        input.classList.add('p1-open-text-input', 'weekday-text-input');
+        input.placeholder = getExamGenericAnswerPlaceholder();
+        input.setAttribute('aria-label', t('您的答案'));
+        input.type = 'text'; input.readOnly = false;
+        input.setAttribute('inputmode', 'text'); input.setAttribute('lang', EXAM_DISPLAY_LANG === 'en' ? 'en' : EXAM_DISPLAY_LANG === 'ja' ? 'ja' : EXAM_DISPLAY_LANG === 'ko' ? 'ko' : 'zh-Hant');
+        input.removeAttribute('maxlength'); input.removeAttribute('pattern');
+      }
+      return;
+    }
+
+    if (q.isQ5) {
+      removeDateKeypadHint();
+      if (wrapper) wrapper.style.display = 'none';
+      if (questionHint) { questionHint.textContent = ''; questionHint.style.display = 'none'; }
+      if (group) group.style.display = 'block';
+      if (label) {
+        label.textContent = t('您的答案');
+        label.classList.add('q5-answer-label');
+        label.classList.remove('date-input-label');
+        label.style.display = 'block';
+      }
+      if (input) {
+        input.classList.remove('weekday-text-input');
+        input.classList.add('p1-open-text-input');
+        input.type = 'text'; input.readOnly = false;
+        input.setAttribute('inputmode', 'text'); input.setAttribute('lang', 'zh-Hant');
+        input.setAttribute('aria-label', t('您的答案'));
+        input.setAttribute('autocomplete', 'off'); input.setAttribute('autocapitalize', 'off'); input.spellcheck = false;
+        input.removeAttribute('maxlength'); input.removeAttribute('pattern');
+        input.placeholder = getExamGenericAnswerPlaceholder();
+      }
+    }
+  }
+
+  var originalSetQ2 = window.setP1Q2Mode;
+  if (typeof originalSetQ2 === 'function') {
+    window.setP1Q2Mode = function (mode) {
+      var result = originalSetQ2.apply(this, arguments);
+      setCalendarCaption();
+      setCalendarButtons(mode === 'solar' || mode === 'lunar' ? mode : '');
+      applyCurrentQuestionCopy();
+      return result;
+    };
+  }
+
+  var originalSetQ3 = window.setP1Q3Mode;
+  if (typeof originalSetQ3 === 'function') {
+    window.setP1Q3Mode = function (mode) {
+      var result = originalSetQ3.apply(this, arguments);
+      setCalendarCaption();
+      setCalendarButtons(mode === 'solar' || mode === 'lunar' ? mode : '');
+      applyCurrentQuestionCopy();
+      return result;
+    };
+  }
+
+  var originalRenderQuestion = window.renderP1Question;
+  if (typeof originalRenderQuestion === 'function') {
+    window.renderP1Question = function () {
+      var result = originalRenderQuestion.apply(this, arguments);
+      applyCurrentQuestionCopy();
+      return result;
+    };
+  }
+
+  var originalUpdateSubmit = window.updateP1SubmitButton;
+  if (typeof originalUpdateSubmit === 'function') {
+    window.updateP1SubmitButton = function () {
+      var result = originalUpdateSubmit.apply(this, arguments);
+      setSubmitHintSuppressed(getCurrentQuestion());
+      return result;
+    };
+  }
+
+  var originalSubmit = window.submitP1StandardQuestion;
+  if (typeof originalSubmit === 'function') {
+    window.submitP1StandardQuestion = function () {
+      var q = getCurrentQuestion();
+      var input = byId('p1-answer-input');
+      var value = input ? String(input.value || '').trim() : '';
+      if (q && q.type === 'q4' && !value) {
+        if (typeof window.showCustomAlert === 'function') window.showCustomAlert(t('請先輸入答案，再確認本題。'));
+        return;
+      }
+      if (q && q.isQ5 && !value) {
+        if (typeof window.showCustomAlert === 'function') window.showCustomAlert(t('請先輸入地點名稱，再確認本題。'));
+        return;
+      }
+      return originalSubmit.apply(this, arguments);
+    };
+  }
+
+  // Initial page state is not a question yet; the wrappers will apply when Q2–Q5 render.
+})();
+</script>
+<script id="final-stage-copy-and-header-translations">
+(function(){
+  if (typeof EXAM_TEXT_TRANSLATIONS === 'undefined') return;
+  Object.assign(EXAM_TEXT_TRANSLATIONS, {
+    "第 1 關": ["Stage 1", "第1段階", "1단계"],
+    "第 2 關": ["Stage 2", "第2段階", "2단계"],
+    "第 3 關": ["Stage 3", "第3段階", "3단계"],
+    "時間、空間認知": ["Time and Spatial Orientation", "時間・空間の見当識", "시간·공간 지남력"],
+    "圖卡記憶": ["Picture Memory", "画像記憶", "그림 기억"],
+    "徒手繪畫時鐘": ["Clock Drawing", "時計描画", "시계 그리기"],
+    "請記住接下來出現的 10 張圖片及名稱。": [
+      "Please remember the 10 pictures and their names as they appear.",
+      "これから表示される10枚の画像と名前を覚えてください。",
+      "앞으로 나오는 그림 10장과 이름을 기억하세요."
+    ],
+    "每張圖片會顯示 2 秒，請記住圖片和名稱。": [
+      "Each picture will be shown for 2 seconds. Remember the picture and its name.",
+      "各画像は2秒間表示されます。画像と名前を覚えてください。",
+      "각 그림은 2초 동안 표시됩니다. 그림과 이름을 기억하세요."
+    ],
+    "全部看完後，休息 2 分鐘。": [
+      "After viewing all the pictures, take a 2-minute break.",
+      "すべて見終わったら、2分間休憩してください。",
+      "모든 그림을 본 뒤 2분간 휴식하세요."
+    ],
+    "時間結束後，輸入記得的圖片名稱，順序不限。": [
+      "When the time is up, enter the names of the pictures you remember. Any order is fine.",
+      "時間が終わったら、覚えている画像の名前を順不同で入力してください。",
+      "시간이 끝나면 기억나는 그림 이름을 순서에 상관없이 입력하세요."
+    ],
+    "不用擔心記不住全部，記得多少就回答多少。": [
+      "Do not worry if you cannot remember everything. Enter as many as you can remember.",
+      "全部覚えていなくても大丈夫です。思い出せる分だけ回答してください。",
+      "모두 기억하지 못해도 괜찮습니다. 기억나는 만큼 답하세요."
+    ],
+    "再聽一次語音說明": [
+      "Replay the audio instructions",
+      "音声案内をもう一度聞く",
+      "음성 안내 다시 듣기"
+    ],
+    "請放輕鬆休息 2 分鐘。": [
+      "Please relax and rest for 2 minutes.",
+      "リラックスして2分間休憩してください。",
+      "편안하게 2분간 휴식하세요."
+    ]
+  });
+  [
+    '目前進度：第 1 關（共 3 關）',
+    '目前進度：第 2 關（共 3 關）',
+    '目前進度：第 3 關（共 3 關）',
+    '請放輕鬆休息 2 分鐘，時間到後會自動開始回想作答。',
+    '倒數結束後，將自動進入回想作答。',
+    '接下來會看到 10 張圖片，請仔細記住圖片和名稱。',
+    '每張圖片會顯示 2 秒，請仔細觀看圖片及名稱。',
+    '時間到後，回想並輸入剛才看過的圖片名稱。'
+  ].forEach(function(key){ delete EXAM_TEXT_TRANSLATIONS[key]; });
+  if (typeof window.applyExamDisplayLanguage === 'function') {
+    window.applyExamDisplayLanguage();
+  }
+})();
+</script>
+
+
+<script id="p1-q2-native-mobile-input-fix">
+(function () {
+  'use strict';
+  function isTouchInputDevice() {
+    // 保留舊函式名稱供相容使用，但數字欄位不再切換為原生螢幕鍵盤。
+    return false;
+  }
+  function applyMonthInputMode() {
+    var q = window.examState && examState.p1 && examState.p1.questions
+      ? examState.p1.questions[examState.p1.currentIndex] : null;
+    if (!q || q.type !== 'q2') return;
+    var input = document.getElementById('p1-answer-input');
+    if (!input) return;
+    input.disabled = false;
+    input.readOnly = false; // 不鎖定欄位，保留電腦實體鍵盤／外接鍵盤輸入能力。
+    input.type = 'text';
+    input.setAttribute('inputmode', 'none'); // 手機與平板也使用網頁自訂數字鍵盤，不跳出原生鍵盤。
+    var multilingual = typeof EXAM_DISPLAY_LANG !== 'undefined' && EXAM_DISPLAY_LANG !== 'zh-TW';
+    if (multilingual) {
+      input.removeAttribute('pattern');
+      input.removeAttribute('maxlength');
+    } else {
+      input.setAttribute('pattern', '[0-9]*');
+      input.maxLength = 2;
+    }
+    input.autocomplete = 'off';
+    input.setAttribute('aria-label', examState.p1.currentMode === 'lunar' ? '農曆月份' : '國曆月份');
+    input.placeholder = typeof getExamGenericAnswerPlaceholder === 'function'
+      ? getExamGenericAnswerPlaceholder(EXAM_DISPLAY_LANG || 'zh-TW') : '請輸入答案';
+    input.style.pointerEvents = 'auto';
+    input.style.touchAction = 'manipulation';
+    var control = document.getElementById('p1-answer-control');
+    if (control) {
+      var wrap = control.querySelector('.input-unit-wrap');
+      if (wrap && !wrap.contains(input)) wrap.insertBefore(input, wrap.querySelector('.input-unit'));
+    }
+  }
+  var priorSetMode = window.setP1Q2Mode;
+  if (typeof priorSetMode === 'function') {
+    window.setP1Q2Mode = function (mode) {
+      var result = priorSetMode.apply(this, arguments);
+      applyMonthInputMode();
+      return result;
+    };
+  }
+  var priorRender = window.renderP1Question;
+  if (typeof priorRender === 'function') {
+    window.renderP1Question = function () {
+      var result = priorRender.apply(this, arguments);
+      applyMonthInputMode();
+      return result;
+    };
+  }
+  document.addEventListener('DOMContentLoaded', applyMonthInputMode);
+  window.addEventListener('resize', applyMonthInputMode, { passive: true });
+  window.addEventListener('orientationchange', applyMonthInputMode, { passive: true });
+})();
+</script>
+
+
+<script id="p3-intro-copy-translations">
+(function(){
+  if (typeof EXAM_TEXT_TRANSLATIONS === 'undefined') return;
+  Object.assign(EXAM_TEXT_TRANSLATIONS, {
+    "請依照指定時間，完成時鐘。": ["Complete the clock according to the specified time.", "指定された時刻に合わせて時計を完成させてください。", "지정된 시간에 맞춰 시계를 완성하세요."],
+    "先畫一個大大的圓形。": ["First, draw a large circle.", "最初に大きな円を描いてください。", "먼저 큰 원을 그리세요."],
+    "在圓圈內寫上 1 到 12。": ["Write the numbers 1 to 12 inside the circle.", "円の中に1から12までの数字を書いてください。", "원 안에 1부터 12까지 숫자를 쓰세요."],
+    "依照指定時間，畫出時針和分針。": ["Draw the hour and minute hands to show the specified time.", "指定された時刻に合わせて短針と長針を描いてください。", "지정된 시간에 맞춰 시침과 분침을 그리세요."],
+    "請按照以下步驟，完成時鐘繪製。": ["Follow the steps below to draw the clock.", "以下の手順に従って、時計を描いてください。", "아래 단계에 따라 시계를 그리세요."],
+    "先畫一個完整的圓形。": ["First, draw a complete circle.", "最初に完全な円を描いてください。", "먼저 완전한 원을 그리세요."],
+    "在圓圈內寫上 1 到 12 的數字。": ["Write the numbers 1 through 12 inside the circle.", "円の中に1から12までの数字を書いてください。", "원 안에 1부터 12까지 숫자를 쓰세요."],
+    "請依照指定時間畫出時鐘，可使用下方工具修改，完成後送出答案。": ["Draw a clock showing the specified time. Use the tools below to make changes, then submit your answer.", "指定された時刻に合わせて時計を描いてください。下のツールで修正し、完成したら回答を送信してください。", "지정된 시간에 맞춰 시계를 그리세요. 아래 도구로 수정한 후 답안을 제출하세요."],
+    "開始畫時鐘": ["Start drawing the clock", "時計を描き始める", "시계 그리기 시작"],
+    "再聽一次語音說明": ["Replay the audio instructions", "音声案内をもう一度聞く", "음성 안내 다시 듣기"],
+    "作答時間：4 分鐘": ["Time limit: 4 minutes", "回答時間：4分", "답변 시간: 4분"]
+  });
+  if (typeof window.applyExamDisplayLanguage === 'function') window.applyExamDisplayLanguage();
+})();
+</script>
+<script>
+/* 第一關第 4 題：輸入期間不顯示重複答案狀態；只保留欄位及必要的空白驗證。 */
+(function(){
+  'use strict';
+  function currentQuestion(){
+    return (typeof examState!=='undefined' && examState.p1 && examState.p1.questions)
+      ? examState.p1.questions[examState.p1.currentIndex] : null;
+  }
+  function suppressWeekdayStatus(){
+    var q=currentQuestion();
+    if(!q || q.type!=='q4') return;
+    var hint=document.getElementById('p1-submit-hint');
+    if(hint){ hint.textContent=''; hint.classList.add('is-copy-suppressed'); hint.setAttribute('aria-hidden','true'); }
+    var questionHint=document.getElementById('p1-question-hint');
+    if(questionHint){ questionHint.textContent=''; questionHint.style.display='none'; }
+  }
+  var oldRender=window.renderP1Question;
+  if(typeof oldRender==='function') window.renderP1Question=function(){ oldRender.apply(this,arguments); suppressWeekdayStatus(); };
+  var oldUpdate=window.updateP1SubmitButton;
+  if(typeof oldUpdate==='function') window.updateP1SubmitButton=function(){ oldUpdate.apply(this,arguments); suppressWeekdayStatus(); };
+})();
+</script>
+
+<script id="three-stage-copy-and-p1-intro-copy-translations">
+(function(){
+  if (typeof EXAM_TEXT_TRANSLATIONS === 'undefined') return;
+  Object.assign(EXAM_TEXT_TRANSLATIONS, {
+    "回答今年的年份、月份、日期、星期，以及您目前所在的地方。":[
+      "Answer the current year, month, date, day of the week, and the place where you are currently located.",
+      "今年の年、月、日、曜日、現在いる場所を回答してください。",
+      "올해의 연도, 월, 날짜, 요일 및 현재 있는 장소를 답하세요."
+    ],
+    "通過標準：前四題需全部答對；第五題地點由施測人員核對，不列入計分。":[
+      "Passing standard: answer at least 4 of the 5 questions correctly.",
+      "合格基準：5問中4問正解で合格です。",
+      "통과 기준: 5문항 중 4문항을 맞히면 통과합니다."
+    ],
+    "依序觀看 10 張圖片，每張圖片呈現 2 秒。休息 2 分鐘後，請輸入您記得的圖片名稱。":[
+      "View 10 pictures in sequence, 2 seconds each. After a 2-minute break, enter the names you remember.",
+      "10枚の画像を順番に見ます。各画像は2秒間表示されます。2分間休憩した後、覚えている画像の名前を入力してください。",
+      "그림 10장을 차례로 보며 각 그림을 2초씩 확인합니다. 2분간 휴식한 뒤 기억나는 그림 이름을 입력하세요."
+    ],
+    "通過標準：10 張圖片中答對 3 張即可通過。":[
+      "Passing standard: recall at least 3 of the 10 pictures correctly.",
+      "合格基準：10枚中3枚正解で合格です。",
+      "통과 기준: 그림 10장 중 3장을 맞히면 통과합니다."
+    ],
+    "依照指定時間，畫出時鐘外框、1 到 12 的數字，以及時針和分針。":[
+      "Draw the clock outline, numbers 1 through 12, and the hour and minute hands according to the specified time.",
+      "指定された時刻に合わせて、時計の外枠、1から12までの数字、時針と分針を描いてください。",
+      "지정된 시간에 맞춰 시계 테두리와 1부터 12까지의 숫자, 시침과 분침을 그리세요."
+    ],
+    "第一關共有 5 題，請仔細聽題目，依照記憶回答。":[
+      "Stage 1 has 5 questions. Listen carefully and answer from memory.",
+      "第1段階は全5問です。問題をよく聞き、記憶を頼りに回答してください。",
+      "1단계는 5문항입니다. 문제를 잘 듣고 기억을 바탕으로 답하세요."
+    ],
+    "第一關共有 5 題，請仔細閱讀題目，依照記憶回答。":[
+      "Stage 1 has 5 questions. Read each question carefully and answer from memory.",
+      "第1段階は全5問です。問題をよく読み、記憶を頼りに回答してください。",
+      "1단계는 5문항입니다. 문제를 잘 읽고 기억을 바탕으로 답하세요."
+    ],
+    "作答時請不要查看日曆或時鐘，也不要請別人提示。":[
+      "Do not look at a calendar or clock while answering, and do not ask anyone for hints.",
+      "回答中はカレンダーや時計を見ないでください。また、他の人にヒントを求めないでください。",
+      "답변할 때 달력이나 시계를 보지 말고 다른 사람에게 힌트를 요청하지 마세요."
+    ]
+  });
+  [
+    '回答今年的年份、現在是幾月、今天是幾號、星期幾，以及目前所在的地方。',
+    '通過標準：5 題需答對 4 題。',
+    '觀看並記住 10 張圖片，休息 2 分鐘後，再依照記憶回答。',
+    '通過標準：10 張圖片需答對 3 張。',
+    '依照指定時間，畫出時鐘外框、數字，以及時針和分針的位置。',
+    '提醒您：作答時請不要查看日曆、時鐘，也不要請旁人提示。',
+    '第一關共有 5 個問題，請仔細閱讀題目，依照您的記憶回答即可。',
+    '您好！第一關共有 5 個問題，請仔細聽題目，再輸入或點選答案，憑現在的記憶回答就好。'
+  ].forEach(function(oldCopy){ delete EXAM_TEXT_TRANSLATIONS[oldCopy]; });
+  if (typeof window.applyExamDisplayLanguage === 'function') window.applyExamDisplayLanguage();
+})();
+</script>
+<script id="display-language-completeness-fix">
+(function () {
+  if (typeof EXAM_TEXT_TRANSLATIONS === 'undefined' || typeof window === 'undefined') return;
+
+  /* 顯示語言補齊：只補介面文案與顯示格式，不修改作答資料、計時、繪圖或評分內容。 */
+  Object.assign(EXAM_TEXT_TRANSLATIONS, {
+    "刪除一位": ["Delete one digit", "1桁削除", "한 자리 삭제"],
+    "刪除一位月份數字": ["Delete one month digit", "月の数字を1桁削除", "월 숫자 한 자리 삭제"],
+    "日": ["Day", "日", "일"],
+    "輸入月份": ["Enter the month", "月を入力", "월 입력"],
+    "輸入日期數字": ["Enter the date", "日付を入力", "날짜 입력"],
+    "星期": ["Day of the week", "曜日", "요일"],
+    "月": ["Month", "月", "월"],
+    "民國年份": ["Minguo year", "民国年", "민국 연도"],
+    "西元年份": ["Gregorian year", "西暦年", "서기 연도"],
+    "農曆日期數字": ["Lunar date", "旧暦の日付", "음력 날짜"],
+    "國曆日期數字": ["Gregorian date", "新暦の日付", "양력 날짜"],
+    "民國年份，請輸入數字": ["Minguo year — enter numbers", "民国年 — 数字を入力してください", "민국 연도 — 숫자를 입력하세요"],
+    "西元年份，請輸入數字": ["Gregorian year — enter numbers", "西暦年 — 数字を入力してください", "서기 연도 — 숫자를 입력하세요"],
+    "農曆日期數字，請輸入數字": ["Lunar date — enter numbers", "旧暦の日付 — 数字を入力してください", "음력 날짜 — 숫자를 입력하세요"],
+    "國曆日期數字，請輸入數字": ["Gregorian date — enter numbers", "新暦の日付 — 数字を入力してください", "양력 날짜 — 숫자를 입력하세요"],
+    "目前輸入：": ["Current entry: ", "入力中：", "현재 입력: "],
+    "目前語音：臺語語音": ["Current audio: Taiwanese Hokkien", "現在の音声：台湾語（閩南語）", "현재 음성: 대만 민난어"],
+    "目前語音：客語語音": ["Current audio: Hakka", "現在の音声：客家語", "현재 음성: 하카어"],
+    "目前語音：國語語音": ["Current audio: Mandarin", "現在の音声：標準中国語", "현재 음성: 표준 중국어"],
+    "臺語語音": ["Taiwanese Hokkien audio", "台湾語音声", "대만 민난어 음성"],
+    "客語語音": ["Hakka audio", "客家語音声", "하카 음성"],
+    "國語語音": ["Mandarin audio", "標準中国語音声", "표준 중국어 음성"],
+    "請準備，即將開始顯示圖片…": ["Get ready. The pictures will appear shortly…", "準備してください。まもなく画像が表示されます…", "준비하세요. 곧 그림이 표시됩니다…"],
+    "系統自動播放中，請專心記憶，不需點擊螢幕。": ["The pictures are playing automatically. Focus on remembering them; there is no need to tap the screen.", "画像を自動表示しています。画面をタップせず、覚えることに集中してください。", "그림이 자동으로 표시되고 있습니다. 화면을 누르지 말고 기억하는 데 집중하세요."],
+    "圖卡圖片準備不完整，請重新開始本輪測驗。": ["The picture cards are not ready. Please restart this round of the assessment.", "画像カードの準備が完了していません。この回の検査を最初からやり直してください。", "그림 카드 준비가 완료되지 않았습니다. 이번 검사 단계를 다시 시작하세요."],
+    "請先輸入圖片名稱。": ["Please enter a picture name first.", "先に画像の名前を入力してください。", "먼저 그림 이름을 입력하세요."],
+    "最多只能加入 10 個答案。": ["You can add up to 10 answers.", "回答は最大10件まで追加できます。", "답변은 최대 10개까지 추가할 수 있습니다."],
+    "這個答案已經加入清單。": ["This answer is already on the list.", "この回答はすでにリストに追加されています。", "이 답변은 이미 목록에 있습니다."],
+    "請先儲存或取消目前的修改。": ["Please save or cancel the current edit first.", "現在の編集を先に保存するか、キャンセルしてください。", "현재 수정을 먼저 저장하거나 취소하세요."],
+    "最多只能保留 10 個答案，請刪除多出的答案後再送出。": ["You can keep up to 10 answers. Delete the extra answers before submitting.", "回答は最大10件までです。超過した回答を削除してから送信してください。", "답변은 최대 10개까지 보관할 수 있습니다. 초과한 답변을 삭제한 뒤 제출하세요."],
+    "請先輸入至少一個圖片名稱，再送出答案。": ["Please enter at least one picture name before submitting.", "回答を送信する前に、画像名を1つ以上入力してください。", "답변을 제출하기 전에 그림 이름을 하나 이상 입력하세요."],
+    "修改": ["Edit", "編集", "수정"],
+    "刪除": ["Delete", "削除", "삭제"],
+    "儲存修改": ["Save changes", "変更を保存", "변경 사항 저장"],
+    "加入的圖片名稱會顯示在這裡。": ["Picture names you add will appear here.", "追加した画像名がここに表示されます。", "추가한 그림 이름이 여기에 표시됩니다."],
+    "作答時間已到，請送出目前的時鐘畫面。": ["Time is up. Please submit your current clock drawing.", "制限時間になりました。現在の時計の描画を送信してください。", "시간이 종료되었습니다. 현재 시계 그림을 제출하세요."],
+    "確定要清除全部重畫嗎？": ["Are you sure you want to clear the drawing and start again?", "すべて消去して描き直しますか？", "모두 지우고 다시 그리시겠습니까?"],
+    "確定要全部擦掉重畫嗎？": ["Are you sure you want to erase everything and start over?", "すべて消去して描き直しますか？", "모두 지우고 다시 그리시겠습니까?"],
+    "請再次確認": ["Please confirm", "もう一度確認してください", "다시 확인하세요"],
+    "確定重畫": ["Clear and redraw", "消去して描き直す", "지우고 다시 그리기"],
+    "好的，我知道了": ["OK, understood", "はい、わかりました", "네, 알겠습니다"],
+    "AI 評分中，請稍候…": ["AI scoring in progress. Please wait…", "AI採点中です。しばらくお待ちください…", "AI 채점 중입니다. 잠시 기다려 주세요…"],
+    "完成送出 ❯": ["Submit completed drawing ❯", "描画を送信する ❯", "그림 제출 완료 ❯"],
+    "找不到畫鐘畫布，請重新進入第三關。": ["The clock drawing canvas could not be found. Please re-enter Stage 3.", "時計描画キャンバスが見つかりません。第3段階に入り直してください。", "시계 그리기 캔버스를 찾을 수 없습니다. 3단계에 다시 들어가세요."],
+    "無法讀取目前的畫作，請重新操作後再送出。": ["The current drawing could not be read. Please try again and submit.", "現在の描画を読み取れませんでした。もう一度操作してから送信してください。", "현재 그림을 읽을 수 없습니다. 다시 작업한 뒤 제출하세요."],
+    "目前畫作格式無法辨識，請重新作答。": ["The current drawing format could not be recognized. Please try again.", "現在の描画形式を認識できませんでした。もう一度回答してください。", "현재 그림 형식을 인식할 수 없습니다. 다시 답변하세요."],
+    "目前無法連接 AI 評分服務。請從正式部署的測驗平台開啟，再重新送出畫作。": ["The AI scoring service is unavailable. Open the assessment from the deployed platform and submit the drawing again.", "現在、AI採点サービスに接続できません。正式に公開された検査プラットフォームから開き、描画を再送信してください。", "현재 AI 채점 서비스에 연결할 수 없습니다. 정식 배포된 검사 플랫폼에서 열고 그림을 다시 제출하세요."],
+    "AI 評分回傳資料格式不正確，未更新本題分數。請稍後再試。": ["The AI scoring response was not in the expected format. This question's score was not updated. Please try again later.", "AI採点の応答形式が正しくないため、この問題の得点は更新されませんでした。しばらくしてからもう一度お試しください。", "AI 채점 응답 형식이 올바르지 않아 이 문항의 점수가 업데이트되지 않았습니다. 나중에 다시 시도하세요."],
+    "無法連接第三關 AI 評分函式。請確認 Code.gs 已更新並重新部署。": ["Could not connect to the Stage 3 AI scoring function. Check that Code.gs has been updated and redeployed.", "第3段階のAI採点関数に接続できません。Code.gsが更新され、再デプロイされていることを確認してください。", "3단계 AI 채점 함수에 연결할 수 없습니다. Code.gs가 업데이트되고 다시 배포되었는지 확인하세요."],
+    "請選擇目前的練習地點": ["Please select your current practice location", "現在の練習場所を選択してください", "현재 연습 장소를 선택하세요"],
+    "測驗說明（共三關）": ["Assessment instructions (3 stages)", "検査の説明（全3段階）", "검사 안내(총 3단계)"],
+    "確認選擇，前往測驗介紹 ›": ["Confirm selection and continue to the assessment introduction ›", "選択を確定して検査の説明へ進む ›", "선택을 확인하고 검사 안내로 이동 ›"],
+    " 再聽一次說明": [" Play the instructions again", " 説明をもう一度聞く", " 안내 다시 듣기"],
+    "點此輸入數字": ["Tap here to enter numbers", "ここをタップして数字を入力", "여기를 눌러 숫자를 입력하세요"],
+    "輸入4位數字": ["Enter 4 digits", "4桁の数字を入力", "숫자 4자리를 입력하세요"],
+    "請先選擇國曆或農曆。": ["Please select the Gregorian or lunar calendar first.", "先に新暦または旧暦を選択してください。", "먼저 양력 또는 음력을 선택하세요."],
+    "請輸入 1 到 12 的月份數字。": ["Please enter a month from 1 to 12.", "1から12までの月を入力してください。", "1부터 12까지의 월을 입력하세요."],
+    "月份只能輸入 1 到 12，請重新輸入。": ["Enter a month from 1 to 12 and try again.", "月は1から12までで入力してください。もう一度入力してください。", "월은 1부터 12까지 입력해야 합니다. 다시 입력하세요."],
+    "✓ 已輸入日期數字，請確認後送出。": ["✓ Date entered. Please confirm and submit.", "✓ 日付を入力しました。確認して送信してください。", "✓ 날짜를 입력했습니다. 확인한 뒤 제출하세요."],
+    "✓ 已完成回答，請確認後送出。": ["✓ Answer completed. Please confirm and submit.", "✓ 回答が完了しました。確認して送信してください。", "✓ 답변을 완료했습니다. 확인한 뒤 제출하세요."],
+    "✓ 已輸入月份，請確認後送出。": ["✓ Month entered. Please confirm and submit.", "✓ 月を入力しました。確認して送信してください。", "✓ 월을 입력했습니다. 확인한 뒤 제출하세요."],
+    "請先輸入答案，再確認本題。": ["Please enter an answer before confirming this question.", "この問題を確定する前に、回答を入力してください。", "이 문항을 확인하기 전에 답변을 입력하세요."],
+    "請先輸入地點名稱，再確認本題。": ["Please enter a location before confirming this question.", "この問題を確定する前に、場所の名前を入力してください。", "이 문항을 확인하기 전에 장소 이름을 입력하세요."],
+    "您還沒選擇回答方式喔，請先點選民國年、西元年或生肖。": ["Please choose a response type first: Minguo year, Gregorian year, or zodiac animal.", "回答方法が選択されていません。民国年、西暦年、または生肖を選択してください。", "답변 방식을 선택하지 않았습니다. 민국 연도, 서력 연도 또는 띠를 선택하세요."],
+    "您還沒輸入生肖喔，請先在上方輸入生肖。": ["You have not entered a zodiac animal. Enter it above first.", "生肖が入力されていません。先に上の欄に入力してください。", "띠를 입력하지 않았습니다. 먼저 위 입력란에 입력하세요."],
+    "您還沒輸入年份數字喔，請先點選下方的數字再按確認。": ["You have not entered the year. Select the numbers below, then confirm.", "年が入力されていません。下の数字を選択してから確認してください。", "연도를 입력하지 않았습니다. 아래 숫자를 선택한 다음 확인하세요."],
+    "您還沒選擇國曆或農曆喔，請先點選上方的日曆。": ["You have not selected a calendar. Choose Gregorian or lunar above first.", "暦が選択されていません。上で新暦または旧暦を選択してください。", "달력을 선택하지 않았습니다. 위에서 양력 또는 음력을 선택하세요."],
+    "您還沒輸入幾號喔，請先點選下方的數字再按確認。": ["You have not entered the date. Select the numbers below, then confirm.", "日付が入力されていません。下の数字を選択してから確認してください。", "날짜를 입력하지 않았습니다. 아래 숫자를 선택한 다음 확인하세요."],
+    "正在播放題目聲音中，請仔細聆聽（若無聲音請調大手機音量）。": ["The question audio is playing. Listen carefully. Turn up your phone volume if needed.", "問題の音声を再生中です。よく聞いてください。聞こえない場合は端末の音量を上げてください。", "문제 음성이 재생 중입니다. 잘 들어주세요. 들리지 않으면 휴대전화 음량을 높이세요."],
+    "系統自動認得的地點簡稱": ["Location aliases recognized automatically by the system", "システムが自動認識する場所の別名", "시스템이 자동으로 인식하는 장소 별칭"],
+    "刪除這個地點簡稱": ["Delete this location alias", "この場所の別名を削除", "이 장소 별칭 삭제"],
+    "請輸入生肖": ["Enter a Chinese zodiac animal", "十二支の動物名を入力してください", "십이지 동물 이름을 입력하세요"],
+    "請輸入您的生肖": ["Please enter your Chinese zodiac animal", "あなたの生肖を入力してください", "본인의 띠를 입력하세요"],
+    "目前沒有第一關作答明細。": ["No Stage 1 response details are available.", "第1段階の回答詳細はありません。", "1단계 답변 세부 정보가 없습니다."],
+    "5. 請問這裡是什麼地方？": ["5. What place is this?", "5. ここはどこですか？", "5. 여기는 어디인가요?"],
+    "實際輸入的地點：": ["Location entered: ", "入力した場所：", "입력한 장소: "],
+    "判定方式：": ["Assessment method: ", "判定方法：", "판정 방식: "],
+    "不列入正式答對、答錯及通過判定。": ["Not included in the official correct/incorrect or pass/fail determination.", "正式な正誤判定および合否判定には含まれません。", "공식 정오 및 통과 여부 판정에 포함되지 않습니다."],
+    "本次居家練習紀錄僅供參考。": ["This home-practice record is for reference only.", "今回の自宅練習記録は参考用です。", "이번 가정 연습 기록은 참고용입니다."],
+    "提醒：第五題尚待施測人員核對，完成審核前不列入正式通過判定。": ["Reminder: Question 5 is awaiting staff verification and will not count toward the official result until reviewed.", "注意：第5問は担当者による確認待ちです。確認が完了するまで正式な合否判定には含まれません。", "안내: 5번 문항은 담당자 확인 대기 중이며 검토가 완료될 때까지 공식 통과 판정에 포함되지 않습니다."],
+    "第二關｜圖卡記憶": ["Stage 2 | Picture Memory", "第2段階｜画像記憶", "2단계 | 그림 기억"],
+    "您實際輸入的答案": ["Answers you entered", "実際に入力した回答", "직접 입력한 답변"],
+    "十張圖片的回想結果": ["Recall results for the 10 pictures", "10枚の画像の想起結果", "그림 10장의 회상 결과"],
+    "有回想出來": ["Recalled", "思い出せた", "기억해 냄"],
+    "沒有回想出來": ["Not recalled", "思い出せなかった", "기억하지 못함"],
+    "無": ["None", "なし", "없음"],
+    "目前沒有使用者輸入的答案紀錄。": ["No user-entered answers are recorded.", "ユーザーが入力した回答の記録はありません。", "사용자가 입력한 답변 기록이 없습니다."],
+    "目前沒有可讀取的十張圖片作答紀錄。": ["No response record for the 10 pictures is available.", "10枚の画像に関する回答記録を読み込めません。", "그림 10장에 대한 답변 기록이 없습니다."],
+    "第三關｜徒手繪畫時鐘": ["Stage 3 | Clock Drawing", "第3段階｜時計描画", "3단계 | 시계 그리기"],
+    "本次實際完成的時鐘畫作": ["Clock drawing submitted for this assessment", "今回提出された時計の描画", "이번 검사에서 제출한 시계 그림"],
+    "本次實際繪圖紀錄": ["Drawing record for this assessment", "今回の描画記録", "이번 검사 그림 기록"],
+    "目前沒有可顯示的時鐘繪圖圖片紀錄。": ["No clock drawing image is available to display.", "表示できる時計の描画画像がありません。", "표시할 시계 그림 이미지 기록이 없습니다."],
+    "時鐘繪圖評分明細": ["Clock drawing score details", "時計描画の採点詳細", "시계 그리기 점수 세부 정보"],
+    "目前沒有項目。": ["No items are available.", "項目はありません。", "항목이 없습니다."],
+    "有得分": ["Points earned", "得点あり", "점수 획득"],
+    "沒得分": ["No points earned", "得点なし", "점수 없음"],
+    "評分系統未提供可顯示的逐項評分資料。": ["The scoring system did not provide item-by-item scoring details.", "採点システムから項目ごとの採点詳細が提供されていません。", "채점 시스템에서 항목별 점수 세부 정보를 제공하지 않았습니다."],
+    "評分系統評語：": ["Scoring-system feedback: ", "採点システムのコメント：", "채점 시스템 의견: "],
+    "評分來源：": ["Scoring source: ", "採点元：", "채점 출처: "],
+    "原紀錄答對數量：": ["Correct answers in the original record: ", "元の記録での正解数：", "원본 기록의 정답 수: "],
+    "你的回答：": ["Your answer: ", "あなたの回答：", "답변: "],
+    "未留下答案紀錄": ["No answer was recorded", "回答記録なし", "답변 기록 없음"],
+    "作答結果：": ["Response result: ", "回答結果：", "답변 결과: "],
+    "✓ 答對": ["✓ Correct", "✓ 正解", "✓ 정답"],
+    "✗ 尚未答對": ["✗ Not correct", "✗ 不正解", "✗ 오답"],
+    "⏳ 待現場確認": ["⏳ Pending on-site verification", "⏳ 現地確認待ち", "⏳ 현장 확인 대기"],
+    "正確答案：": ["Correct answer: ", "正解：", "정답: "],
+    "未經現場核對": ["Not verified on site", "現地確認なし", "현장 확인되지 않음"],
+    "尚未完成審核；第五題目前不列入正式得分。": ["Review is not complete. Question 5 is not included in the official score yet.", "確認が完了していないため、第5問は現時点で正式得点に含まれません。", "검토가 완료되지 않아 5번 문항은 아직 공식 점수에 포함되지 않습니다."],
+    "已完成人工審核。": ["Manual review is complete.", "手動確認が完了しました。", "수동 검토가 완료되었습니다."],
+    "施測人員": ["Assessment staff", "検査担当者", "검사 담당자"],
+    "請參考各關成績及作答明細。": ["Please refer to each stage's score and response details.", "各段階の得点と回答詳細を確認してください。", "각 단계의 점수와 답변 세부 정보를 확인하세요."],
+    "居家練習結果": ["Home-practice results", "自宅練習の結果", "가정 연습 결과"],
+    "正式施測結果": ["Official assessment results", "正式検査の結果", "공식 검사 결과"],
+    "成績待人工確認": ["Results pending manual review", "結果は手動確認待ちです", "결과 수동 검토 대기 중"],
+    "第五題尚待施測人員審核；完成後才會更新正式總分及通過結果。": ["Question 5 is awaiting staff review. The official total score and pass result will be updated after the review.", "第5問は担当者による確認待ちです。確認後に正式な合計点と合否結果が更新されます。", "5번 문항은 담당자 검토 대기 중입니다. 검토가 끝나면 공식 총점과 통과 결과가 업데이트됩니다."],
+    "整體測驗結果：通過": ["Overall assessment result: Passed", "総合検査結果：合格", "전체 검사 결과: 통과"],
+    "整體測驗結果：尚未通過": ["Overall assessment result: Not passed yet", "総合検査結果：未合格", "전체 검사 결과: 아직 통과하지 못함"],
+    "符合的核對別名：": ["Matching alias: ", "一致した別名：", "일치한 별칭: "],
+    "審核紀錄：": ["Review record: ", "確認記録：", "검토 기록: "],
+    "審核結果：": ["Review result: ", "確認結果：", "검토 결과: "],
+    "判定答對": ["Marked correct", "正解と判定", "정답으로 판정"],
+    "判定答錯": ["Marked incorrect", "不正解と判定", "오답으로 판정"],
+    "已完成人工審核。": ["Manual review has been completed.", "手動確認が完了しました。", "수동 검토가 완료되었습니다."],
+    "請確認受測者實際所在位置後，再進行判定。": ["Verify the participant's actual location before making a decision.", "受検者が実際にいる場所を確認してから判定してください。", "응시자가 실제로 있는 위치를 확인한 후 판정하세요."],
+    "此答案需要施測人員依實際地點確認。": ["This answer must be verified by assessment staff against the actual location.", "この回答は、実際の場所に基づいて検査担当者が確認する必要があります。", "이 답변은 실제 위치를 기준으로 검사 담당자가 확인해야 합니다."],
+    "已選擇純文字模式，練習時不會播放聲音。": ["Text-only mode selected. No audio will play during practice.", "テキストのみモードを選択しました。練習中に音声は再生されません。", "텍스트 전용 모드를 선택했습니다. 연습 중에는 음성이 재생되지 않습니다."],
+    "請輸入本月有效的國曆日期。": ["Enter a valid date in the current Gregorian month.", "今月の新暦の日付を正しく入力してください。", "이번 달의 유효한 양력 날짜를 입력하세요."],
+    "請輸入 1 至 30 的農曆日期數字，例如：14。": ["Enter a lunar date from 1 to 30 (for example, 14).", "旧暦の日付を1～30で入力してください（例：14）。", "음력 날짜를 1부터 30까지 입력하세요(예: 14)."],
+    "請輸入 1 至 30 的農曆日期數字。": ["Enter a lunar date from 1 to 30.", "旧暦の日付を1～30で入力してください。", "음력 날짜를 1부터 30까지 입력하세요."],
+    "目前無法取得農曆日期資料，暫時無法判定本題。請確認瀏覽器支援農曆日期。": ["Lunar date information is unavailable, so this question cannot be graded right now. Check that your browser supports lunar dates.", "旧暦の日付情報を取得できないため、現在この問題を判定できません。ブラウザーが旧暦に対応しているか確認してください。", "음력 날짜 정보를 가져올 수 없어 현재 이 문항을 채점할 수 없습니다. 브라우저가 음력을 지원하는지 확인하세요."],
+    "請輸入本月有效的農曆日期數字。": ["Enter a valid lunar date in the current lunar month.", "今月の旧暦の日付を正しく入力してください。", "이번 음력 달의 유효한 날짜를 입력하세요."],
+    "目前練習模式資料不完整，請返回確認練習方式。": ["Practice mode information is incomplete. Go back and check your selected practice mode.", "練習モードの情報が不完全です。戻って練習方法を確認してください。", "연습 모드 정보가 완전하지 않습니다. 돌아가서 선택한 연습 방식을 확인하세요."],
+    "找不到符合的地點": ["No matching locations found", "一致する場所が見つかりません", "일치하는 장소를 찾을 수 없습니다"],
+    "✓ 已恢復為系統預設名稱。": ["✓ Default system names restored.", "✓ システムの既定名称に戻しました。", "✓ 시스템 기본 이름으로 복원했습니다."],
+    "目前沒有計算本題分數，請檢查 AI 金鑰及 Apps Script 部署版本後再試。": ["No score was calculated for this question. Check the AI key and Apps Script deployment, then try again.", "この問題の得点は計算されていません。AIキーとApps Scriptのデプロイ版を確認してから、もう一度お試しください。", "이 문항의 점수가 계산되지 않았습니다. AI 키와 Apps Script 배포 버전을 확인한 후 다시 시도하세요."],
+    "無法連接第三關 AI 評分函式。請確認 Code.gs 已更新並重新部署。": ["Could not connect to the Stage 3 AI scoring function. Make sure Code.gs is updated and redeployed.", "第3段階のAI採点関数に接続できません。Code.gsを更新し、再デプロイしてください。", "3단계 AI 채점 함수에 연결할 수 없습니다. Code.gs를 업데이트하고 다시 배포하세요."],
+    "AI 評分錯誤原因未提供目前顯示語言。": ["The AI scoring error details are not available in the selected display language.", "AI採点エラーの詳細は、選択した表示言語では利用できません。", "선택한 표시 언어로 AI 채점 오류 세부 정보를 제공할 수 없습니다."],
+    "請輸入農曆日期數字：": ["Enter the lunar date number:", "旧暦の日付を数字で入力してください：", "음력 날짜 숫자를 입력하세요:"],
+    "全部清除月份數字": ["Clear all month digits", "月の数字をすべて消去", "월 숫자 모두 지우기"],
+    "圖卡記憶": ["Picture Memory", "画像記憶", "그림 기억"],
+    "時間、空間認知": ["Time and Spatial Orientation", "時間・空間の見当識", "시간·공간 지남력"],
+    "徒手繪畫時鐘": ["Clock Drawing", "時計描画", "시계 그리기"],
+    "再聽一次試聽": ["Replay preview", "試聴をもう一度聞く", "미리 듣기 다시 재생"],
+    "請輸入有效月份，例如：3、March、三月或3월。": ["Enter a valid month, for example 3, March, 三月, or 3월.", "有効な月を入力してください（例：3、March、三月、3월）。", "올바른 월을 입력하세요(예: 3, March, 三月, 3월)."],
+    "請輸入有效日期，例如：17、17th、十七日或십칠일。": ["Enter a valid date, for example 17, 17th, 十七日, or 십칠일.", "有効な日付を入力してください（例：17、17th、十七日、십칠일）。", "올바른 날짜를 입력하세요(예: 17, 17th, 十七日, 십칠일)."],
+    "再聽一次說明": ["Play the instructions again", "説明をもう一度聞く", "안내를 다시 듣기"],
+    "例如：14": ["Example: 14", "例：14", "예: 14"],
+    "請輸入月份": ["Enter the month", "月を入力してください", "월을 입력하세요"],
+    "（請先選擇測驗地點，系統會自動帶入預設別名）": ["(Select the testing location above to load the default aliases.)", "（先に検査場所を選択すると、既定の別名が自動入力されます）", "(위에서 검사 장소를 선택하면 기본 별칭이 자동으로 입력됩니다.)"]
+  });
+
+  var baseTranslate = window.translateExamDisplayText || translateExamDisplayText;
+  function localized(value) {
+    var original = String(value == null ? '' : value);
+    var trimmed = original.trim();
+    var lang = EXAM_DISPLAY_LANG;
+    if (!trimmed || lang === 'zh-TW') return original;
+    var index = getExamDisplayLanguageIndex();
+    var lead = original.slice(0, original.indexOf(trimmed));
+    var tail = original.slice(original.indexOf(trimmed) + trimmed.length);
+    var m;
+    function done(text) { return lead + text + tail; }
+
+    if ((m = trimmed.match(/^確定要刪除「([\s\S]+)」這個地點簡稱嗎？$/))) {
+      return done(index === 0 ? 'Are you sure you want to delete the location alias “' + m[1] + '”?' : index === 1 ? '場所の別名「' + m[1] + '」を削除してもよろしいですか？' : '장소 별칭 “' + m[1] + '”을(를) 삭제하시겠습니까?');
+    }
+    if ((m = trimmed.match(/^刪除別名\s+(.+)$/))) {
+      return done(index === 0 ? 'Delete alias: ' + m[1] : index === 1 ? '別名を削除：' + m[1] : '별칭 삭제: ' + m[1]);
+    }
+    if ((m = trimmed.match(/^目前輸入：\s*(\d+)\s*月$/))) {
+      return done(index === 0 ? 'Current month entry: ' + m[1] : index === 1 ? '入力中：' + m[1] + '月' : '현재 월 입력: ' + m[1]);
+    }
+    if ((m = trimmed.match(/^第\s*(\d+)\s*[\/／]\s*10\s*張$/))) {
+      return done(index === 0 ? 'Picture ' + m[1] + ' of 10' : index === 1 ? '全10枚中 ' + m[1] + '枚目' : '10장 중 ' + m[1] + '번째');
+    }
+    if ((m = trimmed.match(/^系統自動認得的地點簡稱（目前\s*(\d+)\s*組）$/))) {
+      return done(index === 0 ? 'Location aliases recognized automatically (' + m[1] + ' currently)' : index === 1 ? 'システムが自動認識する場所の別名（現在' + m[1] + '件）' : '시스템이 자동 인식한 장소 별칭(' + m[1] + '개)');
+    }
+    if ((m = trimmed.match(/^實際得分：\s*(\d+)\s*\/\s*10（通過門檻：3 張）$/))) {
+      return done(index === 0 ? 'Actual score: ' + m[1] + ' / 10 (passing threshold: 3 pictures)' : index === 1 ? '実得点：' + m[1] + ' / 10（合格基準：3枚）' : '실제 점수: ' + m[1] + ' / 10 (통과 기준: 그림 3장)');
+    }
+    if ((m = trimmed.match(/^實際得分：\s*(\d+)\s*\/\s*7（通過門檻：4 分）$/))) {
+      return done(index === 0 ? 'Actual score: ' + m[1] + ' / 7 (passing threshold: 4 points)' : index === 1 ? '実得点：' + m[1] + ' / 7（合格基準：4点）' : '실제 점수: ' + m[1] + ' / 7 (통과 기준: 4점)');
+    }
+    if ((m = trimmed.match(/^您實際輸入的答案（\s*(\d+)\s*個）$/))) {
+      return done(index === 0 ? 'Answers you entered (' + m[1] + ')' : index === 1 ? '実際に入力した回答（' + m[1] + '件）' : '직접 입력한 답변(' + m[1] + '개)');
+    }
+    if ((m = trimmed.match(/^(有回想出來|沒有回想出來)（\s*(\d+)\s*張）$/))) {
+      var isRecalled = m[1] === '有回想出來';
+      return done(index === 0 ? (isRecalled ? 'Recalled (' : 'Not recalled (') + m[2] + ')' : index === 1 ? (isRecalled ? '思い出せた（' : '思い出せなかった（') + m[2] + '枚）' : (isRecalled ? '기억해 냄(' : '기억하지 못함(') + m[2] + '장)');
+    }
+    if ((m = trimmed.match(/^原紀錄答對數量：\s*(\d+)\s*\/\s*10。$/))) {
+      return done(index === 0 ? 'Correct answers in the original record: ' + m[1] + ' / 10.' : index === 1 ? '元の記録での正解数：' + m[1] + ' / 10。' : '원본 기록의 정답 수: ' + m[1] + ' / 10.');
+    }
+    if ((m = trimmed.match(/^本次指定時間：\s*(\d{1,2})\s*點\s*(\d{1,2})\s*分$/))) {
+      var hh = Number(m[1]), mm = String(Number(m[2])).padStart(2, '0');
+      return done(index === 0 ? 'Target time: ' + hh + ':' + mm : index === 1 ? '今回の指定時刻：' + hh + '時' + mm + '分' : '이번 지정 시간: ' + hh + '시 ' + mm + '분');
+    }
+    if ((m = trimmed.match(/^測驗日期：\s*(\d{4})\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日$/))) {
+      return done(index === 0 ? 'Assessment date: ' + m[1] + '-' + String(m[2]).padStart(2, '0') + '-' + String(m[3]).padStart(2, '0') : index === 1 ? '検査日：' + m[1] + '年' + m[2] + '月' + m[3] + '日' : '검사 날짜: ' + m[1] + '년 ' + m[2] + '월 ' + m[3] + '일');
+    }
+    if ((m = trimmed.match(/^民國\s*(\d+)\s*年$/))) return done(index === 0 ? 'Minguo year ' + m[1] : index === 1 ? '民国' + m[1] + '年' : '민국 연도 ' + m[1] + '년');
+    if ((m = trimmed.match(/^西元\s*(\d+)\s*年$/))) return done(index === 0 ? 'Gregorian year ' + m[1] : index === 1 ? '西暦' + m[1] + '年' : '서기 ' + m[1] + '년');
+    if ((m = trimmed.match(/^(國曆|農曆)\s*(\d+)\s*月$/))) {
+      var calMonth = m[1] === '國曆';
+      return done(index === 0 ? (calMonth ? 'Gregorian month ' : 'Lunar month ') + m[2] : index === 1 ? (calMonth ? '新暦' : '旧暦') + m[2] + '月' : (calMonth ? '양력 ' : '음력 ') + m[2] + '월');
+    }
+    if ((m = trimmed.match(/^(國曆|農曆)\s*(\d+)\s*號$/))) {
+      var calDay = m[1] === '國曆';
+      return done(index === 0 ? (calDay ? 'Gregorian date ' : 'Lunar date ') + m[2] : index === 1 ? (calDay ? '新暦' : '旧暦') + m[2] + '日' : (calDay ? '양력 ' : '음력 ') + m[2] + '일');
+    }
+    if ((m = trimmed.match(/^輸入數字\s*(\d+)$/))) return done(index === 0 ? 'Enter digit ' + m[1] : index === 1 ? '数字' + m[1] + 'を入力' : '숫자 ' + m[1] + ' 입력');
+    if ((m = trimmed.match(/^輸入月份數字\s*(\d+)$/))) return done(index === 0 ? 'Enter month digit ' + m[1] : index === 1 ? '月の数字' + m[1] + 'を入力' : '월 숫자 ' + m[1] + ' 입력');
+    if ((m = trimmed.match(/^「(.+?)」的上傳照片無法解碼，本輪測驗已停止。請確認 FinalExam\.html 已完整更新後重新開始。$/))) {
+      var cardName = m[1];
+      var cardMap = (typeof EXAM_CARD_TRANSLATIONS !== 'undefined') ? EXAM_CARD_TRANSLATIONS[cardName] : null;
+      if (cardMap && cardMap[index]) cardName = cardMap[index];
+      return done(index === 0 ? 'The uploaded image for “' + cardName + '” could not be decoded. This round has stopped. Make sure FinalExam.html is fully updated, then restart.' : index === 1 ? '「' + cardName + '」のアップロード画像を読み込めませんでした。この回の検査を停止しました。FinalExam.htmlが完全に更新されていることを確認し、再開してください。' : '“' + cardName + '” 업로드 이미지를 디코딩할 수 없어 이번 검사가 중지되었습니다. FinalExam.html이 완전히 업데이트되었는지 확인한 뒤 다시 시작하세요.');
+    }
+    if ((m = trimmed.match(/^(?:評分系統評語|AI 評分說明)：([\s\S]+)$/)) && /[\u3400-\u9fff]/.test(m[1])) {
+      return done(index === 0 ? 'Scoring feedback is available in its original language.' : index === 1 ? '採点コメントは元の言語で表示されます。' : '채점 의견은 원문 언어로 표시됩니다.');
+    }
+    if ((m = trimmed.match(/^AI 評分細項：([\s\S]+)$/)) && /[\u3400-\u9fff]/.test(m[1])) {
+      return done(index === 0 ? 'Detailed scoring data is available in its original language.' : index === 1 ? '採点の詳細は元の言語で表示されます。' : '세부 채점 데이터는 원문 언어로 표시됩니다.');
+    }
+    return baseTranslate(original);
+  };
+  window.translateExamDisplayText = localized;
+  translateExamDisplayText = localized;
+
+  if (typeof window.applyExamDisplayLanguage === 'function') window.applyExamDisplayLanguage();
+})();
+</script>
+
+
+<script id="unified-top-voice-position-patch">
+/*
+ * 全平台唯一頂部語音狀態同步器。
+ * 共用同一個 #top-back-bar / #top-back-row / #mode-status-chip，
+ * 不新增重複元件、不改動返回事件、語音切換或音訊播放路徑。
+ */
+(function () {
+  'use strict';
+
+  var STATUS_STEPS = [
+    'step-lang', 'step-location', 'step-intro',
+    'step-p1-intro', 'step-p1',
+    'step-p2-intro', 'step-p2-sop2', 'step-p2-sop4', 'step-p2-sop5',
+    'step-p3-intro', 'step-p3', 'step-result'
+  ];
+  /* 只列出原本確實提供返回操作的頁面；正式作答頁不新增返回按鈕。 */
+  var BACK_STEPS = [
+    'step-lang', 'step-location', 'step-intro',
+    'step-p1-intro', 'step-p2-intro', 'step-p3-intro'
+  ];
+
+  function byId(id) { return document.getElementById(id); }
+
+  function getLanguageLabel(code) {
+    if (code === 'nan-TW') return '臺語';
+    if (code === 'hak-TW') return '客語';
+    if (code === 'zh-TW') return '國語';
+    return '';
+  }
+
+  function createSpeakerIcon() {
+    var ns = 'http://www.w3.org/2000/svg';
+    var svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.setAttribute('focusable', 'false');
+    svg.setAttribute('fill', 'none');
+    svg.setAttribute('stroke', 'currentColor');
+    svg.setAttribute('stroke-width', '2');
+    svg.setAttribute('stroke-linecap', 'round');
+    svg.setAttribute('stroke-linejoin', 'round');
+    var speaker = document.createElementNS(ns, 'path');
+    speaker.setAttribute('d', 'M4 10v4h4l5 4V6l-5 4H4Z');
+    var wave = document.createElementNS(ns, 'path');
+    wave.setAttribute('d', 'M16 9a5 5 0 0 1 0 6');
+    svg.appendChild(speaker);
+    svg.appendChild(wave);
+    return svg;
+  }
+
+  function syncUnifiedTopVoiceStatus(stepId) {
+    var bar = byId('top-back-bar');
+    var row = bar && bar.querySelector('.top-back-row');
+    var back = byId('top-back-btn');
+    var chip = byId('mode-status-chip');
+    if (!bar || !row || !back || !chip) return;
+
+    var step = stepId || (document.body && document.body.getAttribute('data-step')) || '';
+    var state = (typeof examState !== 'undefined' && examState) ? examState : null;
+    var language = state ? state.language : '';
+    var isVoiceMode = !!language && language !== 'text';
+    var showVoice = STATUS_STEPS.indexOf(step) !== -1 && isVoiceMode && !!getLanguageLabel(language);
+    var showBack = BACK_STEPS.indexOf(step) !== -1;
+
+    /* 有返回操作才顯示返回按鈕；無返回頁面不建立空的左側欄位。 */
+    back.style.display = showBack ? 'inline-flex' : 'none';
+    back.hidden = !showBack;
+    back.setAttribute('aria-hidden', showBack ? 'false' : 'true');
+
+    /* 純文字模式不渲染喇叭、狀態文字或空的語音容器。 */
+    chip.innerHTML = '';
+    chip.hidden = !showVoice;
+    chip.style.display = showVoice ? 'inline-flex' : 'none';
+    chip.setAttribute('aria-hidden', showVoice ? 'false' : 'true');
+    if (showVoice) {
+      chip.appendChild(createSpeakerIcon());
+      var label = document.createElement('span');
+      label.textContent = '目前語音：' + getLanguageLabel(language);
+      chip.appendChild(label);
+    }
+
+    row.classList.toggle('has-back', showBack);
+    row.classList.toggle('status-only', !showBack && showVoice);
+    row.classList.toggle('back-only', showBack && !showVoice);
+
+    var hasVisibleContent = showBack || showVoice;
+    bar.hidden = !hasVisibleContent;
+    bar.setAttribute('aria-hidden', hasVisibleContent ? 'false' : 'true');
+    bar.style.display = hasVisibleContent ? 'block' : 'none';
+  }
+
+  window.syncUnifiedTopVoiceStatus = syncUnifiedTopVoiceStatus;
+
+  /* 頁面切換後統一同步；內層原函式仍負責原本導覽／標題工作。 */
+  var priorUpdateHeader = window.updateHeader;
+  if (typeof priorUpdateHeader === 'function') {
+    window.updateHeader = function (id) {
+      var result = priorUpdateHeader.apply(this, arguments);
+      syncUnifiedTopVoiceStatus(id);
+      return result;
+    };
+  }
+
+  var priorShowStep = window.showStep;
+  if (typeof priorShowStep === 'function') {
+    window.showStep = function (id) {
+      var result = priorShowStep.apply(this, arguments);
+      syncUnifiedTopVoiceStatus(id);
+      return result;
+    };
+  }
+
+  /* 語言選擇／純文字模式切換後，即時更新頂部狀態。 */
+  var priorSetLanguage = window.setLanguage;
+  if (typeof priorSetLanguage === 'function') {
+    window.setLanguage = function (code) {
+      var result = priorSetLanguage.apply(this, arguments);
+      syncUnifiedTopVoiceStatus();
+      return result;
+    };
+  }
+
+  var priorSyncAudioButtons = window.syncAudioButtons;
+  if (typeof priorSyncAudioButtons === 'function') {
+    window.syncAudioButtons = function () {
+      var result = priorSyncAudioButtons.apply(this, arguments);
+      syncUnifiedTopVoiceStatus();
+      return result;
+    };
+  }
+
+  syncUnifiedTopVoiceStatus();
+})();
+</script>
+
+
+<style id="unified-numeric-keypad-guidance-styles">
+/* 第一關所有數字鍵盤欄位共用同一行操作提示；不是提醒卡片，不改變輸入框尺寸。 */
+#step-p1 .p1-number-pad-instruction{
+  display:block!important;
+  margin:8px 0 0!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  color:#4F7058!important;
+  font-size:18px!important;
+  font-weight:800!important;
+  line-height:1.5!important;
+  text-align:left!important;
+}
+/* 錯誤訊息僅在按下確認但缺少必要數字時才插入；不使用固定提醒框。 */
+#step-p1 .p1-number-pad-error{
+  display:block;
+  margin:6px 0 0!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  color:#8A4D27!important;
+  font-size:18px!important;
+  font-weight:800!important;
+  line-height:1.5!important;
+  text-align:left!important;
+  overflow-wrap:anywhere;
+}
+#step-p1 .p1-number-pad-error[hidden]{display:none!important}
+</style>
+<script id="unified-numeric-keypad-guidance-and-validation">
+(function(){
+  'use strict';
+  var byId=function(id){return document.getElementById(id);};
+  var input=byId('p1-answer-input');
+  var control=byId('p1-answer-control');
+  if(!input||!control)return;
+
+  var PROMPT='點擊輸入框即可使用數字鍵盤。';
+  var instruction=null;
+  var errorNode=null;
+  var lastQuestionKey='';
+  var lastObservedValue=String(input.value||'');
+  var t=function(value){
+    return typeof window.translateExamDisplayText==='function'
+      ? window.translateExamDisplayText(value) : value;
+  };
+
+  if(typeof window.EXAM_TEXT_TRANSLATIONS!=='undefined'){
+    Object.assign(window.EXAM_TEXT_TRANSLATIONS,{
+      '點擊輸入框即可使用數字鍵盤。':[
+        'Tap the input field to use the numeric keypad.',
+        '入力欄をタップして数字キーパッドを使用してください。',
+        '입력란을 눌러 숫자 키패드를 사용하세요.'
+      ],
+      '數字鍵盤': ['Numeric keypad', '数字キーパッド', '숫자 키패드'],
+      '收起': ['Close', '閉じる', '닫기'],
+      '全部清除': ['Clear all', 'すべて消去', '모두 지우기'],
+      '刪除一位': ['Delete one digit', '1桁削除', '한 자리 삭제'],
+      '請先輸入年份，再確認本題。':[
+        'Enter the year before confirming this question.',
+        'この問題を確定する前に、年を入力してください。',
+        '이 문항을 확인하기 전에 연도를 입력하세요.'
+      ],
+      '請先輸入月份，再確認本題。':[
+        'Enter the month before confirming this question.',
+        'この問題を確定する前に、月を入力してください。',
+        '이 문항을 확인하기 전에 월을 입력하세요.'
+      ],
+      '請先輸入日期，再確認本題。':[
+        'Enter the date before confirming this question.',
+        'この問題を確定する前に、日付を入力してください。',
+        '이 문항을 확인하기 전에 날짜를 입력하세요.'
+      ],
+      '請先選擇國曆或農曆。':[
+        'Please select the Gregorian or lunar calendar first.',
+        '先に新暦または旧暦を選択してください。',
+        '먼저 양력 또는 음력을 선택하세요.'
+      ],
+      '請先選擇民國年、西元年或生肖。':[
+        'Please select Minguo year, Gregorian year, or zodiac first.',
+        '民国年、西暦年、または生肖を先に選択してください。',
+        '민국 연도, 서기 연도 또는 띠를 먼저 선택하세요.'
+      ],
+      '請輸入 1 到 12 的月份數字。':[
+        'Enter a month number from 1 to 12.',
+        '月は1から12までの数字で入力してください。',
+        '월은 1부터 12까지 숫자로 입력하세요.'
+      ]
+    });
+  }
+
+  function currentQuestion(){
+    try{
+      var state=(typeof examState!=='undefined'&&examState)||window.examState||null;
+      return state&&state.p1&&state.p1.questions
+        ? state.p1.questions[state.p1.currentIndex] : null;
+    }catch(e){return null;}
+  }
+  function numericConfig(q){
+    // 四種介面語言都顯示同一個操作提示；英文、日文、韓文仍可輸入文字答案。
+    q=q||currentQuestion();
+    var state=(typeof examState!=='undefined'&&examState)||window.examState||null;
+    if(!q||!state||!state.p1)return null;
+    var mode=examState.p1.currentMode;
+    if(q.type==='q1'&&(mode==='roc'||mode==='western'))return {kind:'year',key:'q1-'+mode};
+    if(q.type==='q2'&&(mode==='solar'||mode==='lunar'))return {kind:'month',key:'q2-'+mode};
+    if(q.type==='q3'&&(mode==='solar'||mode==='lunar'))return {kind:'date',key:'q3-'+mode};
+    return null;
+  }
+  function ensureNodes(){
+    if(!instruction||!instruction.isConnected){
+      instruction=document.createElement('p');
+      instruction.id='p1-number-pad-instruction';
+      instruction.className='p1-number-pad-instruction';
+      instruction.setAttribute('role','note');
+    }
+    if(!errorNode||!errorNode.isConnected){
+      errorNode=document.createElement('p');
+      errorNode.id='p1-number-pad-error';
+      errorNode.className='p1-number-pad-error';
+      errorNode.setAttribute('role','alert');
+      errorNode.setAttribute('aria-live','assertive');
+      errorNode.hidden=true;
+    }
+  }
+  function removeLegacyHints(){
+    Array.prototype.forEach.call(control.querySelectorAll(
+      '.number-pad-help,.p1-date-keypad-hint,#p1-date-keypad-hint,.lunar-month-note'
+    ),function(node){node.remove();});
+    var oldTrigger=byId('p1-number-pad-trigger-help');
+    if(oldTrigger)oldTrigger.remove();
+    var oldSubmitHint=byId('p1-submit-hint');
+    if(oldSubmitHint)oldSubmitHint.remove();
+    var staticLunarNote=byId('p1-lunar-month-note');
+    if(staticLunarNote)staticLunarNote.remove();
+  }
+  function placeAfterAnchor(node,anchor){
+    if(!node||!anchor||!anchor.parentNode)return;
+    if(anchor.nextSibling!==node)anchor.parentNode.insertBefore(node,anchor.nextSibling);
+  }
+  function clearInlineError(){
+    if(errorNode){errorNode.textContent='';errorNode.hidden=true;}
+    input.removeAttribute('aria-invalid');
+  }
+  function clearError(){
+    clearInlineError();
+    var monthFeedback=byId('p1-month-number-pad-feedback');
+    if(monthFeedback){monthFeedback.textContent='';monthFeedback.hidden=true;}
+    var numericFeedback=byId('p1-numeric-input-feedback');
+    if(numericFeedback){numericFeedback.textContent='';numericFeedback.hidden=true;}
+  }
+  function showError(message){
+    ensureNodes();
+    removeLegacyHints();
+    instruction.textContent=t(PROMPT);
+    // 保留原本依年份／月份／日期設定的輸入框 placeholder。
+    var anchor=input.closest?input.closest('.input-unit-wrap'):null;
+    if(!anchor||!control.contains(anchor))anchor=input;
+    placeAfterAnchor(instruction,anchor);
+    if(instruction.nextSibling!==errorNode)instruction.parentNode.insertBefore(errorNode,instruction.nextSibling);
+    var numericFeedback=byId('p1-numeric-input-feedback');
+    if(numericFeedback){numericFeedback.textContent='';numericFeedback.hidden=true;}
+    var monthFeedback=byId('p1-month-number-pad-feedback');
+    if(monthFeedback){monthFeedback.textContent='';monthFeedback.hidden=true;}
+    errorNode.textContent=t(message);
+    errorNode.hidden=false;
+    lastObservedValue=String(input.value||'');
+    input.setAttribute('aria-invalid','true');
+    input.setAttribute('aria-describedby','p1-number-pad-instruction p1-number-pad-error');
+  }
+  function isValidEntry(q,value){
+    if(!value||!/^\d+$/.test(value))return false;
+    if(q.type==='q1')return true;
+    if(q.type==='q2')return Number(value)>=1&&Number(value)<=12;
+    if(q.type==='q3'){
+      var max=examState.p1.currentMode==='lunar'
+        ? (Number(q.lunarMonthLength)||30)
+        : (Number(q.solarDaysInMonth)||31);
+      return Number(value)>=1&&Number(value)<=max;
+    }
+    return false;
+  }
+  function syncGuidance(resetError){
+    var q=currentQuestion();
+    var cfg=numericConfig(q);
+    var key=cfg?cfg.key:'';
+    if(key!==lastQuestionKey){clearError();lastQuestionKey=key;}
+    removeLegacyHints();
+    if(!cfg){
+      if(instruction&&instruction.isConnected)instruction.remove();
+      if(errorNode&&errorNode.isConnected)errorNode.remove();
+      input.removeAttribute('aria-invalid');
+      return;
+    }
+    ensureNodes();
+    instruction.textContent=t(PROMPT);
+    // 保留原本依年份／月份／日期設定的輸入框 placeholder。
+    var anchor=input.closest?input.closest('.input-unit-wrap'):null;
+    if(!anchor||!control.contains(anchor))anchor=input;
+    placeAfterAnchor(instruction,anchor);
+    if(instruction.nextSibling!==errorNode)instruction.parentNode.insertBefore(errorNode,instruction.nextSibling);
+    if(resetError)clearError();
+    lastObservedValue=String(input.value||'');
+    var described=['p1-number-pad-instruction'];
+    if(!errorNode.hidden)described.push('p1-number-pad-error');
+    var status=byId('p1-numeric-input-feedback');
+    if(status&&!status.hidden)described.push(status.id);
+    input.setAttribute('aria-describedby',described.join(' '));
+  }
+
+  // 只在輸入／按鍵內容有變動時清除先前的空值提醒；清空後不自行顯示錯誤，等再次確認才提示。
+  function onValueChanged(){
+    var q=currentQuestion();
+    var cfg=numericConfig(q);
+    var value=String(input.value||'').trim();
+    if(value!==lastObservedValue){
+      // 欄位一有實際變動就清除先前的送出錯誤；清空後等下次按確認才再次提示。
+      clearInlineError();
+      lastObservedValue=value;
+    }
+    if(cfg&&isValidEntry(q,value)){
+      var numericFeedback=byId('p1-numeric-input-feedback');
+      if(numericFeedback){numericFeedback.textContent='';numericFeedback.hidden=true;}
+      var monthFeedback=byId('p1-month-number-pad-feedback');
+      if(monthFeedback){monthFeedback.textContent='';monthFeedback.hidden=true;}
+    }
+    syncGuidance(false);
+  }
+  if(input.dataset.unifiedNumericGuidanceBound!=='1'){
+    input.dataset.unifiedNumericGuidanceBound='1';
+    input.addEventListener('input',onValueChanged);
+    input.addEventListener('change',onValueChanged);
+  }
+
+  var priorUpdate=window.updateP1SubmitButton;
+  if(typeof priorUpdate==='function'){
+    window.updateP1SubmitButton=function(){
+      var result=priorUpdate.apply(this,arguments);
+      onValueChanged();
+      return result;
+    };
+  }
+  ['setP1Q1Mode','setP1Q2Mode','setP1Q3Mode','renderP1Question'].forEach(function(name){
+    var prior=window[name];
+    if(typeof prior==='function'){
+      window[name]=function(){
+        var result=prior.apply(this,arguments);
+        syncGuidance(true);
+        return result;
+      };
+    }
+  });
+
+  var priorSubmit=window.submitP1StandardQuestion;
+  if(typeof priorSubmit==='function'){
+    window.submitP1StandardQuestion=function(){
+      var q=currentQuestion();
+      var cfg=numericConfig(q);
+      var value=String(input.value||'').trim();
+      if(q&&q.type==='q1'&&!['roc','western','zodiac'].includes(examState.p1.currentMode)){
+        if(typeof window.showCustomAlert==='function')window.showCustomAlert(t('請先選擇民國年、西元年或生肖。'));
+        return;
+      }
+      if(q&&['q2','q3'].includes(q.type)&&!['solar','lunar'].includes(examState.p1.currentMode)){
+        if(typeof window.showCustomAlert==='function')window.showCustomAlert(t('請先選擇國曆或農曆。'));
+        return;
+      }
+      if(cfg&&!value){
+        var message=cfg.kind==='year'?'請先輸入年份，再確認本題。':
+          cfg.kind==='month'?'請先輸入月份，再確認本題。':'請先輸入日期，再確認本題。';
+        showError(message);
+        return;
+      }
+      if(cfg&&cfg.kind==='month'&&(!/^[1-9][0-9]?$/.test(value)||Number(value)<1||Number(value)>12)){
+        showError('請輸入 1 到 12 的月份數字。');
+        return;
+      }
+      clearError();
+      syncGuidance(false);
+      return priorSubmit.apply(this,arguments);
+    };
+  }
+
+  // 確認本題、切換題目、改變作答模式後重新同步；不改答案資料或評分流程。
+  syncGuidance(true);
+})();
+</script>
+
+
+<style id="platform-stage-title-hierarchy-final">
+/* 全平台標題層級統一：平台名稱略低於關卡識別；只調整標題字級、間距與關卡框。 */
+.header-area > .platform-title {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 12px 0 16px !important;
+  color: var(--color-dark, #2D3B2D) !important;
+  font-size: calc(31px * var(--font-scale, 1)) !important;
+  font-weight: 900 !important;
+  line-height: 1.3 !important;
+  letter-spacing: 0 !important;
+  text-align: center !important;
+  white-space: normal !important;
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+}
+
+#single-progress-banner.single-progress-banner {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 2px 8px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 66px !important;
+  height: auto !important;
+  box-sizing: border-box !important;
+  margin: 0 0 18px !important;
+  padding: 8px 14px !important;
+  border: 1.5px solid var(--color-green, #4F7058) !important;
+  border-radius: 14px !important;
+  background: #FFFFFF !important;
+  color: var(--color-dark, #2D3B2D) !important;
+  font-size: calc(24px * var(--font-scale, 1)) !important;
+  font-weight: 900 !important;
+  line-height: 1.35 !important;
+  text-align: center !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere;
+}
+
+#single-progress-banner.single-progress-banner[hidden] {
+  display: none !important;
+}
+
+#single-progress-banner .progress-banner-progress,
+#single-progress-banner .progress-banner-stage,
+#single-progress-banner .progress-banner-sep {
+  display: inline-block !important;
+  flex: 0 1 auto !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  color: inherit !important;
+  font-size: inherit !important;
+  font-weight: 900 !important;
+  line-height: inherit !important;
+  text-align: center !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+}
+
+/* 手機維持閱讀字級與置中；只有必要時自然換行，不壓縮或裁切關卡名稱。 */
+@media (max-width: 520px) {
+  .header-area > .platform-title {
+    font-size: calc(30px * var(--font-scale, 1)) !important;
+    margin-bottom: 16px !important;
+  }
+  #single-progress-banner.single-progress-banner {
+    font-size: calc(23px * var(--font-scale, 1)) !important;
+    min-height: 66px !important;
+    padding: 8px 10px !important;
+    gap: 2px 6px !important;
+  }
+}
+
+
+/* 多語系修正：選取狀態原先寫死在 CSS 偽元素中，無法被文字翻譯函式處理。 */
+html:lang(en) #step-p1 .type-btn.active::after,
+html:lang(en) .choice-btn.active::after {
+  content: "✓ Selected" !important;
+}
+html:lang(ja) #step-p1 .type-btn.active::after,
+html:lang(ja) .choice-btn.active::after {
+  content: "✓ 選択済み" !important;
+}
+html:lang(ko) #step-p1 .type-btn.active::after,
+html:lang(ko) .choice-btn.active::after {
+  content: "✓ 선택됨" !important;
+}
+</style>
+
+
+<!-- 已移除舊版 speech-input.js：避免 P1 MutationObserver 自我觸發；目前保留本頁 MediaRecorder 國語錄音輸入模組。 -->
+<script id="drawn-playback-icons">
+(function () {
+  'use strict';
+
+  var replayButtonSelector = '.repeat-audio-btn, .guide-audio-btn, .language-preview-repeat';
+
+  function makeSpeakerIcon() {
+    var ns = 'http://www.w3.org/2000/svg';
+    var svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.setAttribute('focusable', 'false');
+    svg.setAttribute('data-playback-icon', 'speaker');
+
+    var speaker = document.createElementNS(ns, 'path');
+    speaker.setAttribute('d', 'M4 9v6h4l5 4V5L8 9H4Z');
+    svg.appendChild(speaker);
+
+    var wave = document.createElementNS(ns, 'path');
+    wave.setAttribute('d', 'M16 9a5 5 0 0 1 0 6M18.5 6.5a8.5 8.5 0 0 1 0 11');
+    svg.appendChild(wave);
+
+    return svg;
+  }
+
+  function applyDrawnPlaybackIcons() {
+    document.querySelectorAll(replayButtonSelector).forEach(function (button) {
+      // Remove older replay glyphs/icons so every audio control uses the same drawn SVG.
+      button.querySelectorAll('svg').forEach(function (oldIcon) {
+        oldIcon.remove();
+      });
+      button.insertBefore(makeSpeakerIcon(), button.firstChild);
+      button.setAttribute('data-playback-icon-ready', 'true');
+    });
+  }
+
+  applyDrawnPlaybackIcons();
+})();
+</script>
+
+<script id="runtime-language-preview-button-localization-fix">
+/*
+ * 修正語言選擇頁「再聽一次試聽」按鈕在語音模式切換後回復中文的問題。
+ * 原因：按鈕文字是靜態 HTML；語音狀態更新函式會重新顯示按鈕，
+ * 但不會同步依目前介面語言更新其文字。此補丁只更新按鈕標籤，
+ * 保留既有 SVG 喇叭圖示、click handler、音訊來源及顯示／隱藏行為。
+ */
+(function () {
+  'use strict';
+
+  var BUTTON_ID = 'language-preview-repeat';
+  var LABELS = {
+    'zh-TW': '再聽一次試聽',
+    'en': 'Replay preview',
+    'ja': '試聴をもう一度聞く',
+    'ko': '미리 듣기 다시 재생'
+  };
+
+  function getDisplayLanguage() {
+    var raw = '';
+    try {
+      raw = (typeof EXAM_DISPLAY_LANG !== 'undefined' && EXAM_DISPLAY_LANG) ||
+        (document.documentElement && document.documentElement.lang) || '';
+    } catch (e) {
+      raw = (document.documentElement && document.documentElement.lang) || '';
+    }
+    raw = String(raw).toLowerCase().replace(/_/g, '-');
+    if (raw === 'en' || raw.indexOf('en-') === 0) return 'en';
+    if (raw === 'ja' || raw.indexOf('ja-') === 0) return 'ja';
+    if (raw === 'ko' || raw.indexOf('ko-') === 0) return 'ko';
+    return 'zh-TW';
+  }
+
+  function updateLanguagePreviewButton() {
+    var button = document.getElementById(BUTTON_ID);
+    if (!button) return;
+
+    var language = getDisplayLanguage();
+    var labelText = LABELS[language] || LABELS['zh-TW'];
+    var label = button.querySelector('[data-language-preview-label]');
+
+    if (!label) {
+      // Remove only direct text nodes. Keep the hand-drawn SVG speaker icon intact.
+      Array.prototype.slice.call(button.childNodes).forEach(function (node) {
+        if (node.nodeType === 3) node.parentNode.removeChild(node);
+      });
+      label = document.createElement('span');
+      label.setAttribute('data-language-preview-label', 'true');
+      button.appendChild(label);
+    }
+
+    if (label.textContent !== labelText) label.textContent = labelText;
+    button.setAttribute('aria-label', labelText);
+    button.setAttribute('title', labelText);
+    button.setAttribute('data-language-label', language);
+  }
+
+  // Expose a narrow updater for existing language/status flows.
+  window.updateLanguagePreviewButtonLabel = updateLanguagePreviewButton;
+
+  // Re-run after the page-wide language translator so this dynamic control cannot revert.
+  var originalApplyLanguage = window.applyExamDisplayLanguage;
+  if (typeof originalApplyLanguage === 'function') {
+    window.applyExamDisplayLanguage = function () {
+      var result = originalApplyLanguage.apply(this, arguments);
+      updateLanguagePreviewButton();
+      return result;
+    };
+  }
+
+  // Re-run after switching the spoken-answer mode; this wrapper does not change the voice mode.
+  var originalSetLanguage = window.setLanguage;
+  if (typeof originalSetLanguage === 'function') {
+    window.setLanguage = function () {
+      var result = originalSetLanguage.apply(this, arguments);
+      updateLanguagePreviewButton();
+      return result;
+    };
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', updateLanguagePreviewButton, { once: true });
+  } else {
+    updateLanguagePreviewButton();
+  }
+})();
+</script>
+
+
+
+<!-- 自訂數字鍵盤只與最下方答案輸入區並排；題目、選項、外框與確認按鈕維持原本完整版面。 -->
+
+<!-- Duplicate keypad controller removed: the original controller above is now the sole owner of the floating panel. -->
+
+
+<style id="location-alias-natural-wrap-fix">
+/* 地點別名：中文自然換行、英文單字不拆開，刪除按鈕固定保留完整寬度。 */
+#aliasTagsWrapper .alias-tag {
+  display: flex !important;
+  flex-flow: row nowrap !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+  overflow: visible !important;
+}
+#aliasTagsWrapper .alias-tag .alias-tag-text {
+  display: block !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  white-space: normal !important;
+  word-break: normal !important;
+  overflow-wrap: anywhere !important;
+  line-height: 1.5 !important;
+  text-align: left !important;
+}
+#aliasTagsWrapper .alias-tag .remove-btn {
+  display: inline-flex !important;
+  flex: 0 0 88px !important;
+  width: 88px !important;
+  min-width: 88px !important;
+  max-width: 88px !important;
+  min-height: 56px !important;
+  box-sizing: border-box !important;
+  align-items: center !important;
+  justify-content: center !important;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  overflow-wrap: normal !important;
+  writing-mode: horizontal-tb !important;
+  line-height: 1.2 !important;
+  padding: 8px 10px !important;
+}
+@media (max-width: 420px) {
+  #aliasTagsWrapper .alias-tag { gap: 8px !important; padding: 8px !important; }
+  #aliasTagsWrapper .alias-tag .remove-btn {
+    flex-basis: 76px !important;
+    width: 76px !important;
+    min-width: 76px !important;
+    max-width: 76px !important;
+    font-size: 16px !important;
+  }
+}
+
+
+/* 地點管理介面層級簡化：只保留外層主收合，內層採一般標題與資訊區。 */
+/* 工作人員設定頁：降低外框重量，以色塊、留白及字級建立層級。 */
+body[data-step="step-location"] .test-name-heading {
+  margin: 0 0 18px !important;
+  color: var(--color-green) !important;
+  font-size: 26px !important;
+  font-weight: 900 !important;
+  line-height: 1.3 !important;
+  text-align: center;
+}
+#step-location .location-fields-card {
+  margin: 18px 0 0 !important;
+  padding: 18px !important;
+  border: 1.5px solid #DCE5DA !important;
+  border-radius: 16px !important;
+  background: #FFFFFF !important;
+}
+#step-location .location-fields-title {
+  margin: 0 0 16px !important;
+  color: var(--color-green) !important;
+  font-size: 21px !important;
+  font-weight: 900 !important;
+  line-height: 1.4 !important;
+}
+#step-location .form-group {
+  min-width: 0;
+  margin: 0 0 18px !important;
+}
+#step-location .form-group:last-child { margin-bottom: 0 !important; }
+#step-location .form-label {
+  display: block;
+  margin: 0 0 8px !important;
+  color: var(--color-dark) !important;
+  font-size: 18px !important;
+  font-weight: 800 !important;
+  line-height: 1.5 !important;
+}
+#step-location .form-select {
+  width: 100% !important;
+  min-width: 0;
+  min-height: 60px !important;
+  padding: 12px 46px 12px 14px !important;
+  border: 1.5px solid #C9D8CA !important;
+  border-radius: 12px !important;
+  background: #FFFFFF !important;
+  color: var(--color-dark) !important;
+  font-size: 19px !important;
+  font-weight: 800 !important;
+  line-height: 1.5 !important;
+}
+#step-location .form-select:disabled {
+  background: #F3F5F1 !important;
+  color: #718075 !important;
+  border-color: #E1E7DF !important;
+  opacity: 1 !important;
+}
+#step-location .select-wrapper::after {
+  border-right: 2.5px solid var(--color-green) !important;
+  border-bottom: 2.5px solid var(--color-green) !important;
+}
+#step-location .alias-panel.staff-settings-panel {
+  margin: 16px 0 0 !important;
+  padding: 0 !important;
+  border: 1.5px solid #DCE5DA !important;
+  border-radius: 14px !important;
+  background: #FFFFFF !important;
+  overflow: hidden !important;
+}
+#step-location .staff-settings-panel > summary {
+  min-height: 62px;
+  padding: 12px 16px !important;
+  background: #F5F8F3 !important;
+  color: var(--color-green) !important;
+  font-size: 19px !important;
+  font-weight: 900 !important;
+}
+#step-location .staff-settings-content {
+  display: block !important;
+  padding: 0 !important;
+  opacity: 1 !important;
+}
+#step-location .staff-settings-content-inner {
+  padding: 16px !important;
+  min-height: 0;
+  overflow: visible;
+}
+#step-location .staff-alias-section {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+#step-location .staff-alias-heading {
+  margin: 0 0 12px !important;
+  padding: 0 !important;
+  color: var(--color-green) !important;
+  font-size: 20px !important;
+  font-weight: 900 !important;
+  line-height: 1.45 !important;
+}
+#step-location .location-official-name-card {
+  margin: 0 0 16px !important;
+  padding: 13px 15px !important;
+  border: 0 !important;
+  border-radius: 11px !important;
+  background: #F0F5ED !important;
+}
+#step-location .location-name-section-title {
+  margin: 0 0 6px !important;
+  color: var(--color-muted) !important;
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  line-height: 1.45 !important;
+}
+#step-location .location-official-name-row {
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+#step-location .location-official-name-row .lang-value {
+  color: var(--color-dark) !important;
+  font-size: 19px !important;
+  font-weight: 900 !important;
+  line-height: 1.5 !important;
+}
+#step-location .location-translation-note {
+  margin: 6px 0 0 !important;
+  padding: 0 !important;
+  color: var(--color-muted) !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+}
+#step-location .location-alias-rule-note {
+  margin: 0 0 12px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: var(--color-muted) !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  line-height: 1.55 !important;
+}
+#step-location .alias-groups-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0 !important;
+}
+#step-location .alias-group-card {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: 12px !important;
+  border: 1px solid #E1E8DE !important;
+  border-radius: 12px !important;
+  background: #F8FAF6 !important;
+}
+#step-location .alias-group-header {
+  display: flex;
+  align-items: center !important;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 10px !important;
+}
+#step-location .alias-group-title {
+  min-width: 0;
+  color: var(--color-dark) !important;
+  font-size: 18px !important;
+  font-weight: 900 !important;
+  line-height: 1.4 !important;
+}
+#step-location .alias-group-fields,
+#step-location .alias-group-field {
+  display: block !important;
+  margin: 0 !important;
+}
+#step-location .alias-group-field input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 56px !important;
+  padding: 11px 13px !important;
+  font-size: 18px !important;
+  border: 1.5px solid #D6E0D4 !important;
+  border-radius: 10px !important;
+  background: #FFFFFF !important;
+  color: var(--color-dark) !important;
+}
+#step-location .alias-group-delete {
+  flex: 0 0 auto;
+  min-width: 76px !important;
+  min-height: 48px !important;
+  padding: 8px 12px !important;
+  border: 1.5px solid #9EB29F !important;
+  border-radius: 10px !important;
+  background: #FFFFFF !important;
+  color: var(--color-green) !important;
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  cursor: pointer;
+}
+#step-location .location-alias-actions {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+  gap: 12px !important;
+  margin-top: 16px !important;
+  align-items: stretch;
+}
+#step-location .location-alias-actions #alias-add-group-btn {
+  min-width: 0;
+  min-height: 56px !important;
+  padding: 10px 12px !important;
+  border: 1.5px solid #78947D !important;
+  border-radius: 11px !important;
+  background: #FFFFFF !important;
+  color: var(--color-green) !important;
+  font-size: 17px !important;
+  font-weight: 900 !important;
+  white-space: normal !important;
+}
+#step-location .location-alias-actions #alias-save-groups-btn {
+  min-width: 0;
+  min-height: 56px !important;
+  padding: 10px 12px !important;
+  border: 1.5px solid var(--color-green) !important;
+  border-radius: 11px !important;
+  background: var(--color-green) !important;
+  color: #FFFFFF !important;
+  font-size: 17px !important;
+  font-weight: 900 !important;
+  white-space: normal !important;
+}
+#step-location .location-alias-actions #alias-restore-btn {
+  grid-column: 1 / -1;
+  justify-self: stretch;
+  width: 100% !important;
+  min-height: 44px !important;
+  margin: 4px 0 0 !important;
+  padding: 10px 0 2px !important;
+  border: 0 !important;
+  border-top: 1px solid #E4EAE2 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: #718075 !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  text-align: left !important;
+  text-decoration: underline;
+}
+#step-location .location-alias-sync-status {
+  display: block;
+  min-height: 0 !important;
+  margin: 10px 0 0 !important;
+  padding: 8px 10px !important;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  color: var(--color-muted) !important;
+  font-size: 15px !important;
+  font-weight: 800 !important;
+  line-height: 1.5 !important;
+  overflow-wrap: anywhere;
+}
+#step-location .location-alias-sync-status:empty { display: none !important; }
+#step-location .location-alias-sync-status.is-success {
+  color: #2F7046 !important; background: #EDF5EA; border-color: #D7E7D3;
+}
+#step-location .location-alias-sync-status.is-pending {
+  color: #80622F !important; background: #FBF6E9; border-color: #EEE3C5;
+}
+#step-location .location-alias-sync-status.is-error {
+  color: #96572C !important; background: #FFF3EB; border-color: #F0DCCB;
+}
+#step-location .location-alias-sync-status.is-saving {
+  color: #526A59 !important; background: #F3F6F1; border-color: #E1E8DE;
+}
+#step-location .staff-generic-group {
+  margin: 18px 0 0 !important;
+  padding: 14px 0 0 !important;
+  border-top: 1px solid #E4EAE2;
+}
+#step-location .staff-category-note {
+  margin-top: 8px;
+  padding: 12px 14px !important;
+  border: 0 !important;
+  border-radius: 10px !important;
+  background: #F4F7F2 !important;
+  color: #56685B !important;
+  font-size: 15px !important;
+  font-weight: 500 !important;
+  line-height: 1.6 !important;
+}
+#step-location .staff-category-title {
+  margin: 0 !important;
+  color: var(--color-green) !important;
+  font-size: 17px !important;
+  font-weight: 900 !important;
+  line-height: 1.45 !important;
+}
+#customAlertModal .modal-confirm-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+  width: 100%;
+}
+#customAlertModal .modal-confirm-actions .modal-cancel-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  min-height: 56px;
+  padding: 12px 16px;
+  border: 1.5px solid #78947D;
+  border-radius: 14px;
+  background: #FFFFFF;
+  color: #4F7058;
+  font: inherit;
+  font-size: 18px;
+  font-weight: 800;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+@media (max-width: 480px) {
+  #customAlertModal .modal-confirm-actions { grid-template-columns: 1fr; }
+}
+@media (max-width: 560px) {
+  body[data-step="step-location"] .test-name-heading { font-size: 24px !important; }
+  #step-location .location-fields-card { padding: 15px !important; }
+  #step-location .staff-settings-content-inner { padding: 13px !important; }
+  #step-location .location-alias-actions { grid-template-columns: 1fr !important; }
+  #step-location .location-alias-actions #alias-restore-btn { grid-column: 1; }
+  #step-location .alias-group-header { align-items: center !important; }
+  #step-location .alias-group-delete { min-width: 76px !important; }
+}
+
+</style>
+
+<script id="p1-location-question-excluded-from-score-copy">
+(function(){
+  if (typeof EXAM_TEXT_TRANSLATIONS === 'undefined') return;
+  var p1RuleTranslations = [
+    'Passing standard: answer all first four questions correctly. Question 5 is a location check by staff and is not scored.',
+    '合格基準：最初の4問すべてに正解してください。第5問は担当者による場所の確認で、採点対象外です。',
+    '통과 기준: 처음 4문항을 모두 맞혀야 합니다. 5번 문항은 담당자가 장소를 확인하며 점수에 포함되지 않습니다.'
+  ];
+  EXAM_TEXT_TRANSLATIONS['通過標準：前四題需全部答對；第五題地點由施測人員核對，不列入計分。'] = p1RuleTranslations;
+  EXAM_TEXT_TRANSLATIONS['通過標準：5 題中答對 4 題即可通過。'] = p1RuleTranslations;
+  EXAM_TEXT_TRANSLATIONS['通過標準：5題需答對4題。'] = p1RuleTranslations;
+  if (typeof window.applyExamDisplayLanguage === 'function') window.applyExamDisplayLanguage();
+})();
+</script>
+
+<script id="location-manager-complete-four-language-copy">
+(function(){
+  if (typeof EXAM_TEXT_TRANSLATIONS === 'undefined') return;
+  Object.assign(EXAM_TEXT_TRANSLATIONS, {
+    '地點名稱與別名管理': [
+      'Manage location names and aliases',
+      '場所の名称と別名の管理',
+      '장소 이름 및 별칭 관리'
+    ],
+    '最多設定 4 組常用別名，不需要填滿。': [
+      'Set up to 4 commonly used aliases. You do not need to fill every group.',
+      'よく使う別名を最大4グループまで設定できます。すべて入力する必要はありません。',
+      '자주 사용하는 별칭을 최대 4개 그룹까지 설정할 수 있습니다. 모든 그룹을 채울 필요는 없습니다.'
+    ],
+    '＋ 新增別名組': ['＋ Add alias group', '＋ 別名グループを追加', '＋ 별칭 그룹 추가'],
+    '尚未儲存': ['Not saved yet', '未保存', '아직 저장되지 않음'],
+    '已儲存': ['Saved', '保存済み', '저장됨'],
+    '✓ 已儲存': ['✓ Saved', '✓ 保存しました', '✓ 저장됨'],
+    '儲存中…': ['Saving…', '保存中…', '저장 중…'],
+    '儲存失敗，請再試一次': ['Save failed. Please try again.', '保存に失敗しました。もう一度お試しください。', '저장하지 못했습니다. 다시 시도해 주세요.'],
+    '儲存失敗，請再試一次。': ['Save failed. Please try again.', '保存に失敗しました。もう一度お試しください。', '저장하지 못했습니다. 다시 시도해 주세요.'],
+    '目前有尚未儲存的修改，是否要先儲存？': [
+      'You have unsaved changes. Would you like to save them before continuing?',
+      '未保存の変更があります。続行する前に保存しますか？',
+      '저장되지 않은 변경 사항이 있습니다. 계속하기 전에 저장하시겠습니까?'
+    ],
+    '儲存': ['Save', '保存', '저장'],
+    '不儲存': ['Discard', '保存しない', '저장 안 함'],
+    '取消': ['Cancel', 'キャンセル', '취소'],
+    '別名設定尚未同步至共用資料庫。繼續操作前，請先儲存或確認以保留在此裝置的草稿。': [
+      'Alias changes have not synced to the shared database. Save them first, or confirm to keep the draft on this device and continue.',
+      '別名の変更は共用データベースに同期されていません。保存するか、この端末の下書きを保持して続行してください。',
+      '별칭 변경 사항이 공유 데이터베이스에 동기화되지 않았습니다. 저장하거나 이 기기에 임시 저장된 내용을 유지하고 계속하세요.'
+    ],
+    '確定要恢復系統預設名稱嗎？目前設定的別名將會被清除。': [
+      'Restore the system default names? The current aliases will be cleared.',
+      'システムの既定名称に戻しますか？現在設定されている別名は削除されます。',
+      '시스템 기본 이름으로 복원할까요? 현재 설정된 별칭은 삭제됩니다.'
+    ],
+    '繼續離開': ['Continue', '続行', '계속'],
+    '恢復預設名稱': ['Restore defaults', '既定に戻す', '기본값 복원'],
+    '工作人員協助練習': [
+      'Staff-Assisted Practice',
+      'スタッフによるサポート練習',
+      '직원 지원 연습'
+    ],
+    '工作人員設定測驗地點': [
+      'Staff: Set the testing location',
+      'スタッフ用：検査場所を設定してください',
+      '직원용: 검사 장소를 설정하세요'
+    ],
+    '縣市（必選）': ['City / County (required)', '県・市（必須）', '시·현(필수)'],
+    '行政區（必選）': ['District (required)', '行政区（必須）', '행정구(필수)'],
+    '測驗地點（必選）': ['Testing location (required)', '検査場所（必須）', '검사 장소(필수)'],
+    '需由工作人員人工確認的名稱': [
+      'Names requiring staff verification',
+      'スタッフによる確認が必要な名称',
+      '담당자 확인이 필요한 명칭'
+    ],
+    '例如：衛生所、醫院、診所、監理所或監理站。只回答這類通用名稱時，會交由工作人員確認。': [
+      'Examples: health centers, hospitals, clinics, and motor vehicle offices. Generic answers are referred to staff for verification.',
+      '例：保健所、病院、診療所、運転免許事務所など。一般的な名称だけの場合はスタッフが確認します。',
+      '예: 보건소, 병원, 의원, 차량관리사무소 등. 일반 명칭만 답하면 담당자가 확인합니다.'
+    ],
+    '恢復系統預設名稱': ['Restore system default names', 'システムの既定名称に戻す', '시스템 기본 이름으로 복원'],
+    '共用地點資料庫讀取失敗；目前顯示本機／系統預設資料，請確認後臺部署。': [
+      'Unable to read the shared location database. Local or system defaults are shown; check the backend deployment.',
+      '共用場所データベースを読み込めません。端末内またはシステム既定のデータを表示しています。バックエンドのデプロイを確認してください。',
+      '공유 장소 데이터베이스를 읽지 못했습니다. 기기 또는 시스템 기본 데이터를 표시합니다. 백엔드 배포를 확인하세요.'
+    ]
+  });
+  if (typeof window.applyExamDisplayLanguage === 'function') window.applyExamDisplayLanguage();
+})();
+</script>
+<script id="practice-mode-state-and-next-button-sync-fix">
+(function () {
+  'use strict';
+
+  var byId = function (id) { return document.getElementById(id); };
+
+  // 舊版地點選單事件會共用這個 helper；在獨立 HTML 部署時也必須先定義，
+  // 否則 window.onload 的 initCountyOptions() 會中斷，後續縣市／行政區／地點都無法載入。
+  if (typeof window.setLocationSelectPlaceholder !== 'function') {
+    window.setLocationSelectPlaceholder = function (select, text) {
+      if (!select) return;
+      select.innerHTML = '';
+      var option = document.createElement('option');
+      option.value = '';
+      option.textContent = typeof window.translateExamDisplayText === 'function'
+        ? window.translateExamDisplayText(text || '請選擇')
+        : (text || '請選擇');
+      option.selected = true;
+      select.appendChild(option);
+      select.value = '';
+    };
+  }
+
+  function getState() {
+    try {
+      return typeof window.__getCognitiveExamState === 'function'
+        ? window.__getCognitiveExamState()
+        : (window.examState || null);
+    } catch (error) {
+      console.error('[工作人員設定] 無法讀取測驗狀態：', error);
+      return null;
+    }
+  }
+
+  function staffSetupIsVisible() {
+    var setup = byId('staff-location-setup');
+    return !!(setup && !setup.hidden && setup.getAttribute('aria-hidden') !== 'true');
+  }
+
+  // 以同一份 examState 判斷模式；若使用者已在工作人員設定畫面，
+  // 即使舊旗標曾被其他初始化程式清掉，也以目前設定畫面恢復 assisted。
+  function resolvePracticeMode(state) {
+    if (!state) return '';
+    if (state.practiceMode === 'self') return 'self';
+    if (state.practiceMode === 'assisted') return 'assisted';
+    if (state.staffSetupActive || staffSetupIsVisible()) return 'assisted';
+    if (state.examMode === 'staff' && state.isHomePractice !== true) return 'assisted';
+    if (state.isHomePractice === true) return 'self';
+    return '';
+  }
+
+  function normalizeModeState(state, mode) {
+    if (!state || !mode) return;
+    state.locationModeSelected = true;
+    if (mode === 'assisted') {
+      state.practiceMode = 'assisted';
+      state.isHomePractice = false;
+      state.examMode = 'staff';
+      if (staffSetupIsVisible()) state.staffSetupActive = true;
+    } else {
+      state.practiceMode = 'self';
+      state.isHomePractice = true;
+      state.examMode = 'practice';
+      state.staffSetupActive = false;
+    }
+  }
+
+  function syncStaffPageHeading(state) {
+    var heading = byId('test-name-heading');
+    if (!heading || document.body.getAttribute('data-step') !== 'step-location') return;
+    var key = state && state.staffSetupActive ? '工作人員協助練習' : '請選擇練習方式';
+    heading.textContent = typeof window.translateExamDisplayText === 'function'
+      ? window.translateExamDisplayText(key) : key;
+  }
+
+  function syncPracticeModeUI() {
+    var state = getState();
+    if (!state) return;
+    var mode = resolvePracticeMode(state);
+    if (mode) normalizeModeState(state, mode);
+
+    // 原始核心函式負責卡片、設定區及別名管理區的顯示。
+    if (typeof window.updateLocationModeVisibility === 'function') {
+      window.updateLocationModeVisibility();
+    }
+
+    var home = byId('mode-home-btn');
+    var staff = byId('mode-staff-btn');
+    if (home) {
+      home.classList.toggle('active', mode === 'self');
+      home.setAttribute('aria-pressed', mode === 'self' ? 'true' : 'false');
+    }
+    if (staff) {
+      staff.classList.toggle('active', mode === 'assisted');
+      staff.setAttribute('aria-pressed', mode === 'assisted' ? 'true' : 'false');
+    }
+
+    if (typeof window.setLocationActionState === 'function') {
+      window.setLocationActionState();
+    }
+    syncStaffPageHeading(state);
+  }
+
+  function selectedOptionExists(select, value) {
+    if (!select || !value || select.disabled) return false;
+    return Array.prototype.some.call(select.options || [], function (option) {
+      return option.value === value && !option.disabled;
+    });
+  }
+
+  function validateStaffLocation() {
+    var countySelect = byId('countySelect');
+    var districtSelect = byId('districtSelect');
+    var placeSelect = byId('placeSelect');
+
+    var county = countySelect ? String(countySelect.value || '').trim() : '';
+    var district = districtSelect ? String(districtSelect.value || '').trim() : '';
+    var place = placeSelect ? String(placeSelect.value || '').trim() : '';
+
+    if (!county || !selectedOptionExists(countySelect, county) ||
+        typeof LOCATION_EXAM_DATA === 'undefined' ||
+        !Object.prototype.hasOwnProperty.call(LOCATION_EXAM_DATA, county)) {
+      return { ok: false, field: countySelect, message: '請先選擇縣市。' };
+    }
+
+    var districts = LOCATION_EXAM_DATA[county];
+    if (!district || !selectedOptionExists(districtSelect, district) ||
+        !districts || !Object.prototype.hasOwnProperty.call(districts, district)) {
+      return { ok: false, field: districtSelect, message: '請先選擇行政區。' };
+    }
+
+    var places = districts[district];
+    if (!place || !selectedOptionExists(placeSelect, place)) {
+      return { ok: false, field: placeSelect, message: '請先選擇測驗地點。' };
+    }
+    if (!Array.isArray(places) || places.indexOf(place) === -1) {
+      return { ok: false, field: placeSelect, message: '目前選取的測驗地點無效，請重新選擇測驗地點。' };
+    }
+
+    var locationId = [county, district, place].join('::');
+    var record = null;
+    try {
+      if (typeof getLocationCatalogRecord === 'function') {
+        record = getLocationCatalogRecord(county, district, place);
+      }
+    } catch (error) {
+      console.error('[工作人員設定] 正式地點識別資料讀取失敗：', error);
+    }
+    if (!record || !record.id || record.id !== locationId) {
+      return { ok: false, field: placeSelect, message: '測驗地點識別資料不完整，請重新選擇測驗地點。' };
+    }
+
+    return {
+      ok: true,
+      county: county,
+      district: district,
+      placeName: place,
+      locationId: locationId,
+      record: record
+    };
+  }
+
+  function showLocationValidation(message, field) {
+    if (typeof window.showCustomAlert === 'function') {
+      window.showCustomAlert(message);
+    } else {
+      window.alert(message);
+    }
+    if (field) {
+      var container = byId('location-fields');
+      if (container && typeof container.scrollIntoView === 'function') {
+        container.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      window.setTimeout(function () {
+        try { field.focus({ preventScroll: true }); }
+        catch (error) { field.focus(); }
+      }, 180);
+    }
+  }
+
+  // 保留既有語言字典；只增補目前入口所需文字，不更動語言或語音選項。
+  if (typeof EXAM_TEXT_TRANSLATIONS !== 'undefined') {
+    EXAM_TEXT_TRANSLATIONS['下一步：選擇練習方式 ›'] = [
+      'Next: Choose a practice method ›',
+      '次へ：練習方法を選択 ›',
+      '다음: 연습 방식 선택 ›'
+    ];
+    EXAM_TEXT_TRANSLATIONS['請先選擇練習方式。'] = [
+      'Please choose a practice method first.',
+      '練習方法を選択してください。',
+      '연습 방식을 먼저 선택하세요.'
+    ];
+    EXAM_TEXT_TRANSLATIONS['請先選擇縣市。'] = [
+      'Please select a county or city.',
+      '県市を選択してください。',
+      '시·현을 선택하세요.'
+    ];
+    EXAM_TEXT_TRANSLATIONS['請先選擇行政區。'] = [
+      'Please select a district.',
+      '行政区を選択してください。',
+      '행정구역을 선택하세요.'
+    ];
+    EXAM_TEXT_TRANSLATIONS['請先選擇測驗地點。'] = [
+      'Please select a test location.',
+      '検査場所を選択してください。',
+      '검사 장소를 선택하세요.'
+    ];
+    EXAM_TEXT_TRANSLATIONS['練習模式資料已遺失，請重新選擇練習方式。'] = [
+      'Practice mode information is missing. Please choose a practice method again.',
+      '練習モード情報がありません。練習方法を再選択してください。',
+      '연습 방식 정보가 없습니다. 연습 방식을 다시 선택하세요.'
+    ];
+    EXAM_TEXT_TRANSLATIONS['請選擇練習方式'] = [
+      'Choose a practice method',
+      '練習方法を選択してください',
+      '연습 방식을 선택하세요'
+    ];
+    EXAM_TEXT_TRANSLATIONS['設定練習資訊'] = [
+      'Set up practice information',
+      '練習情報を設定',
+      '연습 정보 설정'
+    ];
+    EXAM_TEXT_TRANSLATIONS['請依照目前的情況選擇一種方式。'] = [
+      'Please choose the option that matches your situation.',
+      '現在の状況に合う方法を選択してください。',
+      '현재 상황에 맞는 방법을 선택하세요.'
+    ];
+    EXAM_TEXT_TRANSLATIONS['由工作人員或家人幫忙設定'] = [
+      'A staff member or family member can help with setup',
+      'スタッフまたはご家族が設定をお手伝いします',
+      '직원 또는 가족이 설정을 도와드립니다'
+    ];
+    EXAM_TEXT_TRANSLATIONS['開始自助練習 ›'] = [
+      'Start self-practice ›',
+      '自主練習を開始 ›',
+      '자가 연습 시작 ›'
+    ];
+    EXAM_TEXT_TRANSLATIONS['下一步：設定練習資訊 ›'] = [
+      'Next: Set up practice information ›',
+      '次へ：練習情報を設定 ›',
+      '다음: 연습 정보 설정 ›'
+    ];
+    EXAM_TEXT_TRANSLATIONS['確認設定並開始第一關 ›'] = [
+      'Confirm settings and start Stage 1 ›',
+      '設定を確認して第1段階を開始 ›',
+      '설정을 확인하고 1단계 시작 ›'
+    ];
+  }
+
+  // 只包裝一次原本的核心導向函式；不複製 examState，也不建立第二套模式控制。
+  var coreStartOfficialExam = window.startOfficialExam;
+  if (typeof coreStartOfficialExam === 'function' &&
+      !window.startOfficialExam.__staffLocationValidationUnified) {
+    var unifiedStartOfficialExam = function () {
+      var state = getState();
+      if (!state) {
+        showLocationValidation('練習模式資料已遺失，請重新選擇練習方式。');
+        return false;
+      }
+
+      var mode = resolvePracticeMode(state);
+      if (!mode) {
+        showLocationValidation('請先選擇練習方式。');
+        return false;
+      }
+      normalizeModeState(state, mode);
+
+      // 第一次按專人協助：沿用原核心函式打開既有設定區，不做地點驗證。
+      if (mode === 'assisted' && !state.staffSetupActive) {
+        try {
+          var firstStepResult = coreStartOfficialExam.apply(this, arguments);
+          syncPracticeModeUI();
+          return firstStepResult;
+        } catch (error) {
+          console.error('[專人協助] 開啟地點設定失敗：', error);
+          showLocationValidation('無法開啟工作人員設定：' + String(error && error.message || error));
+          return false;
+        }
+      }
+
+      if (mode === 'assisted') {
+        // 若設定區已經顯示，就以目前畫面恢復 assisted，不要求重新選擇模式。
+        state.staffSetupActive = true;
+        var validation = validateStaffLocation();
+        if (!validation.ok) {
+          showLocationValidation(validation.message, validation.field);
+          return false;
+        }
+
+        // 正式地點 ID 由資料目錄的正式縣市／行政區／地點組合取得，
+        // 與地點別名的儲存成功狀態分開驗證。
+        state.county = validation.county;
+        state.district = validation.district;
+        state.placeName = validation.placeName;
+        state.locationRecordId = validation.locationId;
+      }
+
+      try {
+        var result = coreStartOfficialExam.apply(this, arguments);
+        if (document.body.getAttribute('data-step') === 'step-location') {
+          syncPracticeModeUI();
+        }
+        return result;
+      } catch (error) {
+        console.error('[測驗導向] startOfficialExam 執行失敗：', error);
+        showLocationValidation('設定導向發生錯誤：' + String(error && error.message || error));
+        return false;
+      }
+    };
+    unifiedStartOfficialExam.__staffLocationValidationUnified = true;
+    window.startOfficialExam = unifiedStartOfficialExam;
+  }
+
+  // 不攔截卡片原本的 inline handler；它們直接呼叫原本 startHomePractice/startStaffPractice。
+  // 只在原事件完成後更新按鈕文字與啟用狀態。
+  ['mode-home-btn', 'mode-staff-btn'].forEach(function (id) {
+    var card = byId(id);
+    if (!card || card.dataset.staffModeStateSyncBound === 'true') return;
+    card.dataset.staffModeStateSyncBound = 'true';
+    card.addEventListener('click', function () {
+      window.setTimeout(syncPracticeModeUI, 0);
+    });
+  });
+
+  ['countySelect', 'districtSelect', 'placeSelect'].forEach(function (id) {
+    var control = byId(id);
+    if (!control || control.dataset.staffModeStateSyncBound === 'true') return;
+    control.dataset.staffModeStateSyncBound = 'true';
+    control.addEventListener('change', function () {
+      window.setTimeout(syncPracticeModeUI, 0);
+    });
+  });
+
+  // 只公開同一份核心狀態與視圖同步函式，避免多個 controller 重複包裝 startOfficialExam。
+  window.syncPracticeModeUI = syncPracticeModeUI;
+  window.setLocationActionState = function () {
+    var state = getState();
+    if (!state) return;
+    var mode = resolvePracticeMode(state);
+    var button = byId('location-next-btn');
+    if (!button) return;
+
+    var setupActive = !!state.staffSetupActive || (mode === 'assisted' && staffSetupIsVisible());
+    button.disabled = !mode;
+    button.setAttribute('aria-disabled', mode ? 'false' : 'true');
+    button.textContent = !mode
+      ? '請先選擇練習方式'
+      : mode === 'self'
+        ? '開始自助練習 ›'
+        : setupActive
+          ? '確認設定並開始第一關 ›'
+          : '下一步：設定練習資訊 ›';
+  };
+
+  // 初始同步只反映真實狀態；不更改模式、不清空欄位、不載入或覆寫儲存資料。
+  syncPracticeModeUI();
+})();
+</script>
+
+
+<style id="location-alias-save-guard-styles">
+  #alias-unsaved-dialog[hidden] { display:none !important; }
+  #alias-unsaved-dialog {
+    position:fixed; inset:0; z-index:10030; display:flex; align-items:center; justify-content:center;
+    padding:20px; box-sizing:border-box; background:rgba(31,45,36,.48);
+  }
+  #alias-unsaved-dialog .alias-unsaved-card {
+    width:min(100%,460px); box-sizing:border-box; padding:24px 22px 20px; border-radius:18px;
+    background:#FFFFFF; border:1px solid #E4E9DF; box-shadow:0 12px 36px rgba(31,45,36,.2);
+  }
+  #alias-unsaved-dialog .alias-unsaved-title {
+    margin:0 0 10px; color:#2D3B2D; font-size:20px; line-height:1.45; font-weight:900;
+  }
+  #alias-unsaved-dialog .alias-unsaved-error {
+    min-height:0; margin:0 0 12px; color:#A6632B; font-size:15px; line-height:1.5; font-weight:800;
+  }
+  #alias-unsaved-dialog .alias-unsaved-error:empty { display:none; }
+  #alias-unsaved-dialog .alias-unsaved-actions { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  #alias-unsaved-dialog button {
+    min-height:50px; border-radius:12px; padding:10px 12px; font-family:inherit; font-size:17px; font-weight:800; line-height:1.3; cursor:pointer;
+  }
+  #alias-unsaved-dialog .alias-unsaved-save {
+    grid-column:1/-1; border:2px solid #4F7058; background:#4F7058; color:#FFFFFF;
+  }
+  #alias-unsaved-dialog .alias-unsaved-discard {
+    border:1.5px solid #A7B4A8; background:#FFFFFF; color:#4F7058;
+  }
+  #alias-unsaved-dialog .alias-unsaved-cancel {
+    border:1.5px solid #D7DED5; background:#F7F8F5; color:#35473C;
+  }
+  #alias-unsaved-dialog button:disabled { opacity:.6; cursor:wait; }
+  #alias-unsaved-dialog button:focus-visible { outline:3px solid #91A996; outline-offset:2px; }
+  @media (max-width:480px) {
+    #alias-unsaved-dialog .alias-unsaved-card { padding:20px 16px 16px; }
+    #alias-unsaved-dialog .alias-unsaved-actions { grid-template-columns:1fr; }
+    #alias-unsaved-dialog .alias-unsaved-save { grid-column:auto; }
+  }
+  #step-location .location-alias-sync-status.is-success { color:#2F7046 !important; }
+  #step-location .location-alias-sync-status.is-pending { color:#8A6B35 !important; }
+  #step-location .location-alias-sync-status.is-error { color:#A6632B !important; }
+  #step-location .location-alias-sync-status.is-saving { color:#6E8075 !important; }
+  #step-location .location-alias-last-saved { color:#718075 !important; }
+</style>
+<script id="location-alias-draft-protection">
+(function () {
+  'use strict';
+  var byId = function (id) { return document.getElementById(id); };
+  var panel = byId('staff-mode-settings');
+  var activeDialog = null;
+  var aliasEditorEngaged = false;
+  var navigationInProgress = false;
+  var locationChangeBypass = false;
+
+  function hasPendingAliasDraft() {
+    return typeof window.hasPendingLocationAliasChanges === 'function' &&
+      window.hasPendingLocationAliasChanges();
+  }
+  function hasPending() {
+    if (typeof window.hasPendingStaffSettingsChanges === 'function') {
+      return window.hasPendingStaffSettingsChanges();
+    }
+    return hasPendingAliasDraft();
+  }
+  // 下拉選單切換本身是編輯地點的正常步驟；只有切換前已存在別名草稿時才攔截。
+  function shouldGuardAliasOnly() { return hasPendingAliasDraft() && isEditorContext(); }
+  function isEditorContext() {
+    return document.body.getAttribute('data-step') === 'step-location' &&
+      !!(panel && panel.open) && aliasEditorEngaged;
+  }
+  function shouldGuard() { return hasPending() && isEditorContext(); }
+  function t(text) {
+    return typeof window.translateExamDisplayText === 'function'
+      ? window.translateExamDisplayText(text) : text;
+  }
+
+  function closeDialog() {
+    if (!activeDialog) return;
+    var dialog = activeDialog;
+    activeDialog = null;
+    dialog.hidden = true;
+    if (dialog.parentNode) dialog.parentNode.removeChild(dialog);
+    if (dialog._restoreFocus && document.contains(dialog._restoreFocus)) {
+      try { dialog._restoreFocus.focus({preventScroll:true}); } catch (e) { dialog._restoreFocus.focus(); }
+    }
+  }
+
+  function showUnsavedDialog(continueAction) {
+    if (activeDialog) return;
+    var dialog = document.createElement('div');
+    dialog.id = 'alias-unsaved-dialog';
+    dialog.setAttribute('role', 'presentation');
+    dialog.innerHTML = '';
+    var card = document.createElement('div');
+    card.className = 'alias-unsaved-card';
+    card.setAttribute('role', 'dialog');
+    card.setAttribute('aria-modal', 'true');
+    card.setAttribute('aria-labelledby', 'alias-unsaved-title');
+    var title = document.createElement('h2');
+    title.className = 'alias-unsaved-title';
+    title.id = 'alias-unsaved-title';
+    title.textContent = t('目前有尚未儲存的修改，是否要先儲存？');
+    var error = document.createElement('p');
+    error.className = 'alias-unsaved-error';
+    error.setAttribute('role', 'status');
+    error.setAttribute('aria-live', 'polite');
+    var actions = document.createElement('div');
+    actions.className = 'alias-unsaved-actions';
+    var save = document.createElement('button');
+    save.type = 'button';
+    save.className = 'alias-unsaved-save';
+    save.textContent = t('儲存');
+    var discard = document.createElement('button');
+    discard.type = 'button';
+    discard.className = 'alias-unsaved-discard';
+    discard.textContent = t('不儲存');
+    var cancel = document.createElement('button');
+    cancel.type = 'button';
+    cancel.className = 'alias-unsaved-cancel';
+    cancel.textContent = t('取消');
+    actions.appendChild(save);
+    actions.appendChild(discard);
+    actions.appendChild(cancel);
+    card.appendChild(title);
+    card.appendChild(error);
+    card.appendChild(actions);
+    dialog.appendChild(card);
+    dialog._restoreFocus = document.activeElement;
+    document.body.appendChild(dialog);
+    activeDialog = dialog;
+
+    function setBusy(busy) {
+      [save, discard, cancel].forEach(function (button) { button.disabled = !!busy; });
+      save.textContent = busy ? t('儲存中…') : t('儲存');
+    }
+    save.addEventListener('click', function () {
+      if (save.disabled) return;
+      var saveAction = typeof window.saveCurrentStaffSettings === 'function'
+        ? window.saveCurrentStaffSettings
+        : window.saveCurrentLocationAliasGroups;
+      if (typeof saveAction !== 'function') {
+        var detail = window.lastLocationAliasSyncError && window.lastLocationAliasSyncError.detail;
+        error.textContent = t('儲存失敗，請再試一次。') + (detail ? '（' + detail.slice(0, 180) + '）' : '');
+        return;
+      }
+      setBusy(true);
+      var savePromise;
+      try {
+        savePromise = saveAction();
+      } catch (syncSaveError) {
+        console.warn('未儲存別名確認視窗中的同步儲存錯誤：', syncSaveError);
+        var syncDetail = window.lastLocationAliasSyncError && window.lastLocationAliasSyncError.detail;
+        error.textContent = t('儲存失敗，請再試一次。') + (syncDetail ? '（' + syncDetail.slice(0, 180) + '）' : '（' + String(syncSaveError.message || syncSaveError).slice(0, 180) + '）');
+        setBusy(false);
+        return;
+      }
+      Promise.resolve(savePromise).then(function (success) {
+        if (!success) {
+          var staffSaveDetail = window.lastStaffSettingsSaveError ||
+            (window.lastLocationAliasSyncError && window.lastLocationAliasSyncError.detail) || '';
+          error.textContent = t('儲存失敗，請再試一次。') + (staffSaveDetail ? '（' + String(staffSaveDetail).slice(0, 180) + '）' : '');
+          setBusy(false);
+          return;
+        }
+        closeDialog();
+        if (typeof continueAction === 'function') continueAction();
+      }).catch(function (saveError) {
+        console.warn('未儲存別名確認視窗中的儲存失敗：', saveError);
+        var detail = window.lastLocationAliasSyncError && window.lastLocationAliasSyncError.detail;
+        error.textContent = t('儲存失敗，請再試一次。') + (detail ? '（' + detail.slice(0, 180) + '）' : '');
+        setBusy(false);
+      });
+    });
+    discard.addEventListener('click', function () {
+      if (discard.disabled) return;
+      if (typeof window.discardPendingStaffSettingsChanges === 'function') {
+        window.discardPendingStaffSettingsChanges();
+      } else if (typeof window.discardPendingLocationAliasChanges === 'function') {
+        window.discardPendingLocationAliasChanges();
+      }
+      closeDialog();
+      if (typeof continueAction === 'function') continueAction();
+    });
+    cancel.addEventListener('click', function () { closeDialog(); });
+    dialog.addEventListener('click', function (event) {
+      if (event.target === dialog) closeDialog();
+    });
+    dialog.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') { event.preventDefault(); closeDialog(); }
+      if (event.key === 'Tab') {
+        var focusables = [save, discard, cancel].filter(function (button) { return !button.disabled; });
+        if (!focusables.length) return;
+        var first = focusables[0], last = focusables[focusables.length - 1];
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+      }
+    });
+    save.focus();
+  }
+
+  function requestToLeave(action) {
+    if (!shouldGuard() || navigationInProgress) {
+      if (typeof action === 'function') action();
+      return;
+    }
+    showUnsavedDialog(action);
+  }
+
+  // Opening the management area activates guards for subsequent leave/switch actions.
+  if (panel) {
+    panel.addEventListener('toggle', function () {
+      aliasEditorEngaged = !!panel.open;
+    });
+    panel.addEventListener('focusin', function () {
+      if (panel.open) aliasEditorEngaged = true;
+    });
+  }
+
+  // Closing the outer management panel: save/discard/cancel. The panel closes only after Save succeeds.
+  var panelSummary = panel && panel.querySelector(':scope > summary');
+  if (panel && panelSummary && !panelSummary.dataset.aliasDraftGuardBound) {
+    panelSummary.dataset.aliasDraftGuardBound = 'true';
+    panelSummary.addEventListener('click', function (event) {
+      if (!panel.open || !shouldGuard()) return;
+      event.preventDefault();
+      event.stopPropagation();
+      requestToLeave(function () {
+        panel.open = false;
+        aliasEditorEngaged = false;
+      });
+    });
+  }
+
+  // Any step transition away from location setup is protected, including other settings routes.
+  var originalShowStep = window.showStep;
+  if (typeof originalShowStep === 'function') {
+    window.showStep = function (stepId) {
+      var currentStep = document.body.getAttribute('data-step');
+      var protectLeaving = shouldGuard();
+
+      // 從工作人員設定前往共用第一關說明，是正式提交目前測驗地點的動作；
+      // 地點偏好會由 startOfficialExam() 寫入並更新基準，不應被「地點尚未儲存」攔截。
+      // 只有確實尚未儲存的別名草稿仍須先詢問。
+      if (stepId === 'step-p1-intro' && !(hasPendingAliasDraft() && isEditorContext())) {
+        protectLeaving = false;
+      }
+
+      if (currentStep === 'step-location' && stepId !== 'step-location' && protectLeaving && !navigationInProgress) {
+        var self = this, args = arguments;
+        requestToLeave(function () { navigationInProgress = true; try { originalShowStep.apply(self, args); } finally { navigationInProgress = false; aliasEditorEngaged = false; } });
+        return;
+      }
+      return originalShowStep.apply(this, arguments);
+    };
+  }
+
+  // Back button: after Save/Discard, continue the original back route exactly once.
+  var originalBack = window.handleTopBack;
+  if (typeof originalBack === 'function') {
+    window.handleTopBack = function () {
+      if (shouldGuard() && !navigationInProgress) {
+        var self = this, args = arguments;
+        requestToLeave(function () { navigationInProgress = true; try { originalBack.apply(self, args); } finally { navigationInProgress = false; aliasEditorEngaged = false; } });
+        return;
+      }
+      return originalBack.apply(this, arguments);
+    };
+  }
+
+  // 前往第一關時，縣市／行政區／測驗地點是本次測驗的必要選擇，
+  // 由 startOfficialExam 驗證並呼叫 saveLocationPreference() 提交；
+  // 只有真正未儲存的「別名草稿」才在此處攔截，不把地點選取與別名儲存混成同一狀態。
+  var originalStart = window.startOfficialExam;
+  if (typeof originalStart === 'function') {
+    window.startOfficialExam = function () {
+      if (hasPendingAliasDraft() && isEditorContext() && !navigationInProgress) {
+        var self = this, args = arguments;
+        requestToLeave(function () { navigationInProgress = true; try { originalStart.apply(self, args); } finally { navigationInProgress = false; aliasEditorEngaged = false; } });
+        return;
+      }
+      return originalStart.apply(this, arguments);
+    };
+  }
+
+  // Display-language switch: revert the pending requested language until the user chooses Save/Discard.
+  var originalApplyDisplayLanguage = window.applyExamDisplayLanguage;
+  if (typeof originalApplyDisplayLanguage === 'function') {
+    window.applyExamDisplayLanguage = function () {
+      var requestedLang = window.EXAM_DISPLAY_LANG;
+      var currentLang = document.documentElement.lang || requestedLang;
+      if (requestedLang && currentLang && requestedLang !== currentLang && shouldGuard()) {
+        window.EXAM_DISPLAY_LANG = currentLang;
+        try { localStorage.setItem('app_lang', currentLang); } catch (storageError) {}
+        var self = this, args = arguments;
+        requestToLeave(function () {
+          window.EXAM_DISPLAY_LANG = requestedLang;
+          try { localStorage.setItem('app_lang', requestedLang); } catch (storageError) {}
+          originalApplyDisplayLanguage.apply(self, args);
+        });
+        return;
+      }
+      return originalApplyDisplayLanguage.apply(this, arguments);
+    };
+  }
+
+  // Spoken-answer language (國語／臺語／客語／純文字) is a test setting, not navigation away
+  // from the location editor. Do not intercept setLanguage here: doing so makes voice choices
+  // appear unselectable whenever an alias draft is pending. The display-language switch above
+  // remains protected, as requested, and all alias drafts remain stored locally.
+
+  // Changing county/district/place leaves the alias editor's current location; intercept before inline handlers run.
+  ['countySelect', 'districtSelect', 'placeSelect'].forEach(function (id) {
+    var control = byId(id);
+    if (!control) return;
+    control.dataset.aliasGuardLastValue = control.value || '';
+    ['pointerdown', 'focusin'].forEach(function (eventName) {
+      control.addEventListener(eventName, function () {
+        if (!locationChangeBypass) control.dataset.aliasGuardLastValue = control.value || '';
+      }, true);
+    });
+    control.addEventListener('change', function (event) {
+      if (locationChangeBypass || !shouldGuardAliasOnly()) {
+        control.dataset.aliasGuardLastValue = control.value || '';
+        return;
+      }
+      var nextValue = control.value || '';
+      var priorValue = control.dataset.aliasGuardLastValue || '';
+      if (nextValue === priorValue) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      control.value = priorValue;
+      requestToLeave(function () {
+        locationChangeBypass = true;
+        control.value = nextValue;
+        control.dispatchEvent(new Event('change', {bubbles:true}));
+        control.dataset.aliasGuardLastValue = nextValue;
+        locationChangeBypass = false;
+      });
+    }, true);
+  });
+})();
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<style id="p1-keypad-aside-only-layout">
+/* 第一關保留原本測驗文件流：桌面右側鍵盤固定於視窗，不撐高頁面。 */
+#step-p1 { position:relative; overflow:visible !important; }
+#step-p1 .p1-keypad-column[hidden] { display:none !important; }
+#step-p1 > .p1-keypad-column.p1-keypad-rail-absolute {
+  position:fixed !important;
+  left:var(--p1-keypad-fixed-left, 0px) !important;
+  top:var(--p1-keypad-fixed-top, 0px) !important;
+  width:260px !important;
+  min-width:260px !important;
+  max-width:260px !important;
+  margin:0 !important;
+  padding:0 !important;
+  align-self:start !important;
+  box-sizing:border-box !important;
+  z-index:30 !important;
+  height:auto !important;
+  max-height:none !important;
+  overflow:visible !important;
+  overflow-x:visible !important;
+  overflow-y:visible !important;
+  overscroll-behavior:contain;
+  transition:none !important;
+  animation:none !important;
+  transform:none !important;
+  overflow-anchor:none !important;
+}
+/* 螢幕高度不足時，只在鍵盤面板內捲動，不增加整頁高度。 */
+/* 平板／手機沒有足夠右側空間時，鍵盤仍在答案輸入控制下方正常流動。 */
+#step-p1 .p1-keypad-column:not(.p1-keypad-rail-absolute) {
+  position:static !important;
+  display:block;
+  width:min(260px, 100%) !important;
+  min-width:0 !important;
+  max-width:260px !important;
+  margin:12px 0 0 !important;
+  padding:0 !important;
+  box-sizing:border-box !important;
+  transition:none !important;
+  animation:none !important;
+  transform:none !important;
+}
+#p1-number-pad-floating-panel {
+  position:static !important;
+  inset:auto !important;
+  left:auto !important;
+  top:auto !important;
+  right:auto !important;
+  bottom:auto !important;
+  transform:none !important;
+  z-index:auto !important;
+  display:block;
+  box-sizing:border-box;
+  width:100% !important;
+  min-width:0 !important;
+  max-width:100% !important;
+  height:auto !important;
+  min-height:0 !important;
+  max-height:none !important;
+  margin:0 !important;
+  overflow:visible !important;
+  overflow-anchor:none !important;
+}
+</style>
+
+
+
+
+
+<script id="practice-mode-copy-translation-patch">
+(function () {
+  if (typeof EXAM_TEXT_TRANSLATIONS === 'undefined') return;
+  Object.assign(EXAM_TEXT_TRANSLATIONS, {
+    '自己操作，依照畫面指示完成練習（最常用）': [
+      'Operate it yourself and follow the on-screen instructions to complete the practice (most common).',
+      'ご自身で操作し、画面の案内に従って練習を進めます（最も一般的）。',
+      '직접 조작하고 화면 안내에 따라 연습을 완료합니다(가장 일반적).'
+    ],
+    '在監理站、醫院或有人協助時': [
+      'At a motor vehicle office, hospital, or when someone is assisting you',
+      '監理機関・病院、または誰かのサポートがある場合',
+      '운전면허시험장·병원 또는 다른 사람의 도움을 받을 때'
+    ]
+  });
+  if (typeof window.applyExamDisplayLanguage === 'function') {
+    window.applyExamDisplayLanguage();
+  }
+})();
+</script>
+
+<script id="mandarin-voice-input-module">
+(function () {
+  'use strict';
+
+  // 本模組只提供國語語音輸入；不依賴 Web Speech API。
+  // 麥克風由 GitHub Pages 前端取得，錄音再透過既有 Worker／Apps Script API 轉成文字。
+  var MAX_RECORDING_MS = 12000;
+  var consentGranted = false;
+  var pendingTarget = null;
+  var activeSession = null;
+  var sessionSequence = 0;
+  var observerList = [];
+
+  var MIC_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="2.5" width="6" height="12" rx="3"></rect><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3.5M8.5 21.5h7"></path></svg>';
+
+  function byId(id) { return document.getElementById(id); }
+
+  function isMandarinMode() {
+    var button = byId('btn-lang-zh');
+    var textOnly = byId('btn-lang-text');
+    return !!button && button.classList.contains('active') &&
+      button.getAttribute('aria-pressed') !== 'false' &&
+      !(textOnly && textOnly.classList.contains('active'));
+  }
+
+  function currentP1QuestionNumber() {
+    var status = byId('test-status-sub');
+    if (!status) return null;
+    var match = String(status.textContent || '').match(/\d+/);
+    return match ? Number(match[0]) : null;
+  }
+
+  function isP1VoiceEligible() {
+    if (!isMandarinMode()) return false;
+    var step = byId('step-p1');
+    var input = byId('p1-answer-input');
+    if (!step || !input || input.disabled || input.readOnly) return false;
+    var modeButton = document.querySelector('#p1-type-selector-wrapper .type-btn.active[data-mode]');
+    if (modeButton && modeButton.getAttribute('data-mode') === 'zodiac') return true;
+    var questionNumber = currentP1QuestionNumber();
+    return questionNumber === 4 || questionNumber === 5;
+  }
+
+  function makeVoiceRow(id, buttonText, statusText) {
+    var row = document.createElement('div');
+    row.className = 'mandarin-voice-row';
+    row.id = id;
+
+    var button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'mandarin-voice-button';
+    button.innerHTML = MIC_SVG + '<span>' + buttonText + '</span>';
+    button.setAttribute('aria-pressed', 'false');
+
+    var status = document.createElement('p');
+    status.className = 'mandarin-voice-status';
+    status.setAttribute('role', 'status');
+    status.setAttribute('aria-live', 'polite');
+    status.textContent = statusText || '';
+
+    button.addEventListener('click', function () {
+      var target = id === 'p1-mandarin-voice-row' ? getP1Target() : getP2Target();
+      if (target) handleVoiceButton(target);
+    });
+
+    row.appendChild(button);
+    row.appendChild(status);
+    return row;
+  }
+
+  function ensureVoiceRows() {
+    var p1Control = byId('p1-answer-control');
+    if (p1Control && !byId('p1-mandarin-voice-row')) {
+      var p1Row = makeVoiceRow('p1-mandarin-voice-row', '使用國語語音輸入', '可說出生肖、星期或目前所在的地點。');
+      p1Control.insertAdjacentElement('afterend', p1Row);
+    }
+
+    var p2Entry = document.querySelector('#step-p2-sop5 .p2-recall-entry');
+    if (p2Entry && !byId('p2-mandarin-voice-row')) {
+      var p2Row = makeVoiceRow('p2-mandarin-voice-row', '使用國語語音輸入圖片名稱', '一次說出一個圖片名稱；辨識完成後，請檢查文字再按「＋加入答案」。');
+      p2Entry.insertAdjacentElement('afterend', p2Row);
+    }
+  }
+
+  function getP1Target() {
+    var input = byId('p1-answer-input');
+    var row = byId('p1-mandarin-voice-row');
+    if (!input || !row) return null;
+    return {
+      kind: 'p1',
+      input: input,
+      row: row,
+      button: row.querySelector('button'),
+      status: row.querySelector('.mandarin-voice-status'),
+      context: 'p1'
+    };
+  }
+
+  function getP2Target() {
+    var input = byId('p2-recall-input');
+    var row = byId('p2-mandarin-voice-row');
+    if (!input || !row) return null;
+    return {
+      kind: 'p2',
+      input: input,
+      row: row,
+      button: row.querySelector('button'),
+      status: row.querySelector('.mandarin-voice-status'),
+      context: 'p2'
+    };
+  }
+
+  function setTargetStatus(target, message) {
+    if (target && target.status) target.status.textContent = message || '';
+  }
+
+  function setTargetButton(target, label, disabled, recording) {
+    if (!target || !target.button) return;
+    target.button.innerHTML = MIC_SVG + '<span>' + label + '</span>';
+    target.button.disabled = !!disabled;
+    target.button.classList.toggle('is-recording', !!recording);
+    target.button.setAttribute('aria-pressed', recording ? 'true' : 'false');
+  }
+
+  function syncVoiceRows() {
+    ensureVoiceRows();
+    var mandarin = isMandarinMode();
+    var p1Row = byId('p1-mandarin-voice-row');
+    var p2Row = byId('p2-mandarin-voice-row');
+    var p1Display = mandarin && isP1VoiceEligible() ? 'flex' : 'none';
+    var p2Display = mandarin ? 'flex' : 'none';
+    if (p1Row && p1Row.style.display !== p1Display) p1Row.style.display = p1Display;
+    if (p2Row && p2Row.style.display !== p2Display) p2Row.style.display = p2Display;
+  }
+
+  function showConsent(target) {
+    pendingTarget = target;
+    var overlay = byId('mandarin-voice-consent-overlay');
+    if (overlay) {
+      overlay.classList.add('is-open');
+      overlay.setAttribute('aria-hidden', 'false');
+      var confirm = overlay.querySelector('.mandarin-voice-consent-confirm');
+      if (confirm) {
+        try { confirm.focus({ preventScroll: true }); } catch (e) { confirm.focus(); }
+      }
+    }
+  }
+
+  function closeConsent() {
+    var overlay = byId('mandarin-voice-consent-overlay');
+    if (overlay) {
+      overlay.classList.remove('is-open');
+      overlay.setAttribute('aria-hidden', 'true');
+    }
+  }
+
+  function buildConsentDialog() {
+    if (byId('mandarin-voice-consent-overlay')) return;
+    var overlay = document.createElement('div');
+    overlay.id = 'mandarin-voice-consent-overlay';
+    overlay.className = 'mandarin-voice-consent-overlay';
+    overlay.setAttribute('aria-hidden', 'true');
+    overlay.innerHTML =
+      '<section class="mandarin-voice-consent-card" role="dialog" aria-modal="true" aria-labelledby="mandarin-voice-consent-title">' +
+        '<h2 class="mandarin-voice-consent-title" id="mandarin-voice-consent-title">使用國語語音輸入前，請先閱讀</h2>' +
+        '<p class="mandarin-voice-consent-copy">按下開始後，系統會使用麥克風錄音，最長 12 秒。錄音會傳送至語音辨識服務轉成繁體中文文字。\n\n本平台不會將錄音檔存入 Google Drive 或測驗成績試算表。辨識結果只會先填入答案欄，不會自動加入答案或送出測驗；請確認文字正確後，再自行按下確認或加入答案。</p>' +
+        '<div class="mandarin-voice-consent-actions">' +
+          '<button type="button" class="mandarin-voice-consent-cancel">取消</button>' +
+          '<button type="button" class="mandarin-voice-consent-confirm">同意並開始</button>' +
+        '</div>' +
+      '</section>';
+    document.body.appendChild(overlay);
+    overlay.querySelector('.mandarin-voice-consent-cancel').addEventListener('click', function () {
+      pendingTarget = null;
+      closeConsent();
+    });
+    overlay.querySelector('.mandarin-voice-consent-confirm').addEventListener('click', function () {
+      var target = pendingTarget;
+      pendingTarget = null;
+      closeConsent();
+      if (!target) return;
+      consentGranted = true;
+      beginRecording(target);
+    });
+    overlay.addEventListener('click', function (event) {
+      if (event.target === overlay) {
+        pendingTarget = null;
+        closeConsent();
+      }
+    });
+  }
+
+  function handleVoiceButton(target) {
+    if (!isMandarinMode()) {
+      setTargetStatus(target, '語音輸入目前僅提供國語模式。');
+      return;
+    }
+    if (activeSession) {
+      if (activeSession.target.input === target.input && activeSession.phase === 'recording') {
+        stopRecording(activeSession, false);
+      } else {
+        setTargetStatus(target, '另一筆語音仍在處理中，請稍候完成後再試。');
+      }
+      return;
+    }
+    if (!consentGranted) {
+      showConsent(target);
+      return;
+    }
+    beginRecording(target);
+  }
+
+  function chooseRecorderOptions() {
+    if (!window.MediaRecorder || typeof window.MediaRecorder.isTypeSupported !== 'function') return {};
+    var types = [
+      'audio/mp4;codecs=mp4a.40.2',
+      'audio/mp4',
+      'audio/webm;codecs=opus',
+      'audio/webm',
+      'audio/ogg;codecs=opus'
+    ];
+    for (var i = 0; i < types.length; i++) {
+      try {
+        if (window.MediaRecorder.isTypeSupported(types[i])) return { mimeType: types[i] };
+      } catch (e) {}
+    }
+    return {};
+  }
+
+  function beginRecording(target) {
+    if (!window.isSecureContext || !navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== 'function' || !window.MediaRecorder) {
+      setTargetStatus(target, '目前網頁環境無法啟動錄音。請使用 HTTPS 正式網址直接開啟測驗頁，並允許網站使用麥克風。若此頁嵌在其他網站或 iframe，外層頁面也必須授予麥克風權限；可改用 GitHub Pages 測驗網址直接開啟。');
+      return;
+    }
+
+    var session = {
+      id: ++sessionSequence,
+      target: target,
+      stream: null,
+      recorder: null,
+      chunks: [],
+      timer: null,
+      phase: 'requesting',
+      cancelled: false
+    };
+    activeSession = session;
+    setTargetButton(target, '正在啟用麥克風…', true, false);
+    setTargetStatus(target, '請允許此網站使用麥克風。');
+
+    // getUserMedia 必須由使用者點擊流程觸發；不可在頁面載入時自動要求權限。
+    navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+    }).then(function (stream) {
+      if (activeSession !== session || session.cancelled) {
+        stream.getTracks().forEach(function (track) { track.stop(); });
+        return;
+      }
+      session.stream = stream;
+      var recorder;
+      try {
+        var options = chooseRecorderOptions();
+        recorder = Object.keys(options).length ? new MediaRecorder(stream, options) : new MediaRecorder(stream);
+      } catch (error) {
+        finishSession(session, '無法建立錄音。請更新瀏覽器後再試，或改用文字輸入。');
+        return;
+      }
+      session.recorder = recorder;
+      recorder.ondataavailable = function (event) {
+        if (event.data && event.data.size > 0) session.chunks.push(event.data);
+      };
+      recorder.onerror = function () {
+        finishSession(session, '錄音發生問題，請重新嘗試或改用文字輸入。');
+      };
+      recorder.onstop = function () {
+        if (session.timer) { clearTimeout(session.timer); session.timer = null; }
+        stopTracks(session);
+        if (session.cancelled || activeSession !== session) return;
+        var mime = recorder.mimeType || (session.chunks[0] && session.chunks[0].type) || 'audio/webm';
+        var blob = new Blob(session.chunks, { type: mime });
+        session.recorder = null;
+        session.chunks = [];
+        if (!blob || blob.size < 500) {
+          finishSession(session, '沒有錄到清楚的聲音，請靠近麥克風再說一次。');
+          return;
+        }
+        transcribeRecording(session, blob);
+      };
+
+      try {
+        recorder.start(250);
+        session.phase = 'recording';
+        setTargetButton(target, '停止錄音', false, true);
+        setTargetStatus(target, target.kind === 'p2'
+          ? '正在錄音，請說出一個圖片名稱；說完後再按「停止錄音」。最長 12 秒。'
+          : '正在錄音，請說出答案；說完後再按「停止錄音」。最長 12 秒。');
+        session.timer = setTimeout(function () {
+          if (activeSession === session && session.phase === 'recording') {
+            setTargetStatus(target, '已達 12 秒，正在處理錄音…');
+            stopRecording(session, true);
+          }
+        }, MAX_RECORDING_MS);
+      } catch (error) {
+        finishSession(session, '錄音無法開始。請確認瀏覽器已允許麥克風，再試一次。');
+      }
+    }).catch(function (error) {
+      if (activeSession !== session) return;
+      var name = error && error.name;
+      var message = '無法取得麥克風，請確認瀏覽器網站權限後再試。';
+      if (name === 'NotAllowedError' || name === 'SecurityError' || name === 'PermissionDeniedError') {
+        message = '麥克風權限未開啟，或目前頁面受到 iframe／沙盒限制。請使用 HTTPS 正式測驗網址直接開啟，並在瀏覽器網站設定中允許麥克風。';
+      } else if (name === 'NotFoundError' || name === 'DevicesNotFoundError') {
+        message = '找不到可使用的麥克風，請檢查裝置設定。';
+      } else if (name === 'NotReadableError' || name === 'TrackStartError') {
+        message = '麥克風目前可能正被其他程式使用，請關閉其他錄音程式後再試。';
+      }
+      finishSession(session, message);
+    });
+  }
+
+  function stopTracks(session) {
+    if (!session || !session.stream) return;
+    try { session.stream.getTracks().forEach(function (track) { track.stop(); }); } catch (e) {}
+    session.stream = null;
+  }
+
+  function stopRecording(session, automatic) {
+    if (!session || activeSession !== session || !session.recorder || session.recorder.state !== 'recording') return;
+    if (session.timer) { clearTimeout(session.timer); session.timer = null; }
+    session.phase = 'stopping';
+    setTargetButton(session.target, '正在整理錄音…', true, false);
+    if (!automatic) setTargetStatus(session.target, '錄音完成，正在轉成繁體中文文字，請稍候…');
+    try { session.recorder.stop(); }
+    catch (error) { finishSession(session, '錄音停止失敗，請再試一次。'); }
+  }
+
+  function transcribeRecording(session, blob) {
+    if (activeSession !== session || session.cancelled) return;
+    session.phase = 'transcribing';
+    setTargetButton(session.target, '正在辨識…', true, false);
+    setTargetStatus(session.target, '正在辨識國語，完成後會先填入答案欄，不會自動確認或加入。');
+
+    var reader = new FileReader();
+    reader.onerror = function () {
+      finishSession(session, '錄音資料讀取失敗，請再試一次。');
+    };
+    reader.onloadend = function () {
+      if (activeSession !== session || session.cancelled) return;
+      var dataUrl = String(reader.result || '');
+      var comma = dataUrl.indexOf(',');
+      if (comma < 0) {
+        finishSession(session, '錄音資料格式不正確，請重新錄音。');
+        return;
+      }
+      var base64Audio = dataUrl.slice(comma + 1);
+      var runner = window.google && window.google.script && window.google.script.run;
+      if (!runner) {
+        finishSession(session, '語音辨識後端尚未連線。請確認正式網站已載入後臺橋接，再重新整理頁面。');
+        return;
+      }
+      try {
+        runner
+          .withSuccessHandler(function (result) {
+            if (activeSession !== session || session.cancelled) return;
+            var transcript = String(result && result.transcript ? result.transcript : '').trim();
+            if (!result || result.success !== true || !transcript) {
+              finishSession(session, (result && result.message) ? result.message : '沒有辨識到清楚的內容，請再試一次。');
+              return;
+            }
+            var input = session.target.input;
+            if (input && input.isConnected) {
+              input.value = transcript;
+              input.dispatchEvent(new Event('input', { bubbles: true }));
+              try { input.focus({ preventScroll: true }); } catch (e) { input.focus(); }
+              if (typeof input.setSelectionRange === 'function') {
+                try { input.setSelectionRange(transcript.length, transcript.length); } catch (e) {}
+              }
+            }
+            var message = session.target.kind === 'p2'
+              ? '辨識完成，請檢查或修改文字，再按「＋加入答案」。'
+              : '辨識完成，請檢查或修改答案，再按下方確認按鈕。';
+            finishSession(session, message);
+          })
+          .withFailureHandler(function (error) {
+            if (activeSession !== session || session.cancelled) return;
+            var reason = error && error.message ? error.message : '語音辨識服務連線失敗。';
+            finishSession(session, '語音辨識失敗：' + reason + '。請再試一次或改用文字輸入。');
+          })
+          // 強制傳送 zh-TW；p1/p2 只影響辨識提示，不會切換成臺語或客語。
+          .transcribeP2RecallAudio(base64Audio, blob.type || 'audio/mp4', 'zh-TW', session.target.context);
+      } catch (error) {
+        finishSession(session, '無法連接語音辨識後端，請重新整理頁面後再試。');
+      }
+    };
+    reader.readAsDataURL(blob);
+  }
+
+  function finishSession(session, message) {
+    if (!session) return;
+    if (session.timer) { clearTimeout(session.timer); session.timer = null; }
+    stopTracks(session);
+    if (session.recorder && session.recorder.state === 'recording') {
+      try { session.recorder.stop(); } catch (e) {}
+    }
+    session.phase = 'done';
+    if (activeSession === session) activeSession = null;
+    setTargetButton(session.target, session.target.kind === 'p2' ? '使用國語語音輸入圖片名稱' : '使用國語語音輸入', false, false);
+    setTargetStatus(session.target, message || '');
+  }
+
+  function cancelActiveSession(message) {
+    var session = activeSession;
+    if (!session) return;
+    session.cancelled = true;
+    if (session.timer) { clearTimeout(session.timer); session.timer = null; }
+    stopTracks(session);
+    if (session.recorder && session.recorder.state === 'recording') {
+      try { session.recorder.stop(); } catch (e) {}
+    }
+    activeSession = null;
+    setTargetButton(session.target, session.target.kind === 'p2' ? '使用國語語音輸入圖片名稱' : '使用國語語音輸入', false, false);
+    setTargetStatus(session.target, message || '已停止語音輸入。');
+  }
+
+  function cancelIfPageChanged() {
+    if (!activeSession) return;
+    var step = document.body.getAttribute('data-step') || '';
+    var expected = activeSession.target.kind === 'p1' ? 'step-p1' : 'step-p2-sop5';
+    if (step && step !== expected) cancelActiveSession('已離開此作答頁，錄音已停止。');
+  }
+
+  function setupObservers() {
+    var watched = [
+      byId('p1-question-title'),
+      byId('test-status-sub'),
+      byId('p1-type-selector-wrapper'),
+      byId('p1-answer-control'),
+      byId('step-lang'),
+      byId('step-p2-sop5')
+    ].filter(Boolean);
+    watched.forEach(function (node) {
+      var observer = new MutationObserver(function () { syncVoiceRows(); });
+      observer.observe(node, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['class','aria-pressed','style'] });
+      observerList.push(observer);
+    });
+    var bodyObserver = new MutationObserver(function (records) {
+      records.forEach(function (record) {
+        if (record.type === 'attributes' && record.attributeName === 'data-step') cancelIfPageChanged();
+      });
+      syncVoiceRows();
+    });
+    bodyObserver.observe(document.body, { attributes: true, attributeFilter: ['data-step'] });
+    observerList.push(bodyObserver);
+  }
+
+  function onReady() {
+    buildConsentDialog();
+    ensureVoiceRows();
+    syncVoiceRows();
+    setupObservers();
+    // 語音語言切換後立即同步；此處不更動既有 setLanguage 行為。
+    if (typeof window.setLanguage === 'function') {
+      var originalSetLanguage = window.setLanguage;
+      window.setLanguage = function () {
+        var result = originalSetLanguage.apply(this, arguments);
+        if (arguments[0] !== 'zh-TW') cancelActiveSession('已切換非國語模式，國語語音輸入已停止。');
+        syncVoiceRows();
+        return result;
+      };
+    }
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') {
+        var overlay = byId('mandarin-voice-consent-overlay');
+        if (overlay && overlay.classList.contains('is-open')) {
+          pendingTarget = null;
+          closeConsent();
+        }
+      }
+    });
+    window.addEventListener('pagehide', function () {
+      cancelActiveSession('頁面已離開，錄音已停止。');
+    });
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', onReady, { once: true });
+  else onReady();
+})();
+</script>
+
+</body>
+</html>
