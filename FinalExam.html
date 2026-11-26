@@ -4820,10 +4820,16 @@ function getExamCardDisplayName(chineseName) {
     }
 
     function normalizeAnswerText(str) {
-      if (!str) return '';
-      return str.toString()
-        .replace(/[\s\t\r\n\u3000,\.，。！!？?\(\)（）「」『』"'-]/g, '')
+      if (str === null || str === undefined) return '';
+      var text = String(str);
+      // 統一全形／半形字元，並移除語音辨識偶爾附加的零寬字元。
+      try { if (typeof text.normalize === 'function') text = text.normalize('NFKC'); } catch (error) {}
+      text = text.replace(/[\u200B-\u200D\uFEFF\u00AD]/g, '');
+      // 答案比對一律忽略標點、括號、引號、句點、逗號、頓號、冒號、分號及符號。
+      // 只作用於比對用副本，不會覆寫或改動使用者原始作答紀錄。
+      return text
         .replace(/臺/g, '台')
+        .replace(/[\s\p{P}\p{S}_]+/gu, '')
         .toLowerCase();
     }
 
@@ -5123,16 +5129,9 @@ function getExamCardDisplayName(chineseName) {
 
     function normalizeWeekdayToken(value) {
       var text = String(value == null ? '' : value);
-      // 統一全形字元與 Unicode 表示，並移除語音辨識／輸入法可能附帶的零寬字元。
-      try { if (typeof text.normalize === 'function') text = text.normalize('NFKC'); } catch (e) {}
-      text = text
-        .replace(/[\u200B-\u200D\uFEFF\u00AD]/g, '')
-        .trim()
-        .toLowerCase();
-      // 中文常見星期前綴與標點；英文縮寫的句點也會一併移除。
-      text = text.replace(/^(星期|禮拜|礼拜|週|周)/, '');
-      text = text.replace(/[\s　,，。.!！?？、;；:：()（）「」『』\[\]【】'"`]/g, '');
-      return text;
+      // 中文常見星期前綴先移除，再共用全站標點正規化，避免句點／多個標點造成誤判。
+      text = text.replace(/^[\s\u3000]*(星期|禮拜|礼拜|週|周)/, '');
+      return normalizeAnswerText(text);
     }
 
     function normalizeWeekdayAnswer(value) {
@@ -15270,6 +15269,7 @@ body[data-step="step-location"] .test-name-heading {
 })();
 </script>
 
+<!-- punctuation-normalization-patch: 2026-11-27-v1 -->
 <script id="mandarin-voice-input-module">
 (function () {
   'use strict';
@@ -15831,8 +15831,18 @@ body[data-step="step-location"] .test-name-heading {
     return sawUnit && converted > 0 ? String(converted) : '';
   }
 
+  function stripSpeechEdgePunctuation(value) {
+    var text = String(value == null ? '' : value);
+    try { if (typeof text.normalize === 'function') text = text.normalize('NFKC'); } catch (error) {}
+    text = text.replace(/[\u200B-\u200D\uFEFF\u00AD]/g, '').trim();
+    // 移除辨識結果最前／最後的句點、逗號、頓號、問號、驚嘆號、引號及其他標點。
+    // 保留字詞中間的符號，避免擅自改寫地名或其他自由文字。
+    text = text.replace(/^[\s\p{P}\p{S}_]+|[\s\p{P}\p{S}_]+$/gu, '').trim();
+    return text;
+  }
+
   function normalizeTranscriptForTarget(target, transcript) {
-    var value = String(transcript || '').trim();
+    var value = stripSpeechEdgePunctuation(transcript);
     if (!value) return '';
     if (target && target.kind === 'p1') {
       var input = target.input;
