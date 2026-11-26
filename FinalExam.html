@@ -4144,6 +4144,8 @@ window.closeCustomAlert = closeCustomAlert;
     // 四縣腔使用者錄音：依測驗階段批次預載到瀏覽器（第二關含 25 段圖卡名稱錄音），播放時不再逐題呼叫伺服器。
     var HAKKA_SIXIAN_AUDIO_CACHE = {};
     var HAKKA_SIXIAN_AUDIO_PENDING = {};
+    var HAKKA_HAILU_AUDIO_CACHE = {};
+    var HAKKA_HAILU_AUDIO_PENDING = {};
     var currentHakkaAudioPlayer = null;
     var HAKKA_SIXIAN_P1_KEYS = [
       'exam_intro', 'p1_intro', 'q1_roc', 'q1_western', 'q1_zodiac',
@@ -4173,6 +4175,38 @@ window.closeCustomAlert = closeCustomAlert;
     ];
     var HAKKA_SIXIAN_P3_KEYS = ['p3_intro', 'p3_quiz', 'exam_end'];
     var HAKKA_SIXIAN_LOCATION_KEYS = ['location_intro', 'location_home', 'location_staff'];
+
+    // 海陸腔使用獨立 HakkaHailuAudioLib，錄音格式為 MP3，與四縣腔快取完全分開。
+    var HAKKA_HAILU_P1_KEYS = [
+      'language_select', 'exam_intro', 'p1_intro', 'q1_roc', 'q1_western', 'q1_zodiac',
+      'q2_solar', 'q2_lunar', 'q3_solar', 'q3_lunar', 'q4_weekday', 'q5_location'
+    ];
+    var HAKKA_HAILU_P2_KEYS = [
+      'p2_intro', 'p2_rest', 'p2_rest_repeat', 'p2_time_up', 'p2_recall',
+      'p2_card_phone', 'p2_card_pen', 'p2_card_toothbrush', 'p2_card_scissors',
+      'p2_card_fork', 'p2_card_chopsticks', 'p2_card_cup', 'p2_card_bowl',
+      'p2_card_umbrella', 'p2_card_knife', 'p2_card_pumpkin', 'p2_card_watermelon',
+      'p2_card_banana', 'p2_card_apple', 'p2_card_guava', 'p2_card_bicycle',
+      'p2_card_fire_engine', 'p2_card_ambulance', 'p2_card_taxi', 'p2_card_motorcycle',
+      'p2_card_no_parking', 'p2_card_one_way', 'p2_card_pedestrian_crossing',
+      'p2_card_highway', 'p2_card_traffic_light'
+    ];
+    var HAKKA_HAILU_P3_KEYS = ['p3_intro', 'p3_time_1110', 'p3_time_0145', 'p3_time_0820', 'p3_time_0245', 'exam_end'];
+    var HAKKA_HAILU_LOCATION_KEYS = ['location_intro', 'location_home', 'location_staff'];
+    // 海陸腔 MP3 總清單：使用者選定海陸腔後在背景分批暖機，後續頁面不必逐題等待後端。
+    var HAKKA_HAILU_ALL_KEYS = [
+      'q2_solar', 'q3_lunar', 'q4_weekday', 'p2_rest', 'p2_recall', 'p3_time_0820',
+      'location_intro', 'location_staff', 'p2_card_pen', 'p2_card_cup', 'p2_card_bowl',
+      'p2_card_pumpkin', 'p2_card_apple', 'p2_card_guava', 'p2_card_motorcycle',
+      'p2_card_no_parking', 'p2_card_traffic_light', 'exam_intro', 'q1_zodiac',
+      'q3_solar', 'q5_location', 'p2_rest_repeat', 'p3_intro', 'language_select',
+      'location_home', 'p2_card_toothbrush', 'p2_card_scissors', 'p2_card_chopsticks',
+      'p2_card_umbrella', 'p2_card_fire_engine', 'p2_card_ambulance', 'p2_card_one_way',
+      'p2_card_pedestrian_crossing', 'p1_intro', 'q1_roc', 'q1_western', 'q2_lunar',
+      'p2_intro', 'p3_quiz', 'p3_time_1110', 'p3_time_0145', 'p3_time_0245', 'exam_end',
+      'p2_card_fork', 'p2_card_knife', 'p2_card_watermelon', 'p2_card_banana',
+      'p2_card_bicycle', 'p2_card_taxi', 'p2_card_highway'
+    ];
 
     function createExamSessionId() {
       return 'EXAM-' + Date.now() + '-' + Math.random().toString(36).slice(2, 10);
@@ -4727,8 +4761,15 @@ function getExamCardDisplayName(chineseName) {
       restorePendingReviewSnapshot();
 
       startPreloadTaiwaneseAudios();
-      // 語言選擇頁預載四縣腔試聽音檔；臺語試聽錄音則在點選「臺語」時由 TaiwaneseAudioLib 讀取。
+      // 語言選擇頁預載客語兩種腔調的試聽音檔；臺語仍在點選後讀取。
       preloadHakkaSixianAudioClips(['language_select']);
+      preloadHakkaHailuAudioClips(['language_select']).then(function(cache) {
+        if (!cache['language_select'] || !cache['language_select'].dataUrl) {
+          console.warn('[海陸腔試聽預載] language_select 尚未完成，選取海陸腔時會再補載。');
+        }
+      }).catch(function(error) {
+        console.warn('[海陸腔試聽預載] 初始背景預載失敗：', error);
+      });
 
       if (typeof google !== 'undefined' && google.script && google.script.run) {
         google.script.run.withSuccessHandler(function(data) {
@@ -4746,7 +4787,7 @@ function getExamCardDisplayName(chineseName) {
         } catch(e) {}
       }
       if (globalAudioPlayer) {
-        globalAudioPlayer.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==";
+        globalAudioPlayer.src = "data:audio/wav;base64,UklGRmQfAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YUAfAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==";
         globalAudioPlayer.play().then(function() { isAudioContextUnlocked = true; }).catch(function(e){});
       }
     }
@@ -5113,42 +5154,42 @@ function getExamCardDisplayName(chineseName) {
 // =========================================================================
 function getTaiwaneseKey(text) {
   var cleanText = String(text || "").trim();
-  
-  // 若傳入的已經是標準 Key (例如 "p2_recall" 或 "p2_intro")，直接返回
-  // Library 的音檔 key 可直接使用英文 key 或圖卡顯示名稱；不再查 Google Drive 對照表。
+  var compactText = cleanText.replace(/[\s　]/g, "");
+
+  // 已經是 Library 標準 Key 時直接使用。
   if (/^[A-Za-z0-9_]+$/.test(cleanText)) return cleanText;
 
-  // 第一關與總說明
-  if (cleanText.indexOf("三項認知功能測驗") !== -1 || cleanText.indexOf("三項測驗") !== -1 || cleanText.indexOf("總遊戲說明") !== -1) return "intro_all";
-  if (cleanText.indexOf("本階段共有五個問題") !== -1 || cleanText.indexOf("第一關說明") !== -1 ||
-      (cleanText.indexOf("第一關") !== -1 && cleanText.indexOf("五個問題") !== -1)) return "p1_intro";
-  // 民國與西元年份要先於一般「幾年」判斷，避免被歸到舊的 p1_q1。
-  if (cleanText.indexOf("民國") !== -1 && (cleanText.indexOf("幾年") !== -1 || cleanText.indexOf("年份") !== -1)) return "q1_roc";
-  if (cleanText.indexOf("西元") !== -1 && (cleanText.indexOf("幾年") !== -1 || cleanText.indexOf("年份") !== -1)) return "q1_western";
-  if (cleanText.indexOf("幾年") !== -1 || cleanText.indexOf("生肖") !== -1) return "p1_q1";
-  if (cleanText.indexOf("幾月") !== -1) return "p1_q2";
-  if (cleanText.indexOf("幾號") !== -1 || cleanText.indexOf("幾日") !== -1) return "p1_q3";
-  if (cleanText.indexOf("禮拜幾") !== -1 || cleanText.indexOf("星期幾") !== -1) return "p1_q4";
-  if (cleanText.indexOf("哪裡") !== -1 || cleanText.indexOf("什麼地方") !== -1 || cleanText.indexOf("場所") !== -1) return "p1_q5";
+  // 第一關與總說明。
+  if (compactText.indexOf("三項認知功能測驗") !== -1 || compactText.indexOf("三項測驗") !== -1 || compactText.indexOf("總遊戲說明") !== -1) return "intro_all";
+  if (compactText.indexOf("本階段共有五個問題") !== -1 || compactText.indexOf("第一關說明") !== -1 ||
+      (compactText.indexOf("第一關") !== -1 && compactText.indexOf("五個問題") !== -1)) return "p1_intro";
+  if (compactText.indexOf("民國") !== -1 && (compactText.indexOf("幾年") !== -1 || compactText.indexOf("年份") !== -1)) return "q1_roc";
+  if (compactText.indexOf("西元") !== -1 && (compactText.indexOf("幾年") !== -1 || compactText.indexOf("年份") !== -1)) return "q1_western";
+  if (compactText.indexOf("生肖") !== -1) return "p1_q1";
 
-  // ⚡ 第二關【開頭說明】(p2_intro)：專屬關鍵字「逐一向您展示」、「介紹每張」
-  if (cleanText.indexOf("逐一向您展示") !== -1 || cleanText.indexOf("介紹每張") !== -1 || cleanText.indexOf("全部介紹完畢") !== -1) {
-    return "p2_intro";
-  }
+  // 農曆需優先判斷，避免誤播國曆月份／日期錄音。
+  if ((compactText.indexOf("農曆") !== -1 || compactText.indexOf("舊曆") !== -1) && compactText.indexOf("幾月") !== -1) return "p1_q2_lunar";
+  if (compactText.indexOf("國曆") !== -1 && compactText.indexOf("幾月") !== -1) return "p1_q2";
+  if ((compactText.indexOf("農曆") !== -1 || compactText.indexOf("舊曆") !== -1) && (compactText.indexOf("幾號") !== -1 || compactText.indexOf("幾日") !== -1)) return "p1_q3_lunar";
+  if (compactText.indexOf("國曆") !== -1 && (compactText.indexOf("幾號") !== -1 || compactText.indexOf("幾日") !== -1)) return "p1_q3";
+  if (compactText.indexOf("幾月") !== -1) return "p1_q2";
+  if (compactText.indexOf("幾號") !== -1 || compactText.indexOf("幾日") !== -1) return "p1_q3";
+  if (compactText.indexOf("拜幾") !== -1 || compactText.indexOf("禮拜幾") !== -1 || compactText.indexOf("星期幾") !== -1) return "p1_q4";
+  if (compactText.indexOf("哪裡") !== -1 || compactText.indexOf("什麼地方") !== -1 || compactText.indexOf("啥物所在") !== -1 || compactText.indexOf("場所") !== -1) return "p1_q5";
 
-  // ⚡ 第二關【休息後回想】(p2_recall)：專屬關鍵字「順序不限」、「回答每張」、「頭前看過」、「無照順序」
-  if (cleanText.indexOf("順序不限") !== -1 || cleanText.indexOf("回答每張") !== -1 || cleanText.indexOf("頭前看過") !== -1 || cleanText.indexOf("無照順序") !== -1) {
-    return "p2_recall";
-  }
+  // 第二關說明。
+  if (compactText.indexOf("逐一向您展示") !== -1 || compactText.indexOf("介紹每張") !== -1 || compactText.indexOf("全部介紹完畢") !== -1) return "p2_intro";
+  if (compactText.indexOf("順序不限") !== -1 || compactText.indexOf("回答每張") !== -1 || compactText.indexOf("頭前看過") !== -1 || compactText.indexOf("無照順序") !== -1 ||
+      (compactText.indexOf("回想") !== -1 && (compactText.indexOf("圖片") !== -1 || compactText.indexOf("圖卡") !== -1))) return "p2_recall";
+  if (compactText.indexOf("安靜休息") !== -1 || compactText.indexOf("休息期間") !== -1 || compactText.indexOf("放輕鬆歇睏") !== -1) return "p2_rest";
 
-  // 第二關【休息期間】(p2_rest)
-  if (cleanText.indexOf("安靜休息") !== -1 || cleanText.indexOf("休息期間") !== -1) {
-    return "p2_rest";
-  }
-
-  // 第三關
-  if (cleanText.indexOf("下方畫布") !== -1 || cleanText.indexOf("標上1至12") !== -1 || cleanText.indexOf("2點45分") !== -1) return "p3_quiz";
-  if (cleanText.indexOf("畫出一個完整的時鐘") !== -1 || cleanText.indexOf("時針和分針") !== -1 || cleanText.indexOf("第三關") !== -1) return "p3_intro";
+  // 第三關：依實際指定時間使用獨立音檔，不共用 p3_quiz。
+  if (compactText.indexOf("十一點四十五分") !== -1 || compactText.indexOf("11:45") !== -1 || compactText.indexOf("11點45分") !== -1) return "p3_time_1145";
+  if (compactText.indexOf("十一點十分") !== -1 || compactText.indexOf("11:10") !== -1 || compactText.indexOf("11點10分") !== -1) return "p3_time_1110";
+  if (compactText.indexOf("一點四十五分") !== -1 || compactText.indexOf("1:45") !== -1 || compactText.indexOf("1點45分") !== -1) return "p3_time_0145";
+  if (compactText.indexOf("八點二十分") !== -1 || compactText.indexOf("8:20") !== -1 || compactText.indexOf("8點20分") !== -1) return "p3_time_0820";
+  if (compactText.indexOf("兩點四十五分") !== -1 || compactText.indexOf("二點四十五分") !== -1 || compactText.indexOf("2:45") !== -1 || compactText.indexOf("2點45分") !== -1) return "p3_time_0245";
+  if (compactText.indexOf("畫出一個完整的時鐘") !== -1 || compactText.indexOf("時針和分針") !== -1 || compactText.indexOf("第三關") !== -1) return "p3_intro";
 
   return cleanText;
 }
@@ -5194,21 +5235,9 @@ function getTaiwaneseKey(text) {
                 Object.keys(audioMap).forEach(function(key) {
                   var dataUrl = audioMap[key];
                   if (!dataUrl || typeof dataUrl !== 'string') return;
-                  try {
-                    var audio = new Audio();
-                    audio.preload = 'auto';
-                    audio.src = dataUrl;
-                    audio.load();
-                    HAKKA_SIXIAN_AUDIO_CACHE[key] = { audio: audio, dataUrl: dataUrl, ready: false };
-                    var markReady = function() {
-                      if (HAKKA_SIXIAN_AUDIO_CACHE[key]) HAKKA_SIXIAN_AUDIO_CACHE[key].ready = true;
-                    };
-                    audio.addEventListener('loadeddata', markReady, { once: true });
-                    audio.addEventListener('canplaythrough', markReady, { once: true });
-                    if (audio.readyState >= 2) markReady();
-                  } catch (audioError) {
-                    HAKKA_SIXIAN_AUDIO_CACHE[key] = { audio: null, dataUrl: dataUrl, ready: false };
-                  }
+                  // 只保留已取得的 Data URL，不為每段錄音建立獨立 Audio 元素。
+                  // 播放時統一使用使用者操作已解鎖的 globalAudioPlayer，避免非同步載入後新建 Audio 被瀏覽器擋播。
+                  HAKKA_SIXIAN_AUDIO_CACHE[key] = { audio: null, dataUrl: dataUrl, ready: true };
                 });
                 missing.forEach(function(key) { delete HAKKA_SIXIAN_AUDIO_PENDING[key]; });
                 finish(result || { success: false, audios: {} });
@@ -5258,6 +5287,7 @@ function getTaiwaneseKey(text) {
       if (t.indexOf('農曆') !== -1 && (t.indexOf('幾號') !== -1 || t.indexOf('幾日') !== -1)) return 'q3_lunar';
       if (t.indexOf('星期幾') !== -1 || t.indexOf('禮拜幾') !== -1) return 'q4_weekday';
       if (t.indexOf('什麼地方') !== -1 || t.indexOf('啥物地方') !== -1 || t.indexOf('目前所在的場所') !== -1 || t.indexOf('這裡是') !== -1) return 'q5_location';
+      if (t.indexOf('時間到') !== -1 || t.indexOf('時間已到') !== -1) return 'p2_time_up';
       if (t.indexOf('回想') !== -1 && (t.indexOf('圖片') !== -1 || t.indexOf('相仔') !== -1)) return 'p2_recall';
       if (t.indexOf('安靜休息') !== -1 || t.indexOf('休息期間') !== -1 || t.indexOf('靜候兩分鐘') !== -1 || t.indexOf('放輕鬆休息') !== -1) return 'p2_rest';
       if (t.indexOf('接下來會看到10張圖片') !== -1 || t.indexOf('10張圖片') !== -1 || t.indexOf('逐一向您展示') !== -1 || t.indexOf('第二關') !== -1 || t.indexOf('每張圖片會顯示') !== -1) return 'p2_intro';
@@ -5311,6 +5341,169 @@ function getTaiwaneseKey(text) {
         currentHakkaAudioPlayer = null;
         playRemoteAudioData(cached.dataUrl, requestId, expectedLanguage, isPreview, onEnded);
       }
+      return true;
+    }
+
+    // 海陸腔批次載入獨立 MP3 音檔；不共用四縣腔快取，也不自動改用其他腔調。
+    function preloadHakkaHailuAudioClips(keys) {
+      var requested = Array.from(new Set((keys || []).map(function(key) {
+        return String(key || '').trim();
+      }).filter(function(key) { return /^[A-Za-z0-9_]+$/.test(key); })));
+      if (!requested.length) return Promise.resolve(HAKKA_HAILU_AUDIO_CACHE);
+
+      var pendingPromises = [];
+      var trulyMissing = [];
+      requested.forEach(function(key) {
+        if (HAKKA_HAILU_AUDIO_CACHE[key]) return;
+        if (HAKKA_HAILU_AUDIO_PENDING[key]) pendingPromises.push(HAKKA_HAILU_AUDIO_PENDING[key]);
+        else trulyMissing.push(key);
+      });
+      if (!trulyMissing.length) {
+        return Promise.all(pendingPromises).then(function() { return HAKKA_HAILU_AUDIO_CACHE; });
+      }
+
+      // MP3 壓縮後，每批最多 10 段；最多 5 個小批次並行，避免一次建立超大 JSON 音訊回應。
+      var batchSize = 10;
+      var chunks = [];
+      for (var i = 0; i < trulyMissing.length; i += batchSize) {
+        chunks.push(trulyMissing.slice(i, i + batchSize));
+      }
+
+      var batchPromises = chunks.map(function(chunk) {
+        var batchPromise = new Promise(function(resolve) {
+          var settled = false;
+          var finish = function(value) {
+            if (settled) return;
+            settled = true;
+            resolve(value || { success: false, audios: {} });
+          };
+          var timeoutId = setTimeout(function() {
+            chunk.forEach(function(key) { delete HAKKA_HAILU_AUDIO_PENDING[key]; });
+            console.warn('[海陸腔MP3] 批次載入逾時：', chunk);
+            finish({ success: false, timedOut: true, audios: {} });
+          }, 20000);
+
+          if (typeof google === 'undefined' || !google.script || !google.script.run) {
+            clearTimeout(timeoutId);
+            chunk.forEach(function(key) { delete HAKKA_HAILU_AUDIO_PENDING[key]; });
+            finish({ success: false, audios: {} });
+            return;
+          }
+          try {
+            google.script.run
+              .withSuccessHandler(function(result) {
+                clearTimeout(timeoutId);
+                // 原生 google.script.run 直接回傳 { success, audios }；
+                // 若經 Worker 轉送，則兼容 { ok:true, result:{ success, audios } }。
+                var responseData = result;
+                if (responseData && responseData.ok === true && responseData.result &&
+                    typeof responseData.result === 'object') responseData = responseData.result;
+                if (result && result.ok === false) {
+                  console.warn('[海陸腔MP3] 後端回傳錯誤：', result.errorCode || '', result.message || '');
+                }
+                var audioMap = responseData && responseData.success && responseData.audios
+                  ? responseData.audios : {};
+                Object.keys(audioMap).forEach(function(key) {
+                  var dataUrl = audioMap[key];
+                  if (!dataUrl || typeof dataUrl !== 'string' ||
+                      dataUrl.indexOf('data:audio/mpeg;base64,') !== 0) {
+                    console.warn('[海陸腔MP3] 音檔格式不正確：', key);
+                    return;
+                  }
+                  // 只保存壓縮後的 Data URL；真正播放統一使用已解鎖的共用 Audio 元素。
+                  HAKKA_HAILU_AUDIO_CACHE[key] = { audio: null, dataUrl: dataUrl, ready: true };
+                });
+                var notLoaded = chunk.filter(function(key) { return !HAKKA_HAILU_AUDIO_CACHE[key]; });
+                if (notLoaded.length) console.warn('[海陸腔MP3] 本批未取得下列音檔：', notLoaded);
+                chunk.forEach(function(key) { delete HAKKA_HAILU_AUDIO_PENDING[key]; });
+                finish(responseData || { success: false, audios: {} });
+              })
+              .withFailureHandler(function(error) {
+                clearTimeout(timeoutId);
+                chunk.forEach(function(key) { delete HAKKA_HAILU_AUDIO_PENDING[key]; });
+                console.warn('[海陸腔MP3] 批次呼叫失敗：', chunk, error);
+                finish({ success: false, audios: {} });
+              })
+              .getHakkaHailuAudioBatch(chunk);
+          } catch (error) {
+            clearTimeout(timeoutId);
+            chunk.forEach(function(key) { delete HAKKA_HAILU_AUDIO_PENDING[key]; });
+            console.warn('[海陸腔MP3] 批次呼叫發生同步錯誤：', chunk, error);
+            finish({ success: false, audios: {} });
+          }
+        });
+        chunk.forEach(function(key) { HAKKA_HAILU_AUDIO_PENDING[key] = batchPromise; });
+        return batchPromise;
+      });
+
+      return Promise.all(pendingPromises.concat(batchPromises)).then(function() {
+        return HAKKA_HAILU_AUDIO_CACHE;
+      });
+    }
+
+    /**
+     * 海陸腔分階段背景預載：只預載即將用到的少量 MP3 音檔，避免一次建立大型音訊回應
+     * 綁成同一個 Promise，讓目前頁面的語音必須等整批資料下載完才播放。
+     * 失敗只記錄診斷，不中斷測驗流程；真正播放時仍可由 speakPrompt 按需補載。
+     */
+    function preloadHakkaHailuStageAudio(keys, stageLabel) {
+      if (examState.language !== 'hak-TW' || (examState.hakkaAccent || 'sixian') !== 'hailu') {
+        return Promise.resolve(HAKKA_HAILU_AUDIO_CACHE);
+      }
+      return preloadHakkaHailuAudioClips(keys).then(function(cache) {
+        var missing = (keys || []).filter(function(key) {
+          return !cache[key] || !cache[key].dataUrl;
+        });
+        if (missing.length) {
+          console.warn('[海陸腔分階段預載] ' + String(stageLabel || '') + ' 尚未取得：', missing);
+        }
+        return cache;
+      }).catch(function(error) {
+        console.warn('[海陸腔分階段預載失敗] ' + String(stageLabel || ''), error);
+        return HAKKA_HAILU_AUDIO_CACHE;
+      });
+    }
+
+    // 海陸腔採分階段暖機：先準備地點選擇與第一關開場；後續題目、圖卡及第三關
+    // 由各階段既有的 preloadHakkaHailuStageAudio 呼叫載入，避免一次併發 50 段音檔。
+    function warmHakkaHailuAudioLibraryInBackground() {
+      if (examState.language !== 'hak-TW' || (examState.hakkaAccent || 'sixian') !== 'hailu') {
+        return Promise.resolve(HAKKA_HAILU_AUDIO_CACHE);
+      }
+      var initialStageKeys = [
+        'location_intro', 'location_home', 'location_staff',
+        'exam_intro', 'p1_intro', 'q1_roc', 'q1_western', 'q1_zodiac'
+      ];
+      return preloadHakkaHailuStageAudio(initialStageKeys, '初始頁面與第一關開場').then(function(cache) {
+        var readyCount = initialStageKeys.filter(function(key) { return !!(cache[key] && cache[key].dataUrl); }).length;
+        console.info('[海陸腔MP3初始暖機完成]', readyCount + '/' + initialStageKeys.length);
+        return cache;
+      });
+    }
+
+    // 海陸腔和四縣腔沿用相同題目 key；第三關依海陸腔 Library 的四個時間 key 精確分流。
+    function getHakkaHailuClipKeyFromText(text) {
+      var raw = String(text || '').trim();
+      var explicit = raw.match(/^__HAKKA_CLIP__:([A-Za-z0-9_]+)$/);
+      if (explicit) return explicit[1];
+      var t = raw.replace(/[\s\u3000]/g, '');
+      if (t.indexOf('十一點十分') !== -1 || t.indexOf('11:10') !== -1 || t.indexOf('11點10分') !== -1) return 'p3_time_1110';
+      if (t.indexOf('一點四十五分') !== -1 || t.indexOf('1:45') !== -1 || t.indexOf('1點45分') !== -1) return 'p3_time_0145';
+      if (t.indexOf('八點二十分') !== -1 || t.indexOf('8:20') !== -1 || t.indexOf('8點20分') !== -1) return 'p3_time_0820';
+      if (t.indexOf('兩點四十五分') !== -1 || t.indexOf('二點四十五分') !== -1 || t.indexOf('2:45') !== -1 || t.indexOf('2點45分') !== -1) return 'p3_time_0245';
+      return getHakkaSixianClipKeyFromText(raw);
+    }
+
+    function playCachedHakkaHailuAudio(key, requestId, expectedLanguage, isPreview, onEnded) {
+      var cached = HAKKA_HAILU_AUDIO_CACHE[key];
+      if (!cached || !cached.dataUrl) return false;
+      if (requestId !== speechRequestToken || examState.language !== expectedLanguage ||
+          (examState.hakkaAccent || 'sixian') !== 'hailu') return true;
+
+      // 海陸腔固定使用共用 globalAudioPlayer；該播放器會在使用者點擊時解鎖，
+      // 避免 iOS Safari 因非同步回呼中新建 Audio 元素而拒絕播放。
+      currentHakkaAudioPlayer = null;
+      playRemoteAudioData(cached.dataUrl, requestId, expectedLanguage, isPreview, onEnded, true);
       return true;
     }
 
@@ -5434,16 +5627,37 @@ function getTaiwaneseKey(text) {
         return;
       }
 
-      if (langCode === 'hak-TW' && (examState.hakkaAccent || 'sixian') === 'sixian') {
-        // 只預載第一關會用到的固定錄音；第二、三關會在前一階段背景預載。
-        preloadHakkaSixianAudioClips(HAKKA_SIXIAN_P1_KEYS);
+      if (langCode === 'hak-TW') {
+        // 客語頁面同時預載四縣腔與海陸腔的 language_select 試聽錄音。
+        // 使用者之後可直接來回切換；每次點選都會播放目前選定腔調，不必再按「再聽一次」。
+        preloadHakkaSixianAudioClips(['language_select']).then(function() {
+          if (!HAKKA_SIXIAN_AUDIO_CACHE['language_select']) {
+            console.warn('[四縣腔試聽預載] language_select 未能建立快取。');
+          }
+        }).catch(function(error) {
+          console.warn('[四縣腔試聽預載] 背景預載失敗：', error);
+        });
+        preloadHakkaHailuAudioClips(['language_select']).then(function() {
+          var readyClip = HAKKA_HAILU_AUDIO_CACHE['language_select'];
+          if (!readyClip || !readyClip.dataUrl) {
+            console.warn('[海陸腔試聽預載] language_select 未能建立快取。');
+          }
+        }).catch(function(error) {
+          console.warn('[海陸腔試聽預載] 背景預載失敗：', error);
+        });
+
+        // 四縣腔維持原本預載方式；海陸腔改採頁面／階段分批預載，
+        // 不在語言選擇時一次傳送 exam_intro、p1_intro 等多段大型 WAV。
+        if ((examState.hakkaAccent || 'sixian') === 'sixian') {
+          preloadHakkaSixianAudioClips(HAKKA_SIXIAN_P1_KEYS);
+        }
       }
 
       var preview = langCode === 'zh-TW' ? MANDARIN_VOICE_SCRIPTS.languagePreview : '已選擇客語。';
       speakPrompt(preview, true);
     }
 
-    // inline onclick 需要從 window 全域作用域呼叫；保留函式原本閉包中的 examState 與播放邏輯。
+    // 語言選擇按鈕使用 inline onclick，公開到 window 並保留原閉包狀態。
     window.setLanguage = setLanguage;
 
     // 臺語語言選擇試聽：只從 TaiwaneseAudioLib 取得內嵌預錄音檔，不使用 HTML Base64 或 Google Drive。
@@ -5521,6 +5735,40 @@ function getTaiwaneseKey(text) {
         }
       }
 
+      // 海陸腔只讀取專屬 MP3。已快取時必須在使用者點擊的同一個呼叫堆疊直接 play()；
+      // 尚未載入時只負責預載，完成後提示使用者再按一次試聽，避免非同步回呼失去瀏覽器播放授權。
+      if (accent === 'hailu') {
+        var hailuPreviewCached = HAKKA_HAILU_AUDIO_CACHE['language_select'];
+        if (hailuPreviewCached && hailuPreviewCached.dataUrl) {
+          currentHakkaAudioPlayer = null;
+          // 語言卡片左側喇叭可獨立試聽，不要求先把作答語言切換成客語。
+          playRemoteAudioData(hailuPreviewCached.dataUrl, requestId, examState.language, true, null, true);
+          return;
+        }
+        var hailuStatus = document.getElementById('language-audio-status');
+        if (hailuStatus) {
+          hailuStatus.textContent = '正在載入海陸腔試聽錄音，載入完成後請再按一次「再聽一次試聽」。';
+          hailuStatus.classList.add('is-visible');
+        }
+        preloadHakkaHailuAudioClips(['language_select']).then(function() {
+          if (requestId !== speechRequestToken) return;
+          var loadedClip = HAKKA_HAILU_AUDIO_CACHE['language_select'];
+          if (!loadedClip || !loadedClip.dataUrl) {
+            showIndependentLanguagePreviewError();
+            return;
+          }
+          var status = document.getElementById('language-audio-status');
+          if (status) {
+            status.textContent = '海陸腔試聽錄音已載入，請按「再聽一次試聽」播放。';
+            status.classList.add('is-visible');
+          }
+        }).catch(function(error) {
+          console.error('[海陸腔試聽預載失敗]', error);
+          if (requestId === speechRequestToken) showIndependentLanguagePreviewError();
+        });
+        return;
+      }
+
       // 四縣腔先使用原本的語音資料庫；沒有快取時才沿用原本 API 備援。
       if (accent !== 'sixian') {
         useOriginalHakkaFallback();
@@ -5576,8 +5824,50 @@ function getTaiwaneseKey(text) {
 
     window.previewLanguageAudio = function(langCode) {
       if (['zh-TW', 'nan-TW', 'hak-TW'].indexOf(langCode) === -1) return;
-      unlockAudioContext();
-      stopAllSpeech();
+
+      // 海陸腔：先停止舊音訊，再檢查快取；快取已備妥時直接在本次點擊事件內播放。
+      // 若音檔尚未載入，這次只預載、不在非同步回呼內自動播放，完成後請使用者再點一次。
+      if (langCode === 'hak-TW' && (examState.hakkaAccent || 'sixian') === 'hailu') {
+        stopAllSpeech();
+        var hailuRequestId = speechRequestToken;
+        var readyHailuClip = HAKKA_HAILU_AUDIO_CACHE['language_select'];
+        if (readyHailuClip && readyHailuClip.dataUrl) {
+          currentHakkaAudioPlayer = null;
+          playRemoteAudioData(readyHailuClip.dataUrl, hailuRequestId, examState.language, true, null, true);
+          return;
+        }
+        var loadingStatus = document.getElementById('language-audio-status');
+        if (loadingStatus) {
+          loadingStatus.textContent = '正在載入海陸腔試聽錄音，載入完成後請再按一次「再聽一次試聽」。';
+          loadingStatus.classList.add('is-visible');
+        }
+        preloadHakkaHailuAudioClips(['language_select']).then(function() {
+          if (hailuRequestId !== speechRequestToken) return;
+          var clip = HAKKA_HAILU_AUDIO_CACHE['language_select'];
+          if (!clip || !clip.dataUrl) {
+            showIndependentLanguagePreviewError();
+            return;
+          }
+          var status = document.getElementById('language-audio-status');
+          if (status) {
+            status.textContent = '海陸腔試聽錄音已載入，請按「再聽一次試聽」播放。';
+            status.classList.add('is-visible');
+          }
+        }).catch(function(error) {
+          console.error('[海陸腔試聽載入失敗]', error);
+          if (hailuRequestId === speechRequestToken) showIndependentLanguagePreviewError();
+        });
+        return;
+      }
+
+      if (langCode === 'hak-TW') {
+        stopAllSpeech();
+        unlockAudioContext();
+      } else {
+        // 國語及臺語維持原本的解鎖順序與播放路徑。
+        unlockAudioContext();
+        stopAllSpeech();
+      }
       var requestId = speechRequestToken;
 
       if (langCode === 'zh-TW') {
@@ -5812,21 +6102,96 @@ function getTaiwaneseKey(text) {
     }
 
     function setHakkaAccent(accent) {
+      if (accent !== 'sixian' && accent !== 'hailu') return;
+
+      // 每次切換腔調都先停止上一段聲音，再於這次使用者點擊內解鎖共用播放器。
+      stopAllSpeech();
       unlockAudioContext();
       examState.hakkaAccent = accent;
-      document.getElementById('btn-hak-sixian').className = "accent-btn " + (accent === 'sixian' ? "active" : "");
-      document.getElementById('btn-hak-hailu').className = "accent-btn " + (accent === 'hailu' ? "active" : "");
+
+      var sixianButton = document.getElementById('btn-hak-sixian');
+      var hailuButton = document.getElementById('btn-hak-hailu');
+      if (sixianButton) sixianButton.className = 'accent-btn ' + (accent === 'sixian' ? 'active' : '');
+      if (hailuButton) hailuButton.className = 'accent-btn ' + (accent === 'hailu' ? 'active' : '');
+
+      if (examState.language !== 'hak-TW') return;
+
+      var status = document.getElementById('language-audio-status');
+      var requestId = speechRequestToken;
+      var cache = accent === 'hailu' ? HAKKA_HAILU_AUDIO_CACHE : HAKKA_SIXIAN_AUDIO_CACHE;
+      var cachedPreview = cache['language_select'];
+
+      // 兩種腔調都使用各自獨立快取；快取已完成時，在這次按鈕點擊事件內立即播放。
+      // 因此從海陸切回四縣、或從四縣切到海陸，都不需要再按「再聽一次」。
+      if (accent === 'hailu' && cachedPreview && cachedPreview.dataUrl) {
+        if (status) {
+          status.textContent = '正在播放海陸腔試聽語音。';
+          status.classList.add('is-visible');
+        }
+        playCachedHakkaHailuAudio('language_select', requestId, 'hak-TW', true, null);
+        // 試聽開始後背景暖機全部海陸腔 MP3；後續各頁直接讀取快取，不必逐題等待。
+        warmHakkaHailuAudioLibraryInBackground();
+        return;
+      }
+
+      if (accent === 'sixian' && cachedPreview) {
+        if (status) {
+          status.textContent = '正在播放四縣腔試聽語音。';
+          status.classList.add('is-visible');
+        }
+        playCachedHakkaSixianAudio('language_select', requestId, 'hak-TW', true, null);
+        return;
+      }
+
+      // 若使用者在首次背景預載尚未完成前就切換，先完成該腔調的試聽快取。
+      // 這種首次載入情況可能受瀏覽器自動播放政策限制；之後切換會直接播放，不需重複操作。
+      if (status) {
+        status.textContent = accent === 'hailu' ? '正在準備海陸腔試聽錄音，請稍候。' : '正在準備四縣腔試聽錄音，請稍候。';
+        status.classList.add('is-visible');
+      }
+
+      var preloadPromise = accent === 'hailu'
+        ? preloadHakkaHailuAudioClips(['language_select'])
+        : preloadHakkaSixianAudioClips(['language_select']);
+
+      preloadPromise.then(function() {
+        if (requestId !== speechRequestToken || examState.language !== 'hak-TW' || examState.hakkaAccent !== accent) return;
+        var loaded = (accent === 'hailu' ? HAKKA_HAILU_AUDIO_CACHE : HAKKA_SIXIAN_AUDIO_CACHE)['language_select'];
+        if (!loaded) {
+          showIndependentLanguagePreviewError();
+          return;
+        }
+        if (status) {
+          status.textContent = accent === 'hailu' ? '正在播放海陸腔試聽語音。' : '正在播放四縣腔試聽語音。';
+          status.classList.add('is-visible');
+        }
+        // 音檔取得後立即嘗試播放；不再要求使用者必須再點一次腔調／重聽按鈕。
+        if (accent === 'hailu') {
+          playCachedHakkaHailuAudio('language_select', requestId, 'hak-TW', true, null);
+          warmHakkaHailuAudioLibraryInBackground();
+        } else {
+          playCachedHakkaSixianAudio('language_select', requestId, 'hak-TW', true, null);
+        }
+      }).catch(function(error) {
+        console.error('[客語腔調試聽預載失敗]', accent, error);
+        if (requestId === speechRequestToken) showIndependentLanguagePreviewError();
+      });
+
+      // 四縣腔維持原有預載；海陸腔不整批下載第一關大型錄音，
+      // 後續各頁會在前一頁播放期間分階段預載下一頁所需音檔。
+      if (accent === 'sixian') preloadHakkaSixianAudioClips(HAKKA_SIXIAN_P1_KEYS);
     }
 
-    // 客語腔調按鈕使用 inline onclick，必須公開到 window。
+    // 客語腔調按鈕使用 inline onclick，公開到 window 並保留原閉包狀態。
     window.setHakkaAccent = setHakkaAccent;
 
     function repeatCurrentAudio() {
-      unlockAudioContext();
       if (examState.language === 'text') return;
+      if (!(examState.language === 'hak-TW' && (examState.hakkaAccent || 'sixian') === 'hailu')) {
+        unlockAudioContext();
+      }
       // 四縣腔中場休息的「再聽一次」使用使用者另外提供的專用錄音。
-      if (examState.language === 'hak-TW' && (examState.hakkaAccent || 'sixian') === 'sixian' &&
-          document.body.getAttribute('data-step') === 'step-p2-sop4') {
+      if (examState.language === 'hak-TW' && document.body.getAttribute('data-step') === 'step-p2-sop4') {
         speakPrompt('__HAKKA_CLIP__:p2_rest_repeat');
         return;
       }
@@ -5879,6 +6244,7 @@ function playRemoteAudioData(url, requestId, expectedLanguage, isPreview, onEnde
 
   globalAudioPlayer.onended = null;
   globalAudioPlayer.onerror = function() {
+    console.warn('音訊播放元素發生錯誤：', expectedLanguage, globalAudioPlayer.error || 'unknown');
     if (isPreview) reportPreviewAudioFailure(requestId, expectedLanguage);
   };
   if (typeof onEnded === 'function') {
@@ -5894,11 +6260,13 @@ function playRemoteAudioData(url, requestId, expectedLanguage, isPreview, onEnde
   try {
     var playResult = globalAudioPlayer.play();
     if (playResult && typeof playResult.catch === 'function') {
-      playResult.catch(function() {
+      playResult.catch(function(playError) {
+        console.warn('音訊 play() 被拒絕：', expectedLanguage, playError && playError.name, playError && playError.message);
         if (isPreview) reportPreviewAudioFailure(requestId, expectedLanguage);
       });
     }
   } catch(e) {
+    console.warn('音訊 play() 發生同步錯誤：', expectedLanguage, e && e.name, e && e.message);
     if (isPreview) reportPreviewAudioFailure(requestId, expectedLanguage);
   }
 }
@@ -5918,6 +6286,10 @@ function speakPrompt(text, isPreview, onComplete) {
   }
 
   stopAllSpeech();
+  // 只有海陸腔需要在非同步取回 WAV 前重新解鎖共用 Audio 元素；其他語言維持原播放路徑。
+  if (currentLang === 'hak-TW' && (examState.hakkaAccent || 'sixian') === 'hailu') {
+    unlockAudioContext();
+  }
   currentAudioText = text;
   var requestId = speechRequestToken;
   var failPreview = function() {
@@ -5958,6 +6330,27 @@ function speakPrompt(text, isPreview, onComplete) {
   /* (C) 客語：四縣腔優先播放瀏覽器預載快取；只有非內嵌音檔才走原本伺服器備援。 */
   if (currentLang === 'hak-TW') {
     var activeAccent = examState.hakkaAccent || 'sixian';
+    if (activeAccent === 'hailu') {
+      var hailuClipKey = getHakkaHailuClipKeyFromText(text);
+      if (!hailuClipKey) {
+        console.warn('海陸腔 Library 沒有對應音檔 key：', text);
+        failPreview();
+        return;
+      }
+      if (HAKKA_HAILU_AUDIO_CACHE[hailuClipKey]) {
+        playCachedHakkaHailuAudio(hailuClipKey, requestId, currentLang, !!isPreview, onComplete);
+        return;
+      }
+      preloadHakkaHailuAudioClips([hailuClipKey]).then(function() {
+        if (requestId !== speechRequestToken || examState.language !== currentLang || (examState.hakkaAccent || 'sixian') !== 'hailu') return;
+        if (!playCachedHakkaHailuAudio(hailuClipKey, requestId, currentLang, !!isPreview, onComplete)) {
+          console.warn('海陸腔預錄音檔不存在或尚未填入：', hailuClipKey);
+          if (isPreview) failPreview();
+          else if (typeof onComplete === 'function') onComplete();
+        }
+      });
+      return;
+    }
     if (activeAccent === 'sixian') {
       var clipKey = getHakkaSixianClipKeyFromText(text);
       if (clipKey) {
@@ -5987,6 +6380,8 @@ function speakPrompt(text, isPreview, onComplete) {
 // VOICE_SCRIPT_BUILD: mandarin-2026-11-23-v2 | 第二關逐張圖片名稱維持原本動態播報。
 // 國語新台詞集中管理；臺語與客語仍沿用原本音檔／語音資料庫，不共用這份文字覆蓋。
 window.MANDARIN_VOICE_SCRIPT_BUILD = 'mandarin-2026-11-23-v2';
+window.HAKKA_AUDIO_PLAYBACK_BUILD = 'hakka-mp3-staged-cache-2026-11-27-v1';
+console.info('[客語音訊播放版本]', window.HAKKA_AUDIO_PLAYBACK_BUILD);
 console.info('[國語語音台詞版本]', window.MANDARIN_VOICE_SCRIPT_BUILD);
 
 var MANDARIN_VOICE_SCRIPTS = {
@@ -6147,8 +6542,9 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
 
     // 練習地點頁：先批次載入三段四縣腔錄音，之後點選模式直接播放瀏覽器快取。
     function preloadLocationModeAudios() {
-      if (examState.language !== 'hak-TW' || (examState.hakkaAccent || 'sixian') !== 'sixian') {
-        return Promise.resolve(HAKKA_SIXIAN_AUDIO_CACHE);
+      if (examState.language !== 'hak-TW') return Promise.resolve({});
+      if ((examState.hakkaAccent || 'sixian') === 'hailu') {
+        return preloadHakkaHailuAudioClips(HAKKA_HAILU_LOCATION_KEYS);
       }
       return preloadHakkaSixianAudioClips(HAKKA_SIXIAN_LOCATION_KEYS);
     }
@@ -6195,13 +6591,17 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
         playTaiwaneseLocationAudio('mode_select_intro');
         return;
       }
-      if (examState.language !== 'hak-TW' || (examState.hakkaAccent || 'sixian') !== 'sixian') return;
-      var tokenBeforePreload = speechRequestToken;
-      preloadLocationModeAudios().then(function() {
-        if (tokenBeforePreload !== speechRequestToken) return;
-        if (document.body.getAttribute('data-step') !== 'step-location') return;
-        speakPrompt('__HAKKA_CLIP__:location_intro');
-      });
+      if (examState.language !== 'hak-TW') return;
+      if ((examState.hakkaAccent || 'sixian') === 'hailu') {
+        // 先只取目前頁面需要的 location_intro；播放結束後再背景準備模式選擇與總說明。
+        preloadHakkaHailuStageAudio(['location_intro'], '練習地點說明');
+        speakPrompt('__HAKKA_CLIP__:location_intro', false, function() {
+          preloadHakkaHailuStageAudio(['location_home', 'location_staff'], '練習方式選擇');
+          preloadHakkaHailuStageAudio(['exam_intro'], '三關測驗總說明');
+        });
+        return;
+      }
+      speakPrompt('__HAKKA_CLIP__:location_intro');
     }
 
     function playLocationModeChoiceAudio(mode) {
@@ -6213,9 +6613,15 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
         playTaiwaneseLocationAudio(mode === 'home' ? 'home_practice_selected' : 'staff_mode_selected');
         return;
       }
-      if (examState.language !== 'hak-TW' || (examState.hakkaAccent || 'sixian') !== 'sixian') return;
+      if (examState.language !== 'hak-TW') return;
       var key = mode === 'home' ? 'location_home' : 'location_staff';
-      speakPrompt('__HAKKA_CLIP__:' + key);
+      if ((examState.hakkaAccent || 'sixian') === 'hailu') {
+        speakPrompt('__HAKKA_CLIP__:' + key, false, function() {
+          preloadHakkaHailuStageAudio(['exam_intro'], '三關測驗總說明');
+        });
+      } else {
+        speakPrompt('__HAKKA_CLIP__:' + key);
+      }
     }
 
     function showStep(id) {
@@ -6239,6 +6645,10 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
         return;
       }
       examState.examIntroViewed = true;
+      if (examState.language === 'hak-TW' && (examState.hakkaAccent || 'sixian') === 'hailu') {
+        // 只確保目前頁面需要的總說明音檔；第一關 2.6 MB 說明留到總說明播完後再預載。
+        preloadHakkaHailuStageAudio(['exam_intro'], '三關測驗總說明');
+      }
       showStep('step-intro');
       
       var fullExamIntroScript = 
@@ -6248,7 +6658,14 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
         "第三項是徒手繪畫時鐘。請依照題目指定的時間，畫出完整的時鐘，包括圓形、數字，以及時針和分針。滿分七分，需要取得四分以上才算通過，作答時間為四分鐘。" +
         "以上是三項測驗的介紹，請您放輕鬆，依照接下來的指示進行測驗。";
       
-      speakMandarinOrLegacy(MANDARIN_VOICE_SCRIPTS.examIntro, fullExamIntroScript);
+      if (examState.language === 'hak-TW' && (examState.hakkaAccent || 'sixian') === 'hailu') {
+        speakMandarinOrLegacy(MANDARIN_VOICE_SCRIPTS.examIntro, fullExamIntroScript, false, function() {
+          // 等目前總說明播完才下載下一頁的長錄音，避免兩段大型 WAV 同時搶頻寬。
+          preloadHakkaHailuStageAudio(['p1_intro'], '第一關個別說明');
+        });
+      } else {
+        speakMandarinOrLegacy(MANDARIN_VOICE_SCRIPTS.examIntro, fullExamIntroScript);
+      }
     }
 
     function goToLocationSetup() {
@@ -7620,15 +8037,31 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
         return;
       }
       showStep('step-p1-intro');
-      speakMandarinOrLegacy(MANDARIN_VOICE_SCRIPTS.p1Intro, "第一關共有五個問題，請仔細聽題目，憑現在的記憶回答就好。作答時請勿查看日曆、時鐘，或由旁人提示。");
+      if (examState.language === 'hak-TW' && (examState.hakkaAccent || 'sixian') === 'hailu') {
+        // 第一關大段說明先以單一音檔優先載入；完成播放後才在背景準備各題錄音。
+        preloadHakkaHailuStageAudio(['p1_intro'], '第一關個別說明');
+        speakPrompt('第一關共有五個問題，請仔細聽題目，憑現在的記憶回答就好。作答時請勿查看日曆、時鐘，或由旁人提示。', false, function() {
+          if (document.body.getAttribute('data-step') !== 'step-p1-intro') return;
+          preloadHakkaHailuStageAudio(['q1_roc', 'q1_western', 'q1_zodiac'], '第一關第一題組');
+          preloadHakkaHailuStageAudio(['q2_solar', 'q2_lunar', 'q3_solar', 'q3_lunar', 'q4_weekday'], '第一關日期與星期題組');
+          preloadHakkaHailuStageAudio(['q5_location'], '第一關地點題');
+        });
+      } else {
+        speakMandarinOrLegacy(MANDARIN_VOICE_SCRIPTS.p1Intro, "第一關共有五個問題，請仔細聽題目，憑現在的記憶回答就好。作答時請勿查看日曆、時鐘，或由旁人提示。");
+      }
     }
 
     function startP1Quiz() {
       if (!buildP1Questions()) return;
       showStep('step-p1');
-      // 第一關作答期間，背景預載第二關的固定提示錄音，避免進入第二關後才等伺服器。
+      // 第一關作答期間，背景預載第二關說明；大型海陸腔錄音只先載入必要的 p2_intro。
       if (examState.language === 'hak-TW' && (examState.hakkaAccent || 'sixian') === 'sixian') {
         preloadHakkaSixianAudioClips(HAKKA_SIXIAN_P2_KEYS);
+      } else if (examState.language === 'hak-TW' && (examState.hakkaAccent || 'sixian') === 'hailu') {
+        // 先保證第一題組優先；其完成後再抓第二關長說明，不與第一題爭用同一下載批次。
+        preloadHakkaHailuStageAudio(['q1_roc', 'q1_western', 'q1_zodiac'], '第一關第一題組').then(function() {
+          preloadHakkaHailuStageAudio(['p2_intro'], '第二關開始說明');
+        });
       }
       renderP1Question();
     }
@@ -8340,6 +8773,13 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       if (examState.language === 'hak-TW' && (examState.hakkaAccent || 'sixian') === 'sixian') {
         preloadHakkaSixianAudioClips(HAKKA_SIXIAN_P3_KEYS);
       }
+      // 海陸腔只預載第二關接下來會用到的休息提示；圖卡仍只載入本輪抽中的 10 段。
+      if (examState.language === 'hak-TW' && (examState.hakkaAccent || 'sixian') === 'hailu') {
+        preloadHakkaHailuStageAudio(['p2_rest', 'p2_rest_repeat'], '第二關休息提示');
+        // 第三關說明先單獨預載；指定時間與結果結束語留到後續階段，不一次下載整批大檔。
+        preloadHakkaHailuStageAudio(['p3_intro'], '第三關說明');
+      }
+      // 第三關錄音延後到第二關休息／回想階段預載，避免在此處一次下載大型資料。
       examState.p2.recalledAnswers = [];
       examState.p2.matchedItems = [];
       p2RecallEditingIndex = null;
@@ -8385,8 +8825,47 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       speakMandarinOrLegacy(MANDARIN_VOICE_SCRIPTS.p2Intro, fullP2IntroText);
     }
 
+    function createHakkaHailuAudioProxy(dataUrl) {
+      if (!dataUrl || typeof dataUrl !== 'string') return null;
+      return {
+        currentTime: 0,
+        playbackRate: 1,
+        onended: null,
+        onerror: null,
+        pause: function() {
+          if (!globalAudioPlayer) return;
+          try { globalAudioPlayer.pause(); } catch (e) {}
+          globalAudioPlayer.onended = null;
+          globalAudioPlayer.onerror = null;
+        },
+        play: function() {
+          if (!globalAudioPlayer) return Promise.reject(new Error('共用音訊播放器不存在。'));
+          globalAudioPlayer.onended = this.onended;
+          globalAudioPlayer.onerror = this.onerror;
+          globalAudioPlayer.src = dataUrl;
+          globalAudioPlayer.playbackRate = this.playbackRate || 1;
+          return globalAudioPlayer.play();
+        }
+      };
+    }
+
     function batchPreloadAudioItems(itemNames) {
-      // 四縣腔優先使用第二關已批次載入的 25 段使用者錄音；其餘圖卡仍沿用原本 TTS 備援。
+      // 客語圖卡依所選腔調使用專屬 Library 快取；海陸腔缺少的空白音檔不跨腔代播。
+      if (examState.language === 'hak-TW' && (examState.hakkaAccent || 'sixian') === 'hailu') {
+        // 只載入本輪實際抽中的 10 張圖卡，不再一次傳送整個海陸腔 30 段音檔。
+        var hailuCardKeys = (itemNames || []).map(function(name) {
+          return getHakkaHailuClipKeyFromText(name);
+        }).filter(function(key) { return !!key; });
+        return preloadHakkaHailuAudioClips(hailuCardKeys).then(function() {
+          var audioObjMap = {};
+          (itemNames || []).forEach(function(name) {
+            var key = getHakkaHailuClipKeyFromText(name);
+            var cached = key ? HAKKA_HAILU_AUDIO_CACHE[key] : null;
+            if (cached && cached.dataUrl) audioObjMap[name] = createHakkaHailuAudioProxy(cached.dataUrl);
+          });
+          return audioObjMap;
+        });
+      }
       if (examState.language === 'hak-TW' && (examState.hakkaAccent || 'sixian') === 'sixian') {
         return preloadHakkaSixianAudioClips(HAKKA_SIXIAN_P2_KEYS).then(function() {
           var audioObjMap = {};
@@ -8631,10 +9110,12 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
     }
 
     async function startP2SOP2Display() {
-      unlockAudioContext();
+      var isHakkaHailu = examState.language === 'hak-TW' && (examState.hakkaAccent || 'sixian') === 'hailu';
+      if (!isHakkaHailu) unlockAudioContext();
       var runToken = ++p2DisplayToken;
       var bankId = examState.p2.bankId;
       stopAllSpeech();
+      if (isHakkaHailu) unlockAudioContext();
 
       var startButton = document.getElementById('p2-start-display-btn');
       var originalButtonText = '開始觀看圖片 ❯';
@@ -8870,6 +9351,10 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
     function startP2SOP4Rest() {
       if (restTimerInterval) clearInterval(restTimerInterval);
       showStep('step-p2-sop4'); speakMandarinOrLegacy(MANDARIN_VOICE_SCRIPTS.p2Rest, '休息期間，請您放輕鬆，靜候兩分鐘後再繼續作答。');
+      // p2_recall 是較大的錄音；利用原本 2 分鐘休息時間背景載入，避免時間到才等待。
+      if (examState.language === 'hak-TW' && (examState.hakkaAccent || 'sixian') === 'hailu') {
+        preloadHakkaHailuStageAudio(['p2_recall'], '第二關回想說明');
+      }
       var skipWrap=document.getElementById('skip-rest-wrap');
       var allowSkipRest = examState.isHomePractice === true && examState.examMode === 'practice';
       if(skipWrap) skipWrap.style.display = allowSkipRest ? 'flex' : 'none';
@@ -8894,6 +9379,12 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
           if (document.body.getAttribute('data-step') === 'step-p2-sop5') {
             speakPrompt('請回想剛才看過的十張圖片名稱，順序不限。');
           }
+        });
+      } else if (examState.language === 'hak-TW' && (examState.hakkaAccent || 'sixian') === 'hailu') {
+        speakPrompt('請回想剛才看過的十張圖片名稱，順序不限。', false, function() {
+          if (document.body.getAttribute('data-step') !== 'step-p2-sop5') return;
+          // 回想說明播完後才啟動第三關背景下載；使用者輸入答案期間可完成預載。
+          preloadHakkaHailuStageAudio(['p3_time_1110', 'p3_time_0145', 'p3_time_0820', 'p3_time_0245'], '第三關指定時間');
         });
       } else {
         speakPrompt('請回想剛才看過的十張圖片名稱，順序不限。');
@@ -9115,6 +9606,10 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
     }
 
     function startP3Intro() {
+      if (examState.language === 'hak-TW' && (examState.hakkaAccent || 'sixian') === 'hailu') {
+        // 結果頁結束語預先載入；第三關最多還有 4 分鐘作答時間，不必等到結果頁才下載。
+        preloadHakkaHailuStageAudio(['exam_end'], '測驗結果結束語');
+      }
       showStep('step-p3-intro');
       speakMandarinOrLegacy(MANDARIN_VOICE_SCRIPTS.p3Intro, '請依照指定時間，畫出完整時鐘。先畫圓形，再寫上1到12的數字，最後畫出短時針和長分針。您可以直接用手指在螢幕上畫。');
     }
@@ -9799,7 +10294,12 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
   }
   window.repeatLanguagePreview=function(){
     if(!examState || examState.language==='text')return;
-    // Re-use the exact existing language-selection handler so each language keeps its original audio route.
+    // 海陸腔重聽必須直接使用按鈕點擊事件播放已快取的 WAV，不能重新 setLanguage 後等待非同步回呼。
+    if (examState.language === 'hak-TW' && (examState.hakkaAccent || 'sixian') === 'hailu') {
+      window.previewLanguageAudio('hak-TW');
+      return;
+    }
+    // 其他語言維持原本的語音路徑。
     setLanguage(examState.language);
   };
   window.repeatResultIntroAudio=function(){
@@ -10391,6 +10891,23 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
   };
 
   // 各關明細已整合進各自成績卡片，不再建立頁面底部的獨立詳解區塊。
+
+  // 頁面初始化時先預載一段海陸腔語言試聽 WAV。
+  // 使用者稍後點選「海陸腔」時，音檔已在快取，可在點擊事件內即時播放。
+  try {
+    preloadHakkaHailuAudioClips(['language_select']).then(function() {
+      var warmedClip = HAKKA_HAILU_AUDIO_CACHE['language_select'];
+      if (warmedClip && warmedClip.dataUrl) {
+        console.info('[海陸腔試聽] language_select 已預載完成。');
+      } else {
+        console.warn('[海陸腔試聽] 預載完成但沒有有效的 Data URL。');
+      }
+    }).catch(function(error) {
+      console.warn('[海陸腔試聽] 初始化預載失敗：', error);
+    });
+  } catch (warmupError) {
+    console.warn('[海陸腔試聽] 無法啟動初始化預載：', warmupError);
+  }
 
   // Ensure all mode-dependent replay controls are synchronized after initial page load.
   updateLanguageReplay();syncAudioButtons();setStatusChip();setLocationActionState();
@@ -13315,7 +13832,7 @@ html:lang(ko) .choice-btn.active::after {
 </style>
 
 
-<!-- 已移除舊版 speech-input.js：避免 P1 MutationObserver 自我觸發；目前保留本頁 MediaRecorder 國語錄音輸入模組。 -->
+<!-- 已停用舊版 speech-input.js：避免 MutationObserver 自我觸發凍結；國語錄音輸入由本頁 mandarin-voice-input-module 提供。 -->
 <script id="drawn-playback-icons">
 (function () {
   'use strict';
