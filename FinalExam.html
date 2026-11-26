@@ -15256,9 +15256,10 @@ body[data-step="step-location"] .test-name-heading {
 (function () {
   'use strict';
 
-  // 本模組只提供國語語音輸入；不依賴 Web Speech API。
-  // 麥克風由 GitHub Pages 前端取得，錄音再透過既有 Worker／Apps Script API 轉成文字。
+  // 全站文字欄位的國語語音輸入：MediaRecorder -> Worker -> Apps Script -> 語音辨識。
+  // 錄音只在使用者點擊後開始；辨識文字只填入欄位，不自動送出、加入答案或儲存設定。
   var MAX_RECORDING_MS = 12000;
+  var TRANSCRIPTION_TIMEOUT_MS = 45000;
   var consentGranted = false;
   var pendingTarget = null;
   var activeSession = null;
@@ -15266,6 +15267,7 @@ body[data-step="step-location"] .test-name-heading {
   var observerList = [];
 
   var MIC_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="2.5" width="6" height="12" rx="3"></rect><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3.5M8.5 21.5h7"></path></svg>';
+  var VOICE_ROW_CLASS = 'mandarin-voice-row';
 
   function byId(id) { return document.getElementById(id); }
 
@@ -15277,91 +15279,135 @@ body[data-step="step-location"] .test-name-heading {
       !(textOnly && textOnly.classList.contains('active'));
   }
 
-  function currentP1QuestionNumber() {
-    var status = byId('test-status-sub');
-    if (!status) return null;
-    var match = String(status.textContent || '').match(/\d+/);
-    return match ? Number(match[0]) : null;
+  function isInputVisible(input) {
+    if (!input || !input.isConnected || input.disabled || input.readOnly) return false;
+    if (String(input.type || '').toLowerCase() !== 'text' && String(input.type || '').toLowerCase() !== 'number') return false;
+    try {
+      if (window.getComputedStyle(input).display === 'none' || window.getComputedStyle(input).visibility === 'hidden') return false;
+    } catch (e) {}
+    return !!(input.getClientRects && input.getClientRects().length);
+  }
+
+  function currentP1Question() {
+    var state = window.examState;
+    if (!state || !state.p1 || !Array.isArray(state.p1.questions)) return null;
+    return state.p1.questions[state.p1.currentIndex] || null;
   }
 
   function isP1VoiceEligible() {
-    if (!isMandarinMode()) return false;
-    var step = byId('step-p1');
-    var input = byId('p1-answer-input');
-    if (!step || !input || input.disabled || input.readOnly) return false;
-    var modeButton = document.querySelector('#p1-type-selector-wrapper .type-btn.active[data-mode]');
-    if (modeButton && modeButton.getAttribute('data-mode') === 'zodiac') return true;
-    var questionNumber = currentP1QuestionNumber();
-    return questionNumber === 4 || questionNumber === 5;
+    if (!isMandarinMode() || document.body.getAttribute('data-step') !== 'step-p1') return false;
+    return isInputVisible(byId('p1-answer-input'));
   }
 
-  function makeVoiceRow(id, buttonText, statusText) {
+  function makeVoiceRow(input, anchor, options) {
+    if (!input || !anchor || !anchor.parentNode) return null;
+    options = options || {};
+    var existing = input.__mandarinVoiceRow;
+    if (existing && existing.isConnected) {
+      if (existing.parentNode !== anchor.parentNode || existing.previousElementSibling !== anchor) {
+        anchor.insertAdjacentElement('afterend', existing);
+      }
+      return existing;
+    }
+
     var row = document.createElement('div');
-    row.className = 'mandarin-voice-row';
-    row.id = id;
+    row.className = VOICE_ROW_CLASS;
+    row.id = options.id || ('mandarin-voice-row-' + (++sessionSequence));
+    row.dataset.voiceKind = options.kind || 'generic';
 
     var button = document.createElement('button');
     button.type = 'button';
     button.className = 'mandarin-voice-button';
-    button.innerHTML = MIC_SVG + '<span>' + buttonText + '</span>';
+    button.innerHTML = MIC_SVG + '<span>' + (options.buttonText || '使用國語語音輸入') + '</span>';
     button.setAttribute('aria-pressed', 'false');
 
     var status = document.createElement('p');
     status.className = 'mandarin-voice-status';
     status.setAttribute('role', 'status');
     status.setAttribute('aria-live', 'polite');
-    status.textContent = statusText || '';
-
-    button.addEventListener('click', function () {
-      var target = id === 'p1-mandarin-voice-row' ? getP1Target() : getP2Target();
-      if (target) handleVoiceButton(target);
-    });
+    status.textContent = options.statusText || '';
 
     row.appendChild(button);
     row.appendChild(status);
+    row.__voiceInput = input;
+    row.__voiceConfig = {
+      kind: options.kind || 'generic',
+      context: options.context || 'p1',
+      expectedStep: options.expectedStep || 'step-p1',
+      buttonText: options.buttonText || '使用國語語音輸入',
+      resultMessage: options.resultMessage || '辨識完成，請檢查或修改文字。'
+    };
+    input.__mandarinVoiceRow = row;
+
+    button.addEventListener('click', function () {
+      var target = getTargetFromRow(row);
+      if (target) handleVoiceButton(target);
+    });
+
+    anchor.insertAdjacentElement('afterend', row);
     return row;
+  }
+
+  function getTargetFromRow(row) {
+    if (!row || !row.isConnected || !row.__voiceInput) return null;
+    var config = row.__voiceConfig || {};
+    return {
+      kind: config.kind || 'generic',
+      input: row.__voiceInput,
+      row: row,
+      button: row.querySelector('button'),
+      status: row.querySelector('.mandarin-voice-status'),
+      context: config.context || 'p1',
+      expectedStep: config.expectedStep || 'step-p1',
+      buttonText: config.buttonText || '使用國語語音輸入',
+      resultMessage: config.resultMessage || '辨識完成，請檢查或修改文字。'
+    };
   }
 
   function ensureVoiceRows() {
     var p1Control = byId('p1-answer-control');
-    if (p1Control && !byId('p1-mandarin-voice-row')) {
-      var p1Row = makeVoiceRow('p1-mandarin-voice-row', '使用國語語音輸入', '可說出生肖、星期或目前所在的地點。');
-      p1Control.insertAdjacentElement('afterend', p1Row);
+    var p1Input = byId('p1-answer-input');
+    if (p1Control && p1Input) {
+      makeVoiceRow(p1Input, p1Control, {
+        id: 'p1-mandarin-voice-row', kind: 'p1', context: 'p1', expectedStep: 'step-p1',
+        buttonText: '使用國語語音回答',
+        statusText: '可回答年份、月份、日期、生肖、星期或目前所在的地點。',
+        resultMessage: '辨識完成，請檢查或修改答案，再按下方確認按鈕。'
+      });
     }
 
     var p2Entry = document.querySelector('#step-p2-sop5 .p2-recall-entry');
-    if (p2Entry && !byId('p2-mandarin-voice-row')) {
-      var p2Row = makeVoiceRow('p2-mandarin-voice-row', '使用國語語音輸入圖片名稱', '一次說出一個圖片名稱；辨識完成後，請檢查文字再按「＋加入答案」。');
-      p2Entry.insertAdjacentElement('afterend', p2Row);
+    var p2Input = byId('p2-recall-input');
+    if (p2Entry && p2Input) {
+      makeVoiceRow(p2Input, p2Entry, {
+        id: 'p2-mandarin-voice-row', kind: 'p2', context: 'p2', expectedStep: 'step-p2-sop5',
+        buttonText: '使用國語語音回答圖片名稱',
+        statusText: '一次說出一個圖片名稱；辨識完成後，請檢查文字再按「＋加入答案」。',
+        resultMessage: '辨識完成，請檢查或修改文字，再按「＋加入答案」。'
+      });
     }
-  }
 
-  function getP1Target() {
-    var input = byId('p1-answer-input');
-    var row = byId('p1-mandarin-voice-row');
-    if (!input || !row) return null;
-    return {
-      kind: 'p1',
-      input: input,
-      row: row,
-      button: row.querySelector('button'),
-      status: row.querySelector('.mandarin-voice-status'),
-      context: 'p1'
-    };
-  }
+    // 工作人員模式：可直接說出地點關鍵字，辨識結果會觸發既有搜尋篩選。
+    var placeSearch = byId('placeSearchInput');
+    if (placeSearch) {
+      makeVoiceRow(placeSearch, placeSearch, {
+        id: 'place-search-mandarin-voice-row', kind: 'placeSearch', context: 'p1', expectedStep: 'step-location',
+        buttonText: '使用國語語音輸入地點關鍵字',
+        statusText: '說出縣市、行政區或地點名稱；辨識後會自動篩選下方地點。',
+        resultMessage: '辨識完成，已填入搜尋欄，請確認下方地點選項。'
+      });
+    }
 
-  function getP2Target() {
-    var input = byId('p2-recall-input');
-    var row = byId('p2-mandarin-voice-row');
-    if (!input || !row) return null;
-    return {
-      kind: 'p2',
-      input: input,
-      row: row,
-      button: row.querySelector('button'),
-      status: row.querySelector('.mandarin-voice-status'),
-      context: 'p2'
-    };
+    // 地點別名管理：僅中文（zh-TW）欄位提供國語聽寫，避免把國語辨識結果填入英／日／韓欄位。
+    var aliasInputs = document.querySelectorAll('#aliasTagsWrapper input[type="text"][data-alias-lang="zh-TW"]');
+    Array.prototype.forEach.call(aliasInputs, function (input) {
+      makeVoiceRow(input, input, {
+        kind: 'alias', context: 'p1', expectedStep: 'step-location',
+        buttonText: '使用國語語音輸入中文別名',
+        statusText: '說出這個地點常用的中文名稱；辨識後請檢查，再按「儲存別名設定」。',
+        resultMessage: '辨識完成，請確認中文別名，再按「儲存別名設定」。'
+      });
+    });
   }
 
   function setTargetStatus(target, message) {
@@ -15379,12 +15425,30 @@ body[data-step="step-location"] .test-name-heading {
   function syncVoiceRows() {
     ensureVoiceRows();
     var mandarin = isMandarinMode();
-    var p1Row = byId('p1-mandarin-voice-row');
-    var p2Row = byId('p2-mandarin-voice-row');
-    var p1Display = mandarin && isP1VoiceEligible() ? 'flex' : 'none';
-    var p2Display = mandarin ? 'flex' : 'none';
-    if (p1Row && p1Row.style.display !== p1Display) p1Row.style.display = p1Display;
-    if (p2Row && p2Row.style.display !== p2Display) p2Row.style.display = p2Display;
+    var step = document.body.getAttribute('data-step') || '';
+    var fixedRows = [
+      { row: byId('p1-mandarin-voice-row'), visible: mandarin && step === 'step-p1' && isP1VoiceEligible() },
+      { row: byId('p2-mandarin-voice-row'), visible: mandarin && step === 'step-p2-sop5' && isInputVisible(byId('p2-recall-input')) },
+      { row: byId('place-search-mandarin-voice-row'), visible: mandarin && step === 'step-location' && isInputVisible(byId('placeSearchInput')) }
+    ];
+    fixedRows.forEach(function (item) {
+      if (item.row) {
+        var display = item.visible ? 'flex' : 'none';
+        if (item.row.style.display !== display) item.row.style.display = display;
+      }
+    });
+
+    var aliasRows = document.querySelectorAll('#aliasTagsWrapper .' + VOICE_ROW_CLASS + '[data-voice-kind="alias"]');
+    Array.prototype.forEach.call(aliasRows, function (row) {
+      var input = row.__voiceInput;
+      var visible = mandarin && step === 'step-location' && isInputVisible(input);
+      var display = visible ? 'flex' : 'none';
+      if (row.style.display !== display) row.style.display = display;
+    });
+
+    if (activeSession && (!activeSession.target.input || !activeSession.target.input.isConnected)) {
+      cancelActiveSession('輸入欄位已切換，語音輸入已停止。');
+    }
   }
 
   function showConsent(target) {
@@ -15417,7 +15481,7 @@ body[data-step="step-location"] .test-name-heading {
     overlay.innerHTML =
       '<section class="mandarin-voice-consent-card" role="dialog" aria-modal="true" aria-labelledby="mandarin-voice-consent-title">' +
         '<h2 class="mandarin-voice-consent-title" id="mandarin-voice-consent-title">使用國語語音輸入前，請先閱讀</h2>' +
-        '<p class="mandarin-voice-consent-copy">按下開始後，系統會使用麥克風錄音，最長 12 秒。錄音會傳送至語音辨識服務轉成繁體中文文字。\n\n本平台不會將錄音檔存入 Google Drive 或測驗成績試算表。辨識結果只會先填入答案欄，不會自動加入答案或送出測驗；請確認文字正確後，再自行按下確認或加入答案。</p>' +
+        '<p class="mandarin-voice-consent-copy">按下開始後，系統會使用麥克風錄音，最長 12 秒，再將錄音傳送至語音辨識服務轉成繁體中文文字。\n\n錄音不會存入 Google Drive 或測驗成績試算表。辨識結果只會先填入目前欄位，不會自動確認測驗答案、加入圖卡答案或儲存地點別名；請檢查文字正確後，再自行按下確認、加入或儲存按鈕。</p>' +
         '<div class="mandarin-voice-consent-actions">' +
           '<button type="button" class="mandarin-voice-consent-cancel">取消</button>' +
           '<button type="button" class="mandarin-voice-consent-confirm">同意並開始</button>' +
@@ -15449,6 +15513,7 @@ body[data-step="step-location"] .test-name-heading {
       setTargetStatus(target, '語音輸入目前僅提供國語模式。');
       return;
     }
+    if (!target || !target.input || !target.input.isConnected) return;
     if (activeSession) {
       if (activeSession.target.input === target.input && activeSession.phase === 'recording') {
         stopRecording(activeSession, false);
@@ -15494,6 +15559,7 @@ body[data-step="step-location"] .test-name-heading {
       recorder: null,
       chunks: [],
       timer: null,
+      transcriptionTimer: null,
       phase: 'requesting',
       cancelled: false
     };
@@ -15546,7 +15612,7 @@ body[data-step="step-location"] .test-name-heading {
         setTargetButton(target, '停止錄音', false, true);
         setTargetStatus(target, target.kind === 'p2'
           ? '正在錄音，請說出一個圖片名稱；說完後再按「停止錄音」。最長 12 秒。'
-          : '正在錄音，請說出答案；說完後再按「停止錄音」。最長 12 秒。');
+          : '正在錄音，請說出欄位要填寫的內容；說完後再按「停止錄音」。最長 12 秒。');
         session.timer = setTimeout(function () {
           if (activeSession === session && session.phase === 'recording') {
             setTargetStatus(target, '已達 12 秒，正在處理錄音…');
@@ -15587,11 +15653,62 @@ body[data-step="step-location"] .test-name-heading {
     catch (error) { finishSession(session, '錄音停止失敗，請再試一次。'); }
   }
 
+  function chineseNumberToArabic(value) {
+    var text = String(value || '').trim();
+    if (!text) return '';
+    text = text.replace(/^(今年|民國|西元|國曆|農曆)+/g, '').replace(/[年月日號号月份日期\s，。！？、,.!?]/g, '');
+    var arabic = text.match(/\d+/);
+    if (arabic) return arabic[0];
+    // 從「今年是民國一百一十五年」等完整口語句中擷取數字詞，不要求受測者只說數字。
+    var chineseNumber = text.match(/[零〇○洞一二兩俩三四五六七八九十百千萬]+/);
+    if (!chineseNumber) return '';
+    text = chineseNumber[0];
+
+    var digitMap = { '零':0, '〇':0, '○':0, '洞':0, '一':1, '二':2, '兩':2, '俩':2, '三':3, '四':4, '五':5, '六':6, '七':7, '八':8, '九':9 };
+    if (/^[零〇○洞一二兩俩三四五六七八九]+$/.test(text)) {
+      return text.split('').map(function (char) { return String(digitMap[char]); }).join('');
+    }
+
+    var units = { '十':10, '百':100, '千':1000 };
+    var total = 0, section = 0, number = 0, sawUnit = false;
+    for (var i = 0; i < text.length; i++) {
+      var ch = text.charAt(i);
+      if (Object.prototype.hasOwnProperty.call(digitMap, ch)) {
+        number = digitMap[ch];
+      } else if (Object.prototype.hasOwnProperty.call(units, ch)) {
+        sawUnit = true;
+        var unit = units[ch];
+        if (number === 0 && unit === 10) number = 1;
+        section += number * unit;
+        number = 0;
+      } else if (ch === '萬' || ch === '万') {
+        sawUnit = true;
+        section = (section + number) * 10000;
+        total += section;
+        section = 0;
+        number = 0;
+      }
+    }
+    var converted = total + section + number;
+    return sawUnit && converted > 0 ? String(converted) : '';
+  }
+
+  function normalizeTranscriptForTarget(target, transcript) {
+    var value = String(transcript || '').trim();
+    if (!value) return '';
+    if (target && target.kind === 'p1') {
+      var input = target.input;
+      var numeric = !!(input && (String(input.type).toLowerCase() === 'number' || /\[0-9\]/.test(input.getAttribute('pattern') || '')));
+      if (numeric) return chineseNumberToArabic(value);
+    }
+    return value;
+  }
+
   function transcribeRecording(session, blob) {
     if (activeSession !== session || session.cancelled) return;
     session.phase = 'transcribing';
     setTargetButton(session.target, '正在辨識…', true, false);
-    setTargetStatus(session.target, '正在辨識國語，完成後會先填入答案欄，不會自動確認或加入。');
+    setTargetStatus(session.target, '正在辨識國語，完成後會先填入目前欄位，不會自動送出或儲存。');
 
     var reader = new FileReader();
     reader.onerror = function () {
@@ -15611,35 +15728,43 @@ body[data-step="step-location"] .test-name-heading {
         finishSession(session, '語音辨識後端尚未連線。請確認正式網站已載入後臺橋接，再重新整理頁面。');
         return;
       }
+      session.transcriptionTimer = setTimeout(function () {
+        if (activeSession === session && session.phase === 'transcribing') {
+          finishSession(session, '語音辨識等待時間過長，請稍後再試；也可以直接輸入文字。');
+        }
+      }, TRANSCRIPTION_TIMEOUT_MS);
       try {
         runner
           .withSuccessHandler(function (result) {
             if (activeSession !== session || session.cancelled) return;
-            var transcript = String(result && result.transcript ? result.transcript : '').trim();
-            if (!result || result.success !== true || !transcript) {
+            var rawTranscript = String(result && result.transcript ? result.transcript : '').trim();
+            if (!result || result.success !== true || !rawTranscript) {
               finishSession(session, (result && result.message) ? result.message : '沒有辨識到清楚的內容，請再試一次。');
+              return;
+            }
+            var transcript = normalizeTranscriptForTarget(session.target, rawTranscript);
+            if (!transcript) {
+              finishSession(session, '辨識到的內容無法轉成這一題需要的數字，請再說一次，例如「一一五」或「十二」。');
               return;
             }
             var input = session.target.input;
             if (input && input.isConnected) {
               input.value = transcript;
               input.dispatchEvent(new Event('input', { bubbles: true }));
+              input.dispatchEvent(new Event('change', { bubbles: true }));
               try { input.focus({ preventScroll: true }); } catch (e) { input.focus(); }
               if (typeof input.setSelectionRange === 'function') {
                 try { input.setSelectionRange(transcript.length, transcript.length); } catch (e) {}
               }
             }
-            var message = session.target.kind === 'p2'
-              ? '辨識完成，請檢查或修改文字，再按「＋加入答案」。'
-              : '辨識完成，請檢查或修改答案，再按下方確認按鈕。';
-            finishSession(session, message);
+            finishSession(session, session.target.resultMessage);
           })
           .withFailureHandler(function (error) {
             if (activeSession !== session || session.cancelled) return;
             var reason = error && error.message ? error.message : '語音辨識服務連線失敗。';
             finishSession(session, '語音辨識失敗：' + reason + '。請再試一次或改用文字輸入。');
           })
-          // 強制傳送 zh-TW；p1/p2 只影響辨識提示，不會切換成臺語或客語。
+          // p1/p2 使用既有後端辨識提示；錄音辨識固定為國語 zh-TW。
           .transcribeP2RecallAudio(base64Audio, blob.type || 'audio/mp4', 'zh-TW', session.target.context);
       } catch (error) {
         finishSession(session, '無法連接語音辨識後端，請重新整理頁面後再試。');
@@ -15648,16 +15773,22 @@ body[data-step="step-location"] .test-name-heading {
     reader.readAsDataURL(blob);
   }
 
-  function finishSession(session, message) {
+  function clearSessionTimers(session) {
     if (!session) return;
     if (session.timer) { clearTimeout(session.timer); session.timer = null; }
+    if (session.transcriptionTimer) { clearTimeout(session.transcriptionTimer); session.transcriptionTimer = null; }
+  }
+
+  function finishSession(session, message) {
+    if (!session) return;
+    clearSessionTimers(session);
     stopTracks(session);
     if (session.recorder && session.recorder.state === 'recording') {
       try { session.recorder.stop(); } catch (e) {}
     }
     session.phase = 'done';
     if (activeSession === session) activeSession = null;
-    setTargetButton(session.target, session.target.kind === 'p2' ? '使用國語語音輸入圖片名稱' : '使用國語語音輸入', false, false);
+    setTargetButton(session.target, session.target.buttonText, false, false);
     setTargetStatus(session.target, message || '');
   }
 
@@ -15665,21 +15796,22 @@ body[data-step="step-location"] .test-name-heading {
     var session = activeSession;
     if (!session) return;
     session.cancelled = true;
-    if (session.timer) { clearTimeout(session.timer); session.timer = null; }
+    clearSessionTimers(session);
     stopTracks(session);
     if (session.recorder && session.recorder.state === 'recording') {
       try { session.recorder.stop(); } catch (e) {}
     }
     activeSession = null;
-    setTargetButton(session.target, session.target.kind === 'p2' ? '使用國語語音輸入圖片名稱' : '使用國語語音輸入', false, false);
+    setTargetButton(session.target, session.target.buttonText, false, false);
     setTargetStatus(session.target, message || '已停止語音輸入。');
   }
 
   function cancelIfPageChanged() {
     if (!activeSession) return;
     var step = document.body.getAttribute('data-step') || '';
-    var expected = activeSession.target.kind === 'p1' ? 'step-p1' : 'step-p2-sop5';
-    if (step && step !== expected) cancelActiveSession('已離開此作答頁，錄音已停止。');
+    if (step && step !== activeSession.target.expectedStep) {
+      cancelActiveSession('已離開此作答頁，錄音已停止。');
+    }
   }
 
   function setupObservers() {
@@ -15689,13 +15821,25 @@ body[data-step="step-location"] .test-name-heading {
       byId('p1-type-selector-wrapper'),
       byId('p1-answer-control'),
       byId('step-lang'),
-      byId('step-p2-sop5')
+      byId('step-p2-sop5'),
+      byId('step-location'),
+      byId('location-fields'),
+      byId('aliasTagsWrapper'),
+      byId('staff-mode-settings')
     ].filter(Boolean);
+
     watched.forEach(function (node) {
       var observer = new MutationObserver(function () { syncVoiceRows(); });
-      observer.observe(node, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['class','aria-pressed','style'] });
+      observer.observe(node, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+        attributes: true,
+        attributeFilter: ['class', 'aria-pressed', 'style', 'disabled', 'readonly', 'open']
+      });
       observerList.push(observer);
     });
+
     var bodyObserver = new MutationObserver(function (records) {
       records.forEach(function (record) {
         if (record.type === 'attributes' && record.attributeName === 'data-step') cancelIfPageChanged();
@@ -15711,16 +15855,22 @@ body[data-step="step-location"] .test-name-heading {
     ensureVoiceRows();
     syncVoiceRows();
     setupObservers();
-    // 語音語言切換後立即同步；此處不更動既有 setLanguage 行為。
+
+    // 切換成臺語、客語或純文字模式時，停止進行中的國語錄音。
     if (typeof window.setLanguage === 'function') {
       var originalSetLanguage = window.setLanguage;
-      window.setLanguage = function () {
-        var result = originalSetLanguage.apply(this, arguments);
-        if (arguments[0] !== 'zh-TW') cancelActiveSession('已切換非國語模式，國語語音輸入已停止。');
-        syncVoiceRows();
-        return result;
-      };
+      if (!originalSetLanguage.__mandarinVoiceWrapped) {
+        var wrappedSetLanguage = function () {
+          var result = originalSetLanguage.apply(this, arguments);
+          if (arguments[0] !== 'zh-TW') cancelActiveSession('已切換非國語模式，國語語音輸入已停止。');
+          syncVoiceRows();
+          return result;
+        };
+        wrappedSetLanguage.__mandarinVoiceWrapped = true;
+        window.setLanguage = wrappedSetLanguage;
+      }
     }
+
     document.addEventListener('keydown', function (event) {
       if (event.key === 'Escape') {
         var overlay = byId('mandarin-voice-consent-overlay');
