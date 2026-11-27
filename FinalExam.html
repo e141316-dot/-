@@ -3206,23 +3206,23 @@ body[data-step="step-p1"] #single-progress-banner.single-progress-banner {
   line-height: 1.6 !important;
 }
 
-/* 第五題：國語麥克風為主要作答方式；文字輸入明確作為替代方式。 */
+/* 第五題：先顯示文字輸入欄位，再顯示國語語音輸入，兩種方式都保留。 */
 #step-p1[data-question-type="q5"] #p1-input-group {
   display: flex !important;
   flex-direction: column !important;
   align-items: stretch !important;
   gap: 8px !important;
 }
-#step-p1[data-question-type="q5"] #p1-mandarin-voice-row {
-  order: 1 !important;
-  margin: 4px 0 10px !important;
-}
 #step-p1[data-question-type="q5"] #p1-input-label {
-  order: 2 !important;
+  order: 1 !important;
   margin-top: 2px !important;
 }
 #step-p1[data-question-type="q5"] #p1-answer-control {
+  order: 2 !important;
+}
+#step-p1[data-question-type="q5"] #p1-mandarin-voice-row {
   order: 3 !important;
+  margin: 8px 0 4px !important;
 }
 </style>
 
@@ -10050,10 +10050,20 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
 
     function startP3Timer() {
       if(p3TimerInterval) clearInterval(p3TimerInterval);
+      // 每次正式進入第三關重新開啟一次逾時自動交卷保護。
+      window.__p3TimeLimitHandled = false;
       p3SecondsRemaining=240; updateP3TimerDisplay();
       p3TimerInterval=setInterval(function(){
         p3SecondsRemaining--; updateP3TimerDisplay();
-        if(p3SecondsRemaining<=0){ clearInterval(p3TimerInterval); p3TimerInterval=null; if(examState.language==='zh-TW')speakPrompt(MANDARIN_VOICE_SCRIPTS.p3TimeUp); showCustomAlert('作答時間已到，請送出目前的時鐘畫面。'); }
+        if(p3SecondsRemaining<=0){
+          clearInterval(p3TimerInterval); p3TimerInterval=null;
+          if(!window.__p3TimeLimitHandled){
+            window.__p3TimeLimitHandled = true;
+            // 時間到直接交卷，不再要求長者另外按一次送出。
+            if(typeof window.handleP3TimeLimit === 'function') window.handleP3TimeLimit();
+            else showCustomAlert('作答時間已到，系統無法自動送出，請聯繫工作人員。');
+          }
+        }
       },1000);
     }
     function updateP3TimerDisplay() {
@@ -10509,8 +10519,10 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       var detailLabels = EXAM_DISPLAY_LANG === 'en' ? ['Set', 'Viewing order', 'Correctly recalled', 'Not recalled', 'not recalled yet'] : EXAM_DISPLAY_LANG === 'ja' ? ['問題セット', '表示順', '正しく思い出した項目', '思い出せなかった項目', 'まだ正解なし'] : EXAM_DISPLAY_LANG === 'ko' ? ['문항 묶음', '보여준 순서', '정확히 기억한 항목', '기억하지 못한 항목', '아직 정답 없음'] : ['題組', '觀看順序', '已回想答對', '未回想出來', '尚未答對'];
       var p2Detail = detailLabels[0] + ': ' + (examState.p2.bankId || '—') + '\n' + detailLabels[1] + ': ' + itemNames.map(function(name, index) { return (index + 1) + '. ' + name; }).join('、') + '\n' + detailLabels[2] + ': ' + (matchedDisplayNames.join('、') || detailLabels[4]) + '\n' + detailLabels[3] + ': ' + unmatchedDisplayNames.join('、');
       var p3Detail = translateExamDisplayText('時鐘總分：' + examState.p3.score + ' / 7');
-      if (examState.p3.scoreProvider) p3Detail += '\n' + translateExamDisplayText('評分來源：') + examState.p3.scoreProvider + ' AI';
-      if (examState.p3.scoreReason) p3Detail += '\n' + translateExamDisplayText('AI 評分說明：') + examState.p3.scoreReason;
+      var p3TimeoutEmpty = examState.p3.scoreProvider === 'SYSTEM_TIMEOUT_EMPTY';
+      if (examState.p3.scoreProvider) p3Detail += '\n' + translateExamDisplayText('評分來源：') +
+        (p3TimeoutEmpty ? translateExamDisplayText('時間到空白自動結算') : examState.p3.scoreProvider + ' AI');
+      if (examState.p3.scoreReason) p3Detail += '\n' + translateExamDisplayText(p3TimeoutEmpty ? '評分說明：' : 'AI 評分說明：') + examState.p3.scoreReason;
       if (examState.p3.scoreBreakdown) p3Detail += '\n' + translateExamDisplayText('AI 評分細項：') + JSON.stringify(examState.p3.scoreBreakdown);
       else p3Detail += '\n' + translateExamDisplayText('AI 評分未提供逐項細節。');
       document.getElementById('result-detail-content').innerText = translateExamDisplayText('【第一關】') + '\n' + (p1Detail || translateExamDisplayText('無作答明細')) + '\n\n' + translateExamDisplayText('【第二關】') + '\n' + p2Detail + '\n\n' + translateExamDisplayText('【第三關】') + '\n' + p3Detail;
@@ -10999,13 +11011,37 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
   // Clock drawing: crisp high-DPI square canvas, pen/eraser pointer, undo stack and clear confirmation.
   var penCursor='url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2732%27 height=%2732%27 viewBox=%270 0 32 32%27%3E%3Cpath d=%27M5 26 8 19 22 5 27 10 13 24Z%27 fill=%27%234F7058%27 stroke=%27%2335473C%27 stroke-width=%271.5%27/%3E%3Cpath d=%27M5 26 8 19 12 23Z%27 fill=%27%23D5B58A%27 stroke=%27%2335473C%27 stroke-width=%271%27/%3E%3C/svg%3E") 5 26, crosshair';
   var eraserCursor='url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2732%27 height=%2732%27 viewBox=%270 0 32 32%27%3E%3Cpath d=%27M5 19 18 6 27 15 14 28 8 28 4 24Z%27 fill=%27%23E9D8C9%27 stroke=%27%236E6257%27 stroke-width=%271.7%27/%3E%3Cpath d=%27M12 12 22 22%27 stroke=%27%236E6257%27 stroke-width=%271.5%27/%3E%3C/svg%3E") 5 26, cell';
-  function p3HasInk(){return !!(examState.p3.undoStack&&examState.p3.undoStack.length>1);}
+  function p3HasInk(){
+    var canvas=byId('clockCanvas');
+    if(!canvas || !canvas.width || !canvas.height) return false;
+    try {
+      var ctx=canvas.getContext('2d');
+      if(!ctx) return false;
+      var pixels=ctx.getImageData(0,0,canvas.width,canvas.height).data;
+      var visibleInkPixels=0;
+      // Canvas 預設為不透明純白。只有實際可見的非白色筆跡才算有作答；
+      // 忽略極少量抗鋸齒雜點，避免單次觸碰被誤當成完成繪圖。
+      for(var i=0;i<pixels.length;i+=4){
+        if(pixels[i]<245 || pixels[i+1]<245 || pixels[i+2]<245){
+          visibleInkPixels++;
+          if(visibleInkPixels>=8) return true;
+        }
+      }
+      return false;
+    } catch(error) {
+      // 讀取失敗時採安全停用，不以復原堆疊長度冒充實際筆跡。
+      return false;
+    }
+  }
   function updateP3SubmitState(){
     var hasInk=p3HasInk();
+    var stack=examState.p3.undoStack||[];
+    var canUndo=stack.length>1;
     var b=byId('p3-submit-btn');
     if(b&&!p3AiScoringInProgress)b.disabled=!hasInk;
+    // 復原依據是歷史紀錄，不是目前是否有筆跡；即使擦到全白，也仍可復原。
     var undo=byId('p3-toolbar')&&byId('p3-toolbar').querySelector('.p3-tool-btn[data-tool="undo"]');
-    if(undo){undo.disabled=!hasInk;undo.setAttribute('aria-disabled',hasInk?'false':'true');}
+    if(undo){undo.disabled=!canUndo;undo.setAttribute('aria-disabled',canUndo?'false':'true');}
     var hint=byId('step-p3')&&byId('step-p3').querySelector('.p3-submit-hint');
     if(hint)hint.hidden=hasInk;
   }
@@ -11072,10 +11108,47 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
         var w=Math.max(1,rect.width-left-right),h=Math.max(1,rect.height-top-bottom);
         return{x:(e.clientX-rect.left-left)*(canvas.width/w),y:(e.clientY-rect.top-top)*(canvas.height/h)};
       }
-      function begin(e){e.preventDefault();if(e.pointerType==='mouse'&&e.button!==0)return;drawing=true;changed=false;try{canvas.setPointerCapture(e.pointerId);}catch(err){}applyTool();var p=position(e);ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(p.x+0.1,p.y+0.1);ctx.stroke();changed=true;}
-      function move(e){if(!drawing)return;e.preventDefault();var p=position(e);ctx.lineTo(p.x,p.y);ctx.stroke();changed=true;}
-      function finish(e){if(!drawing)return;if(e)e.preventDefault();drawing=false;if(changed){try{examState.p3.undoStack.push(ctx.getImageData(0,0,canvas.width,canvas.height));}catch(err){}updateP3SubmitState();}}
+      var lastPoint=null;
+      function begin(e){
+        e.preventDefault();
+        if(e.pointerType==='mouse'&&e.button!==0)return;
+        drawing=true;changed=false;
+        try{canvas.setPointerCapture(e.pointerId);}catch(err){}
+        applyTool();
+        lastPoint=position(e);
+        // pointerdown 只設定起點，不畫 0.1px 假筆跡；避免輕觸空白畫布就被視為已作答。
+        ctx.beginPath();ctx.moveTo(lastPoint.x,lastPoint.y);
+      }
+      function move(e){
+        if(!drawing)return;
+        e.preventDefault();
+        var p=position(e);
+        if(!lastPoint){lastPoint=p;ctx.beginPath();ctx.moveTo(p.x,p.y);return;}
+        var dx=p.x-lastPoint.x,dy=p.y-lastPoint.y;
+        if((dx*dx+dy*dy)<0.25)return;
+        ctx.lineTo(p.x,p.y);ctx.stroke();changed=true;lastPoint=p;
+      }
+      function finish(e){
+        if(!drawing)return;
+        if(e)e.preventDefault();
+        drawing=false;lastPoint=null;
+        if(changed){try{examState.p3.undoStack.push(ctx.getImageData(0,0,canvas.width,canvas.height));}catch(err){}}
+        updateP3SubmitState();
+      }
       canvas.addEventListener('pointerdown',begin,{passive:false});canvas.addEventListener('pointermove',move,{passive:false});canvas.addEventListener('pointerup',finish,{passive:false});canvas.addEventListener('pointercancel',finish,{passive:false});canvas.addEventListener('lostpointercapture',finish,{passive:false});
+      // iOS Safari：阻止畫布上的長按選取、系統複製選單、拖曳及雙擊放大。
+      // 只攔截發生在 Canvas 上的事件，不影響畫布外的 Safari 頁面縮放與捲動。
+      function preventNativeCanvasGesture(event){
+        if(event && event.cancelable) event.preventDefault();
+      }
+      ['contextmenu','selectstart','dragstart','dblclick','gesturestart','gesturechange','gestureend'].forEach(function(eventName){
+        canvas.addEventListener(eventName,preventNativeCanvasGesture,{passive:false});
+      });
+      // Safari 的原生雙指縮放事件在部分版本會以 gesture* 事件送出；
+      // 再攔截起始於畫布的多點觸控，避免與繪圖座標競爭。
+      canvas.addEventListener('touchstart',function(event){
+        if(event.touches && event.touches.length>1) preventNativeCanvasGesture(event);
+      },{passive:false});
       p3CanvasBound=true;examState.p3.undoStack=[ctx.getImageData(0,0,canvas.width,canvas.height)];
     }
     setP3CanvasTool(p3CurrentCanvasTool);updateP3SubmitState();
@@ -11104,11 +11177,55 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
     }
     updateP3SubmitState();
   };
+  // 第三關逾時自動交卷：有實際筆跡就走原本 AI 送出流程；空白則直接以 0 分結算，不呼叫 AI。
+  window.handleP3TimeLimit=function(){
+    var canvas=byId('clockCanvas');
+    if(!canvas){
+      showCustomAlert('作答時間已到，但找不到時鐘畫布。請聯繫工作人員。');
+      return false;
+    }
+    var imageDataUrl='';
+    try{imageDataUrl=canvas.toDataURL('image/png');}
+    catch(error){
+      showCustomAlert('作答時間已到，但無法保存目前畫作。請聯繫工作人員。');
+      return false;
+    }
+    if(!imageDataUrl || imageDataUrl.indexOf('data:image/png;base64,')!==0){
+      showCustomAlert('作答時間已到，但目前畫作無法保存。請聯繫工作人員。');
+      return false;
+    }
+    examState.p3.imageDataUrl=imageDataUrl;
+
+    if(p3HasInk()){
+      // submitP3Canvas 仍使用既有驗證、鎖定、Apps Script 評分及結果頁流程。
+      window.submitP3Canvas();
+      return true;
+    }
+
+    // 時間到時完全沒有畫作：自動完成交卷，第三關計 0 分，不送出空白圖給 AI。
+    examState.p3.score=0;
+    examState.p3.scoreBreakdown={a1:0,a2:0,a3:0,b1:0,b2:0,c1:0,c2:0};
+    examState.p3.scoreProvider='SYSTEM_TIMEOUT_EMPTY';
+    examState.p3.scoreReason='作答時間結束時，畫布仍為空白，沒有可辨識的時鐘筆跡，因此本關以 0 分結算。';
+    if(typeof renderFinalReport==='function'){
+      renderFinalReport();
+      return true;
+    }
+    showCustomAlert('作答時間已到，但無法完成結果頁交卷。請聯繫工作人員。');
+    return false;
+  };
+
   var oldSubmitP3Canvas=window.submitP3Canvas;
   window.submitP3Canvas=function(){
+    // 雙重防護：即使直接觸發提交函式，也不得把全白空畫布送進 AI 評分。
+    if(!p3HasInk()){
+      updateP3SubmitState();
+      showCustomAlert('目前畫布是空白的，請先畫出時鐘，再送出答案。');
+      return false;
+    }
     var c=byId('clockCanvas');
     if(c){try{examState.p3.imageDataUrl=c.toDataURL('image/png');}catch(e){}}
-    oldSubmitP3Canvas();
+    return oldSubmitP3Canvas();
   };
   if(byId('p3-submit-btn'))byId('p3-submit-btn').disabled=true;
 
@@ -11120,6 +11237,22 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
     snap.p3.targetTime=examState.p3.targetTime||'';
     return snap;
   };
+
+  if (typeof EXAM_TEXT_TRANSLATIONS !== 'undefined') {
+    Object.assign(EXAM_TEXT_TRANSLATIONS, {
+      '時間到空白自動結算': [
+        'Automatic completion at the time limit (blank canvas)',
+        '制限時間到達時の自動確定（キャンバスは空白）',
+        '시간 종료 시 자동 완료(빈 캔버스)'
+      ],
+      '評分說明：': ['Scoring note: ', '採点説明：', '채점 설명: '],
+      '作答時間結束時，畫布仍為空白，沒有可辨識的時鐘筆跡，因此本關以 0 分結算。': [
+        'The canvas was still blank when time expired. No recognizable clock drawing was submitted, so this stage was scored 0.',
+        '制限時間終了時もキャンバスは空白で、判読可能な時計の描画がなかったため、この段階は0点として確定しました。',
+        '시간이 종료되었을 때 캔버스가 비어 있었고 알아볼 수 있는 시계 그림이 없어 이 단계는 0점으로 처리되었습니다.'
+      ]
+    });
+  }
 
   // Structured, readable results: no debug labels or raw JSON are ever rendered.
   function makeEl(tag,cls,txt){var el=document.createElement(tag);if(cls)el.className=cls;if(txt!==undefined)el.textContent=txt;return el;}
@@ -11310,8 +11443,9 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
     }else{
       p3.appendChild(makeEl('div','detail-answer','評分系統未提供可顯示的逐項評分資料。'));
     }
-    if(examState.p3.scoreReason)p3.appendChild(makeEl('div','detail-answer','評分系統評語：'+String(examState.p3.scoreReason)));
-    if(examState.p3.scoreProvider)p3.appendChild(makeEl('div','detail-date','評分來源：'+String(examState.p3.scoreProvider)));
+    var p3IsTimeoutEmpty = examState.p3.scoreProvider === 'SYSTEM_TIMEOUT_EMPTY';
+    if(examState.p3.scoreReason)p3.appendChild(makeEl('div','detail-answer',(p3IsTimeoutEmpty?'作答狀態：':'評分系統評語：')+translateExamDisplayText(String(examState.p3.scoreReason))));
+    if(examState.p3.scoreProvider)p3.appendChild(makeEl('div','detail-date','評分來源：'+translateExamDisplayText(p3IsTimeoutEmpty?'時間到空白自動結算':String(examState.p3.scoreProvider))));
     p3Host.appendChild(p3);
 
     // 每次產生成績明細時，三關預設全部收合；不更動任何分數或作答資料。
@@ -13335,12 +13469,12 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
       removeDateKeypadHint();
       if (wrapper) wrapper.style.display = 'none';
       if (questionHint) {
-        questionHint.textContent = t('請優先使用國語語音回答，也可以直接輸入地點名稱。');
+        questionHint.textContent = t('請直接輸入地點名稱，也可使用下方國語語音回答。');
         questionHint.style.display = 'block';
       }
       if (group) group.style.display = 'block';
       if (label) {
-        label.textContent = t('也可以直接輸入答案：');
+        label.textContent = t('直接輸入答案：');
         label.classList.add('q5-answer-label');
         label.classList.remove('date-input-label', 'month-input-label');
         label.style.display = 'block';
@@ -13350,7 +13484,7 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
         input.classList.add('p1-open-text-input');
         input.type = 'text'; input.readOnly = false;
         input.setAttribute('inputmode', 'text'); input.setAttribute('lang', 'zh-Hant');
-        input.setAttribute('aria-label', t('也可以直接輸入答案：'));
+        input.setAttribute('aria-label', t('直接輸入答案：'));
         input.setAttribute('autocomplete', 'off'); input.setAttribute('autocapitalize', 'off'); input.spellcheck = false;
         input.removeAttribute('maxlength'); input.removeAttribute('pattern');
         input.placeholder = t('請輸入地點名稱');
@@ -17030,12 +17164,12 @@ if (typeof EXAM_TEXT_TRANSLATIONS !== 'undefined') {
     '請輸入農曆日期：': ['Enter the lunar date:', '旧暦の日付を入力してください：', '음력 날짜를 입력하세요:'],
     '請輸入星期幾：': ['Enter the day of the week:', '曜日を入力してください：', '요일을 입력하세요:'],
     '例如：星期一': ['e.g. Monday', '例：月曜日', '예: 월요일'],
-    '請優先使用國語語音回答，也可以直接輸入地點名稱。': [
-      'Please answer verbally in Mandarin first. You may also type the location name.',
-      'まず国語で音声回答してください。場所の名前を直接入力することもできます。',
-      '먼저 표준 중국어로 음성 답변하세요. 장소 이름을 직접 입력해도 됩니다.'
+    '請直接輸入地點名稱，也可使用下方國語語音回答。': [
+      'Enter the location name directly, or use Mandarin voice input below.',
+      '場所の名前を直接入力するか、下の中国語音声入力を使用してください。',
+      '장소 이름을 직접 입력하거나 아래의 표준 중국어 음성 입력을 사용하세요.'
     ],
-    '也可以直接輸入答案：': ['You may also type your answer:', '回答を直接入力することもできます：', '답변을 직접 입력해도 됩니다:'],
+    '直接輸入答案：': ['Enter your answer:', '回答を入力してください：', '답변을 입력하세요:'],
     '請輸入地點名稱': ['Enter the location name', '場所の名前を入力してください', '장소 이름을 입력하세요'],
     '點擊麥克風，使用國語回答。': ['Tap the microphone to answer in Mandarin.', 'マイクをタップして中国語（標準語）で回答してください。', '마이크를 눌러 표준 중국어로 답변하세요.'],
     '正在聆聽，請開始說話。': ['Listening. Please start speaking.', '聞き取り中です。話し始めてください。', '듣고 있습니다. 말씀해 주세요.'],
@@ -17084,6 +17218,22 @@ if (typeof EXAM_TEXT_TRANSLATIONS !== 'undefined') {
 #step-p2-sop5 .recall-empty-note {
   display: block;
   padding: 8px 10px;
+}
+
+/* 第三關繪圖期間，僅鎖定 Canvas 區域的瀏覽器選取、長按選單及縮放手勢。
+   畫布外仍維持正常頁面捲動與瀏覽器縮放。 */
+#step-p3 .canvas-wrap,
+#step-p3 #clockCanvas {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  -webkit-touch-callout: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+  -webkit-user-drag: none !important;
+}
+#step-p3 #clockCanvas {
+  touch-action: none !important;
+  -ms-touch-action: none !important;
+  overscroll-behavior: contain;
 }
 </style>
 
