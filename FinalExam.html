@@ -3304,8 +3304,8 @@ body[data-step="step-p1"] #single-progress-banner.single-progress-banner {
   #step-p3 .p3-time-strip .p3-target-time { font-size: 19px !important; }
   #step-p3 .p3-time-strip .p3-countdown { font-size: 15px !important; }
 }
-@media (max-width: 360px) {
-  /* 極窄手機改為兩列：指定時間仍相對整條資訊列置中，倒數仍靠右，避免文字互相覆蓋。 */
+@media (max-width: 440px) {
+  /* 手機窄版改為兩列：指定時間仍相對整條資訊列置中，倒數仍靠右，避免文字互相覆蓋。 */
   #step-p3 .p3-time-strip {
     grid-template-columns: minmax(0,1fr) !important;
     grid-template-rows: auto auto !important;
@@ -3324,6 +3324,218 @@ body[data-step="step-p1"] #single-progress-banner.single-progress-banner {
     grid-row: 2 !important;
     justify-self: end !important;
     font-size: 14px !important;
+  }
+}
+</style>
+
+
+<style>
+/* 1. 第一關第五題：維持正常文件流，避免被 iPhone Safari 底部工具列蓋住。 */
+html { min-height:100%; height:auto; overflow-x:hidden; }
+body[data-step="step-p1"] {
+  min-height:100vh;
+  min-height:100dvh;
+  height:auto !important;
+  overflow-x:hidden !important;
+  overflow-y:auto !important;
+  -webkit-overflow-scrolling:touch;
+  scroll-padding-bottom:calc(120px + env(safe-area-inset-bottom, 0px));
+}
+body[data-step="step-p1"] .exam-wrapper {
+  min-height:100vh;
+  min-height:100dvh;
+  height:auto !important;
+  padding-bottom:calc(180px + env(safe-area-inset-bottom, 0px)) !important;
+}
+body[data-step="step-p1"] #step-p1 {
+  position:relative;
+  min-height:0 !important;
+  height:auto !important;
+  overflow-x:clip !important;
+  overflow-y:visible !important;
+}
+body[data-step="step-p1"] #p1-standard-action,
+body[data-step="step-p1"] #step-p1 .p1-action-area {
+  position:static !important;
+  inset:auto !important;
+  left:auto !important;
+  right:auto !important;
+  bottom:auto !important;
+  z-index:auto !important;
+  display:flex;
+  width:100% !important;
+  max-width:100% !important;
+  margin:22px 0 0 !important;
+  padding:8px 0 calc(38px + env(safe-area-inset-bottom, 0px)) !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  box-sizing:border-box !important;
+}
+body[data-step="step-p1"] #p1-submit-btn {
+  width:100% !important;
+  min-height:64px !important;
+  scroll-margin-bottom:calc(120px + env(safe-area-inset-bottom, 0px));
+}
+
+/* 2. 第二關說明頁：返回按鈕獨立第一列，語音狀態完整放在第二列。 */
+@media (max-width:600px) {
+  body[data-step="step-p2-intro"] #top-back-bar {
+    width:100%;
+    margin-bottom:12px !important;
+  }
+  body[data-step="step-p2-intro"] .top-back-row {
+    display:flex !important;
+    flex-direction:column !important;
+    flex-wrap:nowrap !important;
+    align-items:stretch !important;
+    justify-content:flex-start !important;
+    gap:8px !important;
+    width:100% !important;
+    min-width:0 !important;
+  }
+  body[data-step="step-p2-intro"] .top-back-row .top-back-btn {
+    display:inline-flex !important;
+    align-self:flex-start !important;
+    flex:0 0 auto !important;
+    width:max-content !important;
+    min-width:0 !important;
+    max-width:100% !important;
+    min-height:48px !important;
+    padding:8px 14px !important;
+    white-space:nowrap !important;
+    word-break:keep-all !important;
+    overflow-wrap:normal !important;
+  }
+  body[data-step="step-p2-intro"] .top-back-row .mode-status-chip {
+    display:flex !important;
+    align-self:stretch !important;
+    flex:0 0 auto !important;
+    width:100% !important;
+    max-width:100% !important;
+    min-width:0 !important;
+    margin:0 !important;
+    padding:7px 10px !important;
+    justify-content:flex-start !important;
+    text-align:left !important;
+    white-space:normal !important;
+    overflow-wrap:anywhere !important;
+    line-height:1.45 !important;
+    box-sizing:border-box !important;
+  }
+  body[data-step="step-p2-intro"] .top-back-row .mode-status-chip span {
+    min-width:0 !important;
+    white-space:normal !important;
+    overflow-wrap:anywhere !important;
+  }
+}
+
+/* 3. 第二關回想頁：窄螢幕改成插圖、完整文字、整列重聽按鈕。桌面仍維持左右排列。 */
+@media (max-width:600px) {
+  #step-p2-sop5 > .guide-card {
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) !important;
+    align-items:start !important;
+    justify-items:stretch !important;
+    gap:10px !important;
+    width:100% !important;
+    min-width:0 !important;
+    padding:16px 14px !important;
+    box-sizing:border-box !important;
+  }
+  #step-p2-sop5 > .guide-card > .guide-avatar.guide-illustrated {
+    display:flex !important;
+    width:68px !important;
+    height:68px !important;
+    min-width:68px !important;
+    min-height:68px !important;
+    flex:0 0 68px !important;
+    justify-self:center !important;
+    margin:0 auto !important;
+  }
+  #step-p2-sop5 > .guide-card > .guide-content {
+    display:flex !important;
+    flex-direction:column !important;
+    width:100% !important;
+    min-width:0 !important;
+    max-width:100% !important;
+  }
+  #step-p2-sop5 > .guide-card .guide-main {
+    width:100% !important;
+    margin:0 !important;
+    font-size:22px !important;
+    line-height:1.5 !important;
+    text-align:center !important;
+    overflow-wrap:normal !important;
+    word-break:normal !important;
+  }
+  #step-p2-sop5 > .guide-card .guide-sub {
+    width:100% !important;
+    margin:8px 0 0 !important;
+    font-size:18px !important;
+    line-height:1.6 !important;
+    text-align:center !important;
+    overflow-wrap:anywhere !important;
+  }
+  #step-p2-sop5 > .guide-card .guide-footer {
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:stretch !important;
+    width:100% !important;
+    margin-top:12px !important;
+  }
+  #step-p2-sop5 > .guide-card .guide-audio-btn {
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    width:100% !important;
+    min-height:52px !important;
+    box-sizing:border-box !important;
+    white-space:nowrap !important;
+  }
+  #step-p2-sop5 .p2-recall-entry {
+    flex-direction:column !important;
+    flex-wrap:nowrap !important;
+    gap:10px !important;
+    width:100% !important;
+  }
+  #step-p2-sop5 #p2-recall-input,
+  #step-p2-sop5 #p2-recall-add-btn,
+  #step-p2-sop5 #p2-recall-cancel-edit {
+    width:100% !important;
+    min-width:0 !important;
+    box-sizing:border-box !important;
+  }
+}
+
+/* 4. 第三關：Canvas 顯示層與像素背景都固定純白；保留 600×600 內部座標。 */
+#step-p3 .canvas-wrap {
+  background:transparent !important;
+  isolation:isolate;
+}
+#step-p3 #clockCanvas {
+  background:#FFFFFF !important;
+  background-color:#FFFFFF !important;
+  background-image:none !important;
+  color-scheme:light !important;
+  border-color:#173B29 !important;
+}
+@media (max-width:600px) {
+  #step-p3 #p3-toolbar {
+    display:grid !important;
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    gap:10px !important;
+    width:100% !important;
+  }
+  #step-p3 #p3-toolbar .p3-tool-btn {
+    width:100% !important;
+    min-width:0 !important;
+    min-height:60px !important;
+    padding:8px 10px !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    box-sizing:border-box !important;
+    white-space:nowrap !important;
   }
 }
 </style>
@@ -10808,7 +11020,10 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       var st=window.getComputedStyle?window.getComputedStyle(canvas):null;
       var bw=st?(parseFloat(st.borderLeftWidth)||0)+(parseFloat(st.borderRightWidth)||0):0;
       var contentWidth=Math.max(1,rect.width-bw);
-      var scale=canvas.width/contentWidth;
+      var scale=rect.width>1?canvas.width/contentWidth:1;
+      // 白底已存在於 Canvas 像素；橡皮擦改以白色筆跡覆蓋，避免 destination-out 產生透明洞。
+      ctx.globalCompositeOperation='source-over';
+      ctx.strokeStyle=tool==='eraser'?'#FFFFFF':'#35473C';
       ctx.lineWidth=(tool==='eraser'?24:3.5)*scale;
       ctx.lineCap='round';ctx.lineJoin='round';
     }
@@ -10818,11 +11033,17 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
   window.initClockCanvas=function(){
     var canvas=byId('clockCanvas');if(!canvas)return;
     if(!p3CanvasBound){
+      // window.onload 會在第三關仍隱藏時呼叫初始化；隱藏時 rect 為 0，必須延後到 showStep 顯示後再綁定與計算比例。
+      var preInitRect=canvas.getBoundingClientRect();
+      var preInitStyle=window.getComputedStyle?window.getComputedStyle(canvas):null;
+      if(preInitRect.width<2 || preInitRect.height<2 || (preInitStyle && (preInitStyle.display==='none' || preInitStyle.visibility==='hidden'))) return;
       // Canvas 內部座標固定 600 x 600；CSS 僅控制顯示尺寸，不改變繪圖資料座標系。
       var cssWidth=Math.min(460,Math.max(260,Math.floor(Math.min(window.innerWidth*0.86,460))));
       canvas.style.width=cssWidth+'px';canvas.style.height=cssWidth+'px';
       canvas.width=600;canvas.height=600;
       var ctx=canvas.getContext('2d');ctx.setTransform(1,0,0,1,0,0);
+      // 將純白色寫入 600×600 Canvas 像素，確保 iOS Safari、PNG 匯出及評分預覽都不會透出深色底層。
+      ctx.globalCompositeOperation='source-over';ctx.fillStyle='#FFFFFF';ctx.fillRect(0,0,canvas.width,canvas.height);
       var rect0=canvas.getBoundingClientRect();
       var initialStyle=window.getComputedStyle?window.getComputedStyle(canvas):null;
       var borderX=initialStyle?(parseFloat(initialStyle.borderLeftWidth)||0)+(parseFloat(initialStyle.borderRightWidth)||0):0;
@@ -10831,8 +11052,16 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       var scaleX=canvas.width/contentWidth,scaleY=canvas.height/contentHeight;
       var drawing=false, changed=false;
       function applyTool(){
-        if(p3CurrentCanvasTool==='eraser'){ctx.globalCompositeOperation='destination-out';ctx.lineWidth=24*scaleX;}
-        else{ctx.globalCompositeOperation='source-over';ctx.strokeStyle='#35473C';ctx.lineWidth=3.5*scaleX;}
+        // 每次選取工具／開始筆畫都讀取目前可見尺寸，避免隱藏頁的 0px 寬度或裝置旋轉造成筆寬比例錯誤。
+        var liveRect=canvas.getBoundingClientRect();
+        var liveStyle=window.getComputedStyle?window.getComputedStyle(canvas):null;
+        var liveBorderX=liveStyle?(parseFloat(liveStyle.borderLeftWidth)||0)+(parseFloat(liveStyle.borderRightWidth)||0):0;
+        var liveContentWidth=Math.max(1,liveRect.width-liveBorderX);
+        scaleX=canvas.width/liveContentWidth;
+        // 以白色筆跡執行橡皮擦；背景本身為不透明白色，視覺效果等同擦除且 PNG 不會透明。
+        ctx.globalCompositeOperation='source-over';
+        ctx.strokeStyle=p3CurrentCanvasTool==='eraser'?'#FFFFFF':'#35473C';
+        ctx.lineWidth=(p3CurrentCanvasTool==='eraser'?24:3.5)*scaleX;
         ctx.lineCap='round';ctx.lineJoin='round';
       }
       function position(e){
@@ -10862,7 +11091,19 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
     );
   };
   var oldClearCanvas=window.clearCanvas;
-  window.clearCanvas=function(){oldClearCanvas();updateP3SubmitState();};
+  window.clearCanvas=function(){
+    oldClearCanvas();
+    var canvas=byId('clockCanvas');
+    if(canvas){
+      var ctx=canvas.getContext('2d');
+      ctx.globalCompositeOperation='source-over';
+      ctx.fillStyle='#FFFFFF';
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+      examState.p3.undoStack=[ctx.getImageData(0,0,canvas.width,canvas.height)];
+      setP3CanvasTool(p3CurrentCanvasTool);
+    }
+    updateP3SubmitState();
+  };
   var oldSubmitP3Canvas=window.submitP3Canvas;
   window.submitP3Canvas=function(){
     var c=byId('clockCanvas');
@@ -12141,9 +12382,64 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
   }
 
   function isNativeKeypadDevice() {
-    // 所有裝置均使用原本網頁自訂數字鍵盤；不以原生鍵盤取代。
-    // input.readOnly=false，電腦實體鍵盤與外接鍵盤仍可輸入。
-    return false;
+    // iPhone/iPad 與 Android 手機/平板使用作業系統原生鍵盤。
+    // iPadOS 的「要求桌面網站」可能回報 Macintosh，因此另以多點觸控辨識 iPad。
+    // 不以視窗寬度判斷，避免桌面電腦縮小瀏覽器視窗後誤切換成原生鍵盤。
+    var nav = window.navigator || {};
+    var ua = String(nav.userAgent || '');
+    var platform = String(nav.platform || '');
+    var maxTouchPoints = Number(nav.maxTouchPoints || 0);
+    var isIOS = /iPhone|iPad|iPod/i.test(ua) ||
+      (/MacIntel|Macintosh/i.test(platform + ' ' + ua) && maxTouchPoints > 1);
+    var isAndroid = /Android/i.test(ua);
+    var isMobileBrowser = /Mobile|Windows Phone/i.test(ua);
+    return isIOS || isAndroid || isMobileBrowser;
+  }
+
+  // 行動裝置不建立或保留任何網頁自製數字按鍵；只保留月份驗證訊息節點。
+  // 桌面裝置切回時，原本的 renderer 會重新產生自製鍵盤，不需改動答案或評分流程。
+  function removeCustomPadForNativeDevice() {
+    if (panel) panel.hidden = true;
+    if (input) {
+      input.setAttribute('aria-expanded', 'false');
+      input.removeAttribute('aria-haspopup');
+    }
+    removeTriggerHelp();
+
+    var monthFeedback = byId('p1-month-number-pad-feedback');
+    if (monthFeedback && monthFeedback.parentNode !== control) {
+      control.appendChild(monthFeedback);
+    }
+
+    [control, panel, p1KeypadColumn].forEach(function (root) {
+      if (!root || !root.querySelectorAll) return;
+      Array.prototype.slice.call(root.querySelectorAll(
+        '.number-pad-help, .number-pad-grid, .number-pad-actions'
+      )).forEach(function (node) {
+        if (node.parentNode) node.parentNode.removeChild(node);
+      });
+    });
+
+    // 同時清除已暫存在快取中的舊按鍵節點，避免切換裝置後重新插回手機畫面。
+    cachedPadNodes.forEach(function (node) {
+      if (!node || !node.classList) return;
+      if (node.classList.contains('number-pad-feedback')) {
+        if (node.parentNode !== control) control.appendChild(node);
+      } else if (node.parentNode) {
+        node.parentNode.removeChild(node);
+      }
+    });
+    cachedPadNodes = [];
+    cachedPadMode = '';
+
+    if (panel && panel.parentNode) panel.parentNode.removeChild(panel);
+    panel = null;
+    panelCloseButton = null;
+    if (p1KeypadColumn && p1KeypadColumn.parentNode) {
+      p1KeypadColumn.parentNode.removeChild(p1KeypadColumn);
+    }
+    p1KeypadColumn = null;
+    p1Layout = null;
   }
 
   function getAppState() {
@@ -12168,7 +12464,7 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
     var mode = state.p1.currentMode;
     var lang = (typeof window.EXAM_DISPLAY_LANG === 'string' && window.EXAM_DISPLAY_LANG) ||
       (typeof EXAM_DISPLAY_LANG !== 'undefined' && EXAM_DISPLAY_LANG) || 'zh-TW';
-    // 四種介面語言都保留自訂數字鍵盤；英／日／韓亦可由實體鍵盤輸入文字答案。
+    // 介面語言可輸入數字或原本允許的在地化文字；中文數字欄位會啟用原生數字鍵盤。
     var allowWords = lang !== 'zh-TW';
     if (q.type === 'q1') {
       if (mode === 'roc') return { key: 'q1-roc', kind: 'year', maxDigits: 3, placeholder: '點此輸入年份數字', label: '民國年份', allowWords: allowWords };
@@ -12457,8 +12753,8 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
     var oldValue = String(input.dataset.lastAcceptedValue || '');
     var raw = String(input.value || '');
 
-    // 英／日／韓介面：實體鍵盤可輸入完整文字（例如 March、17th、二千二十六年），不可被數字過濾器清空。
-    // 若使用者輸入的是數字，仍套用原本位數與月份範圍檢查；浮動鍵盤按鍵也走同一條路徑。
+    // 允許文字的介面可輸入完整在地化文字（例如 March、17th），不可被數字過濾器清空。
+    // 若使用者輸入的是數字，仍套用原本位數與月份範圍檢查；桌面自製鍵盤也走同一條路徑。
     var containsLocalizedText = config.allowWords && /[A-Za-z぀-ヿ㐀-鿿가-힯]/.test(raw);
     if (containsLocalizedText) {
       input.dataset.lastAcceptedValue = raw;
@@ -12587,19 +12883,36 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
       input.dataset.lastAcceptedValue = String(input.value || '');
     }
 
-    // 把原本在欄位下方建立的按鍵節點收進浮動面板，絕不留在頁面文件流中。
+    var statusHelp = ensureFeedback();
+    setFeedback('');
+    input.readOnly = false;
+    input.disabled = false;
+
+    if (nativeMode) {
+      // 手機／平板：使用 iOS Safari、Android Chrome 自己的數字鍵盤。
+      // type 保持 text，以保留原本字數限制、全形數字正規化及答案驗證流程。
+      removeCustomPadForNativeDevice();
+      input.setAttribute('inputmode', allowWords ? 'text' : 'numeric');
+      input.setAttribute('enterkeyhint', 'done');
+      input.removeAttribute('aria-haspopup');
+      input.setAttribute('aria-expanded', 'false');
+      var nativeDescriptions = [];
+      var guidance = byId('p1-number-pad-instruction');
+      if (guidance && guidance.isConnected) nativeDescriptions.push(guidance.id);
+      if (statusHelp && statusHelp.isConnected) nativeDescriptions.push(statusHelp.id);
+      if (nativeDescriptions.length) input.setAttribute('aria-describedby', nativeDescriptions.join(' '));
+      else input.removeAttribute('aria-describedby');
+      return;
+    }
+
+    // 桌面電腦：繼續使用原本網頁自製數字鍵盤，實體鍵盤輸入也維持可用。
     var helpNodes = getPadNodesFrom(control).filter(function (node) { return node.classList.contains('number-pad-help'); });
     helpNodes.forEach(function (node) { if (node.parentNode) node.parentNode.removeChild(node); });
     ensureOriginalPadNodes(config);
-
-    var statusHelp = ensureFeedback();
-    setFeedback('');
-    // 手機、平板與電腦統一使用網頁自訂浮動鍵盤；實體鍵盤輸入仍保持啟用。
-    input.readOnly = false;
-    input.disabled = false;
     input.setAttribute('inputmode', 'none');
     input.removeAttribute('enterkeyhint');
     input.setAttribute('aria-haspopup', 'dialog');
+    input.setAttribute('aria-expanded', 'false');
     addDesktopHint();
     input.setAttribute('aria-describedby', statusHelp.id);
     if (cachedPadNodes.length) buildPanelContent();
