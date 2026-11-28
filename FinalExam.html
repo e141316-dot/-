@@ -5293,6 +5293,30 @@ function getExamCardDisplayName(chineseName) {
       return out;
     }
 
+    function numberToChineseCardinal(number) {
+      var n = Number(number);
+      if (!Number.isInteger(n) || n < 0 || n > 9999) return '';
+      if (n === 0) return '零';
+      var digits = ['零','一','二','三','四','五','六','七','八','九'];
+      var units = ['', '十', '百', '千'];
+      var out = '', zeroPending = false, position = 0;
+      while (n > 0) {
+        var digit = n % 10;
+        if (digit) {
+          var part = digits[digit] + units[position];
+          out = part + (zeroPending && out ? '零' : '') + out;
+          zeroPending = false;
+        } else if (out) {
+          zeroPending = true;
+        }
+        n = Math.floor(n / 10);
+        position++;
+      }
+      // Chinese year reading convention: 10–19 is commonly written 十一…十九.
+      out = out.replace(/^一十/, '十');
+      return out;
+    }
+
     function getLocalizedYearAliases(number) {
       var n = Number(number);
       var aliases = [];
@@ -5313,6 +5337,17 @@ function getExamCardDisplayName(chineseName) {
       }
       if (jaReading) aliases.push(jaReading, jaReading + 'ねん');
       if (ko) aliases.push(ko, ko + '년');
+      // Traditional Chinese spoken/written year forms, in addition to Arabic digits.
+      var zhCardinal = numberToChineseCardinal(n);
+      var zhDigitSequence = String(n).split('').map(function(d) { return ['零','一','二','三','四','五','六','七','八','九'][Number(d)]; }).join('');
+      if (zhCardinal) {
+        aliases.push(zhCardinal, zhCardinal + '年', zhDigitSequence, zhDigitSequence + '年');
+        if (n >= 1912 && n <= 2999) {
+          aliases.push('西元' + zhCardinal + '年', '公元' + zhCardinal + '年', '西元' + zhDigitSequence + '年', '公元' + zhDigitSequence + '年');
+        }
+        if (n >= 1 && n <= 999) aliases.push('民國' + zhCardinal + '年', '民国' + zhCardinal + '年', '民國' + n + '年', '民国' + n + '年');
+        if (n >= 2000 && n <= 2999) aliases.push(zhCardinal.replace(/^二千/, '兩千') + '年');
+      }
       aliases.push(String(n) + '年', String(n) + '년', String(n) + ' year', 'year ' + String(n));
       return aliases;
     }
@@ -5420,7 +5455,7 @@ function getExamCardDisplayName(chineseName) {
       var normalized = normalizeAnswerText(normalizeAnswerDigits(value));
       if (!normalized) return null;
       var cleaned = normalized.replace(/^the/, '');
-      var numericMatch = cleaned.match(/^(\d{1,2})(?:st|nd|rd|th)?(?:day|日|일)?$/);
+      var numericMatch = cleaned.match(/^(\d{1,2})(?:st|nd|rd|th)?(?:day|日|號|号|일)?$/);
       if (numericMatch) {
         var numeric = Number(numericMatch[1]);
         return Number.isInteger(numeric) && numeric >= 1 && numeric <= 31 ? numeric : null;
@@ -5436,8 +5471,13 @@ function getExamCardDisplayName(chineseName) {
         var ko = normalizeAnswerText(numberToKoreanSino(day) + '일');
         if (cleaned === ko) return day;
       }
-      if (cleaned.endsWith('日')) {
-        var jpNumber = parseJapaneseInteger(cleaned.slice(0, -1));
+      if (cleaned.endsWith('日') || cleaned.endsWith('號') || cleaned.endsWith('号')) {
+        var dayNumberText = cleaned.slice(0, -1);
+        var jpNumber = parseJapaneseInteger(dayNumberText);
+        if (!Number.isInteger(jpNumber)) {
+          var 廿Match = dayNumberText.match(/^廿([一二三四五六七八九])?$/);
+          if (廿Match) jpNumber = 20 + ({'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9}[廿Match[1]] || 0);
+        }
         if (Number.isInteger(jpNumber) && jpNumber >= 1 && jpNumber <= 31) return jpNumber;
       }
       if (cleaned.endsWith('일')) {
@@ -5464,10 +5504,18 @@ function getExamCardDisplayName(chineseName) {
     };
 
     var ZODIAC_LOCALIZED_ALIASES = {
-      '鼠': ['Rat','ねずみ','쥐'], '牛': ['Ox','うし','소'], '虎': ['Tiger','とら','호랑이'],
-      '兔': ['Rabbit','うさぎ','토끼'], '龍': ['Dragon','たつ','용'], '蛇': ['Snake','へび','뱀'],
-      '馬': ['Horse','うま','말'], '羊': ['Goat','Sheep','ひつじ','양'], '猴': ['Monkey','さる','원숭이'],
-      '雞': ['Rooster','Chicken','とり','닭'], '狗': ['Dog','いぬ','개'], '豬': ['Pig','Boar','いのしし','돼지']
+      '鼠': ['Rat','Year of the Rat','ねずみ','ネズミ','子年','쥐','쥐띠'],
+      '牛': ['Ox','Year of the Ox','うし','ウシ','丑年','소','소띠'],
+      '虎': ['Tiger','Year of the Tiger','とら','トラ','寅年','호랑이','호랑이띠'],
+      '兔': ['Rabbit','Year of the Rabbit','うさぎ','ウサギ','卯年','토끼','토끼띠'],
+      '龍': ['Dragon','Year of the Dragon','たつ','タツ','辰年','용','용띠'],
+      '蛇': ['Snake','Year of the Snake','へび','ヘビ','巳年','뱀','뱀띠'],
+      '馬': ['Horse','Year of the Horse','うま','ウマ','午年','말','말띠'],
+      '羊': ['Goat','Sheep','Year of the Goat','ひつじ','ヒツジ','未年','양','양띠'],
+      '猴': ['Monkey','Year of the Monkey','さる','サル','申年','원숭이','원숭이띠'],
+      '雞': ['Rooster','Chicken','Year of the Rooster','とり','トリ','酉年','닭','닭띠'],
+      '狗': ['Dog','Year of the Dog','いぬ','イヌ','戌年','개','개띠'],
+      '豬': ['Pig','Boar','Year of the Pig','いのしし','イノシシ','亥年','돼지','돼지띠']
     };
     Object.keys(ZODIAC_LOCALIZED_ALIASES).forEach(function(sign) {
       if (!ZODIAC_ANSWER_ALIASES[sign]) ZODIAC_ANSWER_ALIASES[sign] = [sign];
@@ -9952,37 +10000,53 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
     }
 
     function getItemSynonyms(item) {
+      // Canonical names, four-language display labels and common everyday synonyms.
+      // These are answer aliases only; they never change the original card name or score threshold.
       var map={
-        '紅綠燈':['traffic signal','stoplight','signal light','交通信号','信号','교통 신호'],
-        '機車':['motorbike','motor scooter','バイク','スクーター','스쿠터'],
-        '菜刀':['chef knife','cooking knife','包丁','식칼'],
-        '芭樂':['guava fruit','グァバ','구아바 과일'],
-        '傘':['parasol','rain umbrella','かさ','우산'], '雨傘':['parasol','rain umbrella','かさ','우산'],
-        '禁止停車':['no-parking sign','no parking sign','駐車禁止標識','주차 금지 표지'],
-        '救護車':['emergency ambulance','救急車両','응급차'],
-        '碗':['rice bowl','おわん','그릇'],
-        '蘋果':['apple fruit','りんご','사과'],
-        '筆':['ballpoint pen','ball pen','ボールペン','볼펜'],
-        '高速公路':['expressway','freeway','autobahn','高速道路','고속도로'],
-        '行人穿越道':['crosswalk','zebra crossing','横断歩道','횡단보도'],
-        '計程車':['cab','taxicab','タクシー','택시'],
-        '杯子':['mug','drinking cup','カップ','머그컵'], '水杯':['mug','drinking cup','カップ','물컵'],
-        '筷子':['chopstick','はし',' 젓가락'],
-        '南瓜':['squash','かぼちゃ','단호박'],
-        '西瓜':['water melon','すいか','수박'],
-        '牙刷':['tooth brush','歯ぶらし','칫솔'],
-        '單行道':['one way','one-way sign','一方通行標識','일방 통행'],
-        '腳踏車':['bike','push bike','自転車','자전거'],
-        '自行車':['bike','push bike','自転車','자전거'],
-        '剪刀':['pair of scissors','はさみ','가위'],
-        '消防車':['fire truck','fireengine','消防車両','소방차'],
-        '香蕉':['plantain','バナナ','바나나'],
-        '電話':['phone','telephone set','電話機','전화기'],
-        '叉子':['dinner fork','フォーク','포크']
+        '紅綠燈':['traffic light','traffic signal','stoplight','signal light','traffic lights','信号機','信號機','交通信号','交通信号灯','信号灯','신호등','교통신호등','교통 신호등'],
+        '機車':['motorcycle','motorbike','motor scooter','scooter','摩托車','バイク','オートバイ','スクーター','모터사이클','오토바이','스쿠터'],
+        '摩托車':['motorcycle','motorbike','motor scooter','scooter','機車','バイク','オートバイ','スクーター','모터사이클','오토바이','스쿠터'],
+        '菜刀':['kitchen knife','chef knife','chef’s knife','cooking knife','包丁','ほうちょう','料理包丁','식칼','부엌칼','주방칼'],
+        '芭樂':['guava','guava fruit','番石榴','グアバ','グァバ','구아바','구아바 과일'],
+        '番石榴':['guava','guava fruit','芭樂','グアバ','グァバ','구아바','구아바 과일'],
+        '傘':['umbrella','rain umbrella','parasol','かさ','カサ','傘','雨傘','우산'],
+        '雨傘':['umbrella','rain umbrella','parasol','かさ','カサ','傘','우산'],
+        '禁止停車':['no parking','no-parking sign','no parking sign','駐車禁止','駐車禁止標識','駐車禁止の標識','주차 금지','주차금지','주차 금지 표지판'],
+        '救護車':['ambulance','emergency ambulance','救急車','救急車両','きゅうきゅうしゃ','구급차','앰뷸런스','응급차'],
+        '碗':['bowl','rice bowl','soup bowl','お椀','おわん','茶碗','どんぶり','그릇','밥그릇'],
+        '蘋果':['apple','apple fruit','りんご','リンゴ','사과'],
+        '筆':['pen','ballpoint pen','ball pen','writing pen','ペン','ボールペン','볼펜','펜'],
+        '高速公路':['highway','expressway','freeway','motorway','autobahn','高速道路','고속도로','고속 국도'],
+        '行人穿越道':['pedestrian crossing','crosswalk','zebra crossing','pedestrian crosswalk','斑馬線','横断歩道','おうだんほどう','횡단보도','보행자 횡단보도'],
+        '斑馬線':['pedestrian crossing','crosswalk','zebra crossing','pedestrian crosswalk','行人穿越道','横断歩道','おうだんほどう','횡단보도','보행자 횡단보도'],
+        '計程車':['taxi','cab','taxicab','タクシー','택시'],
+        '杯子':['cup','drinking cup','mug','glass','コップ','カップ','컵','잔','물컵'],
+        '水杯':['cup','drinking cup','water cup','mug','glass','コップ','カップ','컵','물컵','잔'],
+        '筷子':['chopsticks','chopstick','箸','お箸','はし','ハシ','젓가락'],
+        '南瓜':['pumpkin','squash','かぼちゃ','カボチャ','호박','단호박'],
+        '西瓜':['watermelon','water melon','すいか','スイカ','수박'],
+        '牙刷':['toothbrush','tooth brush','歯ブラシ','はぶらし','칫솔'],
+        '單行道':['one-way street','one way','one-way','one-way sign','單行車','一方通行','一方通行標識','일방통행','일방 통행','일방통행로'],
+        '單行車':['one-way street','one way','one-way','one-way sign','單行道','一方通行','一方通行標識','일방통행','일방 통행','일방통행로'],
+        '腳踏車':['bicycle','bike','push bike','cycle','自転車','じてんしゃ','チャリ','자전거'],
+        '自行車':['bicycle','bike','push bike','cycle','自転車','じてんしゃ','チャリ','자전거'],
+        '剪刀':['scissors','pair of scissors','はさみ','ハサミ','鋏','가위'],
+        '消防車':['fire engine','fire truck','fireengine','消防車','しょうぼうしゃ','소방차'],
+        '香蕉':['banana','バナナ','ばなな','바나나'],
+        '電話':['telephone','phone','telephone set','landline phone','電話','電話機','でんわ','전화','전화기'],
+        '叉子':['fork','dinner fork','フォーク','ふぉーく','포크']
       };
-      var values=(item.exactMatch||[]).slice(); (map[item.sourceName || item.name]||[]).forEach(function(v){if(v && !values.includes(v))values.push(v);});
+      var canonical = String(item.sourceName || item.name || '');
+      var values=(item.exactMatch||[]).slice();
+      (map[canonical]||[]).forEach(function(v){if(v && !values.includes(v))values.push(v);});
       if(item.displayName && !values.includes(item.displayName)) values.push(item.displayName);
-      if(item.sourceName) values.push(item.sourceName); if(item.name) values.push(item.name); return values;
+      if(item.sourceName && !values.includes(item.sourceName)) values.push(item.sourceName);
+      if(item.name && !values.includes(item.name)) values.push(item.name);
+      // Also include the official English/Japanese/Korean labels even when older saved banks
+      // do not yet carry exactMatch values from createP2BankItems().
+      var translated = (typeof EXAM_CARD_TRANSLATIONS !== 'undefined') ? EXAM_CARD_TRANSLATIONS[canonical] : null;
+      if (Array.isArray(translated)) translated.forEach(function(alias){ if(alias && !values.includes(alias)) values.push(alias); });
+      return values;
     }
 
     function submitP2Recall() {
@@ -10938,12 +11002,23 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
     btn.style.opacity=btn.disabled?'.65':'1';
   };
   window.normalizeWeekdayAnswer=function(value){
-    var raw=String(value==null?'':value).trim().replace(/[０-９]/g,function(ch){return String(ch.charCodeAt(0)-0xFF10);});
-    raw=raw.replace(/^(星期|禮拜|週|周)/,'').replace(/[\s　,，。.!！?？、;；:：()（）「」『』\[\]【】]/g,'');
-    var digits={'0':7,'7':7,'1':1,'2':2,'3':3,'4':4,'5':5,'6':6};
-    if(Object.prototype.hasOwnProperty.call(digits,raw))return digits[raw];
-    var map={'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'日':7,'天':7};
-    if(Object.prototype.hasOwnProperty.call(map,raw))return map[raw];
+    var raw=String(value==null?'':value).trim();
+    try { if (typeof raw.normalize === 'function') raw = raw.normalize('NFKC'); } catch(e) {}
+    raw=raw.replace(/[０-９]/g,function(ch){return String(ch.charCodeAt(0)-0xFF10);})
+      .replace(/[\u200B-\u200D\uFEFF\u00AD]/g,'')
+      .replace(/^(星期|禮拜|礼拜|週|周)/,'')
+      .replace(/[\s　,，。.!！?？、;；:：()（）「」『』\[\]【】]/g,'').toLowerCase();
+    var aliases={
+      1:['1','一','mon','monday','月','月曜','月曜日','월','월요일'],
+      2:['2','二','tue','tues','tuesday','火','火曜','火曜日','화','화요일'],
+      3:['3','三','wed','weds','wednesday','水','水曜','水曜日','수','수요일'],
+      4:['4','四','thu','thur','thurs','thursday','木','木曜','木曜日','목','목요일'],
+      5:['5','五','fri','friday','金','金曜','金曜日','금','금요일'],
+      6:['6','六','sat','saturday','土','土曜','土曜日','토','토요일'],
+      7:['0','7','日','天','sun','sunday','日曜','日曜日','일','일요일']
+    };
+    var keys=Object.keys(aliases);
+    for(var i=0;i<keys.length;i++) if(aliases[keys[i]].indexOf(raw)!==-1) return Number(keys[i]);
     return null;
   };
 
