@@ -17387,5 +17387,174 @@ if (typeof EXAM_TEXT_TRANSLATIONS !== 'undefined') {
 })();
 </script>
 
+<script>
+/*
+ * Complete Japanese/Korean labels that were overwritten with empty strings by
+ * the English-only completion patch. This uses the same shared translation
+ * function/index for all non-Chinese display languages and does not touch
+ * voice mode, answer recognition, scoring, timers, or navigation.
+ */
+(function () {
+  if (typeof EXAM_TEXT_TRANSLATIONS === 'undefined') return;
+  Object.assign(EXAM_TEXT_TRANSLATIONS, {
+    '接下來會出現 10 張圖片，請記住圖片及名稱。': [
+      'You will see 10 pictures. Remember each picture and its name.',
+      'これから10枚の画像が表示されます。画像と名前を覚えてください。',
+      '이제 그림 10장이 표시됩니다. 각 그림과 이름을 기억하세요.'
+    ],
+    '每張圖片會顯示 2 秒，請記住圖片和名稱。': [
+      'Each picture will appear for 2 seconds. Remember the picture and its name.',
+      '各画像は2秒間表示されます。画像と名前を覚えてください。',
+      '각 그림은 2초 동안 표시됩니다. 그림과 이름을 기억하세요.'
+    ],
+    '時間結束後，輸入記得的圖片名稱，順序不限。': [
+      'When time is up, enter the names of the pictures you remember. Any order is acceptable.',
+      '時間になったら、覚えている画像の名前を順不同で入力してください。',
+      '시간이 끝나면 기억나는 그림 이름을 순서에 상관없이 입력하세요.'
+    ],
+    '依照指定時間畫出時針和分針。': [
+      'Draw the hour and minute hands to show the specified time.',
+      '指定された時刻を示すように、時針と分針を描いてください。',
+      '지정된 시간을 나타내도록 시침과 분침을 그리세요.'
+    ],
+    '依照指定時間，畫出時針和分針。': [
+      'Draw the hour and minute hands to show the specified time.',
+      '指定された時刻を示すように、時針と分針を描いてください。',
+      '지정된 시간을 나타내도록 시침과 분침을 그리세요.'
+    ],
+    '依照指定時間，畫出時針和分針。': [
+      'Draw the hour and minute hands to show the specified time.',
+      '指定された時刻を示すように、時針と分針を描いてください。',
+      '지정된 시간을 나타내도록 시침과 분침을 그리세요.'
+    ],
+    '請按照以下步驟，完成時鐘繪製。': [
+      'Follow these steps to complete the clock drawing.',
+      '以下の手順に従って、時計を描いてください。',
+      '다음 단계를 따라 시계 그리기를 완료하세요.'
+    ],
+    '先畫一個完整的圓形。': [
+      'First, draw a complete circle.',
+      'まず、閉じた円を描いてください。',
+      '먼저 완전한 원을 그리세요.'
+    ],
+    '請依照指定時間畫出時鐘，可使用下方工具修改，完成後送出答案。': [
+      'Draw a clock showing the specified time. Use the tools below to make changes, then submit your answer.',
+      '指定された時刻を示す時計を描いてください。下のツールで修正し、完成したら回答を送信してください。',
+      '지정된 시간을 나타내는 시계를 그리세요. 아래 도구로 수정한 다음 답안을 제출하세요.'
+    ],
+    '開始畫時鐘': [
+      'Start drawing the clock',
+      '時計を描き始める',
+      '시계 그리기 시작'
+    ],
+    '回答今年的年份、月份、日期、星期，以及您目前所在的地方。': [
+      'Answer the current year, month, date, day of the week, and your current location.',
+      '現在の年、月、日、曜日、そして現在いる場所を回答してください。',
+      '현재 연도, 월, 날짜, 요일 및 현재 위치를 답하세요.'
+    ],
+    '通過標準：前四題需全部答對；第五題地點由施測人員核對，不列入計分。': [
+      'Passing standard: All first four questions must be answered correctly. Question 5 (location) is verified by staff and is not scored.',
+      '合格基準：最初の4問すべてに正解する必要があります。第5問（場所）は担当者が確認し、採点対象外です。',
+      '통과 기준: 앞의 4문항을 모두 맞혀야 합니다. 5번 문항(장소)은 담당자가 확인하며 점수에 포함되지 않습니다.'
+    ],
+    '依序觀看 10 張圖片，每張圖片呈現 2 秒。休息 2 分鐘後，請輸入您記得的圖片名稱。': [
+      'View 10 pictures in sequence, each for 2 seconds. After a 2-minute break, enter the names you remember.',
+      '10枚の画像を順番に見ます。各画像は2秒間表示されます。2分間休憩した後、覚えている画像の名前を入力してください。',
+      '그림 10장을 순서대로 보세요. 각 그림은 2초 동안 표시됩니다. 2분간 휴식한 뒤 기억나는 그림 이름을 입력하세요.'
+    ],
+    '通過標準：10 張圖片中答對 3 張即可通過。': [
+      'Passing standard: Correctly recall at least 3 of the 10 pictures.',
+      '合格基準：10枚の画像のうち3枚以上を正しく思い出すと合格です。',
+      '통과 기준: 그림 10장 중 3장 이상을 정확히 기억하면 통과합니다.'
+    ],
+    '依照指定時間，畫出時鐘外框、1 到 12 的數字，以及時針和分針。': [
+      'Draw the clock outline, numbers 1 through 12, and the hour and minute hands to show the specified time.',
+      '指定された時刻に合わせて、時計の外枠、1から12までの数字、時針と分針を描いてください。',
+      '지정된 시간을 나타내도록 시계 테두리와 1부터 12까지의 숫자, 시침과 분침을 그리세요.'
+    ],
+    '第一關共有 5 題，請仔細聽題目，依照記憶回答。': [
+      'Stage 1 has 5 questions. Listen carefully and answer from memory.',
+      '第1段階は全5問です。問題をよく聞き、記憶を頼りに回答してください。',
+      '1단계는 총 5문항입니다. 질문을 잘 듣고 기억을 바탕으로 답하세요.'
+    ],
+    '作答時請不要查看日曆或時鐘，也不要請別人提示。': [
+      'Do not look at a calendar or clock, or ask anyone for hints while answering.',
+      '回答中はカレンダーや時計を見たり、ほかの人にヒントを求めたりしないでください。',
+      '답변하는 동안 달력이나 시계를 보거나 다른 사람에게 힌트를 요청하지 마세요.'
+    ],
+    '最多設定 4 組常用別名，不需要填滿。': [
+      'You can add up to 4 groups of common aliases. You do not need to fill every group.',
+      'よく使う別名は最大4グループまで設定できます。すべて入力する必要はありません。',
+      '자주 사용하는 별칭은 최대 4개 그룹까지 설정할 수 있으며, 모든 그룹을 입력할 필요는 없습니다.'
+    ],
+    '＋ 新增別名組': [
+      '＋ Add alias group',
+      '＋ 別名グループを追加',
+      '＋ 별칭 그룹 추가'
+    ],
+    '請依照您的使用情況，選擇適合的練習方式。': [
+      'Choose the practice mode that best suits your situation.',
+      'ご利用の状況に合った練習方法を選択してください。',
+      '사용 상황에 가장 적합한 연습 방식을 선택하세요.'
+    ],
+    '由工作人員或家人幫忙設定': [
+      'A staff member or family member can help with setup.',
+      'スタッフまたはご家族が設定をお手伝いします。',
+      '직원 또는 가족이 설정을 도와줄 수 있습니다.'
+    ],
+    '自己操作，依照畫面指示完成練習（最常用）': [
+      'Practice independently by following the on-screen instructions (most common).',
+      '画面の案内に従って、ご自身で練習します（最も一般的）。',
+      '화면 안내에 따라 직접 연습합니다(가장 일반적).'
+    ],
+    '在監理站、醫院或有人協助時': [
+      'At a motor vehicle office, hospital, or with assistance.',
+      '運転免許関連機関や病院、またはサポートを受けながら実施する場合。',
+      '운전면허시험장, 병원 또는 다른 사람의 도움을 받는 경우.'
+    ],
+    '使用國語語音輸入圖片名稱': [
+      'Use Mandarin voice input to enter picture names',
+      '中国語（標準語）の音声入力で画像名を入力',
+      '표준 중국어 음성 입력으로 그림 이름 입력'
+    ],
+    '點擊麥克風，使用國語說出一個圖片名稱。': [
+      'Tap the microphone and say one picture name in Mandarin.',
+      'マイクをタップして、中国語（標準語）で画像名を1つ話してください。',
+      '마이크를 누르고 표준 중국어로 그림 이름 하나를 말하세요.'
+    ],
+    '請先選擇練習方式': [
+      'Please choose a practice mode first.',
+      '先に練習方法を選択してください。',
+      '먼저 연습 방식을 선택하세요.'
+    ],
+    '使用國語語音回答': [
+      'Answer using Mandarin voice input',
+      '中国語（標準語）の音声入力で回答',
+      '표준 중국어 음성 입력으로 답변'
+    ],
+    '可回答年份、月份、日期、生肖、星期或目前所在的地點。': [
+      'You can answer with the year, month, date, Chinese zodiac animal, day of the week, or your current location.',
+      '年、月、日、干支、曜日、または現在いる場所について回答できます。',
+      '연도, 월, 날짜, 띠, 요일 또는 현재 위치를 답할 수 있습니다.'
+    ],
+    '秒後開始': [
+      'seconds until start',
+      '秒後に開始',
+      '초 후 시작'
+    ],
+    '請看著螢幕，準備記住圖片及名稱。': [
+      'Please look at the screen and get ready to remember the pictures and their names.',
+      '画面を見て、画像と名前を覚える準備をしてください。',
+      '화면을 보고 그림과 이름을 기억할 준비를 하세요.'
+    ],
+    '請先在畫布上完成時鐘。': [
+      'Please draw the clock on the canvas first.',
+      'まずキャンバスに時計を描いてください。',
+      '먼저 캔버스에 시계를 그리세요.'
+    ]
+  });
+})();
+</script>
+
 </body>
 </html>
