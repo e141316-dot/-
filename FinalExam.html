@@ -3268,7 +3268,7 @@ body[data-step="step-p1"] #single-progress-banner.single-progress-banner {
 #step-p3 .canvas-wrap { width: 100%; margin: 16px auto 18px !important; }
 #step-p3 #clockCanvas {
   display: block !important;
-  width: min(460px, 86vw, 100%) !important;
+  width: min(560px, 100%) !important;
   height: auto !important;
   aspect-ratio: 1 / 1 !important;
   max-width: 100% !important;
@@ -3298,7 +3298,7 @@ body[data-step="step-p1"] #single-progress-banner.single-progress-banner {
 #step-result .detail-status.miss { background: #EEF0ED; color: #37443A; }
 #step-result .detail-status.pending { background: #F2F0E3; color: #51451F; }
 @media (max-width: 520px) {
-  #step-p3 #clockCanvas { width: min(460px, 86vw, 100%) !important; }
+  #step-p3 #clockCanvas { width: min(560px, 100%) !important; }
   #step-p3 .canvas-wrap { margin: 12px auto 14px !important; }
   #step-p3 .p3-time-strip { grid-template-columns: minmax(0,1fr) auto minmax(0,1fr) !important; }
   #step-p3 .p3-time-strip .p3-target-time { font-size: 19px !important; }
@@ -3377,7 +3377,7 @@ body[data-step="step-p1"] #p1-submit-btn {
   scroll-margin-bottom:calc(120px + env(safe-area-inset-bottom, 0px));
 }
 
-/* 2. 第二關說明頁：返回按鈕獨立第一列，語音狀態完整放在第二列。 */
+/* 2. 第二關說明頁：不提供返回按鈕，僅保留完整語音狀態列。 */
 @media (max-width:600px) {
   body[data-step="step-p2-intro"] #top-back-bar {
     width:100%;
@@ -3385,38 +3385,25 @@ body[data-step="step-p1"] #p1-submit-btn {
   }
   body[data-step="step-p2-intro"] .top-back-row {
     display:flex !important;
-    flex-direction:column !important;
+    flex-direction:row !important;
     flex-wrap:nowrap !important;
-    align-items:stretch !important;
-    justify-content:flex-start !important;
+    align-items:flex-start !important;
+    justify-content:flex-end !important;
     gap:8px !important;
     width:100% !important;
     min-width:0 !important;
   }
-  body[data-step="step-p2-intro"] .top-back-row .top-back-btn {
+  body[data-step="step-p2-intro"] .top-back-row .mode-status-chip {
     display:inline-flex !important;
     align-self:flex-start !important;
-    flex:0 0 auto !important;
+    flex:0 1 auto !important;
     width:max-content !important;
-    min-width:0 !important;
-    max-width:100% !important;
-    min-height:48px !important;
-    padding:8px 14px !important;
-    white-space:nowrap !important;
-    word-break:keep-all !important;
-    overflow-wrap:normal !important;
-  }
-  body[data-step="step-p2-intro"] .top-back-row .mode-status-chip {
-    display:flex !important;
-    align-self:stretch !important;
-    flex:0 0 auto !important;
-    width:100% !important;
     max-width:100% !important;
     min-width:0 !important;
-    margin:0 !important;
+    margin:0 0 0 auto !important;
     padding:7px 10px !important;
-    justify-content:flex-start !important;
-    text-align:left !important;
+    justify-content:flex-end !important;
+    text-align:right !important;
     white-space:normal !important;
     overflow-wrap:anywhere !important;
     line-height:1.45 !important;
@@ -3540,6 +3527,75 @@ body[data-step="step-p1"] #p1-submit-btn {
 }
 </style>
 
+
+<style id="p1-q5-voice-priority-order">
+/* 第五題：語音列是主要操作，文字欄位明確排在其下方；其他題目順序不變。 */
+#step-p1[data-question-type="q5"] #p1-mandarin-voice-row{order:1!important}
+#step-p1[data-question-type="q5"] #p1-input-label{order:2!important}
+#step-p1[data-question-type="q5"] #p1-answer-control{order:3!important}
+</style>
+
+<style id="result-page-staff-ux-patch">
+/* 測驗結果頁局部優化：維持既有卡片與整體寬度，只補強審核狀態及空白畫布呈現。 */
+#step-result .q5-review-actions .q5-verdict-btn {
+  min-height:58px;
+  padding:12px 16px;
+  border:2px solid #9CAF9A;
+  border-radius:12px;
+  background:#FFFFFF;
+  color:#264633;
+  font-size:18px;
+  font-weight:800;
+  box-shadow:none;
+}
+#step-result .q5-review-actions .q5-verdict-btn:focus-visible {
+  outline:3px solid #A8BDAA;
+  outline-offset:3px;
+}
+#step-result .q5-review-actions .q5-verdict-btn.is-selected {
+  border-color:#31543B;
+  background:#31543B;
+  color:#FFFFFF;
+}
+#step-result .q5-review-actions .q5-verdict-btn.is-unselected {
+  border-color:#C8D3C8;
+  background:#F5F7F3;
+  color:#59685C;
+}
+#step-result .q5-review-actions .q5-verdict-btn:disabled { opacity:1; cursor:default; }
+#step-result .result-q5-reminder {
+  margin-top:10px;
+  padding-top:10px;
+  border-top:1px solid rgba(49,84,59,.22);
+  font-weight:800;
+  line-height:1.6;
+}
+#step-result .detail-clock-image-wrap { width:100%; display:flex; justify-content:center; min-width:0; }
+#step-result .detail-clock-empty-state {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  width:100%;
+  box-sizing:border-box;
+  min-height:116px;
+  margin:10px 0 14px;
+  padding:20px 16px;
+  border:1.5px dashed #B8C9B8;
+  border-radius:12px;
+  background:#F5F8F3;
+  color:#264633;
+  text-align:center;
+}
+#step-result .detail-clock-empty-state strong { font-size:20px; line-height:1.5; }
+#step-result .detail-clock-empty-state span { font-size:17px; line-height:1.6; color:#526457; overflow-wrap:anywhere; }
+@media (max-width:520px) {
+  #step-result .q5-review-actions { grid-template-columns:1fr; }
+  #step-result .q5-review-actions .q5-verdict-btn { min-height:56px; width:100%; }
+  #step-result .detail-clock-empty-state { min-height:104px; padding:16px 12px; }
+}
+</style>
 </head>
 <body>
   <div class="exam-wrapper">
@@ -3570,8 +3626,8 @@ body[data-step="step-p1"] #p1-submit-btn {
     <div id="step-lang" class="exam-card">
       <section class="language-card" aria-labelledby="language-heading">
         <h2 id="language-heading" class="lang-section-title">選擇題目播放方式</h2>
-        <p id="speech-recognition-note" class="speech-recognition-note" role="note">目前作答語音辨識僅支援國語。選擇臺語或客語，只會改變題目的播放語音，不會改變作答辨識語言。</p>
-        <div class="lang-btn-grid" role="group" aria-label="選擇題目呈現方式">
+        <p id="speech-recognition-note" class="speech-recognition-note" role="note">作答辨識僅支援國語；切換臺語或客語只會改變題目播放語音。</p>
+        <div class="lang-btn-grid" role="group" aria-label="選擇題目播放方式">
           <div class="lang-option-row is-selected" data-language-option="zh-TW">
             <button type="button" class="lang-preview-btn" aria-label="試聽國語語音" title="試聽國語語音" onclick="previewLanguageAudio('zh-TW')"><svg class="lang-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4h4l5 4V6l-5 4H4Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M16 9a5 5 0 0 1 0 6M18.5 6.5a8.5 8.5 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span class="lang-preview-label" aria-hidden="true">試聽</span></button>
             <button type="button" id="btn-lang-zh" class="lang-btn active" aria-pressed="true" onclick="setLanguage('zh-TW')">
@@ -3609,7 +3665,7 @@ body[data-step="step-p1"] #p1-submit-btn {
           </div>
         </div>
         <p id="language-audio-status" class="audio-status" role="status" aria-live="polite"></p>
-        <button type="button" id="language-preview-repeat" class="language-preview-repeat" onclick="repeatLanguagePreview()">重新播放試聽語音</button>
+        <button type="button" id="language-preview-repeat" class="language-preview-repeat" onclick="repeatLanguagePreview()">重新試聽</button>
       </section>
       <div class="sticky-action-bar step-action">
         <button type="button" class="btn-primary" onclick="goToLocationSetup()">下一步：選擇練習方式 ›</button>
@@ -3629,8 +3685,8 @@ body[data-step="step-p1"] #p1-submit-btn {
             <div class="info-card-icon-box" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
             <h3 class="info-card-title">時間、空間認知</h3>
           </div>
-          <p class="info-card-desc">回答今年的年份、月份、日期、星期，以及您目前所在的地方。</p>
-          <p class="info-card-standard">通過標準：前四題需全部答對；第五題地點由施測人員核對，不列入計分。</p>
+          <p class="info-card-desc">回答目前的年份、月份、日期、星期及所在地。</p>
+          <p class="info-card-standard">通過標準：前四題須全部答對；地點由施測人員核對，不列入計分。</p>
         </article>
         <article class="info-card">
           <div class="info-card-top">
@@ -3638,7 +3694,7 @@ body[data-step="step-p1"] #p1-submit-btn {
             <div class="info-card-icon-box" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2a9 9 0 0 1 9 9c0 3.6-2.1 6.7-5.2 8.2l-.8 2.8H9l-.8-2.8A9.01 9.01 0 0 1 3 11a9 9 0 0 1 9-9z"/><path d="M9 22h6"/></svg></div>
             <h3 class="info-card-title">圖卡記憶</h3>
           </div>
-          <p class="info-card-desc">依序觀看 10 張圖片，每張圖片呈現 2 秒。休息 2 分鐘後，請輸入您記得的圖片名稱。</p>
+          <p class="info-card-desc">依序觀看 10 張圖片，每張顯示 2 秒。休息 2 分鐘後，輸入記得的圖片名稱。</p>
           <p class="info-card-standard">通過標準：10 張圖片中答對 3 張即可通過。</p>
         </article>
         <article class="info-card">
@@ -3647,8 +3703,8 @@ body[data-step="step-p1"] #p1-submit-btn {
             <div class="info-card-icon-box" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 16 14 16"/></svg></div>
             <h3 class="info-card-title">徒手繪畫時鐘</h3>
           </div>
-          <p class="info-card-desc">依照指定時間，畫出時鐘外框、1 到 12 的數字，以及時針和分針。</p>
-          <p class="info-card-standard">通過標準：滿分 7 分，需取得 4 分以上（作答時間 4 分鐘）。</p>
+          <p class="info-card-desc">依指定時間，畫出時鐘外框、1 至 12 的數字，以及時針和分針。</p>
+          <p class="info-card-standard">通過標準：滿分 7 分，須達 4 分以上。作答時間 4 分鐘。</p>
         </article>
       </div>
       <div class="step-audio-actions">
@@ -3667,7 +3723,7 @@ body[data-step="step-p1"] #p1-submit-btn {
         <section class="guide-card location-guide-card">
           <div class="location-guide-top">
             <div class="guide-avatar guide-illustrated" aria-hidden="true"></div>
-            <p class="guide-main">請依照您的使用情況，選擇適合的練習方式。</p>
+            <p class="guide-main">請選擇符合目前情況的方式。</p>
           </div>
           <div class="guide-footer">
             <p id="location-audio-status" class="audio-status" role="status" aria-live="polite"></p>
@@ -3678,8 +3734,8 @@ body[data-step="step-p1"] #p1-submit-btn {
           <button type="button" id="mode-home-btn" class="practice-mode-btn" aria-pressed="false" onclick="startHomePractice()">
             <span class="mode-option-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V21H3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 21v-7h6v7" fill="none" stroke="currentColor" stroke-width="2"/></svg></span>
             <span class="practice-mode-copy">
-              <span class="practice-mode-title">我在家裡練習</span>
-              <span class="practice-mode-subtitle">自己操作，依照畫面指示完成練習（最常用）</span>
+              <span class="practice-mode-title">我在家裡練習 <span class="practice-mode-most-used" style="font-size:calc(14px * var(--font-scale));font-weight:700;color:var(--color-muted);white-space:nowrap;margin-inline-start:6px;">最常用</span></span>
+              <span class="practice-mode-subtitle">自己操作，依照畫面指示完成</span>
             </span>
             <span class="practice-mode-state" aria-hidden="true">○</span>
             <span class="practice-mode-selected-label">已選擇</span>
@@ -3687,8 +3743,8 @@ body[data-step="step-p1"] #p1-submit-btn {
           <button type="button" id="mode-staff-btn" class="practice-mode-btn" aria-pressed="false" onclick="startStaffPractice()">
             <span class="mode-option-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 20c0-3.5 2.5-5.5 6-5.5s6 2 6 5.5M16 8h5m-2.5-2.5v5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
             <span class="practice-mode-copy">
-              <span class="practice-mode-title">在監理站、醫院或有人協助時</span>
-              <span class="practice-mode-subtitle">由工作人員或家人幫忙設定</span>
+              <span class="practice-mode-title">在監理站、醫院等場所</span>
+              <span class="practice-mode-subtitle">由工作人員或家人協助設定</span>
             </span>
             <span class="practice-mode-state" aria-hidden="true">○</span>
             <span class="practice-mode-selected-label">已選擇</span>
@@ -3722,8 +3778,8 @@ body[data-step="step-p1"] #p1-submit-btn {
                 <div id="location-official-name-values" class="location-official-name-values"></div>
                 <p class="location-translation-note" id="location-translation-note">外語名稱為便於辨識的描述性翻譯，未逐一確認為官方譯名。</p>
               </div>
-              <h3 id="alias-summary" class="staff-alias-heading">地點別名管理</h3>
-              <p class="location-alias-rule-note" id="alias-empty-hint">最多設定 4 組常用別名，不需要填滿。</p>
+              <h3 id="alias-summary" class="staff-alias-heading">常用別名</h3>
+              <p class="location-alias-rule-note" id="alias-empty-hint">最多可設定 4 組，無須填滿。</p>
               <div id="aliasTagsWrapper" class="alias-groups-container"></div>
               <div class="location-alias-actions">
                 <button type="button" class="small-action-btn" id="alias-add-group-btn" onclick="addAliasGroup()">＋ 新增別名組</button>
@@ -3734,8 +3790,8 @@ body[data-step="step-p1"] #p1-submit-btn {
               <p id="alias-last-saved-at" class="location-alias-last-saved" aria-live="polite"></p>
             </section>
             <div class="form-group staff-generic-group">
-              <div class="staff-category-title">需由工作人員人工確認的名稱</div>
-              <div class="staff-category-note">例如：衛生所、醫院、診所、監理所或監理站。只回答這類通用名稱時，會交由工作人員確認。</div>
+              <div class="staff-category-title">需人工確認的名稱</div>
+              <div class="staff-category-note">若只回答「衛生所、醫院、診所、監理所、監理站」等通用名稱，系統會交由工作人員確認。</div>
             </div>
           </div>
         </div>
@@ -3751,7 +3807,7 @@ body[data-step="step-p1"] #p1-submit-btn {
       <section class="guide-card exam-guide-card">
         <div class="guide-intro-top">
           <div class="guide-avatar guide-illustrated" aria-hidden="true"></div>
-          <p class="guide-main guide-greeting">第一關共有 5 題，請仔細聽題目，依照記憶回答。</p>
+          <p class="guide-main guide-greeting">第一關共有 5 題，請仔細聽題目，並依自己知道的內容回答。</p>
         </div>
         <div class="guide-reminder">
           <span class="reminder-icon" aria-hidden="true">!</span>
@@ -3772,12 +3828,12 @@ body[data-step="step-p1"] #p1-submit-btn {
       <section class="guide-card exam-guide-card">
         <div class="guide-intro-top">
           <div class="guide-avatar guide-illustrated" aria-hidden="true"></div>
-          <p class="guide-main guide-greeting">接下來會出現 10 張圖片，請記住圖片及名稱。</p>
+          <p class="guide-main guide-greeting">本關共有 10 張圖片。</p>
         </div>
         <div class="p2-intro-steps">
-          <div><strong>① 觀看圖片</strong><span>每張圖片會顯示 2 秒，請記住圖片和名稱。</span></div>
+          <div><strong>① 觀看圖片</strong><span>每張圖片顯示 2 秒，請記住圖片及名稱。</span></div>
           <div><strong>② 休息一下</strong><span>全部看完後，休息 2 分鐘。</span></div>
-          <div><strong>③ 回想作答</strong><span>時間結束後，輸入記得的圖片名稱，順序不限。</span></div>
+          <div><strong>③ 回想作答</strong><span>休息結束後，輸入記得的圖片名稱，順序不限。</span></div>
         </div>
         <p class="guide-full-copy">不用擔心記不住全部，記得多少就回答多少。</p>
         <div class="guide-footer">
@@ -3795,7 +3851,7 @@ body[data-step="step-p1"] #p1-submit-btn {
       <section class="guide-card p3-intro-card">
         <div class="p3-intro-guide-row">
           <div class="guide-avatar guide-illustrated" aria-hidden="true"></div>
-          <p class="guide-full-copy">請按照以下步驟，完成時鐘繪製。</p>
+          <p class="guide-full-copy">請依照以下步驟畫時鐘。</p>
         </div>
         <div class="p3-intro-steps">
           <div><strong>① 畫出外框</strong><span>先畫一個完整的圓形。</span></div>
@@ -3853,12 +3909,12 @@ body[data-step="step-p1"] #p1-submit-btn {
     <div id="step-p2-sop2" class="exam-card" style="display:none; text-align:center;">
       <!-- 開始播放圖卡前，先顯示完整 5 秒倒數；倒數期間不顯示任何圖卡。 -->
       <section id="p2-countdown-screen" class="p2-countdown-screen" aria-live="polite" aria-atomic="true" style="display:flex;">
-        <p id="p2-countdown-title" class="p2-countdown-title">請準備，即將開始顯示圖片…</p>
+        <p id="p2-countdown-title" class="p2-countdown-title">圖片即將開始</p>
         <div class="p2-countdown-number-wrap">
           <strong id="p2-countdown-number" class="p2-countdown-number">5</strong>
           <span id="p2-countdown-unit" class="p2-countdown-unit">秒後開始</span>
         </div>
-        <p id="p2-countdown-note" class="p2-countdown-note">請看著螢幕，準備記住圖片及名稱。</p>
+        <p id="p2-countdown-note" class="p2-countdown-note">請看著螢幕，記住圖片和名稱。</p>
       </section>
       <div id="p2-image-playback" style="display:none;">
         <div id="p2-img-counter" style="font-size:calc(20px * var(--font-scale));font-weight:900;margin:6px 0 12px;">第 1 / 10 張</div>
@@ -3899,7 +3955,7 @@ body[data-step="step-p1"] #p1-submit-btn {
     <div id="step-p2-sop5" class="exam-card" style="display:none;">
       <div class="guide-card">
         <div class="guide-avatar guide-illustrated" aria-hidden="true"></div>
-        <div class="guide-content"><p class="guide-main">請輸入您記得的圖片名稱</p><p class="guide-sub">共 10 張圖片，作答順序不限；答對 3 張即可通過本關。</p><div class="guide-footer"><button type="button" class="guide-audio-btn" onclick="repeatCurrentAudio()">再聽一次</button></div></div>
+        <div class="guide-content"><p class="guide-main">請輸入您記得的圖片名稱</p><p class="guide-sub">共 10 張圖片，順序不限；答對 3 張即可通過。</p><div class="guide-footer"><button type="button" class="guide-audio-btn" onclick="repeatCurrentAudio()">再聽一次作答說明</button></div></div>
       </div>
       <div class="p2-recall-container">
         <div class="p2-recall-count" id="p2-recall-count">已加入 0 個圖片名稱</div>
@@ -3913,7 +3969,7 @@ body[data-step="step-p1"] #p1-submit-btn {
             <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="2.5" width="6" height="12" rx="3"></rect><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3.5M8.5 21.5h7"></path></svg>
             <span>使用國語語音輸入圖片名稱</span>
           </button>
-          <p class="mandarin-voice-status" role="status" aria-live="polite">點擊麥克風，使用國語說出一個圖片名稱。</p>
+          <p class="mandarin-voice-status" role="status" aria-live="polite">點擊麥克風，每次說出一個圖片名稱。</p>
         </div>
         <div id="p2-recall-tags" class="recall-tags is-empty" aria-live="polite"><span class="helper-note recall-empty-note">加入的圖片名稱會顯示在這裡。</span></div>
       </div>
@@ -3934,7 +3990,7 @@ body[data-step="step-p1"] #p1-submit-btn {
           <div class="p3-guide-top">
             <div class="guide-avatar guide-illustrated p3-guide-avatar" aria-hidden="true"></div>
             <div class="p3-guide-dialog">
-              <p class="p3-guide-text">請依照指定時間畫出時鐘，可使用下方工具修改，完成後送出答案。</p>
+              <p class="p3-guide-text">請依指定時間畫出時鐘，可使用下方工具修改，完成後送出。</p>
             </div>
           </div>
           <div class="p3-guide-footer">
@@ -3990,8 +4046,8 @@ body[data-step="step-p1"] #p1-submit-btn {
           <h3 class="q5-review-title">第五題｜地點答案人工審核</h3>
           <p id="q5-review-body" class="q5-review-body"></p>
           <div id="q5-review-actions" class="q5-review-actions">
-            <button type="button" class="btn-primary" onclick="submitQ5Verdict(true)">地點相符</button>
-            <button type="button" class="btn-outline" style="border-color:#4F7058;color:#A6632B;" onclick="submitQ5Verdict(false)">地點不符</button>
+            <button type="button" class="btn-outline q5-verdict-btn" data-verdict="confirmed" aria-pressed="false" onclick="submitQ5Verdict(true)">地點相符</button>
+            <button type="button" class="btn-outline q5-verdict-btn" data-verdict="not-confirmed" aria-pressed="false" onclick="submitQ5Verdict(false)">地點不符</button>
           </div>
           <p id="q5-review-audit" class="q5-review-audit"></p>
         </section>
@@ -4028,14 +4084,15 @@ body[data-step="step-p1"] #p1-submit-btn {
       <div id="overall-banner" class="overall-banner">
         <div id="overall-banner-title" class="overall-banner-title"></div>
         <div id="overall-banner-sub" class="overall-banner-sub"></div>
-        <button type="button" id="result-repeat-audio-btn" class="guide-audio-btn result-speak-btn" onclick="repeatResultIntroAudio()"> 再聽一次</button>
+        <div id="result-q5-reminder" class="overall-banner-sub result-q5-reminder" role="status" aria-live="polite" hidden></div>
+        <button type="button" id="result-repeat-audio-btn" class="guide-audio-btn result-speak-btn" onclick="repeatResultIntroAudio()">再聽一次結果說明</button>
       </div>
 
       <!-- 舊版結果產生函式仍會寫入此相容欄位；不顯示為頁面區塊，也不再提供獨立詳解入口。 -->
       <div id="result-detail-content" hidden aria-hidden="true"></div>
 
       <div class="result-actions-stack">
-        <button type="button" class="btn-primary" onclick="restartExam()">再練習一次</button>
+          <button type="button" class="btn-primary" onclick="restartExam()">重新練習三關</button>
         <div class="result-nav-grid">
           <button type="button" class="btn-outline" onclick="navToLevelSelect()">練習其他項目</button>
           <button type="button" class="btn-outline" onclick="navToIndex()">回主選單</button>
@@ -4742,7 +4799,7 @@ window.closeCustomAlert = closeCustomAlert;
  * ================================================================ */
 var EXAM_DISPLAY_LANG = 'zh-TW';
 var EXAM_DISPLAY_FONT_SCALE = '100';
-var EXAM_TEXT_TRANSLATIONS = {"高齡駕駛人認知檢測練習":["Senior Driver Cognitive Assessment Practice","高齢ドライバー認知機能検査の練習","고령 운전자 인지 기능 검사 연습"],"← 返回練習選單":["← Back to Practice Menu","← 練習メニューに戻る","← 연습 메뉴로 돌아가기"],"第一關":["Stage 1","第1段階","1단계"],"第二關":["Stage 2","第2段階","2단계"],"第三關":["Stage 3","第3段階","3단계"],"時間、空間認知":["Time and Spatial Orientation","時間・空間の見当識","시간·공간 지남력"],"圖卡記憶":["Picture Memory"," 그림 카드 기억","그림 카드 기억"],"徒手繪畫時鐘":["Clock Drawing","時計描画","시계 그리기"],"選擇題目播放方式":["Choose how questions are played","問題の再生方法を選択","문제 재생 방식 선택"],"國語":["Mandarin","中国語（標準語）","중국어(표준어)"],"臺語":["Taiwanese Hokkien","台湾語（閩南語）","대만 민난어"],"（閩南語）":["(Hokkien)","（閩南語）","(민난어)"],"客語":["Hakka","客家語","하카어"],"純文字模式（無語音）":["Text only (no audio)","テキストのみ（音声なし）","텍스트 전용(음성 없음)"],"請選擇客語腔調：":["Choose a Hakka accent:","客家語の方言を選択してください：","하카어 방언을 선택하세요:"],"四縣腔":["Sixian accent","四県腔","쓰셴 방언"],"海陸腔":["Hailu accent","海陸腔","하이루 방언"],"選擇語音後會先播放試聽，請確認聽得到聲音。測驗時會同步顯示題目文字。":["A voice preview will play after selection. Please make sure you can hear it. Question text will also appear during the test.","音声を選択すると試聴が再生されます。音が聞こえることを確認してください。テスト中は問題文も表示されます。","음성을 선택하면 미리 듣기가 재생됩니다. 소리가 들리는지 확인하세요. 검사 중에는 문제 문구도 함께 표시됩니다."],"測驗時只顯示文字，不播放語音。":["Text will be displayed during the test. No audio will play.","テスト中はテキストのみ表示し、音声は再生しません。","검사 중에는 텍스트만 표시하고 음성은 재생하지 않습니다."]," 重新播放試聽語音":[" Replay audio preview"," 試聴音声をもう一度再生"," 미리 듣기 음성 다시 재생"],"下一步：確認練習地點 ›":["Next: Confirm practice location ›","次へ：練習場所を確認 ›","다음: 연습 장소 확인 ›"],"回答年份、月份、日期、星期及所在場所。":["Answer questions about the year, month, date, day of the week, and your current location.","年・月・日・曜日と現在地について回答します。","연도, 월, 날짜, 요일 및 현재 장소에 답하세요."],"通過標準：5題需答對4題。":["Passing score: answer at least 4 of 5 questions correctly.","合格基準：5問中4問以上正解。","통과 기준: 5문항 중 4문항 이상 정답."],"觀看並記憶10張圖片，休息2分鐘後回想圖片內容。":["Study and remember 10 pictures. After a 2-minute break, recall the pictures.","10枚の画像を見て覚えます。2分間休憩した後、画像の内容を思い出してください。","그림 10장을 보고 기억한 뒤 2분 휴식 후 그림 내용을 떠올리세요."],"通過標準：10張圖片需答對3張。":["Passing score: recall at least 3 of the 10 pictures.","合格基準：10枚中3枚以上を正解。","통과 기준: 그림 10장 중 3장 이상 정답."],"依照指定時間，畫出時鐘、數字及指針。":["Draw a clock showing the specified time, including its numbers and hands.","指定された時刻に合わせて、文字盤・数字・針を描いてください。","지정된 시간에 맞춰 시계 숫자와 바늘을 그리세요."],"滿分7分，需取得4分以上，作答時間4分鐘。":["Maximum score: 7 points. At least 4 points are required. Time limit: 4 minutes.","満点は7点、合格には4点以上が必要です。制限時間は4分です。","만점은 7점이며 4점 이상 받아야 합니다. 제한 시간은 4분입니다."],"再聽一次指導語":["Replay instructions","説明をもう一度聞く","안내 다시 듣기"],"開始第一關 ›":["Start Stage 1 ›","第1段階を開始 ›","1단계 시작 ›"],"請先確認目前的練習地點，系統會用來核對第五題答案。":["Please confirm your current practice location. The system will use it to review your answer to Question 5.","現在の練習場所を確認してください。システムは第5問の回答確認に使用します。","현재 연습 장소를 확인하세요. 시스템이 5번 문항 답변을 확인하는 데 사용합니다."],"若您是在家中自行練習，可以直接選擇下方的「我在家裡練習」。":["If you are practicing at home, select “I am practicing at home” below.","ご自宅で練習している場合は、下の「自宅で練習」を選択してください。","집에서 연습 중이라면 아래의 “집에서 연습”을 선택하세요."]," 再聽一次說明":[" Replay instructions"," 説明をもう一度聞く"," 안내 다시 듣기"],"請選擇練習模式":["Choose a practice mode","練習モードを選択","연습 모드를 선택하세요"],"我在家裡練習":["I am practicing at home","自宅で練習","집에서 연습"],"一般自行練習":["Independent practice","個人練習","개인 연습"],"施測人員代操作模式":["Staff-assisted mode","スタッフ操作モード","담당자 진행 모드"],"非在家施測｜監理站、醫療院所等":["Off-site testing | Motor vehicle offices, medical facilities, etc.","自宅以外での実施｜監理機関・医療機関など","가정 외 검사 | 운전면허시험장, 의료기관 등"],"選擇後填寫施測地點及相關設定":["After selecting, enter the testing location and related settings.","選択後、検査場所と関連情報を入力してください。","선택 후 검사 장소와 관련 설정을 입력하세요."],"非在家練習":["Off-site practice","自宅以外での練習","가정 외 연습"],"縣市":["City / County","県・市","시·현"],"請選擇縣市":["Select a city or county","県・市を選択","시·현 선택"],"行政區":["District","区","행정구"],"請先選擇縣市":["Select a city or county first","先に県・市を選択してください","먼저 시·현을 선택하세요"],"測驗地點":["Testing location","検査場所","검사 장소"],"請先選擇行政區":["Select a district first","先に区を選択してください","먼저 행정구를 선택하세요"],"輸入關鍵字搜尋地點":["Enter a keyword to search for a location","キーワードで場所を検索","장소 검색어 입력"],"進階評分與別名設定（監理站／醫療院所施測人員專用）":["Advanced scoring and aliases (for testing staff at motor vehicle offices / medical facilities)","詳細な採点・別名設定（監理機関／医療機関の担当者向け）","고급 채점 및 별칭 설정(운전면허시험장/의료기관 담당자용)"],"A 類｜已自動套用 0 組核對別名（點擊檢視或修改）":["Type A | 0 matching aliases applied automatically (select to view or edit)","Aタイプ｜照合用別名0件を自動適用（クリックして表示・編集）","A 유형 | 대조 별칭 0개 자동 적용(눌러서 확인 또는 수정)"],"請先選擇上方測驗地點，系統會自動帶入預設別名。":["Select a testing location above. The system will automatically add the default aliases.","上の検査場所を選択すると、既定の別名が自動入力されます。","위에서 검사 장소를 선택하면 기본 별칭이 자동으로 입력됩니다."],"＋ 新增":["＋ Add","＋ 追加","＋ 추가"],"↻ 恢復預設別名":["↻ Restore default aliases","↻ 既定の別名に戻す","↻ 기본 별칭 복원"],"B 類｜需要人工審核的通用名稱（不直接給分）":["Type B | Generic names requiring manual review (no automatic credit)","Bタイプ｜手動確認が必要な一般名称（自動採点しません）","B 유형 | 수동 검토가 필요한 일반 명칭(자동 점수 미부여)"],"衛生所、醫院、診所、監理所、監理站、門診部、代辦所。若只回答通用名稱，結果會標示「待人工確認」。":["Health centers, hospitals, clinics, motor vehicle offices, outpatient departments, and service agencies. Generic answers alone will be marked “Pending manual review.”","保健所、病院、診療所、監理機関、外来部門、代行窓口など。一般名称のみの場合は「手動確認待ち」と表示されます。","보건소, 병원, 의원, 운전면허 사무소, 외래 부서 및 대행 기관 등. 일반 명칭만 답하면 “수동 확인 대기”로 표시됩니다."],"確認選擇，前往測驗介紹 ›":["Confirm and continue to test instructions ›","選択を確認して検査説明へ ›","선택 확인 후 검사 안내로 이동 ›"],"您好！第一關共有 5 個問題，請仔細聽題目，憑現在的記憶回答就好。":["Hello! Stage 1 has 5 questions. Listen carefully and answer from memory.","こんにちは。第1段階は5問です。問題をよく聞き、現在の記憶で回答してください。","안녕하세요! 1단계는 5문항입니다. 문제를 잘 듣고 현재 기억을 바탕으로 답하세요."],"※ 作答時請勿查看日曆、時鐘，或由旁人提示喔。":["Please do not look at a calendar or clock, or ask anyone for help while answering.","回答中はカレンダーや時計を見たり、周囲の人にヒントをもらったりしないでください。","답변 중에는 달력이나 시계를 보거나 다른 사람에게 도움을 요청하지 마세요."],"再聽一次":["Replay","もう一度聞く","다시 듣기"],"開始第一關作答 ❯":["Begin Stage 1 ❯","第1段階の回答を開始 ❯","1단계 답변 시작 ❯"],"接下來會看到 10 張圖片，請仔細記住圖片和名稱。":["You will see 10 pictures. Please remember each picture and its name.","これから10枚の画像が表示されます。画像と名前をよく覚えてください。","이제 그림 10장이 표시됩니다. 그림과 이름을 잘 기억하세요."],"① 觀看圖片":["① View the pictures","① 画像を見る","① 그림 보기"],"每張圖片會顯示 2 秒，請仔細觀看圖片及名稱。":["Each picture will appear for 2 seconds. Look carefully at the picture and its name.","各画像は2秒間表示されます。画像と名前をよく見てください。","각 그림은 2초 동안 표시됩니다. 그림과 이름을 주의 깊게 보세요."],"② 休息一下":["② Take a break","② 休憩する","② 휴식하기"],"全部看完後，休息 2 分鐘。":["After viewing all pictures, take a 2-minute break.","すべて見終わったら、2分間休憩してください。","모든 그림을 본 뒤 2분간 휴식하세요."],"③ 回想作答":["③ Recall","③ 思い出して回答","③ 기억해서 답하기"],"時間到後，回想並說出剛才看過的圖片名稱。":["When time is up, recall and name the pictures you saw.","時間になったら、先ほど見た画像の名前を思い出して答えてください。","시간이 되면 방금 본 그림의 이름을 떠올려 말하세요."],"不用擔心記不住全部，記得多少就回答多少。":["Do not worry if you cannot remember everything. Answer as much as you can.","全部覚えていなくても大丈夫です。思い出せる分だけ回答してください。","모두 기억하지 못해도 괜찮습니다. 기억나는 만큼 답하세요."],"開始觀看圖片 ❯":["Start viewing pictures ❯","画像の表示を開始 ❯","그림 보기 시작 ❯"],"請依照題目指定的時間，畫出完整的時鐘。":["Draw a complete clock showing the time specified in the question.","問題で指定された時刻を示す時計を完成させてください。","문제에서 지정한 시간을 표시하는 완전한 시계를 그리세요."],"每次測驗會從不同時間中隨機抽出一題。":["A different target time will be selected at random for each test.","テストごとに異なる時刻がランダムに選ばれます。","검사마다 다른 지정 시간이 무작위로 선택됩니다."],"① 畫出外框":["① Draw the outline","① 外枠を描く","① 테두리 그리기"],"先畫一個大大的圓形。":["First, draw a large circle.","まず大きな円を描いてください。","먼저 큰 원을 그리세요."],"② 寫上數字":["② Add the numbers","② 数字を書く","② 숫자 쓰기"],"在圓圈內寫上 1 到 12 的數字。":["Write the numbers 1 through 12 inside the circle.","円の中に1から12までの数字を書いてください。","원 안에 1부터 12까지 숫자를 쓰세요."],"③ 畫出指針":["③ Draw the hands","③ 針を描く","③ 시곗바늘 그리기"],"依照指定時間，畫出短時針和長分針。":["Draw the short hour hand and long minute hand to show the specified time.","指定された時刻に合わせて、短い時針と長い分針を描いてください。","지정된 시간에 맞춰 짧은 시침과 긴 분침을 그리세요."],"作答時間：4 分鐘":["Time limit: 4 minutes","回答時間：4分","답변 시간: 4분"],"請依照畫面及語音提示作答。":["Follow the on-screen and audio instructions.","画面と音声の案内に従って回答してください。","화면과 음성 안내에 따라 답변하세요."]," 再聽一次":[" Replay instructions"," もう一度聞く"," 안내 다시 듣기"],"開始畫時鐘 ›":["Start drawing the clock ›","時計を描き始める ›","시계 그리기 시작 ›"],"請輸入您的答案":["Enter your answer","回答を入力してください","답변을 입력하세요"],"閏月仍輸入該月份數字即可，例如閏四月輸入 4。":["For a leap month, enter the month number. For example, enter 4 for leap fourth month.","閏月も月の数字を入力してください。例：閏4月なら「4」と入力します。","윤달도 해당 월의 숫자를 입력하세요. 예: 윤4월은 4를 입력합니다."],"確認本題 ❯":["Confirm this answer ❯","この回答を確定 ❯","이 답변 확인 ❯"],"系統自動播放中，請專心記憶，不需點擊螢幕。":["Pictures are playing automatically. Focus on remembering; no screen tap is needed.","画像は自動再生中です。画面をタップせず、記憶に集中してください。","그림이 자동 재생 중입니다. 화면을 누르지 말고 기억에 집중하세요."],"請放輕鬆休息 2 分鐘。":["Please relax and rest for 2 minutes.","リラックスして2分間休憩してください。","편안하게 2분간 휴식하세요."],"剩餘時間":["Time remaining","残り時間","남은 시간"],"倒數結束後，將自動進入回想作答。":["When the countdown ends, the recall section will begin automatically.","カウントダウン終了後、自動的に思い出し回答へ進みます。","카운트다운이 끝나면 자동으로 회상 답변 단계로 이동합니다."],"僅限練習模式":["Practice mode only","練習モードのみ","연습 모드 전용"],"略過休息，直接開始回想":["Skip the break and start recall","休憩をスキップして回答を開始","휴식을 건너뛰고 회상 시작"],"請回想剛才看過的 10 張圖片，想到哪些就回答哪些。":["Recall the 10 pictures you just saw. Enter any names you remember.","先ほど見た10枚の画像を思い出し、覚えている名前を入力してください。","방금 본 그림 10장을 떠올리고 기억나는 이름을 입력하세요."],"共 10 張圖片，作答順序不限；答對 3 張即可通過本關。":["Any order is acceptable. Recall 3 pictures to meet the passing standard.","順番は問いません。3枚正解するとこの段階の合格基準に達します。","순서는 상관없습니다. 그림 3장을 맞히면 이 단계의 통과 기준을 충족합니다."],"已加入 0 個圖片名稱":["Answers added: 0","追加済みの回答：0件","추가된 답변: 0개"],"＋加入":["＋ Add","＋ 追加","＋ 추가"],"取消":["Cancel","キャンセル","취소"],"您加入的答案會顯示在這裡。":["Your answers will appear here.","追加した回答がここに表示されます。","추가한 답변이 여기에 표시됩니다."],"完成作答，送出答案 ›":["Submit answers ›","回答を送信 ›","답변 제출 ›"],"第一階段":["Phase 1","第1段階","1단계"],"畫圓形":["Draw the circle","円を描く","원 그리기"],"第二階段":["Phase 2","第2段階","2단계"],"書寫數字":["Write the numbers","数字を書く","숫자 쓰기"],"第三階段":["Phase 3","第3段階","3단계"],"繪製時針與分針":["Draw the hour and minute hands","時針と分針を描く","시침과 분침 그리기"],"第四階段":["Phase 4","第4段階","4단계"],"完成時鐘":["Complete the clock","時計を完成させる","시계 완성하기"],"請依照指定時間畫出時鐘。可以使用下方工具修改，完成後點選送出答案。":["Draw the clock for the specified time, following the steps in order. Use the pen and eraser below to make changes, then submit your test. Take your time.","指定された時刻に合わせて、順番に時計を描いてください。下のペンと消しゴムで調整し、完成したら送信してください。焦らず進めましょう。","지정된 시간에 맞춰 순서대로 시계를 그리세요. 아래 펜과 지우개로 수정한 뒤 제출하면 됩니다. 천천히 진행하세요."],"指定時間：等待抽題":["Target time: waiting for question","指定時刻：問題を準備中","지정 시간: 문제 추첨 대기"],"畫筆":["Pen","ペン","펜"],"橡皮擦":["Eraser","消しゴム","지우개"],"復原":["Undo","元に戻す","실행 취소"],"全部清除":["Clear all","すべて消去","모두 지우기"],"完成時鐘，送出答案 ›":["Finish clock and submit ›","時計を完成して送信 ›","시계를 완성하고 제출 ›"],"正式施測結果":["Official assessment result","正式検査結果","공식 평가 결과"],"第五題｜地點答案人工審核":["Question 5 | Manual review of location answer","第5問｜場所回答の手動確認","5번 문항 | 장소 답변 수동 검토"],"判定答對":["Marked correct","正解と判定","정답으로 판정"],"判定答錯":["Marked incorrect","不正解と判定","오답으로 판정"],"查看作答明細與解答":["View response details and answers","回答の詳細と正解を見る","답변 세부 정보 및 정답 보기"],"再練習一次":["Practice again","もう一度練習","다시 연습하기"],"練習其他項目":["Practice another section","別の項目を練習","다른 항목 연습"],"回主選單":["Return to main menu","メインメニューに戻る","메인 메뉴로 돌아가기"],"請確認設定資訊":["Please confirm the settings","設定内容を確認してください","설정 내용을 확인해 주세요"],"請完成地點設定項目。":["Please complete the location settings.","場所の設定を完了してください。","장소 설정을 완료하세요."],"好的，我知道了":["Got it","わかりました","알겠습니다"],"辨識結果會先放入輸入框，您可以確認或修改，再自行按「＋加入」。":["The recognized text will appear in the input field. Review or edit it, then select “＋ Add”.","認識結果は入力欄に表示されます。確認または修正してから「＋追加」を押してください。","인식 결과가 입력란에 표시됩니다. 확인하거나 수정한 뒤 “＋ 추가”를 누르세요."],"先不用":["Not now","後で","나중에"],"請選擇語音或文字模式":["Choose voice or text mode","音声またはテキストモードを選択","음성 또는 텍스트 모드 선택"],"測驗說明（共三關）":["Test instructions (3 stages)","検査説明（全3段階）","검사 안내 (총 3단계)"],"選擇練習方式":["Choose practice mode","練習方法を選択","연습 방식 선택"],"中場休息時間":["Break time","休憩時間","휴식 시간"],"回想作答":["Recall answers","思い出して回答","회상 답변"],"測驗結果":["Test results","検査結果","검사 결과"],"請先選擇一種日曆回答（擇一即可）：":["Choose one calendar system:","暦の種類を1つ選択してください：","달력 방식을 하나 선택하세요:"],"民國年":["Minguo year","民国年","민국 연도"],"西元年":["Gregorian year","西暦年","서기 연도"],"生肖":["Chinese zodiac sign","十二支","띠"],"國曆":["Gregorian calendar","新暦","양력"],"農曆":["Lunar calendar","旧暦","음력"],"請輸入今年出生小孩的生肖：":["Enter the Chinese zodiac sign for a child born this year:","今年生まれの子どもの十二支を入力してください：","올해 태어난 아이의 띠를 입력하세요:"],"請輸入民國年份：":["Enter the Minguo year:","民国年を入力してください：","민국 연도를 입력하세요:"],"請輸入西元年份：":["Enter the Gregorian year:","西暦年を入力してください：","서기 연도를 입력하세요:"],"請輸入您記得的月份：":["Enter the month you remember:","覚えている月を入力してください：","기억하는 월을 입력하세요:"],"請輸入國曆月份：":["Enter the solar-calendar month:","新暦の月を入力してください：","양력 월을 입력하세요:"],"請輸入農曆月份：":["Enter the lunar-calendar month:","旧暦の月を入力してください：","음력 월을 입력하세요:"],"請輸入國曆日期：":["Enter the solar-calendar date:","新暦の日付を入力してください：","양력 날짜를 입력하세요:"],"請輸入農曆日期：":["Enter the lunar-calendar date:","旧暦の日付を入力してください：","음력 날짜를 입력하세요:"],"請輸入今天是星期幾：":["Enter the day of the week:","今日は何曜日か入力してください：","오늘은 무슨 요일인지 입력하세요:"],"請輸入地點名稱：":["Enter the location name:","場所の名前を入力してください：","장소 이름을 입력하세요:"],"請問今年是民國幾年？":["What is the current Minguo year?","今年は民国何年ですか？","올해는 민국 몇 년입니까?"],"請問今年是西元幾年？":["What is the current Gregorian year?","今年は西暦何年ですか？","올해는 서기 몇 년입니까?"],"請問今年出生的小孩屬什麼生肖？":["What is the Chinese zodiac sign of a child born this year?","今年生まれの子どもの干支は何ですか？","올해 태어난 아이의 띠는 무엇입니까?"],"請問現在是國曆幾月？":["What month is it in the solar calendar?","新暦では今何月ですか？","양력으로 지금은 몇 월입니까?"],"請問現在是農曆幾月？":["What month is it in the lunar calendar?","旧暦では今何月ですか？","음력으로 지금은 몇 월입니까?"],"請問現在是幾月？":["What month is it now?","今は何月ですか？","지금은 몇 월입니까?"],"請問今天是國曆幾號？":["What is today’s date in the solar calendar?","新暦で今日は何日ですか？","양력으로 오늘은 며칠입니까?"],"請問今天是農曆幾號？":["What is today’s date in the lunar calendar?","旧暦で今日は何日ですか？","음력으로 오늘은 며칠입니까?"],"請問今天是幾號？":["What is today’s date?","今日は何日ですか？","오늘은 며칠입니까?"],"請問今天是星期幾？":["What day of the week is it today?","今日は何曜日ですか？","오늘은 무슨 요일입니까?"],"請問這裡是什麼地方？":["Where are you now?","ここはどこですか？","이곳은 어디입니까?"],"找不到符合的地點":["No matching location found","該当する場所が見つかりません","일치하는 장소를 찾을 수 없습니다"],"請輸入星期名稱，例如：星期三或禮拜三。":["Enter a weekday, for example Wednesday.","曜日を入力してください。例：水曜日。","요일을 입력하세요. 예: 수요일."],"確認地點答案 ❯":["Confirm location answer ❯","場所の回答を確定 ❯","장소 답변 확인 ❯"],"正在準備圖片…":["Preparing pictures…","画像を準備しています…","그림 준비 중…"],"請準備，即將開始顯示圖片…":["Get ready. Pictures will appear shortly…","準備してください。まもなく画像が表示されます…","준비하세요. 곧 그림이 표시됩니다…"],"請先儲存或取消目前的修改。":["Please save or cancel your current edit first.","先に現在の編集を保存するか、キャンセルしてください。","현재 수정을 먼저 저장하거나 취소하세요."],"請先輸入至少一個答案。":["Please enter at least one answer.","回答を1つ以上入力してください。","답변을 하나 이상 입력하세요."],"最多只能保留 10 個答案，請刪除多出的答案後再送出。":["You can keep up to 10 answers. Remove the extra answers before submitting.","回答は最大10件まで保存できます。超過分を削除してから送信してください。","답변은 최대 10개까지 유지할 수 있습니다. 초과한 답변을 삭제한 후 제출하세요."],"修改":["Edit","編集","수정"],"刪除":["Delete","削除","삭제"],"儲存修改":["Save changes","変更を保存","수정 저장"],"確定重畫":["Clear and redraw","消去して描き直す","지우고 다시 그리기"],"請再次確認":["Please confirm again","もう一度確認してください","다시 확인하세요"],"AI 評分中，請稍候…":["AI scoring in progress. Please wait…","AI採点中です。しばらくお待ちください…","AI 채점 중입니다. 잠시 기다려 주세요…"],"完成送出 ❯":["Finish and submit ❯","完了して送信 ❯","완료 후 제출 ❯"],"目前無法播放語音，請確認裝置音量或稍後再試。":["Audio cannot be played right now. Check your device volume or try again later.","現在、音声を再生できません。端末の音量を確認するか、後でもう一度お試しください。","현재 음성을 재생할 수 없습니다. 기기 음량을 확인하거나 잠시 후 다시 시도하세요."],"例如：115":["For example: 115","例：115","예: 115"],"例如：2026":["For example: 2026","例：2026","예: 2026"],"例如：11":["For example: 11","例：11","예: 11"],"例如：17":["For example: 17","例：17","예: 17"],"例如：初五、十一、廿三":["For example: 5th day, 11th day, or 23rd day of the lunar month","例：初五、十一、廿三","예: 음력 초닷새, 열하루, 스무사흘"],"例如：星期三":["For example: Wednesday","例：水曜日","예: 수요일"],"例如：衛生所、醫院或診所":["For example: health center, hospital, or clinic","例：保健所、病院、診療所","예: 보건소, 병원 또는 의원"],"請輸入想到的圖片名稱":["Enter a picture name you remember","思い出した画像の名前を入力","기억나는 그림 이름 입력"],"圖片展示進度":["Picture display progress","画像表示の進行状況","그림 표시 진행 상황"],"圖卡圖片":["Picture card","画像カード","그림 카드"],"畫鐘測驗繪製順序":["Clock drawing steps","時計描画の手順","시계 그리기 순서"],"畫鐘測驗操作引導":["Clock drawing instructions","時計描画の操作案内","시계 그리기 안내"],"畫鐘繪圖工具":["Clock drawing tools","時計描画ツール","시계 그리기 도구"],"通過":["Passed","合格","통과"],"未通過":["Not passed","不合格","미통과"],"待人工確認":["Pending manual review","手動確認待ち","수동 확인 대기"],"答對":["Correct","正解","정답"],"答錯":["Incorrect","不正解","오답"],"未答對":["Not correct","不正解","정답 아님"],"參考答案":["Reference answer","参考解答","참고 답안"],"作答明細":["Response details","回答の詳細","답변 세부 정보"],"題組":["Question set","問題セット","문항 묶음"],"觀看順序":["Viewing order","表示順","보여준 순서"],"已回想答對":["Correctly recalled","正しく思い出した項目","정확히 기억한 항목"],"未回想出來":["Not recalled","思い出せなかった項目","기억하지 못한 항목"],"時鐘總分":["Clock total score","時計の合計点","시계 총점"],"評分來源":["Scoring source","採点元","채점 출처"],"AI 評分說明":["AI scoring explanation","AI採点の説明","AI 채점 설명"],"AI 評分細項":["AI scoring details","AI採点の詳細","AI 채점 세부 내용"],"AI 評分未提供逐項細節。":["The AI did not provide itemized scoring details.","AIは項目別の採点詳細を提供していません。","AI가 항목별 채점 세부 정보를 제공하지 않았습니다."],"居家練習結果":["Home practice result","自宅練習の結果","가정 연습 결과"],"未經現場核對":["Not verified on site","現地確認なし","현장 확인되지 않음"],"未達通過標準":["Did not meet the passing standard","合格基準に達していません","통과 기준에 도달하지 못했습니다"],"成績待人工確認":["Score pending manual review","得点は手動確認待ちです","점수 수동 검토 대기 중"],"尚未通過":["Not passed yet","未合格","아직 통과하지 못함"],"無作答明細":["No response details","回答の詳細はありません","응답 세부 정보 없음"],"您的回答：":["Your answer: ","あなたの回答：","응답: "],"回答方式：":["Response method: ","回答方法：","응답 방식: "],"辨識後日期：":["Recognized date: ","認識された日付：","인식된 날짜: "],"辨識後月份：":["Recognized month: ","認識された月：","인식된 월: "],"標準化生肖：":["Normalized zodiac: ","標準化された生肖：","표준화된 띠: "],"系統標準化地點：":["System-normalized location: ","システムで標準化された場所：","시스템 표준화 위치: "],"標準化星期：":["Normalized weekday: ","標準化された曜日：","표준화된 요일: "],"測驗日期：":["Test date: ","検査日：","검사 날짜: "],"狀態：":["Status: ","状態：","상태: "],"說明：":["Note: ","説明：","설명: "],"符合的核對別名：":["Matched alias: ","一致した照合用別名：","일치한 대조 별칭: "],"參考答案：":["Reference answer: ","参考解答：","참고 답안: "],"判定：":["Result: ","判定：","판정: "],"題組：":["Set: ","問題セット：","문항 묶음: "],"觀看順序：":["Viewing order: ","表示順：","표시 순서: "],"已回想答對：":["Correctly recalled: ","正しく思い出した項目：","정확히 기억한 항목: "],"未回想出來：":["Not recalled: ","思い出せなかった項目：","기억하지 못한 항목: "],"時鐘總分：":["Clock total score: ","時計の合計点：","시계 총점: "],"評分來源：":["Scoring provider: ","採点元：","채점 제공자: "],"AI 評分說明：":["AI scoring explanation: ","AI採点の説明：","AI 채점 설명: "],"AI 評分細項：":["AI scoring details: ","AI採点の詳細：","AI 채점 세부 정보: "],"您的答案：":["Your answer: ","あなたの回答：","응답: "],"審核結果：":["Review result: ","審査結果：","검토 결과: "],"審核紀錄：":["Review record: ","審査記録：","검토 기록: "],"尚未完成審核；第五題目前不列入正式得分。":["Review is not complete. Question 5 is not included in the official score yet.","審査は完了していません。第5問は現時点で正式得点に含まれません。","검토가 완료되지 않았습니다. 5번 문항은 현재 공식 점수에 포함되지 않습니다."],"已完成人工審核。":["Manual review completed.","手動確認が完了しました。","수동 검토가 완료되었습니다."],"【第一關】":["【Stage 1】","【第1段階】","【1단계】"],"【第二關】":["【Stage 2】","【第2段階】","【2단계】"],"【第三關】":["【Stage 3】","【第3段階】","【3단계】"],"星期一":["Monday","月曜日","월요일"],"星期二":["Tuesday","火曜日","화요일"],"星期三":["Wednesday","水曜日","수요일"],"星期四":["Thursday","木曜日","목요일"],"星期五":["Friday","金曜日","금요일"],"星期六":["Saturday","土曜日","토요일"],"星期日":["Sunday","日曜日","일요일"],"請先確認練習地點，再查看測驗介紹。":["Please confirm your practice location before viewing the test instructions.","検査説明を見る前に、練習場所を確認してください。","검사 안내를 보기 전에 연습 장소를 확인하세요."],"請先確認練習地點，再進入第一關。":["Please confirm your practice location before starting Stage 1.","第1段階に進む前に、練習場所を確認してください。","1단계를 시작하기 전에 연습 장소를 확인하세요."],"請先閱讀測驗介紹，再開始第一關。":["Please read the test instructions before starting Stage 1.","第1段階を始める前に、検査説明を読んでください。","1단계를 시작하기 전에 검사 안내를 읽으세요."],"請先選擇「我在家裡練習」或「施測人員代操作模式」。":["Please select “I am practicing at home” or “Staff-assisted mode.”","「自宅で練習」または「スタッフ操作モード」を選択してください。","“집에서 연습” 또는 “담당자 진행 모드”를 선택하세요."],"找不到畫鐘畫布，請重新進入第三關。":["Clock canvas not found. Please re-enter Stage 3.","時計の描画エリアが見つかりません。第3段階に入り直してください。","시계 그리기 캔버스를 찾을 수 없습니다. 3단계에 다시 들어가세요."],"無法讀取目前的畫作，請重新操作後再送出。":["Unable to read the current drawing. Please try again and submit.","現在の描画を読み取れません。もう一度操作して送信してください。","현재 그림을 읽을 수 없습니다. 다시 그린 후 제출하세요."],"目前畫作格式無法辨識，請重新作答。":["The drawing format cannot be recognized. Please try again.","描画形式を認識できません。もう一度回答してください。","그림 형식을 인식할 수 없습니다. 다시 답하세요."],"目前無法連接 AI 評分服務。請從正式部署的測驗平台開啟，再重新送出畫作。":["Cannot connect to the AI scoring service. Open the officially deployed test platform and submit the drawing again.","AI採点サービスに接続できません。正式にデプロイされた検査プラットフォームから開き、描画を再送信してください。","AI 채점 서비스에 연결할 수 없습니다. 정식 배포된 검사 플랫폼에서 다시 열고 그림을 제출하세요."],"AI 評分回傳資料格式不正確，未更新本題分數。請稍後再試。":["The AI scoring response format is invalid. This item score was not updated. Please try again later.","AI採点の応答形式が正しくないため、この項目の得点は更新されていません。後でもう一度お試しください。","AI 채점 응답 형식이 올바르지 않아 이 문항 점수가 갱신되지 않았습니다. 나중에 다시 시도하세요."],"AI 評分完成。":["AI scoring completed.","AI採点が完了しました。","AI 채점이 완료되었습니다."],"正在將您的時鐘畫作送交 AI 評分，請稍候。":["Your clock drawing is being sent for AI scoring. Please wait.","時計の描画をAI採点に送信しています。しばらくお待ちください。","시계 그림을 AI 채점에 제출하는 중입니다. 잠시 기다려 주세요."],"AI 評分未完成，畫作已保留，您可以再次送出。":["AI scoring was not completed. Your drawing has been saved; you can submit it again.","AI採点は完了していません。描画は保存されています。再送信できます。","AI 채점이 완료되지 않았습니다. 그림은 보존되었으며 다시 제출할 수 있습니다."],"AI 評分連線失敗，畫作已保留，您可以再次送出。":["AI scoring connection failed. Your drawing has been saved; you can submit it again.","AI採点への接続に失敗しました。描画は保存されています。再送信できます。","AI 채점 연결에 실패했습니다. 그림은 보존되었으며 다시 제출할 수 있습니다."],"AI 評分服務未能完成判讀。":["The AI scoring service could not complete the assessment.","AI採点サービスは判定を完了できませんでした。","AI 채점 서비스가 평가를 완료하지 못했습니다."],"AI 回傳的分數格式不正確，畫作已保留，請重新送出。":["The AI returned an invalid score format. Your drawing has been saved; please submit it again.","AIから正しくない得点形式が返されました。描画は保存されています。再送信してください。","AI가 잘못된 점수 형식을 반환했습니다. 그림은 보존되었으니 다시 제출하세요."],"目前不是透過正式 Apps Script 網頁應用程式開啟，無法連接 AI 評分服務。":["This page was not opened through the official Apps Script web app, so the AI scoring service is unavailable.","このページは正式なApps Scriptウェブアプリから開かれていないため、AI採点サービスに接続できません。","이 페이지는 공식 Apps Script 웹 앱에서 열리지 않아 AI 채점 서비스를 사용할 수 없습니다."],"無法連接第三關 AI 評分函式。請確認 Code.gs 已更新並重新部署。":["Cannot connect to the Stage 3 AI scoring function. Make sure Code.gs is updated and redeployed.","第3段階のAI採点関数に接続できません。Code.gsを更新して再デプロイしてください。","3단계 AI 채점 함수에 연결할 수 없습니다. Code.gs를 업데이트하고 다시 배포하세요."],"這個回答屬於通用地點名稱，需要工作人員確認。":["This is a generic place name and requires staff confirmation.","一般的な場所の名称のため、スタッフによる確認が必要です。","일반적인 장소 명칭이므로 담당자의 확인이 필요합니다."],"已符合設定的地點名稱。":["This matches the configured location name.","設定された場所の名称と一致しました。","설정된 장소 이름과 일치합니다."],"系統無法自動核對這個地點，需要工作人員確認。":["The system cannot verify this location automatically. Staff confirmation is required.","この場所をシステムで自動確認できません。スタッフによる確認が必要です。","시스템이 이 장소를 자동으로 확인할 수 없습니다. 담당자 확인이 필요합니다."],"此答案需要施測人員依實際地點確認。":["This answer must be checked by the test administrator against the actual location.","この回答は実際の場所に基づき、検査担当者が確認する必要があります。","이 답변은 실제 장소를 기준으로 검사 담당자가 확인해야 합니다."],"請確認受測者實際所在位置後，再進行判定。":["Confirm the participant’s actual location before making a decision.","受検者の実際の所在地を確認してから判定してください。","검사 대상자의 실제 위치를 확인한 후 판정하세요."],"第五題地點答案未經現場核對，不列入正式對錯及通過判定；本次紀錄僅供練習參考。":["The location answer for Question 5 was not verified on site, so it is excluded from the official correctness and passing decision. This record is for practice reference only.","第5問の場所の回答は現地確認されていないため、正式な正誤判定および合格判定には含まれません。この記録は練習用です。","5번 문항의 장소 답변은 현장 확인을 거치지 않아 공식 정오 및 통과 판정에서 제외됩니다. 이 기록은 연습용 참고 자료입니다."],"第五題尚待施測人員審核；完成後才會更新正式總分及通過結果。":["Question 5 is awaiting review by the test administrator. The official total score and result will be updated after review.","第5問は検査担当者の確認待ちです。確認後、正式な合計点と結果が更新されます。","5번 문항은 검사 담당자의 검토를 기다리고 있습니다. 검토 후 공식 총점과 결과가 업데이트됩니다."],"此地點答案需要施測人員確認。":["This location answer requires confirmation by the test administrator.","この場所の回答は検査担当者による確認が必要です。","이 장소 답변은 검사 담당자의 확인이 필요합니다."],"請輸入您目前所在的地點名稱。":["Enter the name of your current location.","現在いる場所の名称を入力してください。","현재 위치의 이름을 입력하세요."],"請先選擇縣市、行政區及測驗地點。":["Select the city/county, district, and testing location first.","先に県・市、区、検査場所を選択してください。","먼저 시·현, 행정구 및 검사 장소를 선택하세요."],"請選擇縣市、行政區及測驗地點。":["Please select the city/county, district, and testing location.","県・市、区、検査場所を選択してください。","시·현, 행정구 및 검사 장소를 선택하세요."],"請先選擇測驗地點，讓系統帶入核對別名。":["Select a testing location first so the system can load matching aliases.","照合用の別名を読み込むため、先に検査場所を選択してください。","대조 별칭을 불러오려면 먼저 검사 장소를 선택하세요."],"請先輸入您目前所在的地點名稱。":["Enter or say the name of your current location.","現在いる場所の名称を入力または発話してください。","현재 위치의 이름을 입력하거나 말하세요."],"請輸入 1 至 12 的月份數字。":["Enter a month number from 1 to 12.","1から12までの月の数字を入力してください。","1부터 12까지의 월 숫자를 입력하세요."],"請輸入有效的國曆日期，例如：17。":["Enter a valid Gregorian calendar date, for example 17.","有効な新暦の日付を入力してください。例：17。","유효한 양력 날짜를 입력하세요. 예: 17."],"請輸入有效的農曆日期，例如：初五、十一或廿三。":["Enter a valid lunar date, for example the 5th, 11th, or 23rd day.","有効な旧暦の日付を入力してください。例：初五、十一、廿三。","유효한 음력 날짜를 입력하세요. 예: 초닷새, 11일 또는 23일."],"請輸入正確的生肖名稱。":["Enter a valid Chinese zodiac animal.","正しい十二支の動物名を入力してください。","올바른 십이지 동물 이름을 입력하세요."],"請先選擇國曆或農曆。":["Select the Gregorian or lunar calendar first.","先に新暦または旧暦を選択してください。","먼저 양력 또는 음력을 선택하세요."],"目前無法取得台灣時區的測驗日期，請確認裝置日期與瀏覽器設定後再試一次。":["Unable to obtain the test date in the Taiwan time zone. Check your device date and browser settings, then try again.","台湾のタイムゾーンで検査日を取得できません。端末の日付とブラウザー設定を確認して、もう一度お試しください。","대만 시간대의 검사 날짜를 가져올 수 없습니다. 기기 날짜와 브라우저 설정을 확인한 후 다시 시도하세요."],"目前無法取得完整農曆日期資料，暫時無法判定本題。請確認瀏覽器支援農曆日期。":["Complete lunar date information is unavailable, so this question cannot be evaluated yet. Check whether your browser supports the lunar calendar.","旧暦の日付情報を取得できないため、この問題を判定できません。ブラウザーが旧暦に対応しているか確認してください。","전체 음력 날짜 정보를 가져올 수 없어 현재 문항을 판정할 수 없습니다. 브라우저가 음력을 지원하는지 확인하세요."],"目前無法取得完整農曆月份資料，暫時無法判定本題。請確認瀏覽器支援農曆日期。":["Complete lunar month information is unavailable, so this question cannot be evaluated yet. Check whether your browser supports the lunar calendar.","旧暦の月情報を取得できないため、この問題を判定できません。ブラウザーが旧暦に対応しているか確認してください。","전체 음력 월 정보를 가져올 수 없어 현재 문항을 판정할 수 없습니다. 브라우저가 음력을 지원하는지 확인하세요."],"目前無法取得農曆生肖資料，請改用民國年或西元年回答。":["Unable to obtain the lunar zodiac information. Please answer using the Minguo or Gregorian year instead.","旧暦の生肖情報を取得できません。民国年または西暦で回答してください。","음력 띠 정보를 가져올 수 없습니다. 민국 연도 또는 서력 연도로 답하세요."],"最多只能加入 10 個答案。":["You can add up to 10 answers.","回答は最大10件まで追加できます。","답변은 최대 10개까지 추가할 수 있습니다."],"作答時間已到，請送出目前的時鐘畫面。":["Time is up. Please submit the current clock drawing.","制限時間になりました。現在の時計の描画を送信してください。","시간이 종료되었습니다. 현재 시계 그림을 제출하세요."],"圖卡圖片準備不完整，請重新開始本輪測驗。":["The picture cards are not fully prepared. Please restart this test round.","画像カードの準備が完了していません。この検査を最初からやり直してください。","그림 카드 준비가 완료되지 않았습니다. 이번 검사 단계를 다시 시작하세요."],"國語語音":["Mandarin audio","中国語音声","중국어 음성"],"臺語語音":["Taiwanese Hokkien audio","台湾語音声","대만 민난어 음성"],"客語語音":["Hakka audio","客家語音声","하카어 음성"],"純文字模式":["Text-only mode","テキストのみモード","텍스트 전용 모드"],"請選擇目前的練習地點":["Select your current practice location","現在の練習場所を選択してください","현재 연습 장소를 선택하세요"],"您好！第一關共有 5 個問題，請仔細看題目，憑現在的記憶回答就好。":["Hello! Stage 1 has 5 questions. Read carefully and answer from memory.","こんにちは。第1段階は5問です。問題をよく読み、現在の記憶で回答してください。","안녕하세요! 1단계는 5문항입니다. 문제를 잘 읽고 현재 기억을 바탕으로 답하세요."],"請依照畫面提示作答。":["Follow the on-screen instructions.","画面の案内に従って回答してください。","화면 안내에 따라 답변하세요."],"狀態：未經現場核對（不列入正式對錯判定）":["Status: Not verified on site (excluded from the official correctness decision)","状態：現地確認なし（正式な正誤判定には含まれません）","상태: 현장 확인되지 않음 (공식 정오 판정에서 제외)"],"狀態：自動核對：答對":["Status: Automatically verified — correct","状態：自動照合：正解","상태: 자동 확인 — 정답"],"狀態：待人工確認":["Status: Pending manual review","状態：手動確認待ち","상태: 수동 검토 대기"],"狀態：人工審核：答對":["Status: Manually reviewed — correct","状態：手動審査：正解","상태: 수동 검토 — 정답"],"狀態：人工審核：答錯":["Status: Manually reviewed — incorrect","状態：手動審査：不正解","상태: 수동 검토 — 오답"],"狀態：自動核對：答錯":["Status: Automatically verified — incorrect","状態：自動照合：不正解","상태: 자동 확인 — 오답"],"審核結果：判定答對":["Review result: Marked correct","審査結果：正解と判定","검토 결과: 정답으로 판정"],"審核結果：判定答錯":["Review result: Marked incorrect","審査結果：不正解と判定","검토 결과: 오답으로 판정"],"說明：本次為居家自行練習，地點答案未經現場核對。":["Note: This was home practice, so the location answer was not verified on site.","説明：今回は自宅練習のため、場所の回答は現地確認されていません。","설명: 이번에는 가정 연습이므로 장소 답변이 현장 확인되지 않았습니다."],"第一關共有 5 個問題，請仔細閱讀題目，依照您的記憶回答即可。":["Stage 1 has 5 questions. Read each question carefully and answer from memory.","第1段階は全5問です。問題をよく読み、記憶をもとに回答してください。","1단계는 5문항입니다. 문제를 잘 읽고 기억을 바탕으로 답하세요."]};
+var EXAM_TEXT_TRANSLATIONS = {"高齡駕駛人認知檢測練習":["Senior Driver Cognitive Assessment Practice","高齢ドライバー認知機能検査の練習","고령 운전자 인지 기능 검사 연습"],"← 返回練習選單":["← Back to Practice Menu","← 練習メニューに戻る","← 연습 메뉴로 돌아가기"],"第一關":["Stage 1","第1段階","1단계"],"第二關":["Stage 2","第2段階","2단계"],"第三關":["Stage 3","第3段階","3단계"],"時間、空間認知":["Time and Spatial Orientation","時間・空間の見当識","시간·공간 지남력"],"圖卡記憶":["Picture Memory"," 그림 카드 기억","그림 카드 기억"],"徒手繪畫時鐘":["Clock Drawing","時計描画","시계 그리기"],"選擇題目播放方式":["Choose how questions are played","問題の再生方法を選択","문제 재생 방식 선택"],"國語":["Mandarin","中国語（標準語）","중국어(표준어)"],"臺語":["Taiwanese Hokkien","台湾語（閩南語）","대만 민난어"],"（閩南語）":["(Hokkien)","（閩南語）","(민난어)"],"客語":["Hakka","客家語","하카어"],"純文字模式（無語音）":["Text only (no audio)","テキストのみ（音声なし）","텍스트 전용(음성 없음)"],"請選擇客語腔調：":["Choose a Hakka accent:","客家語の方言を選択してください：","하카어 방언을 선택하세요:"],"四縣腔":["Sixian accent","四県腔","쓰셴 방언"],"海陸腔":["Hailu accent","海陸腔","하이루 방언"],"選擇語音後會先播放試聽，請確認聽得到聲音。測驗時會同步顯示題目文字。":["A voice preview will play after selection. Please make sure you can hear it. Question text will also appear during the test.","音声を選択すると試聴が再生されます。音が聞こえることを確認してください。テスト中は問題文も表示されます。","음성을 선택하면 미리 듣기가 재생됩니다. 소리가 들리는지 확인하세요. 검사 중에는 문제 문구도 함께 표시됩니다."],"測驗時只顯示文字，不播放語音。":["Text will be displayed during the test. No audio will play.","テスト中はテキストのみ表示し、音声は再生しません。","검사 중에는 텍스트만 표시하고 음성은 재생하지 않습니다."]," 重新播放試聽語音":[" Replay audio preview"," 試聴音声をもう一度再生"," 미리 듣기 음성 다시 재생"],"下一步：確認練習地點 ›":["Next: Confirm practice location ›","次へ：練習場所を確認 ›","다음: 연습 장소 확인 ›"],"回答年份、月份、日期、星期及所在場所。":["Answer questions about the year, month, date, day of the week, and your current location.","年・月・日・曜日と現在地について回答します。","연도, 월, 날짜, 요일 및 현재 장소에 답하세요."],"通過標準：5題需答對4題。":["Passing score: answer at least 4 of 5 questions correctly.","合格基準：5問中4問以上正解。","통과 기준: 5문항 중 4문항 이상 정답."],"觀看並記憶10張圖片，休息2分鐘後回想圖片內容。":["Study and remember 10 pictures. After a 2-minute break, recall the pictures.","10枚の画像を見て覚えます。2分間休憩した後、画像の内容を思い出してください。","그림 10장을 보고 기억한 뒤 2분 휴식 후 그림 내용을 떠올리세요."],"通過標準：10張圖片需答對3張。":["Passing score: recall at least 3 of the 10 pictures.","合格基準：10枚中3枚以上を正解。","통과 기준: 그림 10장 중 3장 이상 정답."],"依照指定時間，畫出時鐘、數字及指針。":["Draw a clock showing the specified time, including its numbers and hands.","指定された時刻に合わせて、文字盤・数字・針を描いてください。","지정된 시간에 맞춰 시계 숫자와 바늘을 그리세요."],"滿分7分，需取得4分以上，作答時間4分鐘。":["Maximum score: 7 points. At least 4 points are required. Time limit: 4 minutes.","満点は7点、合格には4点以上が必要です。制限時間は4分です。","만점은 7점이며 4점 이상 받아야 합니다. 제한 시간은 4분입니다."],"再聽一次指導語":["Replay instructions","説明をもう一度聞く","안내 다시 듣기"],"開始第一關 ›":["Start Stage 1 ›","第1段階を開始 ›","1단계 시작 ›"],"請先確認目前的練習地點，系統會用來核對第五題答案。":["Please confirm your current practice location. The system will use it to review your answer to Question 5.","現在の練習場所を確認してください。システムは第5問の回答確認に使用します。","현재 연습 장소를 확인하세요. 시스템이 5번 문항 답변을 확인하는 데 사용합니다."],"若您是在家中自行練習，可以直接選擇下方的「我在家裡練習」。":["If you are practicing at home, select “I am practicing at home” below.","ご自宅で練習している場合は、下の「自宅で練習」を選択してください。","집에서 연습 중이라면 아래의 “집에서 연습”을 선택하세요."]," 再聽一次說明":[" Replay instructions"," 説明をもう一度聞く"," 안내 다시 듣기"],"請選擇練習模式":["Choose a practice mode","練習モードを選択","연습 모드를 선택하세요"],"我在家裡練習":["I am practicing at home","自宅で練習","집에서 연습"],"一般自行練習":["Independent practice","個人練習","개인 연습"],"施測人員代操作模式":["Staff-assisted mode","スタッフ操作モード","담당자 진행 모드"],"非在家施測｜監理站、醫療院所等":["Off-site testing | Motor vehicle offices, medical facilities, etc.","自宅以外での実施｜監理機関・医療機関など","가정 외 검사 | 운전면허시험장, 의료기관 등"],"選擇後填寫施測地點及相關設定":["After selecting, enter the testing location and related settings.","選択後、検査場所と関連情報を入力してください。","선택 후 검사 장소와 관련 설정을 입력하세요."],"非在家練習":["Off-site practice","自宅以外での練習","가정 외 연습"],"縣市":["City / County","県・市","시·현"],"請選擇縣市":["Select a city or county","県・市を選択","시·현 선택"],"行政區":["District","区","행정구"],"請先選擇縣市":["Select a city or county first","先に県・市を選択してください","먼저 시·현을 선택하세요"],"測驗地點":["Testing location","検査場所","검사 장소"],"請先選擇行政區":["Select a district first","先に区を選択してください","먼저 행정구를 선택하세요"],"輸入關鍵字搜尋地點":["Enter a keyword to search for a location","キーワードで場所を検索","장소 검색어 입력"],"進階評分與別名設定（監理站／醫療院所施測人員專用）":["Advanced scoring and aliases (for testing staff at motor vehicle offices / medical facilities)","詳細な採点・別名設定（監理機関／医療機関の担当者向け）","고급 채점 및 별칭 설정(운전면허시험장/의료기관 담당자용)"],"A 類｜已自動套用 0 組核對別名（點擊檢視或修改）":["Type A | 0 matching aliases applied automatically (select to view or edit)","Aタイプ｜照合用別名0件を自動適用（クリックして表示・編集）","A 유형 | 대조 별칭 0개 자동 적용(눌러서 확인 또는 수정)"],"請先選擇上方測驗地點，系統會自動帶入預設別名。":["Select a testing location above. The system will automatically add the default aliases.","上の検査場所を選択すると、既定の別名が自動入力されます。","위에서 검사 장소를 선택하면 기본 별칭이 자동으로 입력됩니다."],"＋ 新增":["＋ Add","＋ 追加","＋ 추가"],"↻ 恢復預設別名":["↻ Restore default aliases","↻ 既定の別名に戻す","↻ 기본 별칭 복원"],"B 類｜需要人工審核的通用名稱（不直接給分）":["Type B | Generic names requiring manual review (no automatic credit)","Bタイプ｜手動確認が必要な一般名称（自動採点しません）","B 유형 | 수동 검토가 필요한 일반 명칭(자동 점수 미부여)"],"衛生所、醫院、診所、監理所、監理站、門診部、代辦所。若只回答通用名稱，結果會標示「待人工確認」。":["Health centers, hospitals, clinics, motor vehicle offices, outpatient departments, and service agencies. Generic answers alone will be marked “Pending manual review.”","保健所、病院、診療所、監理機関、外来部門、代行窓口など。一般名称のみの場合は「手動確認待ち」と表示されます。","보건소, 병원, 의원, 운전면허 사무소, 외래 부서 및 대행 기관 등. 일반 명칭만 답하면 “수동 확인 대기”로 표시됩니다."],"確認選擇，前往測驗介紹 ›":["Confirm and continue to test instructions ›","選択を確認して検査説明へ ›","선택 확인 후 검사 안내로 이동 ›"],"您好！第一關共有 5 個問題，請仔細聽題目，憑現在的記憶回答就好。":["Hello! Stage 1 has 5 questions. Listen carefully and answer based on what you know.","こんにちは。第1段階は5問です。問題をよく聞き、現在の記憶で回答してください。","안녕하세요! 1단계는 5문항입니다. 문제를 잘 듣고 현재 기억을 바탕으로 답하세요."],"※ 作答時請勿查看日曆、時鐘，或由旁人提示喔。":["Please do not look at a calendar or clock, or ask anyone for help while answering.","回答中はカレンダーや時計を見たり、周囲の人にヒントをもらったりしないでください。","답변 중에는 달력이나 시계를 보거나 다른 사람에게 도움을 요청하지 마세요."],"再聽一次":["Replay","もう一度聞く","다시 듣기"],"開始第一關作答 ❯":["Begin Stage 1 ❯","第1段階の回答を開始 ❯","1단계 답변 시작 ❯"],"接下來會看到 10 張圖片，請仔細記住圖片和名稱。":["You will see 10 pictures. Please remember each picture and its name.","これから10枚の画像が表示されます。画像と名前をよく覚えてください。","이제 그림 10장이 표시됩니다. 그림과 이름을 잘 기억하세요."],"① 觀看圖片":["① View the pictures","① 画像を見る","① 그림 보기"],"每張圖片會顯示 2 秒，請仔細觀看圖片及名稱。":["Each picture will appear for 2 seconds. Look carefully at the picture and its name.","各画像は2秒間表示されます。画像と名前をよく見てください。","각 그림은 2초 동안 표시됩니다. 그림과 이름을 주의 깊게 보세요."],"② 休息一下":["② Take a break","② 休憩する","② 휴식하기"],"全部看完後，休息 2 分鐘。":["After viewing all pictures, take a 2-minute break.","すべて見終わったら、2分間休憩してください。","모든 그림을 본 뒤 2분간 휴식하세요."],"③ 回想作答":["③ Recall","③ 思い出して回答","③ 기억해서 답하기"],"時間到後，回想並說出剛才看過的圖片名稱。":["When time is up, recall and name the pictures you saw.","時間になったら、先ほど見た画像の名前を思い出して答えてください。","시간이 되면 방금 본 그림의 이름을 떠올려 말하세요."],"不用擔心記不住全部，記得多少就回答多少。":["Do not worry if you cannot remember everything. Answer as much as you can.","全部覚えていなくても大丈夫です。思い出せる分だけ回答してください。","모두 기억하지 못해도 괜찮습니다. 기억나는 만큼 답하세요."],"開始觀看圖片 ❯":["Start viewing pictures ❯","画像の表示を開始 ❯","그림 보기 시작 ❯"],"請依照題目指定的時間，畫出完整的時鐘。":["Draw a complete clock showing the time specified in the question.","問題で指定された時刻を示す時計を完成させてください。","문제에서 지정한 시간을 표시하는 완전한 시계를 그리세요."],"每次測驗會從不同時間中隨機抽出一題。":["A different target time will be selected at random for each test.","テストごとに異なる時刻がランダムに選ばれます。","검사마다 다른 지정 시간이 무작위로 선택됩니다."],"① 畫出外框":["① Draw the outline","① 外枠を描く","① 테두리 그리기"],"先畫一個大大的圓形。":["First, draw a large circle.","まず大きな円を描いてください。","먼저 큰 원을 그리세요."],"② 寫上數字":["② Add the numbers","② 数字を書く","② 숫자 쓰기"],"在圓圈內寫上 1 到 12 的數字。":["Write the numbers 1 through 12 inside the circle.","円の中に1から12までの数字を書いてください。","원 안에 1부터 12까지 숫자를 쓰세요."],"③ 畫出指針":["③ Draw the hands","③ 針を描く","③ 시곗바늘 그리기"],"依照指定時間，畫出短時針和長分針。":["Draw the short hour hand and long minute hand to show the specified time.","指定された時刻に合わせて、短い時針と長い分針を描いてください。","지정된 시간에 맞춰 짧은 시침과 긴 분침을 그리세요."],"作答時間：4 分鐘":["Time limit: 4 minutes","回答時間：4分","답변 시간: 4분"],"請依照畫面及語音提示作答。":["Follow the on-screen and audio instructions.","画面と音声の案内に従って回答してください。","화면과 음성 안내에 따라 답변하세요."]," 再聽一次":[" Replay instructions"," もう一度聞く"," 안내 다시 듣기"],"開始畫時鐘 ›":["Start drawing the clock ›","時計を描き始める ›","시계 그리기 시작 ›"],"請輸入您的答案":["Enter your answer","回答を入力してください","답변을 입력하세요"],"閏月仍輸入該月份數字即可，例如閏四月輸入 4。":["For a leap month, enter the month number. For example, enter 4 for leap fourth month.","閏月も月の数字を入力してください。例：閏4月なら「4」と入力します。","윤달도 해당 월의 숫자를 입력하세요. 예: 윤4월은 4를 입력합니다."],"確認本題 ❯":["Confirm this answer ❯","この回答を確定 ❯","이 답변 확인 ❯"],"系統自動播放中，請專心記憶，不需點擊螢幕。":["Pictures are playing automatically. Focus on remembering; no screen tap is needed.","画像は自動再生中です。画面をタップせず、記憶に集中してください。","그림이 자동 재생 중입니다. 화면을 누르지 말고 기억에 집중하세요."],"請放輕鬆休息 2 分鐘。":["Please relax and rest for 2 minutes.","リラックスして2分間休憩してください。","편안하게 2분간 휴식하세요."],"剩餘時間":["Time remaining","残り時間","남은 시간"],"倒數結束後，將自動進入回想作答。":["When the countdown ends, the recall section will begin automatically.","カウントダウン終了後、自動的に思い出し回答へ進みます。","카운트다운이 끝나면 자동으로 회상 답변 단계로 이동합니다."],"僅限練習模式":["Practice mode only","練習モードのみ","연습 모드 전용"],"略過休息，直接開始回想":["Skip the break and start recall","休憩をスキップして回答を開始","휴식을 건너뛰고 회상 시작"],"請回想剛才看過的 10 張圖片，想到哪些就回答哪些。":["Recall the 10 pictures you just saw. Enter any names you remember.","先ほど見た10枚の画像を思い出し、覚えている名前を入力してください。","방금 본 그림 10장을 떠올리고 기억나는 이름을 입력하세요."],"共 10 張圖片，作答順序不限；答對 3 張即可通過本關。":["Any order is acceptable. Recall 3 pictures to meet the passing standard.","順番は問いません。3枚正解するとこの段階の合格基準に達します。","순서는 상관없습니다. 그림 3장을 맞히면 이 단계의 통과 기준을 충족합니다."],"已加入 0 個圖片名稱":["Answers added: 0","追加済みの回答：0件","추가된 답변: 0개"],"＋加入":["＋ Add","＋ 追加","＋ 추가"],"取消":["Cancel","キャンセル","취소"],"您加入的答案會顯示在這裡。":["Your answers will appear here.","追加した回答がここに表示されます。","추가한 답변이 여기에 표시됩니다."],"完成作答，送出答案 ›":["Submit answers ›","回答を送信 ›","답변 제출 ›"],"第一階段":["Phase 1","第1段階","1단계"],"畫圓形":["Draw the circle","円を描く","원 그리기"],"第二階段":["Phase 2","第2段階","2단계"],"書寫數字":["Write the numbers","数字を書く","숫자 쓰기"],"第三階段":["Phase 3","第3段階","3단계"],"繪製時針與分針":["Draw the hour and minute hands","時針と分針を描く","시침과 분침 그리기"],"第四階段":["Phase 4","第4段階","4단계"],"完成時鐘":["Complete the clock","時計を完成させる","시계 완성하기"],"請依指定時間畫出時鐘，可使用下方工具修改，完成後送出。":["Draw the clock for the specified time, following the steps in order. Use the pen and eraser below to make changes, then submit your test. Take your time.","指定された時刻に合わせて、順番に時計を描いてください。下のペンと消しゴムで調整し、完成したら送信してください。焦らず進めましょう。","지정된 시간에 맞춰 순서대로 시계를 그리세요. 아래 펜과 지우개로 수정한 뒤 제출하면 됩니다. 천천히 진행하세요."],"指定時間：等待抽題":["Target time: waiting for question","指定時刻：問題を準備中","지정 시간: 문제 추첨 대기"],"畫筆":["Pen","ペン","펜"],"橡皮擦":["Eraser","消しゴム","지우개"],"復原":["Undo","元に戻す","실행 취소"],"全部清除":["Clear all","すべて消去","모두 지우기"],"完成時鐘，送出答案 ›":["Finish clock and submit ›","時計を完成して送信 ›","시계를 완성하고 제출 ›"],"正式施測結果":["Official assessment result","正式検査結果","공식 평가 결과"],"第五題｜地點答案人工審核":["Question 5 | Manual review of location answer","第5問｜場所回答の手動確認","5번 문항 | 장소 답변 수동 검토"],"判定答對":["Marked correct","正解と判定","정답으로 판정"],"判定答錯":["Marked incorrect","不正解と判定","오답으로 판정"],"查看作答明細與解答":["View response details and answers","回答の詳細と正解を見る","답변 세부 정보 및 정답 보기"],"再練習一次":["Practice again","もう一度練習","다시 연습하기"],"練習其他項目":["Practice another section","別の項目を練習","다른 항목 연습"],"回主選單":["Return to main menu","メインメニューに戻る","메인 메뉴로 돌아가기"],"請確認設定資訊":["Please confirm the settings","設定内容を確認してください","설정 내용을 확인해 주세요"],"請完成地點設定項目。":["Please complete the location settings.","場所の設定を完了してください。","장소 설정을 완료하세요."],"好的，我知道了":["Got it","わかりました","알겠습니다"],"辨識結果會先放入輸入框，您可以確認或修改，再自行按「＋加入」。":["The recognized text will appear in the input field. Review or edit it, then select “＋ Add”.","認識結果は入力欄に表示されます。確認または修正してから「＋追加」を押してください。","인식 결과가 입력란에 표시됩니다. 확인하거나 수정한 뒤 “＋ 추가”를 누르세요."],"先不用":["Not now","後で","나중에"],"請選擇語音或文字模式":["Choose voice or text mode","音声またはテキストモードを選択","음성 또는 텍스트 모드 선택"],"測驗說明（共三關）":["Test instructions (3 stages)","検査説明（全3段階）","검사 안내 (총 3단계)"],"選擇練習方式":["Choose practice mode","練習方法を選択","연습 방식 선택"],"中場休息時間":["Break time","休憩時間","휴식 시간"],"回想作答":["Recall answers","思い出して回答","회상 답변"],"測驗結果":["Test results","検査結果","검사 결과"],"請先選擇一種日曆回答（擇一即可）：":["Choose one calendar system:","暦の種類を1つ選択してください：","달력 방식을 하나 선택하세요:"],"民國年":["Minguo year","民国年","민국 연도"],"西元年":["Gregorian year","西暦年","서기 연도"],"生肖":["Chinese zodiac","十二支","띠"],"國曆":["Gregorian calendar","新暦","양력"],"農曆":["Lunar calendar","旧暦","음력"],"請輸入今年出生小孩的生肖：":["Enter the Chinese zodiac sign for a child born this year:","今年生まれの子どもの十二支を入力してください：","올해 태어난 아이의 띠를 입력하세요:"],"請輸入民國年份：":["Enter the Minguo year:","民国年を入力してください：","민국 연도를 입력하세요:"],"請輸入西元年份：":["Enter the Gregorian year:","西暦年を入力してください：","서기 연도를 입력하세요:"],"請輸入您記得的月份：":["Enter the month you remember:","覚えている月を入力してください：","기억하는 월을 입력하세요:"],"請輸入國曆月份：":["Enter the solar-calendar month:","新暦の月を入力してください：","양력 월을 입력하세요:"],"請輸入農曆月份：":["Enter the lunar-calendar month:","旧暦の月を入力してください：","음력 월을 입력하세요:"],"請輸入國曆日期：":["Enter the solar-calendar date:","新暦の日付を入力してください：","양력 날짜를 입력하세요:"],"請輸入農曆日期：":["Enter the lunar-calendar date:","旧暦の日付を入力してください：","음력 날짜를 입력하세요:"],"請輸入今天是星期幾：":["Enter the day of the week:","今日は何曜日か入力してください：","오늘은 무슨 요일인지 입력하세요:"],"請輸入地點名稱：":["Enter the location name:","場所の名前を入力してください：","장소 이름을 입력하세요:"],"請問今年是民國幾年？":["What is the current Minguo year?","今年は民国何年ですか？","올해는 민국 몇 년입니까?"],"請問今年是西元幾年？":["What is the current Gregorian year?","今年は西暦何年ですか？","올해는 서기 몇 년입니까?"],"請問今年出生的小孩屬什麼生肖？":["What is the Chinese zodiac sign of a child born this year?","今年生まれの子どもの干支は何ですか？","올해 태어난 아이의 띠는 무엇입니까?"],"請問現在是國曆幾月？":["What month is it in the solar calendar?","新暦では今何月ですか？","양력으로 지금은 몇 월입니까?"],"請問現在是農曆幾月？":["What month is it in the lunar calendar?","旧暦では今何月ですか？","음력으로 지금은 몇 월입니까?"],"請問現在是幾月？":["What month is it now?","今は何月ですか？","지금은 몇 월입니까?"],"請問今天是國曆幾號？":["What is today’s date in the solar calendar?","新暦で今日は何日ですか？","양력으로 오늘은 며칠입니까?"],"請問今天是農曆幾號？":["What is today’s date in the lunar calendar?","旧暦で今日は何日ですか？","음력으로 오늘은 며칠입니까?"],"請問今天是幾號？":["What is today’s date?","今日は何日ですか？","오늘은 며칠입니까?"],"請問今天是星期幾？":["What day of the week is it today?","今日は何曜日ですか？","오늘은 무슨 요일입니까?"],"請問這裡是什麼地方？":["Where are you now?","ここはどこですか？","이곳은 어디입니까?"],"找不到符合的地點":["No matching location found","該当する場所が見つかりません","일치하는 장소를 찾을 수 없습니다"],"請輸入星期名稱，例如：星期三或禮拜三。":["Enter a weekday, for example Wednesday.","曜日を入力してください。例：水曜日。","요일을 입력하세요. 예: 수요일."],"確認地點答案 ❯":["Confirm location answer ❯","場所の回答を確定 ❯","장소 답변 확인 ❯"],"正在準備圖片…":["Preparing pictures…","画像を準備しています…","그림 준비 중…"],"請準備，即將開始顯示圖片…":["Get ready. Pictures will appear shortly…","準備してください。まもなく画像が表示されます…","준비하세요. 곧 그림이 표시됩니다…"],"請先儲存或取消目前的修改。":["Please save or cancel your current edit first.","先に現在の編集を保存するか、キャンセルしてください。","현재 수정을 먼저 저장하거나 취소하세요."],"請先輸入至少一個答案。":["Please enter at least one answer.","回答を1つ以上入力してください。","답변을 하나 이상 입력하세요."],"最多只能保留 10 個答案，請刪除多出的答案後再送出。":["You can keep up to 10 answers. Remove the extra answers before submitting.","回答は最大10件まで保存できます。超過分を削除してから送信してください。","답변은 최대 10개까지 유지할 수 있습니다. 초과한 답변을 삭제한 후 제출하세요."],"修改":["Edit","編集","수정"],"刪除":["Delete","削除","삭제"],"儲存修改":["Save changes","変更を保存","수정 저장"],"確定重畫":["Clear and redraw","消去して描き直す","지우고 다시 그리기"],"請再次確認":["Please confirm again","もう一度確認してください","다시 확인하세요"],"AI 評分中，請稍候…":["AI scoring in progress. Please wait…","AI採点中です。しばらくお待ちください…","AI 채점 중입니다. 잠시 기다려 주세요…"],"完成送出 ❯":["Finish and submit ❯","完了して送信 ❯","완료 후 제출 ❯"],"目前無法播放語音，請確認裝置音量或稍後再試。":["Audio cannot be played right now. Check your device volume or try again later.","現在、音声を再生できません。端末の音量を確認するか、後でもう一度お試しください。","현재 음성을 재생할 수 없습니다. 기기 음량을 확인하거나 잠시 후 다시 시도하세요."],"例如：115":["For example: 115","例：115","예: 115"],"例如：2026":["For example: 2026","例：2026","예: 2026"],"例如：11":["For example: 11","例：11","예: 11"],"例如：17":["For example: 17","例：17","예: 17"],"例如：初五、十一、廿三":["For example: 5th day, 11th day, or 23rd day of the lunar month","例：初五、十一、廿三","예: 음력 초닷새, 열하루, 스무사흘"],"例如：星期三":["For example: Wednesday","例：水曜日","예: 수요일"],"例如：衛生所、醫院或診所":["For example: health center, hospital, or clinic","例：保健所、病院、診療所","예: 보건소, 병원 또는 의원"],"請輸入想到的圖片名稱":["Enter a picture name you remember","思い出した画像の名前を入力","기억나는 그림 이름 입력"],"圖片展示進度":["Picture display progress","画像表示の進行状況","그림 표시 진행 상황"],"圖卡圖片":["Picture card","画像カード","그림 카드"],"畫鐘測驗繪製順序":["Clock drawing steps","時計描画の手順","시계 그리기 순서"],"畫鐘測驗操作引導":["Clock drawing instructions","時計描画の操作案内","시계 그리기 안내"],"畫鐘繪圖工具":["Clock drawing tools","時計描画ツール","시계 그리기 도구"],"通過":["Passed","合格","통과"],"未通過":["Not passed","不合格","미통과"],"待人工確認":["Pending manual review","手動確認待ち","수동 확인 대기"],"答對":["Correct","正解","정답"],"答錯":["Incorrect","不正解","오답"],"未答對":["Not correct","不正解","정답 아님"],"參考答案":["Reference answer","参考解答","참고 답안"],"作答明細":["Response details","回答の詳細","답변 세부 정보"],"題組":["Question set","問題セット","문항 묶음"],"觀看順序":["Viewing order","表示順","보여준 순서"],"已回想答對":["Correctly recalled","正しく思い出した項目","정확히 기억한 항목"],"未回想出來":["Not recalled","思い出せなかった項目","기억하지 못한 항목"],"時鐘總分":["Clock total score","時計の合計点","시계 총점"],"評分來源":["Scoring source","採点元","채점 출처"],"AI 評分說明":["AI scoring explanation","AI採点の説明","AI 채점 설명"],"AI 評分細項":["AI scoring details","AI採点の詳細","AI 채점 세부 내용"],"AI 評分未提供逐項細節。":["The AI did not provide itemized scoring details.","AIは項目別の採点詳細を提供していません。","AI가 항목별 채점 세부 정보를 제공하지 않았습니다."],"居家練習結果":["Home practice result","自宅練習の結果","가정 연습 결과"],"未經現場核對":["Not verified on site","現地確認なし","현장 확인되지 않음"],"未達通過標準":["Did not meet the passing standard","合格基準に達していません","통과 기준에 도달하지 못했습니다"],"成績待人工確認":["Score pending manual review","得点は手動確認待ちです","점수 수동 검토 대기 중"],"尚未通過":["Not passed yet","未合格","아직 통과하지 못함"],"無作答明細":["No response details","回答の詳細はありません","응답 세부 정보 없음"],"您的回答：":["Your answer: ","あなたの回答：","응답: "],"回答方式：":["Response method: ","回答方式：","응답 방식: "],"辨識後日期：":["Recognized date: ","認識された日付：","인식된 날짜: "],"辨識後月份：":["Recognized month: ","認識された月：","인식된 월: "],"標準化生肖：":["Normalized zodiac: ","標準化された生肖：","표준화된 띠: "],"系統標準化地點：":["System-normalized location: ","システムで標準化された場所：","시스템 표준화 위치: "],"標準化星期：":["Normalized weekday: ","標準化された曜日：","표준화된 요일: "],"測驗日期：":["Test date: ","検査日：","검사 날짜: "],"狀態：":["Status: ","状態：","상태: "],"說明：":["Note: ","説明：","설명: "],"符合的核對別名：":["Matched alias: ","一致した照合用別名：","일치한 대조 별칭: "],"參考答案：":["Reference answer: ","参考解答：","참고 답안: "],"判定：":["Result: ","判定：","판정: "],"題組：":["Set: ","問題セット：","문항 묶음: "],"觀看順序：":["Viewing order: ","表示順：","표시 순서: "],"已回想答對：":["Correctly recalled: ","正しく思い出した項目：","정확히 기억한 항목: "],"未回想出來：":["Not recalled: ","思い出せなかった項目：","기억하지 못한 항목: "],"時鐘總分：":["Clock total score: ","時計の合計点：","시계 총점: "],"評分來源：":["Scoring provider: ","採点元：","채점 제공자: "],"AI 評分說明：":["AI scoring explanation: ","AI採点の説明：","AI 채점 설명: "],"AI 評分細項：":["AI scoring details: ","AI採点の詳細：","AI 채점 세부 정보: "],"您的答案：":["Your answer: ","あなたの回答：","응답: "],"審核結果：":["Review result: ","審査結果：","검토 결과: "],"審核紀錄：":["Review record: ","審査記録：","검토 기록: "],"尚未完成審核；第五題目前不列入正式得分。":["Review is not complete. Question 5 is not included in the official score yet.","審査は完了していません。第5問は現時点で正式得点に含まれません。","검토가 완료되지 않았습니다. 5번 문항은 현재 공식 점수에 포함되지 않습니다."],"已完成人工審核。":["Manual review completed.","手動確認が完了しました。","수동 검토가 완료되었습니다."],"【第一關】":["【Stage 1】","【第1段階】","【1단계】"],"【第二關】":["【Stage 2】","【第2段階】","【2단계】"],"【第三關】":["【Stage 3】","【第3段階】","【3단계】"],"星期一":["Monday","月曜日","월요일"],"星期二":["Tuesday","火曜日","화요일"],"星期三":["Wednesday","水曜日","수요일"],"星期四":["Thursday","木曜日","목요일"],"星期五":["Friday","金曜日","금요일"],"星期六":["Saturday","土曜日","토요일"],"星期日":["Sunday","日曜日","일요일"],"請先確認練習地點，再查看測驗介紹。":["Please confirm your practice location before viewing the test instructions.","検査説明を見る前に、練習場所を確認してください。","검사 안내를 보기 전에 연습 장소를 확인하세요."],"請先確認練習地點，再進入第一關。":["Please confirm your practice location before starting Stage 1.","第1段階に進む前に、練習場所を確認してください。","1단계를 시작하기 전에 연습 장소를 확인하세요."],"請先閱讀測驗介紹，再開始第一關。":["Please read the test instructions before starting Stage 1.","第1段階を始める前に、検査説明を読んでください。","1단계를 시작하기 전에 검사 안내를 읽으세요."],"請先選擇「我在家裡練習」或「施測人員代操作模式」。":["Please select “I am practicing at home” or “Staff-assisted mode.”","「自宅で練習」または「スタッフ操作モード」を選択してください。","“집에서 연습” 또는 “담당자 진행 모드”를 선택하세요."],"找不到畫鐘畫布，請重新進入第三關。":["Clock canvas not found. Please re-enter Stage 3.","時計の描画エリアが見つかりません。第3段階に入り直してください。","시계 그리기 캔버스를 찾을 수 없습니다. 3단계에 다시 들어가세요."],"無法讀取目前的畫作，請重新操作後再送出。":["Unable to read the current drawing. Please try again and submit.","現在の描画を読み取れません。もう一度操作して送信してください。","현재 그림을 읽을 수 없습니다. 다시 그린 후 제출하세요."],"目前畫作格式無法辨識，請重新作答。":["The drawing format cannot be recognized. Please try again.","描画形式を認識できません。もう一度回答してください。","그림 형식을 인식할 수 없습니다. 다시 답하세요."],"目前無法連接 AI 評分服務。請從正式部署的測驗平台開啟，再重新送出畫作。":["Cannot connect to the AI scoring service. Open the officially deployed test platform and submit the drawing again.","AI採点サービスに接続できません。正式にデプロイされた検査プラットフォームから開き、描画を再送信してください。","AI 채점 서비스에 연결할 수 없습니다. 정식 배포된 검사 플랫폼에서 다시 열고 그림을 제출하세요."],"AI 評分回傳資料格式不正確，未更新本題分數。請稍後再試。":["The AI scoring response format is invalid. This item score was not updated. Please try again later.","AI採点の応答形式が正しくないため、この項目の得点は更新されていません。後でもう一度お試しください。","AI 채점 응답 형식이 올바르지 않아 이 문항 점수가 갱신되지 않았습니다. 나중에 다시 시도하세요."],"AI 評分完成。":["AI scoring completed.","AI採点が完了しました。","AI 채점이 완료되었습니다."],"正在將您的時鐘畫作送交 AI 評分，請稍候。":["Your clock drawing is being sent for AI scoring. Please wait.","時計の描画をAI採点に送信しています。しばらくお待ちください。","시계 그림을 AI 채점에 제출하는 중입니다. 잠시 기다려 주세요."],"AI 評分未完成，畫作已保留，您可以再次送出。":["AI scoring was not completed. Your drawing has been saved; you can submit it again.","AI採点は完了していません。描画は保存されています。再送信できます。","AI 채점이 완료되지 않았습니다. 그림은 보존되었으며 다시 제출할 수 있습니다."],"AI 評分連線失敗，畫作已保留，您可以再次送出。":["AI scoring connection failed. Your drawing has been saved; you can submit it again.","AI採点への接続に失敗しました。描画は保存されています。再送信できます。","AI 채점 연결에 실패했습니다. 그림은 보존되었으며 다시 제출할 수 있습니다."],"AI 評分服務未能完成判讀。":["The AI scoring service could not complete the assessment.","AI採点サービスは判定を完了できませんでした。","AI 채점 서비스가 평가를 완료하지 못했습니다."],"AI 回傳的分數格式不正確，畫作已保留，請重新送出。":["The AI returned an invalid score format. Your drawing has been saved; please submit it again.","AIから正しくない得点形式が返されました。描画は保存されています。再送信してください。","AI가 잘못된 점수 형식을 반환했습니다. 그림은 보존되었으니 다시 제출하세요."],"目前不是透過正式 Apps Script 網頁應用程式開啟，無法連接 AI 評分服務。":["This page was not opened through the official Apps Script web app, so the AI scoring service is unavailable.","このページは正式なApps Scriptウェブアプリから開かれていないため、AI採点サービスに接続できません。","이 페이지는 공식 Apps Script 웹 앱에서 열리지 않아 AI 채점 서비스를 사용할 수 없습니다."],"無法連接第三關 AI 評分函式。請確認 Code.gs 已更新並重新部署。":["Cannot connect to the Stage 3 AI scoring function. Make sure Code.gs is updated and redeployed.","第3段階のAI採点関数に接続できません。Code.gsを更新して再デプロイしてください。","3단계 AI 채점 함수에 연결할 수 없습니다. Code.gs를 업데이트하고 다시 배포하세요."],"這個回答屬於通用地點名稱，需要工作人員確認。":["This is a generic place name and requires staff confirmation.","一般的な場所の名称のため、スタッフによる確認が必要です。","일반적인 장소 명칭이므로 담당자의 확인이 필요합니다."],"已符合設定的地點名稱。":["This matches the configured location name.","設定された場所の名称と一致しました。","설정된 장소 이름과 일치합니다."],"系統無法自動核對這個地點，需要工作人員確認。":["The system cannot verify this location automatically. Staff confirmation is required.","この場所をシステムで自動確認できません。スタッフによる確認が必要です。","시스템이 이 장소를 자동으로 확인할 수 없습니다. 담당자 확인이 필요합니다."],"此答案需要施測人員依實際地點確認。":["This answer must be checked by the test administrator against the actual location.","この回答は実際の場所に基づき、検査担当者が確認する必要があります。","이 답변은 실제 장소를 기준으로 검사 담당자가 확인해야 합니다."],"請確認受測者實際所在位置後，再進行判定。":["Confirm the participant’s actual location before making a decision.","受検者の実際の所在地を確認してから判定してください。","검사 대상자의 실제 위치를 확인한 후 판정하세요."],"第五題地點答案未經現場核對，不列入正式對錯及通過判定；本次紀錄僅供練習參考。":["The location answer for Question 5 was not verified on site, so it is excluded from the official correctness and passing decision. This record is for practice reference only.","第5問の場所の回答は現地確認されていないため、正式な正誤判定および合格判定には含まれません。この記録は練習用です。","5번 문항의 장소 답변은 현장 확인을 거치지 않아 공식 정오 및 통과 판정에서 제외됩니다. 이 기록은 연습용 참고 자료입니다."],"第五題尚待施測人員審核；完成後才會更新正式總分及通過結果。":["Question 5 is awaiting review by the test administrator. The official total score and result will be updated after review.","第5問は検査担当者の確認待ちです。確認後、正式な合計点と結果が更新されます。","5번 문항은 검사 담당자의 검토를 기다리고 있습니다. 검토 후 공식 총점과 결과가 업데이트됩니다."],"此地點答案需要施測人員確認。":["This location answer requires confirmation by the test administrator.","この場所の回答は検査担当者による確認が必要です。","이 장소 답변은 검사 담당자의 확인이 필요합니다."],"請輸入您目前所在的地點名稱。":["Enter the name of your current location.","現在いる場所の名称を入力してください。","현재 위치의 이름을 입력하세요."],"請先選擇縣市、行政區及測驗地點。":["Select the city/county, district, and testing location first.","先に県・市、区、検査場所を選択してください。","먼저 시·현, 행정구 및 검사 장소를 선택하세요."],"請選擇縣市、行政區及測驗地點。":["Please select the city/county, district, and testing location.","県・市、区、検査場所を選択してください。","시·현, 행정구 및 검사 장소를 선택하세요."],"請先選擇測驗地點，讓系統帶入核對別名。":["Select a testing location first so the system can load matching aliases.","照合用の別名を読み込むため、先に検査場所を選択してください。","대조 별칭을 불러오려면 먼저 검사 장소를 선택하세요."],"請先輸入您目前所在的地點名稱。":["Enter or say the name of your current location.","現在いる場所の名称を入力または発話してください。","현재 위치의 이름을 입력하거나 말하세요."],"請輸入 1 至 12 的月份數字。":["Enter a month number from 1 to 12.","1から12までの月の数字を入力してください。","1부터 12까지의 월 숫자를 입력하세요."],"請輸入有效的國曆日期，例如：17。":["Enter a valid Gregorian calendar date, for example 17.","有効な新暦の日付を入力してください。例：17。","유효한 양력 날짜를 입력하세요. 예: 17."],"請輸入有效的農曆日期，例如：初五、十一或廿三。":["Enter a valid lunar date, for example the 5th, 11th, or 23rd day.","有効な旧暦の日付を入力してください。例：初五、十一、廿三。","유효한 음력 날짜를 입력하세요. 예: 초닷새, 11일 또는 23일."],"請輸入正確的生肖名稱。":["Enter a valid Chinese zodiac animal.","正しい十二支の動物名を入力してください。","올바른 십이지 동물 이름을 입력하세요."],"請先選擇國曆或農曆。":["Select the Gregorian or lunar calendar first.","先に新暦または旧暦を選択してください。","먼저 양력 또는 음력을 선택하세요."],"目前無法取得台灣時區的測驗日期，請確認裝置日期與瀏覽器設定後再試一次。":["Unable to obtain the test date in the Taiwan time zone. Check your device date and browser settings, then try again.","台湾のタイムゾーンで検査日を取得できません。端末の日付とブラウザー設定を確認して、もう一度お試しください。","대만 시간대의 검사 날짜를 가져올 수 없습니다. 기기 날짜와 브라우저 설정을 확인한 후 다시 시도하세요."],"目前無法取得完整農曆日期資料，暫時無法判定本題。請確認瀏覽器支援農曆日期。":["Complete lunar date information is unavailable, so this question cannot be evaluated yet. Check whether your browser supports the lunar calendar.","旧暦の日付情報を取得できないため、この問題を判定できません。ブラウザーが旧暦に対応しているか確認してください。","전체 음력 날짜 정보를 가져올 수 없어 현재 문항을 판정할 수 없습니다. 브라우저가 음력을 지원하는지 확인하세요."],"目前無法取得完整農曆月份資料，暫時無法判定本題。請確認瀏覽器支援農曆日期。":["Complete lunar month information is unavailable, so this question cannot be evaluated yet. Check whether your browser supports the lunar calendar.","旧暦の月情報を取得できないため、この問題を判定できません。ブラウザーが旧暦に対応しているか確認してください。","전체 음력 월 정보를 가져올 수 없어 현재 문항을 판정할 수 없습니다. 브라우저가 음력을 지원하는지 확인하세요."],"目前無法取得農曆生肖資料，請改用民國年或西元年回答。":["Unable to obtain the lunar zodiac information. Please answer using the Minguo or Gregorian year instead.","旧暦の生肖情報を取得できません。民国年または西暦で回答してください。","음력 띠 정보를 가져올 수 없습니다. 민국 연도 또는 서력 연도로 답하세요."],"最多只能加入 10 個答案。":["You can add up to 10 answers.","回答は最大10件まで追加できます。","답변은 최대 10개까지 추가할 수 있습니다."],"作答時間已到，請送出目前的時鐘畫面。":["Time is up. Please submit the current clock drawing.","制限時間になりました。現在の時計の描画を送信してください。","시간이 종료되었습니다. 현재 시계 그림을 제출하세요."],"圖卡圖片準備不完整，請重新開始本輪測驗。":["The picture cards are not fully prepared. Please restart this test round.","画像カードの準備が完了していません。この検査を最初からやり直してください。","그림 카드 준비가 완료되지 않았습니다. 이번 검사 단계를 다시 시작하세요."],"國語語音":["Mandarin audio","中国語音声","중국어 음성"],"臺語語音":["Taiwanese Hokkien audio","台湾語音声","대만 민난어 음성"],"客語語音":["Hakka audio","客家語音声","하카어 음성"],"純文字模式":["Text-only mode","テキストのみモード","텍스트 전용 모드"],"請選擇目前的練習地點":["Select your current practice location","現在の練習場所を選択してください","현재 연습 장소를 선택하세요"],"您好！第一關共有 5 個問題，請仔細看題目，憑現在的記憶回答就好。":["Hello! Stage 1 has 5 questions. Read carefully and answer from memory.","こんにちは。第1段階は5問です。問題をよく読み、現在の記憶で回答してください。","안녕하세요! 1단계는 5문항입니다. 문제를 잘 읽고 현재 기억을 바탕으로 답하세요."],"請依照畫面提示作答。":["Follow the on-screen instructions.","画面の案内に従って回答してください。","화면 안내에 따라 답변하세요."],"狀態：未經現場核對（不列入正式對錯判定）":["Status: Not verified on site (excluded from the official correctness decision)","状態：現地確認なし（正式な正誤判定には含まれません）","상태: 현장 확인되지 않음 (공식 정오 판정에서 제외)"],"狀態：自動核對：答對":["Status: Automatically verified — correct","状態：自動照合：正解","상태: 자동 확인 — 정답"],"狀態：待人工確認":["Status: Pending manual review","状態：手動確認待ち","상태: 수동 검토 대기"],"狀態：人工審核：答對":["Status: Manually reviewed — correct","状態：手動審査：正解","상태: 수동 검토 — 정답"],"狀態：人工審核：答錯":["Status: Manually reviewed — incorrect","状態：手動審査：不正解","상태: 수동 검토 — 오답"],"狀態：自動核對：答錯":["Status: Automatically verified — incorrect","状態：自動照合：不正解","상태: 자동 확인 — 오답"],"審核結果：判定答對":["Review result: Marked correct","審査結果：正解と判定","검토 결과: 정답으로 판정"],"審核結果：判定答錯":["Review result: Marked incorrect","審査結果：不正解と判定","검토 결과: 오답으로 판정"],"說明：本次為居家自行練習，地點答案未經現場核對。":["Note: This was home practice, so the location answer was not verified on site.","説明：今回は自宅練習のため、場所の回答は現地確認されていません。","설명: 이번에는 가정 연습이므로 장소 답변이 현장 확인되지 않았습니다."],"第一關共有 5 個問題，請仔細閱讀題目，依照您的記憶回答即可。":["Stage 1 has 5 questions. Read each question carefully and answer based on what you know.","第1段階は全5問です。問題をよく読み、記憶をもとに回答してください。","1단계는 5문항입니다. 질문을 잘 읽고 자신이 알고 있는 내용을 바탕으로 답하세요."],"重新練習三關":["Practice all three stages again","3つのステージをもう一度練習","세 단계 다시 연습하기"],"再聽一次結果說明":["Replay the result explanation","結果説明をもう一度聞く","결과 설명 다시 듣기"],"圖片回想結果":["Picture recall results","画像の想起結果","그림 회상 결과"],"本次未取得分項目。":["No scoring items were awarded points this time.","今回は得点項目がありません。","이번에는 점수를 획득한 항목이 없습니다."],"本次沒有未得分項目。":["There were no items without points this time.","今回は未得点の項目はありません。","이번에는 점수를 얻지 못한 항목이 없습니다."],"本次未留下繪圖內容":["No drawing was recorded this time","今回は描画記録がありません","이번에는 그림이 기록되지 않았습니다"],"畫布在作答時間結束時仍為空白。":["The canvas was still blank when the time limit ended.","制限時間終了時もキャンバスは空白でした。","제한 시간이 끝났을 때도 캔버스는 비어 있었습니다."],"畫布未留下可辨識筆跡。":["No recognizable marks were left on the canvas.","キャンバスに判読できる筆跡は残っていません。","캔버스에 식별 가능한 흔적이 남지 않았습니다."],"第五題地點待人工核對，不列入第一關正式計分。":["Question 5 location requires staff review and is excluded from the Stage 1 score.","第5問の場所は担当者による確認が必要で、第1段階の得点には含まれません。","5번 문항의 장소는 담당자 확인이 필요하며 1단계 점수에서 제외됩니다."]};
 
 Object.assign(EXAM_TEXT_TRANSLATIONS, {
   "選擇題目呈現方式": [
@@ -4762,27 +4819,27 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
   "試聽臺語語音": ["Preview Taiwanese Hokkien audio", "台湾語音声を試聴", "대만 민난어 음성 미리 듣기"],
   "試聽客語語音": ["Preview Hakka audio", "客家語音声を試聴", "하카어 음성 미리 듣기"],
   "試聽": ["Preview", "試聴", "미리 듣기"],
-  "目前作答語音辨識僅支援國語。選擇臺語或客語，只會改變題目的播放語音，不會改變作答辨識語言。": [
-    "Spoken-answer recognition currently supports Mandarin only. Choosing Taiwanese Hokkien or Hakka changes only the voice used to play questions; spoken answers are still recognized in Mandarin.",
-    "回答音声の認識は現在、中国語（標準語）のみ対応しています。台湾語または客家語を選んでも、変わるのは問題の再生音声のみで、回答の認識言語は中国語（標準語）のままです。",
-    "말로 답한 내용의 인식은 현재 중국어(표준어)만 지원합니다. 대만 민난어나 하카어를 선택해도 문제 재생 음성만 바뀌며, 답변 인식 언어는 중국어(표준어)로 유지됩니다."
+  "作答辨識僅支援國語；切換臺語或客語只會改變題目播放語音。": [
+    "Spoken-answer recognition supports Mandarin only; switching to Taiwanese Hokkien or Hakka changes only the audio used to play questions.",
+    "音声による回答認識は中国語（標準語）のみ対応しています。台湾語または客家語に切り替えると、問題の再生音声のみが変わります。",
+    "음성 답변 인식은 중국어(표준어)만 지원합니다. 대만 민난어나 하카어로 전환해도 문제 재생 음성만 바뀝니다."
   ]
 });
 Object.assign(EXAM_TEXT_TRANSLATIONS, {
-  "請確認是否聽得到試聽語音。若沒有聲音，請檢查裝置音量或喇叭設定。": [
-    "Please check whether you can hear the audio preview. If you cannot hear it, check your device volume or speaker settings.",
-    "試聴音声が聞こえるか確認してください。聞こえない場合は、端末の音量またはスピーカーの設定を確認してください。",
-    "미리 듣기 음성이 들리는지 확인하세요. 들리지 않으면 기기 음량 또는 스피커 설정을 확인하세요."
+  "請先試聽；若聽不到聲音，請檢查裝置音量。": [
+    "Preview the audio first. If you cannot hear it, check your device volume.",
+    "まず試聴してください。音が聞こえない場合は、端末の音量を確認してください。",
+    "먼저 미리 들어 보세요. 소리가 들리지 않으면 기기 음량을 확인하세요."
   ],
   "試聽播放失敗，請確認裝置音量或喇叭設定。": [
     "Audio preview failed. Please check your device volume or speaker settings.",
     "音声の試聴に失敗しました。端末の音量またはスピーカーの設定を確認してください。",
     "음성 미리 듣기에 실패했습니다. 기기 음량 또는 스피커 설정을 확인하세요."
   ],
-  "重新播放試聽語音": [
-    "Replay audio preview",
-    "試聴音声をもう一度再生",
-    "미리 듣기 음성 다시 재생"
+  "重新試聽": [
+    "Replay preview",
+    "もう一度試聴",
+    "다시 듣기"
   ]
 });
 
@@ -4829,10 +4886,10 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
     "音声を選ぶと試聴が自動再生されます。音が聞こえることを確認してください。",
     "음성을 선택하면 미리 듣기가 자동 재생됩니다. 소리가 들리는지 확인하세요."
   ],
-  "請確認是否聽得到試聽語音。若沒有聲音，請檢查裝置音量或喇叭設定。":[
-    "Please check whether you can hear the audio preview. If you cannot hear it, check your device volume or speaker settings.",
-    "試聴音声が聞こえるか確認してください。聞こえない場合は、端末の音量またはスピーカーの設定を確認してください。",
-    "미리 듣기 음성이 들리는지 확인하세요. 들리지 않으면 기기 음량 또는 스피커 설정을 확인하세요."
+  "請先試聽；若聽不到聲音，請檢查裝置音量。":[
+    "Preview the audio first. If you cannot hear it, check your device volume.",
+    "まず試聴してください。音が聞こえない場合は、端末の音量を確認してください。",
+    "먼저 미리 들어 보세요. 소리가 들리지 않으면 기기 음량을 확인하세요."
   ],
   "已選擇純文字模式，練習時不會播放聲音。":[
     "Text-only mode selected. No sound will play during practice.",
@@ -4888,7 +4945,7 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
     "장소 이름 및 별칭 관리"
   ],
   "系統自動認得的地點簡稱":["Location short names recognized automatically by the system","システムが自動認識する場所の略称","시스템이 자동으로 인식하는 장소 약칭"],
-  "需由工作人員人工確認的名稱":["Names that need to be checked by staff","スタッフによる確認が必要な名称","직원이 직접 확인해야 하는 이름"],
+  "需人工確認的名稱":["Names that need to be checked by staff","スタッフによる確認が必要な名称","직원이 직접 확인해야 하는 이름"],
   "確定要刪除這個地點簡稱嗎？":["Are you sure you want to delete this location short name?","この場所の略称を削除してもよろしいですか？","이 장소 약칭을 삭제하시겠습니까?"],
   "刪除":["Delete","削除","삭제"],
   "已恢復為系統預設名稱":["The default system names have been restored","システムの既定名称に戻しました","시스템 기본 이름으로 복원했습니다"],
@@ -4903,9 +4960,9 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
 
 
 /* 補齊靜態及執行時介面的英／日／韓文字，避免顯示語言切換後殘留中文。 */
-Object.assign(EXAM_TEXT_TRANSLATIONS, {"臺語（閩南語）":["Taiwanese Hokkien","台湾語（閩南語）","대만 민난어"],"下一步：選擇練習地點 ›":["Next: Choose Practice Location ›","次へ：練習場所を選択 ›","다음: 연습 장소 선택 ›"],"請獨立完成測驗，不要請旁人提示。":["Complete the test independently. Do not ask anyone for hints.","検査は一人で行ってください。他の人にヒントを求めないでください。","검사는 혼자 진행하고 다른 사람에게 힌트를 요청하지 마세요."],"第 1 關":["Stage 1","第1段階","1단계"],"第 2 關":["Stage 2","第2段階","2단계"],"第 3 關":["Stage 3","第3段階","3단계"],"回答今年的年份、現在是幾月、今天是幾號、星期幾，以及目前所在的地方。":["Answer the current year, month, date, day of the week, and your current location.","現在の年・月・日・曜日と、現在いる場所を回答してください。","현재 연도, 월, 날짜, 요일 및 현재 위치를 답하세요."],"通過標準：5 題需答對 4 題。":["Passing standard: answer at least 4 of 5 questions correctly.","合格基準：5問中4問以上正解。","통과 기준: 5문항 중 4문항 이상 정답."],"觀看並記住 10 張圖片，休息 2 分鐘後，再依照記憶回答。":["Study and remember 10 pictures. After a 2-minute break, recall them from memory.","10枚の画像を見て覚え、2分間休憩した後、記憶を頼りに回答してください。","그림 10장을 보고 기억한 뒤 2분간 휴식하고 기억을 바탕으로 답하세요."],"通過標準：10 張圖片需答對 3 張。":["Passing standard: recall at least 3 of the 10 pictures.","合格基準：10枚中3枚以上正解。","통과 기준: 그림 10장 중 3장 이상 정답."],"依照指定時間，畫出時鐘外框、數字，以及時針和分針的位置。":["Draw the clock outline, numbers, and hour and minute hands to show the specified time.","指定された時刻に合わせて、時計の外枠、数字、時針と分針を描いてください。","지정된 시간을 나타내도록 시계 테두리와 숫자, 시침과 분침을 그리세요."],"通過標準：滿分 7 分，需取得 4 分以上（作答時間 4 分鐘）。":["Passing standard: score at least 4 out of 7. Time limit: 4 minutes.","合格基準：7点満点中4点以上（制限時間4分）。","통과 기준: 7점 만점에 4점 이상(제한 시간 4분)."],"再聽一次語音說明":["Replay the audio instructions","音声案内をもう一度聞く","음성 안내 다시 듣기"],"請選擇您現在練習的地方。":["Please select where you are practicing.","現在練習している場所を選択してください。","현재 연습 중인 장소를 선택하세요."],"如果您在家裡自己練習，直接點選下方的「我在家裡練習」就可以了。":["If you are practicing at home, simply select “I am practicing at home” below.","自宅で練習している場合は、下の「自宅で練習」を選択してください。","집에서 연습 중이라면 아래의 “집에서 연습”을 선택하세요."],"自己在家裡做練習（最常用）":["Practice at home (most common)","自宅で練習（最も一般的）","집에서 연습(가장 일반적)"],"已選擇":["Selected","選択済み","선택됨"],"在監理站、醫院或由專人協助":["At a motor vehicle office, hospital, or with staff assistance","監理機関・病院、または担当者の支援を受けて実施","운전면허시험장, 병원 또는 담당자 도움으로 진행"],"由工作人員或家人幫忙輸入地點":["A staff member or family member enters the location","スタッフまたは家族が場所を入力","직원 또는 가족이 장소를 입력"],"工作人員設定測驗地點":["Staff: Set the testing location","スタッフ用：検査場所を設定してください","직원용: 검사 장소를 설정하세요"],"縣市（必選）":["City or county (required)","県・市（必須）","시·현(필수)"],"行政區（必選）":["District (required)","区（必須）","행정구(필수)"],"測驗地點（必選）":["Test location (required)","検査場所（必須）","검사 장소(필수)"],"地點名稱與別名管理":["Manage location names and aliases","場所の名称と別名の管理","직원 전용: 장소 이름 설정(일반 연습에서는 조작할 필요 없음)"],"系統自動認得的地點簡稱":["Location aliases recognized automatically by the system","システムが自動認識する場所の略称","시스템이 자동으로 인식하는 장소 별칭"],"請先選擇上方測驗地點，系統會自動帶入預設名稱。":["Select the test location above. The system will fill in the default names automatically.","上の検査場所を選択すると、既定の名称が自動入力されます。","위에서 검사 장소를 선택하면 기본 이름이 자동으로 입력됩니다."],"恢復系統預設名稱":["Restore system default names","システムの既定名称に戻す","시스템 기본 이름 복원"],"需由工作人員人工確認的名稱":["Names requiring staff review","スタッフによる確認が必要な名称","직원의 확인이 필요한 이름"],"例如：衛生所、醫院、診所、監理所或監理站。只回答這類通用名稱時，會交由工作人員確認。":["Examples: health center, hospital, clinic, motor vehicle office. Generic answers like these require staff review.","例：保健所、病院、診療所、監理機関など。このような一般名称のみの場合は、スタッフによる確認が必要です。","예: 보건소, 병원, 의원, 운전면허시험장 등. 이러한 일반 명칭만 답한 경우 직원 확인이 필요합니다."],"您好！":["Hello!","こんにちは！","안녕하세요!"],"第一關共有 5 個問題，請仔細聽題目，再輸入或點選答案。":["Stage 1 has 5 questions. Listen carefully, then type or select your answers.","第1段階は5問です。問題をよく聞き、入力または選択して回答してください。","1단계는 5문항입니다. 문제를 잘 듣고 답을 입력하거나 선택하세요."],"提醒您：作答時請不要查看日曆、時鐘，也不要請旁人提示。":["Reminder: Do not look at a calendar or clock while answering, and do not ask anyone for hints.","注意：回答中はカレンダーや時計を見ないでください。また、他の人にヒントを求めないでください。","안내: 답변 중에는 달력이나 시계를 보거나 다른 사람에게 힌트를 요청하지 마세요."]," 再聽一次語音說明":[" Replay audio instructions"," 音声案内をもう一度聞く"," 음성 안내 다시 듣기"],"開始第一關作答 ›":["Start Stage 1 ›","第1段階の回答を開始 ›","1단계 답변 시작 ›"],"時間到後，回想並輸入剛才看過的圖片名稱。":["When time is up, recall and enter the names of the pictures you saw.","時間になったら、先ほど見た画像の名前を思い出して入力してください。","시간이 되면 방금 본 그림의 이름을 떠올려 입력하세요."],"開始觀看圖片 ›":["Start viewing pictures ›","画像の表示を開始 ›","그림 보기 시작 ›"],"再聽一次題目":["Play the question again","問題をもう一度聞く","문제 다시 듣기"],"✓ 已記錄答案":["✓ Answer recorded","✓ 回答を記録しました","✓ 답변이 기록되었습니다"],"請先在上方完成作答，再按確認。":["Complete your answer above, then select Confirm.","上で回答を入力してから「確認」を選択してください。","위에서 답변을 완료한 다음 확인을 누르세요."],"確認本題 ›":["Confirm this answer ›","この回答を確定 ›","이 답변 확인 ›"],"休息一下":["Take a break","休憩しましょう","잠시 쉬세요"],"請放輕鬆休息 2 分鐘，時間到後會自動開始回想作答。":["Please relax and rest for 2 minutes. Recall will begin automatically when the time is up.","リラックスして2分間休憩してください。時間になると自動的に思い出し回答が始まります。","편안하게 2분간 휴식하세요. 시간이 끝나면 자동으로 회상 답변이 시작됩니다."],"再聽一次休息說明":["Replay the break instructions","休憩の説明をもう一度聞く","휴식 안내 다시 듣기"],"請輸入您記得的圖片名稱":["Recall the 10 pictures you just saw. Enter any names you remember.","先ほど見た10枚の画像を思い出し、覚えている名前を入力してください。","방금 본 그림 10장을 떠올리고 기억나는 이름을 입력하세요."],"＋加入答案":["＋ Add answer","＋ 回答を追加","＋ 답변 추가"],"加入的圖片名稱會顯示在這裡。":["Added picture names will appear here.","追加した画像名がここに表示されます。","추가한 그림 이름이 여기에 표시됩니다."],"剩餘 04:00":["Time left: 04:00","残り時間：04:00","남은 시간: 04:00"],"正式施測模式":["Official assessment mode","正式検査モード","공식 검사 모드"],"查看本關作答明細":["View responses for this stage","この段階の回答詳細を見る","이 단계의 답변 세부 정보 보기"],"選擇作答語言":["Choose an answer language","回答言語を選択","답변 언어 선택"],"試聽國語":["Preview Mandarin audio","中国語音声を試聴","중국어 음성 미리 듣기"],"試聽臺語":["Preview Taiwanese Hokkien audio","台湾語音声を試聴","대만 민난어 음성 미리 듣기"],"試聽客語":["Preview Hakka audio","客家語音声を試聴","하카어 음성 미리 듣기"],"純文字模式不提供語音試聽":["Audio preview is unavailable in text-only mode","テキストのみモードでは音声を試聴できません","텍스트 전용 모드에서는 음성 미리 듣기를 사용할 수 없습니다"],"輸入其他地點簡稱":["Enter another location alias","別の場所の略称を入力","다른 장소 별칭 입력"],"請輸入答案":["Enter your answer","回答を入力してください","답변을 입력하세요"],"請輸入您記得的圖片名稱":["Enter the picture name you remember","覚えている画像の名前を入力してください","기억나는 그림 이름을 입력하세요"],"目前無法播放語音試聽，請稍後再試。":["Audio preview is currently unavailable. Please try again later.","現在、音声を試聴できません。しばらくしてからもう一度お試しください。","현재 음성 미리 듣기를 재생할 수 없습니다. 나중에 다시 시도하세요."],"返回練習選單":["Back to Practice Menu","練習メニューに戻る","연습 메뉴로 돌아가기"],"返回語言設定":["Back to Language Settings","言語設定に戻る","언어 설정으로 돌아가기"],"返回練習地點":["Back to Practice Location","練習場所に戻る","연습 장소로 돌아가기"],"返回測驗介紹":["Back to Test Instructions","検査説明に戻る","검사 안내로 돌아가기"],"返回第一關說明":["Back to Stage 1 Instructions","第1段階の説明に戻る","1단계 안내로 돌아가기"],"返回第三關說明":["Back to Stage 3 Instructions","第3段階の説明に戻る","3단계 안내로 돌아가기"],"✓ 第一關":["✓ Stage 1","✓ 第1段階","✓ 1단계"],"✓ 第二關":["✓ Stage 2","✓ 第2段階","✓ 2단계"],"臺語練習方式錄音無法連線取得。":["The Taiwanese Hokkien practice audio could not be loaded.","台湾語の練習音声を読み込めませんでした。","대만 민난어 연습 음성을 불러오지 못했습니다."],"請先輸入一個別名，再按新增。":["Enter an alias before selecting Add.","追加する前に略称を入力してください。","추가를 누르기 전에 별칭을 입력하세요."],"家裡":["Home","自宅","집"],"家中":["At home","自宅","집"],"住家":["Residence","住居","거주지"],"請重新選擇有效的練習模式。":["Please select a valid practice mode again.","有効な練習モードをもう一度選択してください。","유효한 연습 모드를 다시 선택하세요."],"請輸入生肖名稱":["Enter a Chinese zodiac animal","十二支の動物名を入力してください","십이지 동물 이름을 입력하세요"],"請直接輸入您目前所在的地點名稱。":["Enter the name of your current location.","現在いる場所の名称を入力してください。","현재 위치의 이름을 입력하세요."],"資料暫無法取得":["Data is temporarily unavailable","データを一時的に取得できません","데이터를 일시적으로 가져올 수 없습니다"],"依測驗地點設定核對":["Verify using the configured test location","設定された検査場所を使用して照合","설정된 검사 장소를 기준으로 확인"],"請先輸入月份。":["Please enter a month first.","先に月を入力してください。","먼저 월을 입력하세요."],"休息期間，請您放輕鬆，靜候兩分鐘後再繼續作答。":["Please relax during the break. Continue answering after two minutes.","休憩中はリラックスして、2分後に回答を再開してください。","휴식 시간에는 편안히 쉬고 2분 후 답변을 계속하세요."],"本次認知功能測驗已完成，請查看以下測驗結果與作答明細。謝謝您的用心參與。":["The cognitive assessment is complete. Please review the results and response details below. Thank you for participating.","認知機能検査が完了しました。以下の結果と回答詳細をご確認ください。ご参加ありがとうございました。","인지 기능 검사가 완료되었습니다. 아래 결과와 답변 세부 정보를 확인하세요. 참여해 주셔서 감사합니다."],"請先完成上方測驗地點選擇":["Please complete the test location selection above first.","先に上の検査場所を選択してください。","먼저 위에서 검사 장소를 선택하세요."],"點此輸入數字":["Tap here to enter numbers","ここをタップして数字を入力","여기를 눌러 숫자를 입력하세요"],"輸入4位數字":["Enter 4 digits","4桁の数字を入力","숫자 4자리를 입력하세요"],"請輸入數字":["Enter numbers","数字を入力してください","숫자를 입력하세요"],"點此輸入一～六或日":["Tap to enter Monday through Sunday","ここをタップして月曜から日曜を入力","여기를 눌러 월요일부터 일요일까지 입력하세요"],"第一關｜時間、空間認知":["Stage 1 | Time and Spatial Orientation","第1段階｜時間・空間の見当識","1단계 | 시간·공간 지남력"],"本次實際完成的時鐘畫作":["Clock drawing submitted for this test","今回提出された時計の描画","이번 검사에서 제출한 시계 그림"],"本次實際繪圖紀錄":["Drawing record for this test","今回の描画記録","이번 검사 그림 기록"],"目前沒有可顯示的時鐘繪圖圖片紀錄。":["No clock drawing image is available to display.","表示できる時計の描画画像がありません。","표시할 시계 그림 이미지 기록이 없습니다."],"分針指向指定分鐘":["Minute hand points to the specified minute","分針が指定された分を指している","분침이 지정된 분을 가리킴"],"時針位置符合指定時間":["Hour hand position matches the specified time","時針の位置が指定時刻と一致している","시침 위치가 지정 시간과 일치함"],"沒有不相關添加":["No unrelated marks added","無関係な書き込みがない","관련 없는 표시가 없음"],"數字位於圓圈內":["Numbers are inside the circle","数字が円の内側にある","숫자가 원 안에 있음"],"1 至 12 完整且順時針排列":["Numbers 1 through 12 are complete and arranged clockwise","1から12までの数字がそろい、時計回りに配置されている","1부터 12까지 숫자가 빠짐없이 시계 방향으로 배열됨"],"圓形輪廓完整":["Complete circular outline","円の輪郭が完成している","원형 윤곽이 완성됨"],"圓形大小與比例":["Circle size and proportions","円の大きさと比率","원의 크기와 비율"],"原評分系統回傳的項目紀錄":["Item details returned by the original scoring system","元の採点システムから返された項目記録","기존 채점 시스템에서 반환한 항목 기록"],"得分紀錄：":["Score record: ","得点記録：","점수 기록: "],"判定紀錄：":["Assessment record: ","判定記録：","판정 기록: "],"符合":["Met","該当","충족"],"未符合":["Not met","非該当","미충족"],"評分紀錄：":["Scoring record: ","採点記録：","채점 기록: "],"收合本關作答明細":["Hide response details","回答詳細を閉じる","답변 세부 정보 접기"],"居家練習模式":["Home practice mode","自宅練習モード","가정 연습 모드"],"施測人員模式":["Staff assessment mode","検査担当者モード","검사 담당자 모드"],"正在播放語音說明中，請仔細聆聽（若沒聲音請調大手機音量）":["Audio instructions are playing. Listen carefully. Turn up your phone volume if needed.","音声案内を再生中です。よく聞いてください。聞こえない場合は端末の音量を上げてください。","음성 안내가 재생 중입니다. 잘 들어주세요. 소리가 들리지 않으면 휴대전화 음량을 높이세요."],"已選擇純文字模式，練習時不會播放聲音。":["Text-only mode is selected. Audio will not play during practice.","テキストのみモードが選択されています。練習中に音声は再生されません。","텍스트 전용 모드가 선택되었습니다. 연습 중에는 음성이 재생되지 않습니다."],"請確認是否聽得到試聽語音。若沒有聲音，請檢查裝置音量或喇叭設定。":["Please check whether you can hear the audio preview. If you cannot hear it, check your device volume or speaker settings.","試聴音声が聞こえるか確認してください。聞こえない場合は、端末の音量またはスピーカーの設定を確認してください。","미리 듣기 음성이 들리는지 확인하세요. 들리지 않으면 기기 음량 또는 스피커 설정을 확인하세요."],"目前作答方式：純文字":["Response mode: Text only","回答方法：テキストのみ","답변 방식: 텍스트 전용"],"目前語音：":["Audio language: ","音声：","음성: "],"選擇題目呈現方式":["Choose a response mode","回答方法を選択","응답 방식 선택"],"選擇練習地點":["Choose a practice location","練習場所を選択","연습 장소 선택"],"數字按鍵":["Number keys","数字キー","숫자 키"],"清除重填":["Clear and re-enter","消去して再入力","지우고 다시 입력"],"刪掉一個字":["Delete one character","1文字削除","문자 하나 삭제"],"請用下方按鍵輸入年份數字":["Use the buttons below to enter the year","下のボタンで年を入力してください","아래 버튼을 사용해 연도를 입력하세요"],"請用下方按鍵點選日期數字":["Use the buttons below to enter the date","下のボタンで日付を入力してください","아래 버튼을 사용해 날짜를 입력하세요"],"請輸入農曆日期數字即可（例如：初五請按 5，十五請按 15）。":["Enter only the lunar date number (for example, press 5 for the 5th day or 15 for the 15th day).","旧暦の日付の数字のみを入力してください（例：初五は5、十五は15を押します）。","음력 날짜 숫자만 입력하세요(예: 초닷새는 5, 보름은 15를 누르세요)."],"您的答案":["Your answer","あなたの回答","답변"],"請輸入星期幾":["Enter the day of the week","曜日を入力してください","요일을 입력하세요"],"您的答案：請輸入星期幾":["Your answer: Enter the day of the week","あなたの回答：曜日を入力してください","답변: 요일을 입력하세요"],"請選擇一種回答方式，答對即可。":["Choose one response method. A correct answer is enough.","回答方法を1つ選んでください。正解すれば通過です。","답변 방식을 하나 선택하세요. 정답이면 통과입니다."],"您可以用「國曆」或「農曆」其中一種來回答，只要答對其中一種就算過關！請先點選您習慣的日曆：":["You may answer using either the Gregorian or lunar calendar. Either correct answer will count. Choose your preferred calendar first:","新暦または旧暦のどちらかで回答できます。どちらかが正解なら合格です。最初に使い慣れた暦を選んでください。","양력 또는 음력 중 하나로 답할 수 있습니다. 둘 중 하나만 맞아도 통과입니다. 먼저 익숙한 달력을 선택하세요."],"請直接輸入今天是星期幾。":["Please type the day of the week.","今日の曜日を入力してください。","오늘이 무슨 요일인지 입력하세요."],"請輸入今天是星期幾，再確認本題。":["Please enter the day of the week before confirming this answer.","曜日を入力してから、この回答を確定してください。","요일을 입력한 다음 이 답변을 확인하세요."],"請先在上方輸入日期數字，再按確認。":["Enter the date number above, then select Confirm.","上に日付を入力してから「確認」を選択してください。","위에 날짜 숫자를 입력한 다음 확인을 누르세요."],"請先選擇一種回答方式，並完成作答後再按確認。":["Choose a response method and complete your answer before selecting Confirm.","回答方法を選択して回答を入力してから、「確認」を選択してください。","답변 방식을 선택하고 답변을 완료한 다음 확인을 누르세요."],"請先選擇國曆或農曆，再輸入月份數字。":["Select the Gregorian or lunar calendar, then enter the month number.","新暦または旧暦を選択してから、月の数字を入力してください。","양력 또는 음력을 선택한 다음 월 숫자를 입력하세요."],"請輸入您目前所在的地點名稱，再按確認。":["Enter the name of your current location, then select Confirm.","現在いる場所の名称を入力してから「確認」を選択してください。","현재 위치 이름을 입력한 다음 확인을 누르세요."],"這個地點簡稱":["this location alias","この場所の略称","이 장소 별칭"],"刪除這個地點簡稱":["Delete this location alias","この場所の略称を削除","이 장소 별칭 삭제"],"請先選擇民國年、西元年或生肖，再完成作答。":["Select Minguo year, Gregorian year, or zodiac first, then complete your answer.","最初に民国年、西暦年、生肖のいずれかを選択してから回答してください。","먼저 민국 연도, 서력 연도 또는 띠를 선택한 다음 답변하세요."],"請先在上方輸入生肖，再按確認。":["Enter the zodiac animal above, then select Confirm.","上に生肖を入力してから「確認」を選択してください。","위에 띠를 입력한 다음 확인을 누르세요."],"請先在上方輸入年份數字，再按確認。":["Enter the year above, then select Confirm.","上に年の数字を入力してから「確認」を選択してください。","위에 연도 숫자를 입력한 다음 확인을 누르세요."],"請先選擇國曆或農曆，再輸入日期數字。":["Select the Gregorian or lunar calendar, then enter the date number.","新暦または旧暦を選択してから、日付の数字を入力してください。","양력 또는 음력을 선택한 다음 날짜 숫자를 입력하세요."],"您還沒選擇回答方式喔，請先點選民國年、西元年或生肖。":["Please choose a response method first: Minguo year, Gregorian year, or zodiac.","回答方法が選択されていません。民国年、西暦年、生肖のいずれかを選択してください。","답변 방식을 선택하지 않았습니다. 민국 연도, 서력 연도 또는 띠를 선택하세요."],"您還沒輸入生肖喔，請先在上方輸入生肖。":["You have not entered a zodiac animal. Enter it above first.","生肖が入力されていません。先に上に入力してください。","띠를 입력하지 않았습니다. 먼저 위에 입력하세요."],"您還沒輸入年份數字喔，請先點選下方的數字再按確認。":["You have not entered the year. Select the numbers below, then confirm.","年が入力されていません。下の数字を選択してから確認してください。","연도를 입력하지 않았습니다. 아래 숫자를 선택한 다음 확인하세요."],"您還沒選擇國曆或農曆喔，請先點選上方的日曆。":["You have not selected a calendar. Choose Gregorian or lunar above first.","暦が選択されていません。上で新暦または旧暦を選択してください。","달력을 선택하지 않았습니다. 위에서 양력 또는 음력을 선택하세요."],"您還沒輸入幾號喔，請先點選下方的數字再按確認。":["You have not entered the date. Select the numbers below, then confirm.","日付が入力されていません。下の数字を選択してから確認してください。","날짜를 입력하지 않았습니다. 아래 숫자를 선택한 다음 확인하세요."],"請用下方按鍵輸入月份數字（1 到 12）。":["Use the buttons below to enter a month from 1 to 12.","下のボタンで1から12までの月を入力してください。","아래 버튼으로 1부터 12까지의 월을 입력하세요."],"月份數字按鍵":["Month number keys","月の数字キー","월 숫자 키"],"月份最多輸入兩個數字，請清除後重新輸入。":["A month can have at most two digits. Clear and enter it again.","月は最大2桁です。消去してもう一度入力してください。","월은 최대 두 자리까지 입력할 수 있습니다. 지우고 다시 입력하세요."],"月份只能輸入 1 到 12，已清空，請重新輸入。":["Enter a month from 1 to 12. The field has been cleared; please try again.","月は1から12までで入力してください。入力欄を消去しました。もう一度入力してください。","월은 1부터 12까지 입력해야 합니다. 입력란을 지웠으니 다시 입력하세요."],"月份只能輸入 1 到 12，不能從 0 開始。":["Enter a month from 1 to 12. It cannot start with 0.","月は1から12までです。0から始めることはできません。","월은 1부터 12까지이며 0으로 시작할 수 없습니다."],"清除全部月份數字":["Clear all month digits","月の数字をすべて消去","월 숫자 모두 지우기"],"已清空，請重新輸入月份。":["Cleared. Please enter the month again.","消去しました。月をもう一度入力してください。","지웠습니다. 월을 다시 입력하세요."],"刪除上一個數字":["Delete the previous digit","前の数字を削除","이전 숫자 삭제"],"刪除上一個月份數字":["Delete the previous month digit","前の月の数字を削除","이전 월 숫자 삭제"],"已刪除數字，請重新輸入月份。":["The digit was deleted. Please enter the month again.","数字を削除しました。月をもう一度入力してください。","숫자를 삭제했습니다. 월을 다시 입력하세요."],"請用下方按鍵輸入月份數字":["Use the buttons below to enter the month","下のボタンで月を入力してください","아래 버튼으로 월을 입력하세요"],"農曆月份":["Lunar month","旧暦の月","음력 월"],"國曆月份":["Gregorian month","新暦の月","양력 월"],"，請使用下方數字按鍵輸入":[". Use the number keys below.","。下の数字キーを使用してください。",". 아래 숫자 키를 사용하세요."],"數字鍵盤":["Numeric keypad","数字キーパッド","숫자 키패드"],"收起":["Collapse","閉じる","접기"],"收起數字鍵盤":["Close numeric keypad","数字キーパッドを閉じる","숫자 키패드 닫기"],"請輸入生肖":["Enter the Chinese zodiac animal","十二支の動物名を入力してください","십이지 동물 이름을 입력하세요"],"請輸入您的生肖":["Please enter your Chinese zodiac animal","あなたの生肖を入力してください","본인의 띠를 입력하세요"],"請依照指定時間畫出時鐘。可以使用下方工具修改，完成後點選送出答案。":["Draw a clock showing the specified time. Use the tools below to make changes, then select Submit Answer when finished.","指定された時刻を示す時計を描いてください。下のツールで修正し、完成したら「回答を送信」を選択してください。","지정된 시간을 나타내는 시계를 그리세요. 아래 도구로 수정한 후 완료되면 답안 제출을 누르세요."],"請畫出一個完整的時鐘，顯示":["Draw a complete clock showing ","次の時刻を示す時計を描いてください：","다음 시간을 나타내는 완전한 시계를 그리세요: "],"目前沒有可以復原的筆畫。":["There are no strokes to undo.","元に戻せる線がありません。","되돌릴 획이 없습니다."],"確定要全部擦掉重畫嗎？":["Are you sure you want to erase everything and start over?","すべて消去して描き直しますか？","모두 지우고 다시 그리시겠습니까?"],"目前選擇的是純文字模式，練習時不會播放聲音。":["Text-only mode is selected. No audio will play during practice.","テキストのみモードが選択されています。練習中に音声は再生されません。","텍스트 전용 모드가 선택되었습니다. 연습 중에는 음성이 재생되지 않습니다."],"← 返回選擇語音":["← Back to Language Selection","← 音声選択に戻る","← 언어 선택으로 돌아가기"],"← 返回測驗介紹":["← Back to Test Instructions","← 検査説明に戻る","← 검사 안내로 돌아가기"],"← 返回第一關說明":["← Back to Stage 1 Instructions","← 第1段階の説明に戻る","← 1단계 안내로 돌아가기"],"← 返回第三關說明":["← Back to Stage 3 Instructions","← 第3段階の説明に戻る","← 3단계 안내로 돌아가기"],"請選擇練習地點":["Please select a practice location","練習場所を選択してください","연습 장소를 선택하세요"],"休息倒數":["Break countdown","休憩カウントダウン","휴식 카운트다운"],"休息倒數進度":["Break countdown progress","休憩カウントダウンの進行状況","휴식 카운트다운 진행 상황"],"時鐘繪圖畫布":["Clock drawing canvas","時計描画キャンバス","시계 그리기 캔버스"],"作答區":["Answer area","回答エリア","답변 영역"],"您的答案：請輸入地點名稱":["Your answer: Enter the location name","あなたの回答：場所の名前を入力してください","답변: 장소 이름을 입력하세요"]});
+Object.assign(EXAM_TEXT_TRANSLATIONS, {"臺語（閩南語）":["Taiwanese Hokkien","台湾語（閩南語）","대만 민난어"],"下一步：選擇練習地點 ›":["Next: Choose Practice Location ›","次へ：練習場所を選択 ›","다음: 연습 장소 선택 ›"],"請獨立完成測驗，不要請旁人提示。":["Complete the test independently. Do not ask anyone for hints.","検査は一人で行ってください。他の人にヒントを求めないでください。","검사는 혼자 진행하고 다른 사람에게 힌트를 요청하지 마세요."],"第 1 關":["Stage 1","第1段階","1단계"],"第 2 關":["Stage 2","第2段階","2단계"],"第 3 關":["Stage 3","第3段階","3단계"],"回答今年的年份、現在是幾月、今天是幾號、星期幾，以及目前所在的地方。":["Answer the current year, month, date, day of the week, and your current location.","現在の年・月・日・曜日と、現在いる場所を回答してください。","현재 연도, 월, 날짜, 요일 및 현재 위치를 답하세요."],"通過標準：5 題需答對 4 題。":["Passing standard: answer at least 4 of 5 questions correctly.","合格基準：5問中4問以上正解。","통과 기준: 5문항 중 4문항 이상 정답."],"觀看並記住 10 張圖片，休息 2 分鐘後，再依照記憶回答。":["Study and remember 10 pictures. After a 2-minute break, recall them from memory.","10枚の画像を見て覚え、2分間休憩した後、記憶を頼りに回答してください。","그림 10장을 보고 기억한 뒤 2분간 휴식하고 기억을 바탕으로 답하세요."],"通過標準：10 張圖片需答對 3 張。":["Passing standard: recall at least 3 of the 10 pictures.","合格基準：10枚中3枚以上正解。","통과 기준: 그림 10장 중 3장 이상 정답."],"依照指定時間，畫出時鐘外框、數字，以及時針和分針的位置。":["Draw the clock outline, numbers, and hour and minute hands to show the specified time.","指定された時刻に合わせて、時計の外枠、数字、時針と分針を描いてください。","지정된 시간을 나타내도록 시계 테두리와 숫자, 시침과 분침을 그리세요."],"通過標準：滿分 7 分，需取得 4 分以上（作答時間 4 分鐘）。":["Passing standard: score at least 4 out of 7. Time limit: 4 minutes.","合格基準：7点満点中4点以上（制限時間4分）。","통과 기준: 7점 만점에 4점 이상(제한 시간 4분)."],"再聽一次語音說明":["Replay the audio instructions","音声案内をもう一度聞く","음성 안내 다시 듣기"],"請選擇您現在練習的地方。":["Please select where you are practicing.","現在練習している場所を選択してください。","현재 연습 중인 장소를 선택하세요."],"如果您在家裡自己練習，直接點選下方的「我在家裡練習」就可以了。":["If you are practicing at home, simply select “I am practicing at home” below.","自宅で練習している場合は、下の「自宅で練習」を選択してください。","집에서 연습 중이라면 아래의 “집에서 연습”을 선택하세요."],"自己在家裡做練習（最常用）":["Practice at home (most common)","自宅で練習（最も一般的）","집에서 연습(가장 일반적)"],"已選擇":["Selected","選択済み","선택됨"],"在監理站、醫院或由專人協助":["At a motor vehicle office, hospital, or with staff assistance","監理機関・病院、または担当者の支援を受けて実施","운전면허시험장, 병원 또는 담당자 도움으로 진행"],"由工作人員或家人幫忙輸入地點":["A staff member or family member enters the location","スタッフまたは家族が場所を入力","직원 또는 가족이 장소를 입력"],"工作人員設定測驗地點":["Staff: Set the testing location","スタッフ用：検査場所を設定してください","직원용: 검사 장소를 설정하세요"],"縣市（必選）":["City or county (required)","県・市（必須）","시·현(필수)"],"行政區（必選）":["District (required)","区（必須）","행정구(필수)"],"測驗地點（必選）":["Test location (required)","検査場所（必須）","검사 장소(필수)"],"地點名稱與別名管理":["Manage location names and aliases","場所の名称と別名の管理","직원 전용: 장소 이름 설정(일반 연습에서는 조작할 필요 없음)"],"系統自動認得的地點簡稱":["Location aliases recognized automatically by the system","システムが自動認識する場所の略称","시스템이 자동으로 인식하는 장소 별칭"],"請先選擇上方測驗地點，系統會自動帶入預設名稱。":["Select the test location above. The system will fill in the default names automatically.","上の検査場所を選択すると、既定の名称が自動入力されます。","위에서 검사 장소를 선택하면 기본 이름이 자동으로 입력됩니다."],"恢復系統預設名稱":["Restore system default names","システムの既定名称に戻す","시스템 기본 이름 복원"],"需人工確認的名稱":["Names requiring staff review","スタッフによる確認が必要な名称","직원의 확인이 필요한 이름"],"若只回答「衛生所、醫院、診所、監理所、監理站」等通用名稱，系統會交由工作人員確認。":["Examples: health center, hospital, clinic, motor vehicle office. Generic answers like these require staff review.","例：保健所、病院、診療所、監理機関など。このような一般名称のみの場合は、スタッフによる確認が必要です。","예: 보건소, 병원, 의원, 운전면허시험장 등. 이러한 일반 명칭만 답한 경우 직원 확인이 필요합니다."],"您好！":["Hello!","こんにちは！","안녕하세요!"],"第一關共有 5 個問題，請仔細聽題目，再輸入或點選答案。":["Stage 1 has 5 questions. Listen carefully, then type or select your answers.","第1段階は5問です。問題をよく聞き、入力または選択して回答してください。","1단계는 5문항입니다. 문제를 잘 듣고 답을 입력하거나 선택하세요."],"提醒您：作答時請不要查看日曆、時鐘，也不要請旁人提示。":["Reminder: Do not look at a calendar or clock while answering, and do not ask anyone for hints.","注意：回答中はカレンダーや時計を見ないでください。また、他の人にヒントを求めないでください。","안내: 답변 중에는 달력이나 시계를 보거나 다른 사람에게 힌트를 요청하지 마세요."]," 再聽一次語音說明":[" Replay audio instructions"," 音声案内をもう一度聞く"," 음성 안내 다시 듣기"],"開始第一關作答 ›":["Start Stage 1 ›","第1段階の回答を開始 ›","1단계 답변 시작 ›"],"時間到後，回想並輸入剛才看過的圖片名稱。":["When time is up, recall and enter the names of the pictures you saw.","時間になったら、先ほど見た画像の名前を思い出して入力してください。","시간이 되면 방금 본 그림의 이름을 떠올려 입력하세요."],"開始觀看圖片 ›":["Start viewing pictures ›","画像の表示を開始 ›","그림 보기 시작 ›"],"再聽一次題目":["Play the question again","問題をもう一度聞く","문제 다시 듣기"],"✓ 已記錄答案":["✓ Answer recorded","✓ 回答を記録しました","✓ 답변이 기록되었습니다"],"請先在上方完成作答，再按確認。":["Complete your answer above, then select Confirm.","上で回答を入力してから「確認」を選択してください。","위에서 답변을 완료한 다음 확인을 누르세요."],"確認本題 ›":["Confirm this answer ›","この回答を確定 ›","이 답변 확인 ›"],"休息一下":["Take a break","休憩しましょう","잠시 쉬세요"],"請放輕鬆休息 2 分鐘，時間到後會自動開始回想作答。":["Please relax and rest for 2 minutes. Recall will begin automatically when the time is up.","リラックスして2分間休憩してください。時間になると自動的に思い出し回答が始まります。","편안하게 2분간 휴식하세요. 시간이 끝나면 자동으로 회상 답변이 시작됩니다."],"再聽一次休息說明":["Replay the break instructions","休憩の説明をもう一度聞く","휴식 안내 다시 듣기"],"請輸入您記得的圖片名稱":["Recall the 10 pictures you just saw. Enter any names you remember.","先ほど見た10枚の画像を思い出し、覚えている名前を入力してください。","방금 본 그림 10장을 떠올리고 기억나는 이름을 입력하세요."],"＋加入答案":["＋ Add answer","＋ 回答を追加","＋ 답변 추가"],"加入的圖片名稱會顯示在這裡。":["Added picture names will appear here.","追加した画像名がここに表示されます。","추가한 그림 이름이 여기에 표시됩니다."],"剩餘 04:00":["Time left: 04:00","残り時間：04:00","남은 시간: 04:00"],"正式施測模式":["Official assessment mode","正式検査モード","공식 검사 모드"],"查看本關作答明細":["View responses for this stage","この段階の回答詳細を見る","이 단계의 답변 세부 정보 보기"],"選擇作答語言":["Choose an answer language","回答言語を選択","답변 언어 선택"],"試聽國語":["Preview Mandarin audio","中国語音声を試聴","중국어 음성 미리 듣기"],"試聽臺語":["Preview Taiwanese Hokkien audio","台湾語音声を試聴","대만 민난어 음성 미리 듣기"],"試聽客語":["Preview Hakka audio","客家語音声を試聴","하카어 음성 미리 듣기"],"純文字模式不提供語音試聽":["Audio preview is unavailable in text-only mode","テキストのみモードでは音声を試聴できません","텍스트 전용 모드에서는 음성 미리 듣기를 사용할 수 없습니다"],"輸入其他地點簡稱":["Enter another location alias","別の場所の略称を入力","다른 장소 별칭 입력"],"請輸入答案":["Enter your answer","回答を入力してください","답변을 입력하세요"],"請輸入您記得的圖片名稱":["Enter the picture name you remember","覚えている画像の名前を入力してください","기억나는 그림 이름을 입력하세요"],"目前無法播放語音試聽，請稍後再試。":["Audio preview is currently unavailable. Please try again later.","現在、音声を試聴できません。しばらくしてからもう一度お試しください。","현재 음성 미리 듣기를 재생할 수 없습니다. 나중에 다시 시도하세요."],"返回練習選單":["Back to Practice Menu","練習メニューに戻る","연습 메뉴로 돌아가기"],"返回語言設定":["Back to Language Settings","言語設定に戻る","언어 설정으로 돌아가기"],"返回練習地點":["Back to Practice Location","練習場所に戻る","연습 장소로 돌아가기"],"返回測驗介紹":["Back to Test Instructions","検査説明に戻る","검사 안내로 돌아가기"],"返回第一關說明":["Back to Stage 1 Instructions","第1段階の説明に戻る","1단계 안내로 돌아가기"],"返回第三關說明":["Back to Stage 3 Instructions","第3段階の説明に戻る","3단계 안내로 돌아가기"],"✓ 第一關":["✓ Stage 1","✓ 第1段階","✓ 1단계"],"✓ 第二關":["✓ Stage 2","✓ 第2段階","✓ 2단계"],"臺語練習方式錄音無法連線取得。":["The Taiwanese Hokkien practice audio could not be loaded.","台湾語の練習音声を読み込めませんでした。","대만 민난어 연습 음성을 불러오지 못했습니다."],"請先輸入一個別名，再按新增。":["Enter an alias before selecting Add.","追加する前に略称を入力してください。","추가를 누르기 전에 별칭을 입력하세요."],"家裡":["Home","自宅","집"],"家中":["At home","自宅","집"],"住家":["Residence","住居","거주지"],"請重新選擇有效的練習模式。":["Please select a valid practice mode again.","有効な練習モードをもう一度選択してください。","유효한 연습 모드를 다시 선택하세요."],"請輸入生肖名稱":["Enter a Chinese zodiac animal","十二支の動物名を入力してください","십이지 동물 이름을 입력하세요"],"請直接輸入您目前所在的地點名稱。":["Enter the name of your current location.","現在いる場所の名称を入力してください。","현재 위치의 이름을 입력하세요."],"資料暫無法取得":["Data is temporarily unavailable","データを一時的に取得できません","데이터를 일시적으로 가져올 수 없습니다"],"依測驗地點設定核對":["Verify using the configured test location","設定された検査場所を使用して照合","설정된 검사 장소를 기준으로 확인"],"請先輸入月份。":["Please enter a month first.","先に月を入力してください。","먼저 월을 입력하세요."],"休息期間，請您放輕鬆，靜候兩分鐘後再繼續作答。":["Please relax during the break. Continue answering after two minutes.","休憩中はリラックスして、2分後に回答を再開してください。","휴식 시간에는 편안히 쉬고 2분 후 답변을 계속하세요."],"本次認知功能測驗已完成，請查看以下測驗結果與作答明細。謝謝您的用心參與。":["The cognitive assessment is complete. Please review the results and response details below. Thank you for participating.","認知機能検査が完了しました。以下の結果と回答詳細をご確認ください。ご参加ありがとうございました。","인지 기능 검사가 완료되었습니다. 아래 결과와 답변 세부 정보를 확인하세요. 참여해 주셔서 감사합니다."],"請先完成上方測驗地點選擇":["Please complete the test location selection above first.","先に上の検査場所を選択してください。","먼저 위에서 검사 장소를 선택하세요."],"點此輸入數字":["Tap here to enter numbers","ここをタップして数字を入力","여기를 눌러 숫자를 입력하세요"],"輸入4位數字":["Enter 4 digits","4桁の数字を入力","숫자 4자리를 입력하세요"],"請輸入數字":["Enter numbers","数字を入力してください","숫자를 입력하세요"],"點此輸入一～六或日":["Tap to enter Monday through Sunday","ここをタップして月曜から日曜を入力","여기를 눌러 월요일부터 일요일까지 입력하세요"],"第一關｜時間、空間認知":["Stage 1 | Time and Spatial Orientation","第1段階｜時間・空間の見当識","1단계 | 시간·공간 지남력"],"本次實際完成的時鐘畫作":["Clock drawing submitted for this test","今回提出された時計の描画","이번 검사에서 제출한 시계 그림"],"本次實際繪圖紀錄":["Drawing record for this test","今回の描画記録","이번 검사 그림 기록"],"目前沒有可顯示的時鐘繪圖圖片紀錄。":["No clock drawing image is available to display.","表示できる時計の描画画像がありません。","표시할 시계 그림 이미지 기록이 없습니다."],"分針指向指定分鐘":["Minute hand points to the specified minute","分針が指定された分を指している","분침이 지정된 분을 가리킴"],"時針位置符合指定時間":["Hour hand position matches the specified time","時針の位置が指定時刻と一致している","시침 위치가 지정 시간과 일치함"],"沒有不相關添加":["No unrelated marks added","無関係な書き込みがない","관련 없는 표시가 없음"],"數字位於圓圈內":["Numbers are inside the circle","数字が円の内側にある","숫자가 원 안에 있음"],"1 至 12 完整且順時針排列":["Numbers 1 through 12 are complete and arranged clockwise","1から12までの数字がそろい、時計回りに配置されている","1부터 12까지 숫자가 빠짐없이 시계 방향으로 배열됨"],"圓形輪廓完整":["Complete circular outline","円の輪郭が完成している","원형 윤곽이 완성됨"],"圓形大小與比例":["Circle size and proportions","円の大きさと比率","원의 크기와 비율"],"原評分系統回傳的項目紀錄":["Item details returned by the original scoring system","元の採点システムから返された項目記録","기존 채점 시스템에서 반환한 항목 기록"],"得分紀錄：":["Score record: ","得点記録：","점수 기록: "],"判定紀錄：":["Assessment record: ","判定記録：","판정 기록: "],"符合":["Met","該当","충족"],"未符合":["Not met","非該当","미충족"],"評分紀錄：":["Scoring record: ","採点記録：","채점 기록: "],"收合本關作答明細":["Hide response details","回答詳細を閉じる","답변 세부 정보 접기"],"居家練習模式":["Home practice mode","自宅練習モード","가정 연습 모드"],"施測人員模式":["Staff assessment mode","検査担当者モード","검사 담당자 모드"],"正在播放語音說明中，請仔細聆聽（若沒聲音請調大手機音量）":["Audio instructions are playing. Listen carefully. Turn up your phone volume if needed.","音声案内を再生中です。よく聞いてください。聞こえない場合は端末の音量を上げてください。","음성 안내가 재생 중입니다. 잘 들어주세요. 소리가 들리지 않으면 휴대전화 음량을 높이세요."],"已選擇純文字模式，練習時不會播放聲音。":["Text-only mode is selected. Audio will not play during practice.","テキストのみモードが選択されています。練習中に音声は再生されません。","텍스트 전용 모드가 선택되었습니다. 연습 중에는 음성이 재생되지 않습니다."],"請先試聽；若聽不到聲音，請檢查裝置音量。":["Preview the audio first. If you cannot hear it, check your device volume.","まず試聴してください。音が聞こえない場合は、端末の音量を確認してください。","먼저 미리 들어 보세요. 소리가 들리지 않으면 기기 음량을 확인하세요."],"目前作答方式：純文字":["Response mode: Text only","回答方法：テキストのみ","답변 방식: 텍스트 전용"],"目前語音：":["Audio language: ","音声：","음성: "],"選擇題目呈現方式":["Choose a response mode","回答方法を選択","응답 방식 선택"],"選擇練習地點":["Choose a practice location","練習場所を選択","연습 장소 선택"],"數字按鍵":["Number keys","数字キー","숫자 키"],"清除重填":["Clear and re-enter","消去して再入力","지우고 다시 입력"],"刪掉一個字":["Delete one character","1文字削除","문자 하나 삭제"],"請用下方按鍵輸入年份數字":["Use the buttons below to enter the year","下のボタンで年を入力してください","아래 버튼을 사용해 연도를 입력하세요"],"請用下方按鍵點選日期數字":["Use the buttons below to enter the date","下のボタンで日付を入力してください","아래 버튼을 사용해 날짜를 입력하세요"],"請輸入農曆日期數字即可（例如：初五請按 5，十五請按 15）。":["Enter only the lunar date number (for example, press 5 for the 5th day or 15 for the 15th day).","旧暦の日付の数字のみを入力してください（例：初五は5、十五は15を押します）。","음력 날짜 숫자만 입력하세요(예: 초닷새는 5, 보름은 15를 누르세요)."],"您的答案":["Your answer","あなたの回答","답변"],"請輸入星期幾":["Enter the day of the week","曜日を入力してください","요일을 입력하세요"],"您的答案：請輸入星期幾":["Your answer: Enter the day of the week","あなたの回答：曜日を入力してください","답변: 요일을 입력하세요"],"請選擇一種方式回答：":["Choose one way to answer:","回答方法を1つ選んでください：","한 가지 답변 방법을 선택하세요:"],"您可以用「國曆」或「農曆」其中一種來回答，只要答對其中一種就算過關！請先點選您習慣的日曆：":["You may answer using either the Gregorian or lunar calendar. Either correct answer will count. Choose your preferred calendar first:","新暦または旧暦のどちらかで回答できます。どちらかが正解なら合格です。最初に使い慣れた暦を選んでください。","양력 또는 음력 중 하나로 답할 수 있습니다. 둘 중 하나만 맞아도 통과입니다. 먼저 익숙한 달력을 선택하세요."],"請直接輸入今天是星期幾。":["Please type the day of the week.","今日の曜日を入力してください。","오늘이 무슨 요일인지 입력하세요."],"請輸入今天是星期幾，再確認本題。":["Please enter the day of the week before confirming this answer.","曜日を入力してから、この回答を確定してください。","요일을 입력한 다음 이 답변을 확인하세요."],"請先在上方輸入日期數字，再按確認。":["Enter the date number above, then select Confirm.","上に日付を入力してから「確認」を選択してください。","위에 날짜 숫자를 입력한 다음 확인을 누르세요."],"請先選擇一種回答方式，並完成作答後再按確認。":["Choose a response method and complete your answer before selecting Confirm.","回答方法を選択して回答を入力してから、「確認」を選択してください。","답변 방식을 선택하고 답변을 완료한 다음 확인을 누르세요."],"請先選擇國曆或農曆，再輸入月份數字。":["Select the Gregorian or lunar calendar, then enter the month number.","新暦または旧暦を選択してから、月の数字を入力してください。","양력 또는 음력을 선택한 다음 월 숫자를 입력하세요."],"請輸入您目前所在的地點名稱，再按確認。":["Enter the name of your current location, then select Confirm.","現在いる場所の名称を入力してから「確認」を選択してください。","현재 위치 이름을 입력한 다음 확인을 누르세요."],"這個地點簡稱":["this location alias","この場所の略称","이 장소 별칭"],"刪除這個地點簡稱":["Delete this location alias","この場所の略称を削除","이 장소 별칭 삭제"],"請先選擇民國年、西元年或生肖，再完成作答。":["Select Minguo year, Gregorian year, or zodiac first, then complete your answer.","最初に民国年、西暦年、生肖のいずれかを選択してから回答してください。","먼저 민국 연도, 서력 연도 또는 띠를 선택한 다음 답변하세요."],"請先在上方輸入生肖，再按確認。":["Enter the zodiac animal above, then select Confirm.","上に生肖を入力してから「確認」を選択してください。","위에 띠를 입력한 다음 확인을 누르세요."],"請先在上方輸入年份數字，再按確認。":["Enter the year above, then select Confirm.","上に年の数字を入力してから「確認」を選択してください。","위에 연도 숫자를 입력한 다음 확인을 누르세요."],"請先選擇國曆或農曆，再輸入日期數字。":["Select the Gregorian or lunar calendar, then enter the date number.","新暦または旧暦を選択してから、日付の数字を入力してください。","양력 또는 음력을 선택한 다음 날짜 숫자를 입력하세요."],"您還沒選擇回答方式喔，請先點選民國年、西元年或生肖。":["Please choose a response method first: Minguo year, Gregorian year, or zodiac.","回答方法が選択されていません。民国年、西暦年、生肖のいずれかを選択してください。","답변 방식을 선택하지 않았습니다. 민국 연도, 서력 연도 또는 띠를 선택하세요."],"您還沒輸入生肖喔，請先在上方輸入生肖。":["You have not entered a zodiac animal. Enter it above first.","生肖が入力されていません。先に上に入力してください。","띠를 입력하지 않았습니다. 먼저 위에 입력하세요."],"您還沒輸入年份數字喔，請先點選下方的數字再按確認。":["You have not entered the year. Select the numbers below, then confirm.","年が入力されていません。下の数字を選択してから確認してください。","연도를 입력하지 않았습니다. 아래 숫자를 선택한 다음 확인하세요."],"您還沒選擇國曆或農曆喔，請先點選上方的日曆。":["You have not selected a calendar. Choose Gregorian or lunar above first.","暦が選択されていません。上で新暦または旧暦を選択してください。","달력을 선택하지 않았습니다. 위에서 양력 또는 음력을 선택하세요."],"您還沒輸入幾號喔，請先點選下方的數字再按確認。":["You have not entered the date. Select the numbers below, then confirm.","日付が入力されていません。下の数字を選択してから確認してください。","날짜를 입력하지 않았습니다. 아래 숫자를 선택한 다음 확인하세요."],"請用下方按鍵輸入月份數字（1 到 12）。":["Use the buttons below to enter a month from 1 to 12.","下のボタンで1から12までの月を入力してください。","아래 버튼으로 1부터 12까지의 월을 입력하세요."],"月份數字按鍵":["Month number keys","月の数字キー","월 숫자 키"],"月份最多輸入兩個數字，請清除後重新輸入。":["A month can have at most two digits. Clear and enter it again.","月は最大2桁です。消去してもう一度入力してください。","월은 최대 두 자리까지 입력할 수 있습니다. 지우고 다시 입력하세요."],"月份只能輸入 1 到 12，已清空，請重新輸入。":["Enter a month from 1 to 12. The field has been cleared; please try again.","月は1から12までで入力してください。入力欄を消去しました。もう一度入力してください。","월은 1부터 12까지 입력해야 합니다. 입력란을 지웠으니 다시 입력하세요."],"月份只能輸入 1 到 12，不能從 0 開始。":["Enter a month from 1 to 12. It cannot start with 0.","月は1から12までです。0から始めることはできません。","월은 1부터 12까지이며 0으로 시작할 수 없습니다."],"清除全部月份數字":["Clear all month digits","月の数字をすべて消去","월 숫자 모두 지우기"],"已清空，請重新輸入月份。":["Cleared. Please enter the month again.","消去しました。月をもう一度入力してください。","지웠습니다. 월을 다시 입력하세요."],"刪除上一個數字":["Delete the previous digit","前の数字を削除","이전 숫자 삭제"],"刪除上一個月份數字":["Delete the previous month digit","前の月の数字を削除","이전 월 숫자 삭제"],"已刪除數字，請重新輸入月份。":["The digit was deleted. Please enter the month again.","数字を削除しました。月をもう一度入力してください。","숫자를 삭제했습니다. 월을 다시 입력하세요."],"請用下方按鍵輸入月份數字":["Use the buttons below to enter the month","下のボタンで月を入力してください","아래 버튼으로 월을 입력하세요"],"農曆月份":["Lunar month","旧暦の月","음력 월"],"國曆月份":["Gregorian month","新暦の月","양력 월"],"，請使用下方數字按鍵輸入":[". Use the number keys below.","。下の数字キーを使用してください。",". 아래 숫자 키를 사용하세요."],"數字鍵盤":["Numeric keypad","数字キーパッド","숫자 키패드"],"收起":["Collapse","閉じる","접기"],"收起數字鍵盤":["Close numeric keypad","数字キーパッドを閉じる","숫자 키패드 닫기"],"請輸入生肖":["Enter the Chinese zodiac animal","十二支の動物名を入力してください","십이지 동물 이름을 입력하세요"],"請輸入您的生肖":["Please enter your Chinese zodiac animal","あなたの生肖を入力してください","본인의 띠를 입력하세요"],"請依指定時間畫出時鐘，可使用下方工具修改，完成後送出。":["Draw a clock showing the specified time. Use the tools below to make changes, then select Submit Answer when finished.","指定された時刻を示す時計を描いてください。下のツールで修正し、完成したら「回答を送信」を選択してください。","지정된 시간을 나타내는 시계를 그리세요. 아래 도구로 수정한 후 완료되면 답안 제출을 누르세요."],"請畫出一個完整的時鐘，顯示":["Draw a complete clock showing ","次の時刻を示す時計を描いてください：","다음 시간을 나타내는 완전한 시계를 그리세요: "],"目前沒有可以復原的筆畫。":["There are no strokes to undo.","元に戻せる線がありません。","되돌릴 획이 없습니다."],"確定要全部擦掉重畫嗎？":["Are you sure you want to erase everything and start over?","すべて消去して描き直しますか？","모두 지우고 다시 그리시겠습니까?"],"目前選擇的是純文字模式，練習時不會播放聲音。":["Text-only mode is selected. No audio will play during practice.","テキストのみモードが選択されています。練習中に音声は再生されません。","텍스트 전용 모드가 선택되었습니다. 연습 중에는 음성이 재생되지 않습니다."],"← 返回選擇語音":["← Back to Language Selection","← 音声選択に戻る","← 언어 선택으로 돌아가기"],"← 返回測驗介紹":["← Back to Test Instructions","← 検査説明に戻る","← 검사 안내로 돌아가기"],"← 返回第一關說明":["← Back to Stage 1 Instructions","← 第1段階の説明に戻る","← 1단계 안내로 돌아가기"],"← 返回第三關說明":["← Back to Stage 3 Instructions","← 第3段階の説明に戻る","← 3단계 안내로 돌아가기"],"請選擇練習地點":["Please select a practice location","練習場所を選択してください","연습 장소를 선택하세요"],"休息倒數":["Break countdown","休憩カウントダウン","휴식 카운트다운"],"休息倒數進度":["Break countdown progress","休憩カウントダウンの進行状況","휴식 카운트다운 진행 상황"],"時鐘繪圖畫布":["Clock drawing canvas","時計描画キャンバス","시계 그리기 캔버스"],"作答區":["Answer area","回答エリア","답변 영역"],"您的答案：請輸入地點名稱":["Your answer: Enter the location name","あなたの回答：場所の名前を入力してください","답변: 장소 이름을 입력하세요"]});
 
-Object.assign(EXAM_TEXT_TRANSLATIONS, {"正式地點名稱":["Official location name","正式な場所の名称","공식 장소 이름"],"外語名稱為便於辨識的描述性翻譯，未逐一確認為官方譯名。":["Foreign-language names are descriptive translations for identification and have not all been verified as official names.","外国語名は識別用の説明的な翻訳であり、すべてが公式名称として確認されたものではありません。","외국어 이름은 식별을 위한 설명형 번역이며, 모두 공식 명칭으로 확인된 것은 아닙니다."],"地點別名管理":["Location alias management","場所の別名管理","장소 별칭 관리"],"每個地點保留 1 個正式名稱，最多 4 組別名；欄位依目前語言顯示，其他語言資料會保留。":["Keep one official name and up to 4 alias groups per location. Only the current language field is shown; values in other languages are preserved.","各場所の正式名称は1つ、別名は最大4グループです。現在の表示言語の欄だけを表示し、他言語のデータは保持します。","장소마다 공식 이름은 1개, 별칭 그룹은 최대 4개입니다. 현재 표시 언어의 입력란만 표시하며 다른 언어의 데이터는 보존합니다."],"繁體中文":["Traditional Chinese","繁体字中国語","번체 중국어"],"英文":["English","英語","영어"],"日文":["Japanese","日本語","일본어"],"韓文":["Korean","韓国語","한국어"],"別名組":["Alias group","別名グループ","별칭 그룹"],"請輸入別名":["Enter alias","別名を入力","별칭 입력"],"＋新增別名組":["＋ Add alias group","＋ 別名グループを追加","＋ 별칭 그룹 추가"],"儲存別名設定":["Save alias settings","別名設定を保存","별칭 설정 저장"],"此地點最多設定 4 組別名。":["A location can have up to 4 alias groups.","1か所につき別名は最大4グループまで設定できます。","장소당 별칭 그룹은 최대 4개까지 설정할 수 있습니다."],"每組別名至少填寫一種語言；空白欄位會略過。":["Enter at least one language for each alias group. Blank fields are skipped.","各別名グループには少なくとも1言語を入力してください。空欄は照合対象から除外されます。","각 별칭 그룹에는 하나 이상의 언어를 입력하세요. 빈 칸은 비교에서 제외됩니다."],"請依照使用者的作答語言，填寫對應的地點別名。各語言獨立比對，可分別設定。":["Enter location aliases in the language users will answer in. Each language is matched independently and can be configured separately.","利用者の回答言語に合わせて場所の別名を入力してください。各言語は個別に照合され、別々に設定できます。","사용자가 답변할 언어에 맞춰 장소 별칭을 입력하세요. 각 언어는 독립적으로 비교되며 별도로 설정할 수 있습니다."],"目前尚未設定常用別名；可先使用正式名稱作答。":["No common aliases are configured yet. The formal name can still be used.","一般的な別名はまだ設定されていません。正式名称で回答できます。","아직 일반 별칭이 설정되지 않았습니다. 공식 이름으로 답할 수 있습니다."],"請先選擇測驗地點，再管理該地點的名稱。":["Select a testing location before managing its names.","名称を管理する前に検査場所を選択してください。","장소 이름을 관리하기 전에 검사 장소를 선택하세요."],"已儲存在共用地點資料庫。":["Saved to the shared location database.","共用場所データベースに保存しました。","공유 장소 데이터베이스에 저장했습니다."],"已先儲存在此裝置；共用資料庫同步失敗，請確認後臺連線後再儲存。":["Saved on this device. Shared database sync failed; check the backend connection and save again.","この端末には保存しましたが、共用データベースとの同期に失敗しました。バックエンド接続を確認して再保存してください。","이 기기에는 저장했지만 공유 데이터베이스 동기화에 실패했습니다. 백엔드 연결을 확인한 뒤 다시 저장하세요."],"已還原系統預設別名。":["System default aliases have been restored.","システムの既定の別名に戻しました。","시스템 기본 별칭으로 복원했습니다."],"已還原此地點的系統預設別名，但尚未同步至共用資料庫。":["Default aliases were restored on this device but have not synced to the shared database.","この端末では既定の別名に戻しましたが、共用データベースにはまだ同期されていません。","이 기기에서 기본 별칭을 복원했지만 공유 데이터베이스에는 아직 동기화되지 않았습니다."],"地點名稱尚待工作人員現場確認；此題不列入正式計分。":["The location answer still requires on-site staff verification. This question is excluded from the official score.","場所の回答は担当者による現地確認が必要です。この問題は正式な得点に含まれません。","장소 답변은 담당자의 현장 확인이 필요합니다. 이 문항은 공식 점수에 포함되지 않습니다."],"第五題地點答案需要人工核對，不列入第一關正式計分。":["The location answer in Question 5 requires manual verification and is excluded from the Stage 1 score.","第5問の場所の回答は手動確認が必要で、第1段階の正式な得点には含まれません。","5번 문항의 장소 답변은 수동 확인이 필요하며 1단계 공식 점수에서 제외됩니다."],"系統找到一筆完全相符的地點名稱，但仍須現場核對。":["One exact location-name match was found, but on-site verification is still required.","完全一致する場所名が1件見つかりましたが、現地確認が必要です。","정확히 일치하는 장소 이름을 찾았지만 현장 확인이 필요합니다."],"輸入內容可能對應多個地點，請由工作人員確認。":["The entry may match multiple locations. Staff verification is required.","入力内容は複数の場所に該当する可能性があります。担当者の確認が必要です。","입력 내용이 여러 장소와 일치할 수 있습니다. 담당자 확인이 필요합니다."],"沒有找到完全相符的地點名稱，請由工作人員確認。":["No exact location-name match was found. Staff verification is required.","完全一致する場所名が見つかりません。担当者の確認が必要です。","정확히 일치하는 장소 이름을 찾지 못했습니다. 담당자 확인이 필요합니다."],"地點名稱比對只採用完整相符；部分文字不會自動指定地點。":["Location matching requires an exact full-name match. Partial text never selects a location automatically.","場所の照合は名称全体の完全一致のみです。一部一致で場所を自動指定することはありません。","장소 이름은 전체가 정확히 일치해야 합니다. 일부 일치만으로 장소를 자동 지정하지 않습니다."],"地點別名已在此裝置儲存；按「儲存別名設定」才會同步到所有裝置。":["Alias edits are saved on this device. Select “Save alias settings” to sync them across devices.","別名の編集はこの端末に保存されます。「別名設定を保存」を選択すると全端末に同期されます。","별칭 수정 사항은 이 기기에 저장됩니다. ‘별칭 설정 저장’을 눌러 모든 기기와 동기화하세요."]});
+Object.assign(EXAM_TEXT_TRANSLATIONS, {"正式地點名稱":["Official location name","正式な場所の名称","공식 장소 이름"],"外語名稱為便於辨識的描述性翻譯，未逐一確認為官方譯名。":["Foreign-language names are descriptive translations for identification and have not all been verified as official names.","外国語名は識別用の説明的な翻訳であり、すべてが公式名称として確認されたものではありません。","외국어 이름은 식별을 위한 설명형 번역이며, 모두 공식 명칭으로 확인된 것은 아닙니다."],"常用別名":["Location alias management","場所の別名管理","장소 별칭 관리"],"每個地點保留 1 個正式名稱，最多 4 組別名；欄位依目前語言顯示，其他語言資料會保留。":["Keep one official name and up to 4 alias groups per location. Only the current language field is shown; values in other languages are preserved.","各場所の正式名称は1つ、別名は最大4グループです。現在の表示言語の欄だけを表示し、他言語のデータは保持します。","장소마다 공식 이름은 1개, 별칭 그룹은 최대 4개입니다. 현재 표시 언어의 입력란만 표시하며 다른 언어의 데이터는 보존합니다."],"繁體中文":["Traditional Chinese","繁体字中国語","번체 중국어"],"英文":["English","英語","영어"],"日文":["Japanese","日本語","일본어"],"韓文":["Korean","韓国語","한국어"],"別名組":["Alias group","別名グループ","별칭 그룹"],"請輸入別名":["Enter alias","別名を入力","별칭 입력"],"＋新增別名組":["＋ Add alias group","＋ 別名グループを追加","＋ 별칭 그룹 추가"],"儲存別名設定":["Save alias settings","別名設定を保存","별칭 설정 저장"],"此地點最多設定 4 組別名。":["A location can have up to 4 alias groups.","1か所につき別名は最大4グループまで設定できます。","장소당 별칭 그룹은 최대 4개까지 설정할 수 있습니다."],"每組別名至少填寫一種語言；空白欄位會略過。":["Enter at least one language for each alias group. Blank fields are skipped.","各別名グループには少なくとも1言語を入力してください。空欄は照合対象から除外されます。","각 별칭 그룹에는 하나 이상의 언어를 입력하세요. 빈 칸은 비교에서 제외됩니다."],"請依照使用者的作答語言，填寫對應的地點別名。各語言獨立比對，可分別設定。":["Enter location aliases in the language users will answer in. Each language is matched independently and can be configured separately.","利用者の回答言語に合わせて場所の別名を入力してください。各言語は個別に照合され、別々に設定できます。","사용자가 답변할 언어에 맞춰 장소 별칭을 입력하세요. 각 언어는 독립적으로 비교되며 별도로 설정할 수 있습니다."],"目前尚未設定常用別名；可先使用正式名稱作答。":["No common aliases are configured yet. The formal name can still be used.","一般的な別名はまだ設定されていません。正式名称で回答できます。","아직 일반 별칭이 설정되지 않았습니다. 공식 이름으로 답할 수 있습니다."],"請先選擇測驗地點，再管理該地點的名稱。":["Select a testing location before managing its names.","名称を管理する前に検査場所を選択してください。","장소 이름을 관리하기 전에 검사 장소를 선택하세요."],"已儲存在共用地點資料庫。":["Saved to the shared location database.","共用場所データベースに保存しました。","공유 장소 데이터베이스에 저장했습니다."],"已先儲存在此裝置；共用資料庫同步失敗，請確認後臺連線後再儲存。":["Saved on this device. Shared database sync failed; check the backend connection and save again.","この端末には保存しましたが、共用データベースとの同期に失敗しました。バックエンド接続を確認して再保存してください。","이 기기에는 저장했지만 공유 데이터베이스 동기화에 실패했습니다. 백엔드 연결을 확인한 뒤 다시 저장하세요."],"已還原系統預設別名。":["System default aliases have been restored.","システムの既定の別名に戻しました。","시스템 기본 별칭으로 복원했습니다."],"已還原此地點的系統預設別名，但尚未同步至共用資料庫。":["Default aliases were restored on this device but have not synced to the shared database.","この端末では既定の別名に戻しましたが、共用データベースにはまだ同期されていません。","이 기기에서 기본 별칭을 복원했지만 공유 데이터베이스에는 아직 동기화되지 않았습니다."],"地點名稱尚待工作人員現場確認；此題不列入正式計分。":["The location answer still requires on-site staff verification. This question is excluded from the official score.","場所の回答は担当者による現地確認が必要です。この問題は正式な得点に含まれません。","장소 답변은 담당자의 현장 확인이 필요합니다. 이 문항은 공식 점수에 포함되지 않습니다."],"第五題地點答案需要人工核對，不列入第一關正式計分。":["The location answer in Question 5 requires manual verification and is excluded from the Stage 1 score.","第5問の場所の回答は手動確認が必要で、第1段階の正式な得点には含まれません。","5번 문항의 장소 답변은 수동 확인이 필요하며 1단계 공식 점수에서 제외됩니다."],"系統找到一筆完全相符的地點名稱，但仍須現場核對。":["One exact location-name match was found, but on-site verification is still required.","完全一致する場所名が1件見つかりましたが、現地確認が必要です。","정확히 일치하는 장소 이름을 찾았지만 현장 확인이 필요합니다."],"輸入內容可能對應多個地點，請由工作人員確認。":["The entry may match multiple locations. Staff verification is required.","入力内容は複数の場所に該当する可能性があります。担当者の確認が必要です。","입력 내용이 여러 장소와 일치할 수 있습니다. 담당자 확인이 필요합니다."],"沒有找到完全相符的地點名稱，請由工作人員確認。":["No exact location-name match was found. Staff verification is required.","完全一致する場所名が見つかりません。担当者の確認が必要です。","정확히 일치하는 장소 이름을 찾지 못했습니다. 담당자 확인이 필요합니다."],"地點名稱比對只採用完整相符；部分文字不會自動指定地點。":["Location matching requires an exact full-name match. Partial text never selects a location automatically.","場所の照合は名称全体の完全一致のみです。一部一致で場所を自動指定することはありません。","장소 이름은 전체가 정확히 일치해야 합니다. 일부 일치만으로 장소를 자동 지정하지 않습니다."],"地點別名已在此裝置儲存；按「儲存別名設定」才會同步到所有裝置。":["Alias edits are saved on this device. Select “Save alias settings” to sync them across devices.","別名の編集はこの端末に保存されます。「別名設定を保存」を選択すると全端末に同期されます。","별칭 수정 사항은 이 기기에 저장됩니다. ‘별칭 설정 저장’을 눌러 모든 기기와 동기화하세요."]});
 
 Object.assign(EXAM_TEXT_TRANSLATIONS, {"狀態：地點已由施測人員確認（不列入計分）":["Status: Location verified by staff (excluded from score)","状態：担当者が場所を確認（得点対象外）","상태: 담당자가 장소 확인(점수 제외)"],"狀態：地點未獲施測人員確認（不列入計分）":["Status: Location not verified by staff (excluded from score)","状態：担当者による場所確認なし（得点対象外）","상태: 담당자가 장소를 확인하지 않음(점수 제외)"]});
 
@@ -4961,6 +5018,15 @@ function translateExamDisplayText(value) {
   if (mapped && mapped[index]) return original.slice(0, original.indexOf(trimmed)) + mapped[index] + original.slice(original.indexOf(trimmed) + trimmed.length);
 
   var m;
+  if ((m = trimmed.match(/^前四題得分：\s*(\d+)\s*\/\s*4；第五題地點待人工核對，不列入計分。$/))) {
+    return index === 0 ? 'Score for the first four questions: ' + m[1] + ' / 4; Question 5 is pending location review and is not scored.' : index === 1 ? '最初の4問の得点：' + m[1] + ' / 4。第5問の場所は確認待ちで、採点対象外です。' : '앞의 4문항 점수: ' + m[1] + ' / 4. 5번 장소는 확인 대기 중이며 점수에 포함되지 않습니다.';
+  }
+  if ((m = trimmed.match(/^目前\s*(\d+)\s*項測驗達到通過標準。$/))) {
+    return index === 0 ? m[1] + ' assessment(s) currently meet the passing standard.' : index === 1 ? '現在、' + m[1] + '項目が合格基準に達しています。' : '현재 ' + m[1] + '개 검사가 통과 기준을 충족합니다.';
+  }
+  if ((m = trimmed.match(/^您的作答（\s*(\d+)\s*項）$/))) {
+    return index === 0 ? 'Your responses (' + m[1] + ')' : index === 1 ? 'あなたの回答（' + m[1] + '項目）' : '응답 내용 (' + m[1] + '개)';
+  }
   if ((m = trimmed.match(/^第\s*(\d+)\s*題／共\s*5\s*題$/))) {
     var q = Number(m[1]);
     var dyn = index === 0 ? 'Question ' + q + ' of 5' : index === 1 ? '全5問中 ' + q + '問目' : '5문항 중 ' + q + '번';
@@ -6375,7 +6441,6 @@ function getTaiwaneseKey(text) {
         // 第一關個別說明的上一頁是三關總說明；保留已確認的練習方式與測驗設定。
         showStep('step-intro');
       }
-      else if (step === 'step-p2-intro') showStep('step-p1-intro');
       else if (step === 'step-p3') {
         if (p3TimerInterval) { clearInterval(p3TimerInterval); p3TimerInterval = null; }
         startP3Intro();
@@ -6422,7 +6487,7 @@ function getTaiwaneseKey(text) {
         locationFields.inert = !staffEnabled;
       }
 
-      // 原有地點別名管理與人工核對說明仍只在專人設定狀態開放。
+      // 原有常用別名與人工核對說明仍只在專人設定狀態開放。
       if (staffSettings) {
         var settingsWereHidden = staffSettings.style.display === 'none';
         staffSettings.style.display = staffEnabled ? 'block' : 'none';
@@ -6843,9 +6908,9 @@ var MANDARIN_VOICE_SCRIPTS = {
   examIntro: '這次一共有三項認知功能測驗。第一項是時間與空間認知，共有五個問題。前四題請回答今年的年份、月份、日期和星期，四題都答對才算通過。第五題請回答目前所在的場所，這一題由施測人員現場核對，不列入計分。第二項是圖卡記憶，您會看到十張圖片，全部看完後休息兩分鐘，再回想並說出剛才看過的圖片名稱，答對三張以上就通過了。第三項是徒手繪畫時鐘，請依照指定時間畫出完整的時鐘，包括圓形、數字，以及時針和分針。滿分七分，取得四分以上就通過了，作答時間為四分鐘。都了解的話，我們就放輕鬆，從第一關開始吧！',
   p1Intro: '歡迎來到第一關，時間與空間認知。這一關共有五個問題，請仔細聽題目，憑現在的記憶回答就好。作答時請不要看日曆、時鐘，也不要請旁人提示喔。',
   p1Questions: {
-    q1Roc: '請問今年是民國幾年？',
-    q1Western: '請問今年是西元幾年？',
-    q1Zodiac: '請問今年出生的小孩屬什麼生肖？',
+    q1Roc: '請問今年是哪一年？',
+    q1Western: '請問今年是哪一年？',
+    q1Zodiac: '請問今年是哪一年？',
     q2Solar: '請問現在是國曆幾月？請回答您記得的月份。',
     q2Lunar: '請問現在是農曆幾月？請回答您記得的月份。',
     q3Solar: '請問今天是國曆幾號？請回答您記得的日期。',
@@ -8098,9 +8163,9 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       renderOfficialLocationNames(activeLocationRecordId);
       renderAliasGroups(safeGroups);
       var heading = document.getElementById('alias-summary');
-      if (heading) heading.textContent = translateExamDisplayText('地點別名管理');
+      if (heading) heading.textContent = translateExamDisplayText('常用別名');
       var hint = document.getElementById('alias-empty-hint');
-      if (hint) hint.textContent = translateExamDisplayText('最多設定 4 組常用別名，不需要填滿。');
+      if (hint) hint.textContent = translateExamDisplayText('最多可設定 4 組，無須填滿。');
       var addButton = document.getElementById('alias-add-group-btn');
       var saveButton = document.getElementById('alias-save-groups-btn');
       var restoreButton = document.getElementById('alias-restore-btn');
@@ -8631,18 +8696,15 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       if (!q) return '';
       var questionText = '';
       if (q.type === 'q1') {
-        if (mode === 'roc') questionText = '請問今年是民國幾年？';
-        else if (mode === 'western') questionText = '請問今年是西元幾年？';
-        else if (mode === 'zodiac') questionText = '請問今年出生的小孩屬什麼生肖？';
-        else questionText = q.title;
+        questionText = '請問今年是哪一年？';
       } else if (q.type === 'q2') {
         if (mode === 'solar') questionText = '請問現在是國曆幾月？';
         else if (mode === 'lunar') questionText = '請問現在是農曆幾月？';
         else questionText = '請問現在是幾月？';
       } else if (q.type === 'q3') {
-        if (mode === 'solar') questionText = '請問今天是國曆幾號？';
-        else if (mode === 'lunar') questionText = '請問今天是農曆幾號？';
-        else questionText = '請問今天是幾號？';
+        questionText = '請問今天是幾號？';
+      } else if (q.isQ5) {
+        questionText = '請問您目前在哪裡？';
       } else questionText = q.title;
       return translateExamDisplayText(questionText);
     }
@@ -8776,8 +8838,8 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
         input.removeAttribute('min'); input.removeAttribute('max'); input.removeAttribute('step');
         input.removeAttribute('maxlength'); input.removeAttribute('pattern');
         input.autocomplete = 'off'; input.autocapitalize = 'off'; input.spellcheck = false;
-        input.placeholder = '請輸入生肖名稱';
-        label.innerText = '請輸入今年出生小孩的生肖：';
+        input.placeholder = '例如：鼠、牛、虎';
+        label.innerText = '請輸入您的生肖';
         renderChoiceGrid([], [], '');
       } else {
         var allowLocalizedYearWords = EXAM_DISPLAY_LANG !== 'zh-TW';
@@ -8936,7 +8998,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       wrapper.style.display='none'; group.style.display='block';
       if (q.type === 'q1') {
         wrapper.style.display='block';
-        wrapper.innerHTML = '<div class="option-caption">請選擇一種回答方式，答對即可。</div><div class="type-selector-grid"><button type="button" class="type-btn active" data-mode="roc" onclick="setP1Q1Mode(this.dataset.mode)">民國年</button><button type="button" class="type-btn" data-mode="western" onclick="setP1Q1Mode(this.dataset.mode)">西元年</button><button type="button" class="type-btn" data-mode="zodiac" onclick="setP1Q1Mode(this.dataset.mode)">生肖</button></div><div id="p1-choice-grid" class="choice-grid"></div>';
+        wrapper.innerHTML = '<div class="option-caption">請選擇一種方式回答：</div><div class="type-selector-grid"><button type="button" class="type-btn active" data-mode="roc" onclick="setP1Q1Mode(this.dataset.mode)">民國年</button><button type="button" class="type-btn" data-mode="western" onclick="setP1Q1Mode(this.dataset.mode)">西元年</button><button type="button" class="type-btn" data-mode="zodiac" onclick="setP1Q1Mode(this.dataset.mode)">生肖</button></div><div id="p1-choice-grid" class="choice-grid"></div>';
         setP1Q1Mode('roc');
       } else if (q.type === 'q2') {
         wrapper.style.display='block';
@@ -9102,6 +9164,13 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
         score: passed ? 1 : 0,
         testDate: examState.p1.testDate || ''
       };
+      if (q.type === 'q1') {
+        // 僅增加結果頁所需的作答方式／對應正確答案紀錄，不參與任何計分判斷。
+        answerRecord.answerMode = examState.p1.currentMode;
+        if (examState.p1.currentMode === 'roc') answerRecord.correctAnswerForMode = '民國 ' + q.rocYear + ' 年';
+        else if (examState.p1.currentMode === 'western') answerRecord.correctAnswerForMode = '西元 ' + q.gregorianYear + ' 年';
+        else if (examState.p1.currentMode === 'zodiac') answerRecord.correctAnswerForMode = '生肖 ' + (q.zodiac || '資料暫無法取得');
+      }
       if (q.type === 'q1' && examState.p1.currentMode === 'zodiac') {
         answerRecord.normalizedAnswer = normalizeZodiacAnswer(ans);
         answerRecord.canonicalAnswer = normalizeZodiacAnswer(ans);
@@ -9645,8 +9714,8 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
 
       if (countdownTitle) {
         countdownTitle.textContent = typeof translateExamDisplayText === 'function'
-          ? translateExamDisplayText('請準備，即將開始顯示圖片…')
-          : '請準備，即將開始顯示圖片…';
+          ? translateExamDisplayText('圖片即將開始')
+          : '圖片即將開始';
       }
       if (countdownUnit) {
         countdownUnit.textContent = EXAM_DISPLAY_LANG === 'en' ? 'seconds until start'
@@ -9656,12 +9725,12 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       }
       if (countdownNote) {
         countdownNote.textContent = EXAM_DISPLAY_LANG === 'en'
-          ? 'Please look at the screen and get ready to remember each picture and its name.'
+          ? 'Look at the screen and remember each picture and its name.'
           : EXAM_DISPLAY_LANG === 'ja'
-            ? '画面を見て、画像と名前を覚える準備をしてください。'
+            ? '画面を見て、画像と名前を覚えてください。'
             : EXAM_DISPLAY_LANG === 'ko'
-              ? '화면을 보고 그림과 이름을 기억할 준비를 하세요.'
-              : '請看著螢幕，準備記住圖片及名稱。';
+              ? '화면을 보고 그림과 이름을 기억하세요.'
+              : '請看著螢幕，記住圖片和名稱。';
       }
       if (countdownScreen) countdownScreen.style.display = 'flex';
       if (imagePlayback) imagePlayback.style.display = 'none';
@@ -9714,7 +9783,9 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
           progressFill.style.width = '0%';
           void progressFill.offsetWidth;
           progressFill.style.transition = 'width 2s linear';
-          progressFill.style.width = '100%';
+          // 純文字模式固定觀看 2 秒，進度條同步跑滿；語音模式可能等到 3.5 秒，
+          // 先顯示主要 2 秒觀看進度，待該張圖片實際結束時再補完，避免進度先跑完。
+          progressFill.style.width = examState.language === 'text' ? '100%' : '85%';
         }
 
         // 等待瀏覽器完成繪製後，才開始固定 2 秒觀看時間。
@@ -9759,6 +9830,11 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
             Promise.all([sleep(2000), currentItemAudioPromise]),
             sleep(3500)
           ]);
+        }
+        // 進度條最後一段只在圖片實際結束時完成，不改變原本圖片停留時間。
+        if (progressFill) {
+          progressFill.style.transition = 'width 80ms ease-out';
+          progressFill.style.width = '100%';
         }
         stopP2SlideAudio(itemAudioObject);
         p2CurrentAudio = null;
@@ -10418,15 +10494,30 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       var body = document.getElementById('q5-review-body');
       var actions = document.getElementById('q5-review-actions');
       var audit = document.getElementById('q5-review-audit');
+      var verdictButtons = actions ? Array.prototype.slice.call(actions.querySelectorAll('.q5-verdict-btn')) : [];
       if (status === 'MANUAL_REVIEW') {
         body.innerText = translateExamDisplayText('您的答案：') + (examState.p1.q5RawAnswer || '') + '\n' +
           translateExamDisplayText((examState.p1.q5Evaluation && examState.p1.q5Evaluation.msg) || '此答案需要施測人員依實際地點確認。') + '\n' + translateExamDisplayText('請確認受測者實際所在位置後，再進行判定。');
         actions.style.display = 'grid';
+        verdictButtons.forEach(function(button) {
+          button.disabled = false;
+          button.classList.remove('is-selected', 'is-unselected');
+          button.setAttribute('aria-pressed', 'false');
+        });
         audit.innerText = translateExamDisplayText('尚未完成審核；第五題目前不列入正式得分。');
       } else {
         var lastReview = (examState.p1.q5ReviewAudit || []).slice(-1)[0];
-        body.innerText = translateExamDisplayText('您的答案：') + (examState.p1.q5RawAnswer || '') + '\n' + translateExamDisplayText('審核結果：') + translateExamDisplayText(status === 'LOCATION_CONFIRMED' ? '地點已由施測人員確認（不列入計分）' : '地點未獲施測人員確認（不列入計分）');
-        actions.style.display = 'none';
+        var verdictConfirmed = status === 'LOCATION_CONFIRMED';
+        body.innerText = translateExamDisplayText('您的答案：') + (examState.p1.q5RawAnswer || '') + '\n' + translateExamDisplayText('審核結果：') + translateExamDisplayText(verdictConfirmed ? '地點已由施測人員確認（不列入計分）' : '地點未獲施測人員確認（不列入計分）');
+        // 保留兩個選項供事後檢視；已選結果以視覺狀態呈現並停用，避免重複審核。
+        actions.style.display = 'grid';
+        verdictButtons.forEach(function(button) {
+          var selected = (button.getAttribute('data-verdict') === 'confirmed') === verdictConfirmed;
+          button.disabled = true;
+          button.classList.toggle('is-selected', selected);
+          button.classList.toggle('is-unselected', !selected);
+          button.setAttribute('aria-pressed', selected ? 'true' : 'false');
+        });
         var auditLocationVerdict = lastReview && (
           lastReview.verdict === 'LOCATION_CONFIRMED' || lastReview.verdict === 'PASS'
             ? '地點相符'
@@ -10436,7 +10527,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
           ? translateExamDisplayText('審核紀錄：') +
             translateExamDisplayText(lastReview.reviewBy || '施測人員') +
             (EXAM_DISPLAY_LANG === 'en' ? ', ' : '、') +
-            translateExamDisplayText(auditLocationVerdict) +
+            translateExamDisplayText(auditLocationVerdict || (verdictConfirmed ? '地點相符' : '地點不符')) +
             (EXAM_DISPLAY_LANG === 'en' ? '; ' : '；') +
             (EXAM_DISPLAY_LANG === 'en' ? 'Time: ' : EXAM_DISPLAY_LANG === 'ja' ? '時刻：' : EXAM_DISPLAY_LANG === 'ko' ? '시간: ' : '時間：') +
             lastReview.reviewedAt
@@ -10511,9 +10602,9 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
 
       var p1ScoreText;
       if (isHome) {
-        p1ScoreText = '前四題已判定得分：' + examState.p1.score + ' / 4；第五題未經現場核對，不列入正式對錯判定。';
+        p1ScoreText = '前四題得分：' + examState.p1.score + ' / 4；第五題未經現場核對，不列入正式對錯判定。';
       } else {
-        p1ScoreText = '前四題已判定得分：' + examState.p1.score + ' / 4；第五題地點答案需要人工核對，不列入計分。';
+        p1ScoreText = '前四題得分：' + examState.p1.score + ' / 4；第五題地點待人工核對，不列入計分。';
       }
       document.getElementById('res-p1-score').innerText = translateExamDisplayText(p1ScoreText);
       document.getElementById('res-p2-score').innerText = translateExamDisplayText('得分：' + examState.p2.score + ' / 10（通過門檻：3 張）');
@@ -10530,20 +10621,26 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       var banner = document.getElementById('overall-banner');
       var bannerTitle = document.getElementById('overall-banner-title');
       var bannerSub = document.getElementById('overall-banner-sub');
-      // 每次產生結算頁時先恢復副標題顯示；居家練習結果再單獨隱藏提示句。
+      var q5Reminder = document.getElementById('result-q5-reminder');
+      // 摘要數量與第五題待審核提醒分開呈現，避免兩項資訊擠在同一行。
       bannerSub.style.display = '';
+      if (q5Reminder) {
+        q5Reminder.innerText = translateExamDisplayText('第五題地點待人工核對，不列入第一關正式計分。');
+        q5Reminder.hidden = !q5Pending;
+        q5Reminder.style.display = q5Pending ? 'block' : 'none';
+      }
       if (isHome) {
         banner.className = 'overall-banner banner-pending';
         bannerTitle.innerText = translateExamDisplayText('居家練習結果');
-        // 移除「請參考各關成績及作答明細。」；保留下方「再聽一次」按鈕。
+        // 居家練習不顯示正式施測的整體通過數與工作人員待審核提醒。
         bannerSub.innerText = '';
         bannerSub.style.display = 'none';
+        if (q5Reminder) { q5Reminder.hidden = true; q5Reminder.style.display = 'none'; }
       } else {
         var overallPass = passCount >= 2;
         banner.className = 'overall-banner ' + (overallPass ? 'banner-pass' : 'banner-fail');
         bannerTitle.innerText = translateExamDisplayText('整體測驗結果：' + (overallPass ? '通過' : '尚未通過'));
-        bannerSub.innerText = translateExamDisplayText('三項測驗中，目前有 ' + passCount + ' 項達到通過標準。');
-        if (q5Pending) bannerSub.innerText += '\n' + translateExamDisplayText('第五題地點答案需要人工核對，不列入第一關正式計分。');
+        bannerSub.innerText = translateExamDisplayText('目前 ' + passCount + ' 項測驗達到通過標準。');
       }
 
       var p1Detail = (examState.p1.answers || []).map(function(item, i) {
@@ -10866,8 +10963,8 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       var main=p&&p.querySelector('.guide-main');
       if(main){
         var p1IntroCopy = (examState && examState.language==='text')
-          ? '第一關共有 5 題，請仔細閱讀題目，依照記憶回答。'
-          : '第一關共有 5 題，請仔細聽題目，依照記憶回答。';
+          ? '第一關共有 5 題，請仔細閱讀題目，並依自己知道的內容回答。'
+          : '第一關共有 5 題，請仔細聽題目，並依自己知道的內容回答。';
         main.textContent = typeof window.translateExamDisplayText === 'function'
           ? window.translateExamDisplayText(p1IntroCopy) : p1IntroCopy;
       }
@@ -11145,8 +11242,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       var preInitStyle=window.getComputedStyle?window.getComputedStyle(canvas):null;
       if(preInitRect.width<2 || preInitRect.height<2 || (preInitStyle && (preInitStyle.display==='none' || preInitStyle.visibility==='hidden'))) return;
       // Canvas 內部座標固定 600 x 600；CSS 僅控制顯示尺寸，不改變繪圖資料座標系。
-      var cssWidth=Math.min(460,Math.max(260,Math.floor(Math.min(window.innerWidth*0.86,460))));
-      canvas.style.width=cssWidth+'px';canvas.style.height=cssWidth+'px';
+      canvas.style.width='min(560px, 100%)';canvas.style.height='auto';
       canvas.width=600;canvas.height=600;
       var ctx=canvas.getContext('2d');ctx.setTransform(1,0,0,1,0,0);
       // 將純白色寫入 600×600 Canvas 像素，確保 iOS Safari、PNG 匯出及評分預覽都不會透出深色底層。
@@ -11349,9 +11445,8 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
     answers.forEach(function(item,i){
       var index=i+1;
       var row=makeEl('div','detail-item');
-      var questionText=item.question||({1:'請問今年是幾年？',2:'請問現在是幾月？',3:'請問今天是幾號？',4:'請問今天是星期幾？',5:'請問這裡是什麼地方？'}[index]||('第 '+index+' 題'));
-      if(index===2)questionText='請問現在是幾月？';
-      if(index===3)questionText='請問今天是幾號？';
+      var questionText=item.question||({1:'請問今年是哪一年？',2:'請問現在是幾月？',3:'請問今天是幾號？',4:'請問今天是星期幾？',5:'請問您目前在哪裡？'}[index]||('第 '+index+' 題'));
+      if(index===2 && item.calendarLabel) questionText='請問現在是'+item.calendarLabel+'幾月？';
       row.appendChild(makeEl('div','detail-question',index+'. '+translateExamDisplayText(questionText)));
       var raw=String(item.originalAnswer!=null?item.originalAnswer:(item.answer!=null?item.answer:''));
       if(index===5&&!raw)raw=String(examState.p1.q5RawAnswer||'');
@@ -11359,10 +11454,9 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       var isUnanswered = !String(raw || '').trim();
       if(isUnanswered && index!==5) response='未作答';
       if(index===1 && !isUnanswered){
-        if((item.question||'').indexOf('民國')>=0)response='民國 '+raw+' 年';
-        else if((item.question||'').indexOf('西元')>=0)response='西元 '+raw+' 年';
-        else if(item.answerMode==='roc')response='民國 '+raw+' 年';
-        else if(item.answerMode==='western')response='西元 '+raw+' 年';
+        if(item.answerMode==='roc' || (item.question||'').indexOf('民國')>=0)response='民國 '+raw+' 年';
+        else if(item.answerMode==='western' || (item.question||'').indexOf('西元')>=0)response='西元 '+raw+' 年';
+        else if(item.answerMode==='zodiac' || item.canonicalAnswer)response='生肖 '+raw;
       }
       if(index===2&&!isUnanswered)response=(item.calendarLabel||'國曆')+' '+(item.normalizedMonth!=null?item.normalizedMonth:raw)+' 月';
       if(index===3&&!isUnanswered)response=(item.calendarLabel||'國曆')+' '+(item.normalizedDay!=null?item.normalizedDay:raw)+' 號';
@@ -11380,7 +11474,13 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
         else if(item.review||st==='MANUAL_REVIEW')kind='pending';
         else kind=item.passed?'pass':'fail';
       }
-      addAnswer(row,'你的回答：',response||'未作答',false);
+      if(index===1 && item.answerMode){
+        var q1ModeLabel = item.answerMode==='roc' ? '民國年' : item.answerMode==='western' ? '西元年' : item.answerMode==='zodiac' ? '生肖' : '';
+        if(q1ModeLabel) addAnswer(row,'回答方式：',translateExamDisplayText(q1ModeLabel),false);
+      }else if((index===2||index===3) && item.calendarLabel){
+        addAnswer(row,'回答方式：',translateExamDisplayText(item.calendarLabel),false);
+      }
+      addAnswer(row,'您的回答：',response||'未作答',false);
       var resLine=makeEl('div','detail-answer p1-result-line');
       resLine.appendChild(document.createTextNode('作答結果：'));
       var resultLabel = index === 5
@@ -11392,7 +11492,13 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       var resultKind = index === 5 ? 'pending' : isUnanswered ? 'miss' : kind;
       resLine.appendChild(makeEl('span','detail-status '+resultKind,translateExamDisplayText(resultLabel)));
       row.appendChild(resLine);
-      if(index!==5 && kind!=='pass' && item.expected!=null && String(item.expected)!=='')addAnswer(row,'正確答案：',String(item.expected),true);
+      if(index!==5 && item.expected!=null && String(item.expected)!==''){
+        var expectedDisplay = item.expected;
+        if(index===1 && item.correctAnswerForMode) expectedDisplay=item.correctAnswerForMode;
+        else if(index===2 && item.correctMonth!=null) expectedDisplay=(item.calendarLabel||'國曆')+' '+item.correctMonth+' 月'+(item.calendarType==='lunar'&&item.isLeapMonth?'（閏月）':'');
+        else if(index===3 && item.correctDay!=null) expectedDisplay=(item.calendarLabel||'國曆')+' '+item.correctDay+' 號';
+        addAnswer(row,'正確答案：',String(expectedDisplay),true);
+      }
       p1.appendChild(row);
     });
     if(!answers.length){
@@ -11419,7 +11525,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
     p2.appendChild(makeEl('h4','','第二關｜圖卡記憶'));
     p2.appendChild(makeEl('div','detail-answer detail-strong-line','實際得分：'+examState.p2.score+' / 10（通過門檻：3 張）'));
     var userAnswers=Array.isArray(examState.p2.userAnswers)&&examState.p2.userAnswers.length?examState.p2.userAnswers:(examState.p2.recalledAnswers||[]);
-    p2.appendChild(makeEl('div','detail-subheading','您實際輸入的答案（'+userAnswers.length+' 個）'));
+    p2.appendChild(makeEl('div','detail-subheading','您的作答（'+userAnswers.length+' 項）'));
     if(userAnswers.length){
       var answerList=makeEl('ol','detail-ordered-list');
       userAnswers.forEach(function(answer){answerList.appendChild(makeEl('li','',String(answer)));});
@@ -11429,7 +11535,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
     }
     var p2Items=examState.p2.items||[];
     var matchedItems=examState.p2.matchedItems||[];
-    p2.appendChild(makeEl('div','detail-subheading','十張圖片的回想結果'));
+    p2.appendChild(makeEl('div','detail-subheading','圖片回想結果'));
     if(p2Items.length){
       var recalledNames=[],missedNames=[];
       p2Items.forEach(function(item){
@@ -11464,14 +11570,48 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       p3.appendChild(makeEl('div','detail-answer','本次指定時間：'+Number(t[0])+' 點 '+String(t[1]||'00').padStart(2,'0')+' 分'));
     }
     var image=examState.p3.imageDataUrl;
+    var p3IsTimeoutEmpty = examState.p3.scoreProvider === 'SYSTEM_TIMEOUT_EMPTY';
+    function appendP3EmptyState(helperText){
+      var state=makeEl('div','detail-clock-empty-state');
+      state.appendChild(makeEl('strong','','本次未留下繪圖內容'));
+      state.appendChild(makeEl('span','',helperText));
+      return state;
+    }
     if(image){
+      p3.appendChild(makeEl('div','detail-subheading','本次實際繪圖紀錄'));
+      var imageWrap=makeEl('div','detail-clock-image-wrap');
       var img=document.createElement('img');img.className='detail-clock-image';img.alt='本次實際完成的時鐘畫作';
+      img.onload=function(){
+        try{
+          var probe=document.createElement('canvas');
+          probe.width=img.naturalWidth||600;probe.height=img.naturalHeight||600;
+          var probeCtx=probe.getContext('2d',{willReadFrequently:true});
+          probeCtx.drawImage(img,0,0,probe.width,probe.height);
+          var pixels=probeCtx.getImageData(0,0,probe.width,probe.height).data;
+          var inkCount=0;
+          for(var pi=0;pi<pixels.length;pi+=4){
+            if(pixels[pi+3]>16&&(pixels[pi]<245||pixels[pi+1]<245||pixels[pi+2]<245)){
+              inkCount++;if(inkCount>=8)break;
+            }
+          }
+          if(inkCount<8){
+            imageWrap.innerHTML='';
+            imageWrap.appendChild(appendP3EmptyState(p3IsTimeoutEmpty?'畫布在作答時間結束時仍為空白。':'畫布未留下可辨識筆跡。'));
+          }
+        }catch(pixelCheckError){
+          // 若瀏覽器無法讀取像素，保留原始繪圖，不因檢查失敗而隱藏紀錄。
+          console.warn('無法檢查時鐘繪圖像素，保留原圖。',pixelCheckError);
+        }
+      };
       img.onerror=function(){
         if(img.parentNode)img.parentNode.replaceChild(makeEl('div','detail-answer','已保存繪圖紀錄，但目前瀏覽器無法顯示該圖片。'),img);
       };
+      imageWrap.appendChild(img);
+      p3.appendChild(imageWrap);
       img.src=image;
+    }else if(p3IsTimeoutEmpty){
       p3.appendChild(makeEl('div','detail-subheading','本次實際繪圖紀錄'));
-      p3.appendChild(img);
+      p3.appendChild(appendP3EmptyState('畫布在作答時間結束時仍為空白。'));
     }else{
       p3.appendChild(makeEl('div','detail-answer','目前沒有可顯示的時鐘繪圖圖片紀錄。'));
     }
@@ -11504,7 +11644,8 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
         items.forEach(function(item){list.appendChild(makeEl('li','',item));});
         category.appendChild(list);
       }else{
-        category.appendChild(makeEl('div','p3-score-category-empty','目前沒有項目。'));
+        var emptyMessage = title === '有得分' ? '本次未取得分項目。' : '本次沒有未得分項目。';
+        category.appendChild(makeEl('div','p3-score-category-empty',emptyMessage));
       }
       p3.appendChild(category);
     }
@@ -11514,8 +11655,10 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
     }else{
       p3.appendChild(makeEl('div','detail-answer','評分系統未提供可顯示的逐項評分資料。'));
     }
-    var p3IsTimeoutEmpty = examState.p3.scoreProvider === 'SYSTEM_TIMEOUT_EMPTY';
-    if(examState.p3.scoreReason)p3.appendChild(makeEl('div','detail-answer',(p3IsTimeoutEmpty?'作答狀態：':'評分系統評語：')+translateExamDisplayText(String(examState.p3.scoreReason))));
+    if(examState.p3.scoreReason){
+      var p3ReasonText = p3IsTimeoutEmpty ? '時間結束時畫布仍為空白，因此本關以 0 分結算。' : String(examState.p3.scoreReason);
+      p3.appendChild(makeEl('div','detail-answer',(p3IsTimeoutEmpty?'作答狀態：':'評分系統評語：')+translateExamDisplayText(p3ReasonText)));
+    }
     if(examState.p3.scoreProvider)p3.appendChild(makeEl('div','detail-date','評分來源：'+translateExamDisplayText(p3IsTimeoutEmpty?'時間到空白自動結算':String(examState.p3.scoreProvider))));
     p3Host.appendChild(p3);
 
@@ -11654,7 +11797,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       setLiveStatus('language-audio-status','已選擇純文字模式，練習時不會播放聲音。','check');
       if(btn)btn.style.display='none';
     }else{
-      setLiveStatus('language-audio-status',translateExamDisplayText('請確認是否聽得到試聽語音。若沒有聲音，請檢查裝置音量或喇叭設定。'),'speaker');
+      setLiveStatus('language-audio-status',translateExamDisplayText('請先試聽；若聽不到聲音，請檢查裝置音量。'),'speaker');
       if(btn)btn.style.display='flex';
     }
   }
@@ -11719,7 +11862,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       var title=byId('test-name-heading');
       var back=byId('top-back-btn');
       var bar=byId('top-back-bar');
-      if(id==='step-lang' && title)title.textContent=(typeof window.translateExamDisplayText==='function'?window.translateExamDisplayText('選擇題目呈現方式'):'選擇題目呈現方式');
+      if(id==='step-lang' && title)title.textContent='';
       if(id==='step-location' && title){
         var headingKey=examState && examState.staffSetupActive?'工作人員協助練習':'請選擇練習方式';
         title.textContent=typeof window.translateExamDisplayText==='function'
@@ -11807,7 +11950,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
       var input=byId('p1-answer-input'),control=byId('p1-answer-control');
       if(!input||!control)return;
       input.type='text';input.readOnly=true;input.setAttribute('inputmode','none');input.maxLength=2;
-      input.placeholder='請輸入日期';
+      input.placeholder='例如：15';
       var unit=control.querySelector('.input-unit-wrap');
       if(unit && !unit.querySelector('.input-unit')){
         var unitText=document.createElement('span');unitText.className='input-unit';unitText.textContent='號';unit.appendChild(unitText);
@@ -11854,7 +11997,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
         if(wrapper){
           wrapper.style.display='block';
           var caption=wrapper.querySelector('.option-caption');
-          if(caption)caption.textContent='請選擇一種回答方式，答對即可。';
+          if(caption)caption.textContent='請選擇一種方式回答：';
         }
         if(group)group.style.display='block';
         window.setP1Q1Mode('roc');
@@ -12047,13 +12190,13 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
           var caption=wrapper.querySelector('.option-caption');
           if(caption){
             caption.textContent=q.type==='q1'
-              ? '請選擇一種回答方式，答對即可。'
+              ? '請選擇一種方式回答：'
               : '您可以用「國曆」或「農曆」其中一種來回答，只要答對其中一種就算過關！請先點選您習慣的日曆：';
           }
         }
         var title=byId('p1-question-title');
         if(title)title.textContent=q.type==='q1'
-          ? translateExamDisplayText('請問今年是民國幾年？')
+          ? translateExamDisplayText('請問今年是哪一年？')
           : translateExamDisplayText('請問今天是幾號？');
       }
       if(typeof window.updateP1SubmitButton==='function')window.updateP1SubmitButton();
@@ -12323,8 +12466,8 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
     input.setAttribute('inputmode', 'none');
     input.removeAttribute('pattern');
     input.maxLength = 2;
-    input.placeholder = '請輸入月份';
-    input.setAttribute('aria-label', (mode === 'lunar' ? '農曆月份' : '國曆月份') + '，請使用下方數字按鍵輸入');
+    input.placeholder = '例如：11';
+    input.setAttribute('aria-label', (mode === 'lunar' ? '農曆月份' : '國曆月份') + '，例如：11');
 
     var unit = control.querySelector('.input-unit-wrap');
     if (!unit) {
@@ -13063,18 +13206,18 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
       if (q.type === 'q1') {
         input.placeholder = getExamGenericAnswerPlaceholder(lang);
       } else if (q.type === 'q2') {
-        input.placeholder = getExamGenericAnswerPlaceholder(lang);
+        input.placeholder = translateExamDisplayText('例如：11');
       } else if (q.type === 'q3') {
         var currentState = getAppState();
         var lunarDate = !!(currentState && currentState.p1.currentMode === 'lunar');
-        input.placeholder = getExamGenericAnswerPlaceholder(lang);
+        input.placeholder = translateExamDisplayText('例如：15');
       }
     } else {
       // 繁體中文保留原本數字輸入限制與自訂鍵盤規則。
       input.maxLength = config.maxDigits;
       input.setAttribute('pattern', '[0-9]*');
       input.setAttribute('aria-label', config.label + '，請輸入數字');
-      input.placeholder = q.type === 'q2' ? '請輸入月份' : (q.type === 'q3' ? '請輸入日期' : getExamGenericAnswerPlaceholder(lang));
+      input.placeholder = q.type === 'q2' ? translateExamDisplayText('例如：11') : (q.type === 'q3' ? translateExamDisplayText('例如：15') : getExamGenericAnswerPlaceholder(lang));
       input.setAttribute('lang', 'zh-Hant');
     }
 
@@ -13171,8 +13314,8 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
     input.removeAttribute('inputmode');
     input.removeAttribute('pattern');
     input.removeAttribute('maxlength');
-    input.placeholder = '請輸入生肖';
-    input.setAttribute('aria-label', '請輸入生肖');
+    input.placeholder = '例如：鼠、牛、虎';
+    input.setAttribute('aria-label', '請輸入您的生肖');
     input.removeAttribute('aria-describedby');
     input.value = '';
     showZodiacTitle();
@@ -13185,7 +13328,7 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
     input.removeAttribute('inputmode');
     input.setAttribute('lang', 'zh-Hant');
     input.setAttribute('autocomplete', 'off');
-    input.placeholder = '請輸入生肖';
+    input.placeholder = '例如：鼠、牛、虎';
     input.classList.add('zodiac-text-input');
     var label = document.getElementById('p1-input-label');
     if (label) { label.textContent = '請輸入您的生肖'; label.style.display = 'block'; label.classList.add('zodiac-input-title'); }
@@ -13347,9 +13490,36 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
     return typeof window.translateExamDisplayText === 'function'
       ? window.translateExamDisplayText(value) : value;
   };
-  var calendarCaption = '請選擇您習慣使用的日曆：';
+  var calendarCaption = '您平常使用哪種日曆？';
 
   Object.assign(EXAM_TEXT_TRANSLATIONS, {
+    '您平常使用哪種日曆？': [
+      'Which calendar do you usually use?',
+      '普段はどちらの暦を使っていますか？',
+      '평소 어떤 달력을 사용하시나요?'
+    ],
+    '例如：11': ['For example: 11', '例：11', '예: 11'],
+    '例如：15': ['For example: 15', '例：15', '예: 15'],
+    '請問您目前在哪裡？': [
+      'Where are you currently?',
+      '現在、どこにいますか？',
+      '현재 어디에 계신가요?'
+    ],
+    '請說出您目前所在的地點。': [
+      'Please say where you are.',
+      '現在いる場所を言ってください。',
+      '현재 계신 장소를 말씀해 주세요.'
+    ],
+    '文字輸入（備用方式）': [
+      'Text input (backup method)',
+      '文字入力（予備の方法）',
+      '문자 입력(대체 방법)'
+    ],
+    '請選擇一種方式回答：': [
+      'Choose one way to answer:',
+      '回答方法を1つ選んでください：',
+      '한 가지 답변 방법을 선택하세요:'
+    ],
     '請選擇您習慣使用的日曆：': [
       'Choose your preferred calendar:',
       '普段お使いの暦を選択してください：',
@@ -13414,10 +13584,10 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
     });
   }
 
-  function setCalendarCaption() {
+  function setCalendarCaption(text) {
     var wrapper = byId('p1-type-selector-wrapper');
     var caption = wrapper && wrapper.querySelector('.option-caption');
-    if (caption) caption.textContent = t(calendarCaption);
+    if (caption) caption.textContent = t(text || calendarCaption);
   }
 
   function removeDateOnlyHints(control) {
@@ -13472,7 +13642,7 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
     setSubmitHintSuppressed(q);
 
     if (q.type === 'q2' || q.type === 'q3') {
-      setCalendarCaption();
+      setCalendarCaption(q.type === 'q2' ? '您平常使用哪種日曆？' : calendarCaption);
       var currentMode = examState.p1.currentMode;
       setCalendarButtons(currentMode === 'solar' || currentMode === 'lunar' ? currentMode : '');
       if (questionHint) { questionHint.textContent = ''; questionHint.style.display = 'none'; }
@@ -13488,8 +13658,8 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
         label.style.display = q2Selected ? 'block' : 'none';
       }
       if (input && q2Selected) {
-        input.placeholder = t('請輸入月份');
-        input.setAttribute('aria-label', label ? label.textContent : t('請輸入月份'));
+        input.placeholder = t('例如：11');
+        input.setAttribute('aria-label', label ? label.textContent : t('例如：11'));
       }
       return;
     }
@@ -13505,8 +13675,8 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
         label.style.display = selected ? 'block' : 'none';
       }
       if (input && selected) {
-        input.placeholder = t('請輸入日期');
-        input.setAttribute('aria-label', label ? label.textContent : t('請輸入日期'));
+        input.placeholder = t('例如：15');
+        input.setAttribute('aria-label', label ? label.textContent : t('例如：15'));
       }
       var q3LunarNote = byId('p1-lunar-month-note');
       if (q3LunarNote) q3LunarNote.style.display = 'none';
@@ -13539,12 +13709,12 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
       removeDateKeypadHint();
       if (wrapper) wrapper.style.display = 'none';
       if (questionHint) {
-        questionHint.textContent = t('請直接輸入地點名稱，也可使用下方國語語音回答。');
+        questionHint.textContent = t('請說出您目前所在的地點。');
         questionHint.style.display = 'block';
       }
       if (group) group.style.display = 'block';
       if (label) {
-        label.textContent = t('直接輸入答案：');
+        label.textContent = t('文字輸入（備用方式）');
         label.classList.add('q5-answer-label');
         label.classList.remove('date-input-label', 'month-input-label');
         label.style.display = 'block';
@@ -13554,7 +13724,7 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
         input.classList.add('p1-open-text-input');
         input.type = 'text'; input.readOnly = false;
         input.setAttribute('inputmode', 'text'); input.setAttribute('lang', 'zh-Hant');
-        input.setAttribute('aria-label', t('直接輸入答案：'));
+        input.setAttribute('aria-label', t('文字輸入（備用方式）'));
         input.setAttribute('autocomplete', 'off'); input.setAttribute('autocapitalize', 'off'); input.spellcheck = false;
         input.removeAttribute('maxlength'); input.removeAttribute('pattern');
         input.placeholder = t('請輸入地點名稱');
@@ -13754,10 +13924,10 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
     "先畫一個大大的圓形。": ["First, draw a large circle.", "最初に大きな円を描いてください。", "먼저 큰 원을 그리세요."],
     "在圓圈內寫上 1 到 12。": ["Write the numbers 1 to 12 inside the circle.", "円の中に1から12までの数字を書いてください。", "원 안에 1부터 12까지 숫자를 쓰세요."],
     "依照指定時間，畫出時針和分針。": ["Draw the hour and minute hands to show the specified time.", "指定された時刻に合わせて短針と長針を描いてください。", "지정된 시간에 맞춰 시침과 분침을 그리세요."],
-    "請按照以下步驟，完成時鐘繪製。": ["Follow the steps below to draw the clock.", "以下の手順に従って、時計を描いてください。", "아래 단계에 따라 시계를 그리세요."],
+    "請依照以下步驟畫時鐘。": ["Follow the steps below to draw the clock.", "以下の手順に従って、時計を描いてください。", "아래 단계에 따라 시계를 그리세요."],
     "先畫一個完整的圓形。": ["First, draw a complete circle.", "最初に完全な円を描いてください。", "먼저 완전한 원을 그리세요."],
     "在圓圈內寫上 1 到 12 的數字。": ["Write the numbers 1 through 12 inside the circle.", "円の中に1から12までの数字を書いてください。", "원 안에 1부터 12까지 숫자를 쓰세요."],
-    "請依照指定時間畫出時鐘，可使用下方工具修改，完成後送出答案。": ["Draw a clock showing the specified time. Use the tools below to make changes, then submit your answer.", "指定された時刻に合わせて時計を描いてください。下のツールで修正し、完成したら回答を送信してください。", "지정된 시간에 맞춰 시계를 그리세요. 아래 도구로 수정한 후 답안을 제출하세요."],
+    "請依指定時間畫出時鐘，可使用下方工具修改，完成後送出。": ["Draw a clock showing the specified time. Use the tools below to make changes, then submit your answer.", "指定された時刻に合わせて時計を描いてください。下のツールで修正し、完成したら回答を送信してください。", "지정된 시간에 맞춰 시계를 그리세요. 아래 도구로 수정한 후 답안을 제출하세요."],
     "開始畫時鐘": ["Start drawing the clock", "時計を描き始める", "시계 그리기 시작"],
     "再聽一次語音說明": ["Replay the audio instructions", "音声案内をもう一度聞く", "음성 안내 다시 듣기"],
     "作答時間：4 分鐘": ["Time limit: 4 minutes", "回答時間：4分", "답변 시간: 4분"]
@@ -13817,15 +13987,15 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
       "指定された時刻に合わせて、時計の外枠、1から12までの数字、時針と分針を描いてください。",
       "지정된 시간에 맞춰 시계 테두리와 1부터 12까지의 숫자, 시침과 분침을 그리세요."
     ],
-    "第一關共有 5 題，請仔細聽題目，依照記憶回答。":[
-      "Stage 1 has 5 questions. Listen carefully and answer from memory.",
-      "第1段階は全5問です。問題をよく聞き、記憶を頼りに回答してください。",
-      "1단계는 5문항입니다. 문제를 잘 듣고 기억을 바탕으로 답하세요."
+    "第一關共有 5 題，請仔細聽題目，並依自己知道的內容回答。":[
+      "Stage 1 has 5 questions. Listen carefully and answer based on what you know.",
+      "第1段階は全5問です。問題をよく聞き、自分が知っている内容に基づいて回答してください。",
+      "1단계는 5문항입니다. 질문을 잘 듣고 자신이 알고 있는 내용을 바탕으로 답하세요."
     ],
-    "第一關共有 5 題，請仔細閱讀題目，依照記憶回答。":[
-      "Stage 1 has 5 questions. Read each question carefully and answer from memory.",
-      "第1段階は全5問です。問題をよく読み、記憶を頼りに回答してください。",
-      "1단계는 5문항입니다. 문제를 잘 읽고 기억을 바탕으로 답하세요."
+    "第一關共有 5 題，請仔細閱讀題目，並依自己知道的內容回答。":[
+      "Stage 1 has 5 questions. Read each question carefully and answer based on what you know.",
+      "第1段階は全5問です。問題をよく読み、自分が知っている内容に基づいて回答してください。",
+      "1단계는 5문항입니다. 질문을 잘 읽고 자신이 알고 있는 내용을 바탕으로 답하세요."
     ],
     "作答時請不要查看日曆或時鐘，也不要請別人提示。":[
       "Do not look at a calendar or clock while answering, and do not ask anyone for hints.",
@@ -14106,9 +14276,9 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
   /* 只列出原本確實提供返回操作的頁面；正式作答頁不新增返回按鈕。 */
   var BACK_STEPS = [
     'step-lang', 'step-location', 'step-intro',
-    'step-p1-intro', 'step-p2-intro'
+    'step-p1-intro'
   ];
-  // 共用返回按鈕只在第三關說明頁暫時移出 DOM；其他頁面仍沿用同一按鈕與事件。
+  // 第二關與第三關說明頁不顯示返回按鈕；其他頁面仍沿用同一個共用按鈕與事件。
   var sharedBackButton = document.getElementById('top-back-btn');
 
   function byId(id) { return document.getElementById(id); }
@@ -14148,8 +14318,8 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
     if (!bar || !row || !chip || !sharedBackButton) return;
 
     var step = stepId || (document.body && document.body.getAttribute('data-step')) || '';
-    if (step === 'step-p3-intro') {
-      // 此頁不需要返回第二關；移除共用按鈕本身，保留右上方語音狀態。
+    if (step === 'step-p2-intro' || step === 'step-p3-intro') {
+      // 第二關開始說明頁與第三關說明頁不提供返回按鈕；只移除共用按鈕本身，保留右上方語音狀態。
       if (sharedBackButton.parentNode) sharedBackButton.parentNode.removeChild(sharedBackButton);
     } else if (!sharedBackButton.parentNode) {
       // 進入其他頁面時將同一個共用按鈕放回，不另建新按鈕或新事件。
@@ -14674,10 +14844,10 @@ html:lang(ko) .choice-btn.active::after {
 
   var BUTTON_ID = 'language-preview-repeat';
   var LABELS = {
-    'zh-TW': '重新播放試聽語音',
-    'en': 'Replay audio preview',
-    'ja': '試聴音声をもう一度再生',
-    'ko': '미리 듣기 음성 다시 재생'
+    'zh-TW': '重新試聽',
+    'en': 'Replay preview',
+    'ja': 'もう一度試聴',
+    'ko': '다시 듣기'
   };
 
   function getDisplayLanguage() {
@@ -15172,7 +15342,7 @@ body[data-step="step-location"] .test-name-heading {
       '場所の名称と別名の管理',
       '장소 이름 및 별칭 관리'
     ],
-    '最多設定 4 組常用別名，不需要填滿。': [
+    '最多可設定 4 組，無須填滿。': [
       'Set up to 4 commonly used aliases. You do not need to fill every group.',
       'よく使う別名を最大4グループまで設定できます。すべて入力する必要はありません。',
       '자주 사용하는 별칭을 최대 4개 그룹까지 설정할 수 있습니다. 모든 그룹을 채울 필요는 없습니다.'
@@ -15217,12 +15387,12 @@ body[data-step="step-location"] .test-name-heading {
     '縣市（必選）': ['City / County (required)', '県・市（必須）', '시·현(필수)'],
     '行政區（必選）': ['District (required)', '行政区（必須）', '행정구(필수)'],
     '測驗地點（必選）': ['Testing location (required)', '検査場所（必須）', '검사 장소(필수)'],
-    '需由工作人員人工確認的名稱': [
+    '需人工確認的名稱': [
       'Names requiring staff verification',
       'スタッフによる確認が必要な名称',
       '담당자 확인이 필요한 명칭'
     ],
-    '例如：衛生所、醫院、診所、監理所或監理站。只回答這類通用名稱時，會交由工作人員確認。': [
+    '若只回答「衛生所、醫院、診所、監理所、監理站」等通用名稱，系統會交由工作人員確認。': [
       'Examples: health centers, hospitals, clinics, and motor vehicle offices. Generic answers are referred to staff for verification.',
       '例：保健所、病院、診療所、運転免許事務所など。一般的な名称だけの場合はスタッフが確認します。',
       '예: 보건소, 병원, 의원, 차량관리사무소 등. 일반 명칭만 답하면 담당자가 확인합니다.'
@@ -16225,7 +16395,18 @@ body[data-step="step-location"] .test-name-heading {
       row.__voiceClickBound = true;
     }
 
-    if (row.parentNode !== anchor.parentNode || row.previousElementSibling !== anchor) {
+    if (options.kind === 'p1' && getCurrentP1VoiceContext() === 'p1_location') {
+      // 第五題以語音為主要操作：將既有語音列放在備用文字標籤與輸入框之前。
+      // 不重建按鈕、不更換事件，也不改變錄音／辨識流程。
+      var locationLabel = byId('p1-input-label');
+      if (locationLabel && locationLabel.parentNode === anchor.parentNode) {
+        if (row.parentNode !== locationLabel.parentNode || row.nextElementSibling !== locationLabel) {
+          locationLabel.parentNode.insertBefore(row, locationLabel);
+        }
+      } else if (row.parentNode !== anchor.parentNode || row.previousElementSibling !== anchor) {
+        anchor.insertAdjacentElement('afterend', row);
+      }
+    } else if (row.parentNode !== anchor.parentNode || row.previousElementSibling !== anchor) {
       anchor.insertAdjacentElement('afterend', row);
     }
     return row;
@@ -16254,7 +16435,7 @@ body[data-step="step-location"] .test-name-heading {
       makeVoiceRow(p1Input, p1Control, {
         id: 'p1-mandarin-voice-row', kind: 'p1', context: 'p1', expectedStep: 'step-p1',
         buttonText: '使用國語語音回答',
-        statusText: '點擊麥克風，使用國語回答。',
+        statusText: '點擊麥克風開始回答。',
         resultMessage: '已辨識您的回答，請確認內容。'
       });
     }
@@ -16265,7 +16446,7 @@ body[data-step="step-location"] .test-name-heading {
       makeVoiceRow(p2Input, p2Entry, {
         id: 'p2-mandarin-voice-row', kind: 'p2', context: 'p2', expectedStep: 'step-p2-sop5',
         buttonText: '使用國語語音輸入圖片名稱',
-        statusText: '點擊麥克風，使用國語說出一個圖片名稱。',
+        statusText: '點擊麥克風，每次說出一個圖片名稱。',
         resultMessage: '已辨識圖片名稱，請檢查或修改文字，再按「＋加入答案」。'
       });
     }
@@ -16281,14 +16462,14 @@ body[data-step="step-location"] .test-name-heading {
       });
     }
 
-    // 地點別名管理：僅中文（zh-TW）欄位提供國語聽寫，避免把國語辨識結果填入英／日／韓欄位。
+    // 常用別名：僅中文（zh-TW）欄位提供國語聽寫，避免把國語辨識結果填入英／日／韓欄位。
     var aliasInputs = document.querySelectorAll('#aliasTagsWrapper input[type="text"][data-alias-lang="zh-TW"]');
     Array.prototype.forEach.call(aliasInputs, function (input) {
       makeVoiceRow(input, input, {
         kind: 'alias', context: 'p1_location', expectedStep: 'step-location',
-        buttonText: '使用國語語音輸入中文別名',
-        statusText: '說出這個地點常用的中文名稱；辨識後請檢查，再按「儲存別名設定」。',
-        resultMessage: '辨識完成，請確認中文別名，再按「儲存別名設定」。'
+        buttonText: '國語語音輸入別名',
+        statusText: '請說出常用地點名稱，確認辨識結果後，按「儲存別名設定」。',
+        resultMessage: '辨識完成，請確認別名，再按「儲存別名設定」。'
       });
     });
   }
@@ -16942,14 +17123,8 @@ body[data-step="step-lang"] .header-area .platform-title {
   margin: 8px 0 4px !important;
 }
 body[data-step="step-lang"] .header-area #test-name-heading {
-  display: block !important;
-  margin: 0 0 12px !important;
-  color: #4F7058 !important;
-  font-size: 21px !important;
-  font-weight: 800 !important;
-  line-height: 1.4 !important;
-  letter-spacing: 0 !important;
-  text-align: center !important;
+  display: none !important;
+  margin: 0 !important;
 }
 #step-lang .language-card {
   padding: 18px 18px 16px !important;
@@ -17317,7 +17492,7 @@ if (typeof EXAM_TEXT_TRANSLATIONS !== 'undefined') {
       '中国語音声で画像名を入力',
       '표준 중국어 음성으로 그림 이름 입력'
     ],
-    '點擊麥克風，使用國語說出一個圖片名稱。': [
+    '點擊麥克風，每次說出一個圖片名稱。': [
       'Tap the microphone and say one picture name in Mandarin.',
       'マイクを押し、中国語で画像名を1つ話してください。',
       '마이크를 누르고 표준 중국어로 그림 이름 하나를 말하세요.'
@@ -17380,7 +17555,7 @@ if (typeof EXAM_TEXT_TRANSLATIONS !== 'undefined') {
 /* Completes fixed English UI labels that were missing from the original translation map.
    Display language only; test voice selection, scoring, state, and navigation are unchanged. */
 if (typeof EXAM_TEXT_TRANSLATIONS !== 'undefined') {
-  Object.assign(EXAM_TEXT_TRANSLATIONS, {"回答今年的年份、月份、日期、星期，以及您目前所在的地方。":["Answer the current year, month, date, day of the week, and your current location.","",""],"通過標準：前四題需全部答對；第五題地點由施測人員核對，不列入計分。":["Passing standard: All first four questions must be answered correctly. Question 5 (location) is verified by staff and is not scored.","",""],"依序觀看 10 張圖片，每張圖片呈現 2 秒。休息 2 分鐘後，請輸入您記得的圖片名稱。":["View 10 pictures in sequence, each for 2 seconds. After a 2-minute break, enter the names you remember.","",""],"通過標準：10 張圖片中答對 3 張即可通過。":["Passing standard: Correctly recall at least 3 of the 10 pictures.","",""],"依照指定時間，畫出時鐘外框、1 到 12 的數字，以及時針和分針。":["Draw the clock outline, numbers 1 through 12, and the hour and minute hands to show the specified time.","",""],"請依照您的使用情況，選擇適合的練習方式。":["Choose the practice mode that best suits your situation.","",""],"自己操作，依照畫面指示完成練習（最常用）":["Practice independently by following the on-screen instructions (most common).","",""],"在監理站、醫院或有人協助時":["At a motor vehicle office, hospital, or with assistance.","",""],"由工作人員或家人幫忙設定":["A staff member or family member can help with setup.","",""],"最多設定 4 組常用別名，不需要填滿。":["You can add up to 4 groups of common aliases. You do not need to fill every group.","",""],"＋ 新增別名組":["＋ Add alias group","",""],"請先選擇練習方式":["Please choose a practice mode first.","",""],"第一關共有 5 題，請仔細聽題目，依照記憶回答。":["Stage 1 has 5 questions. Listen carefully and answer from memory.","",""],"作答時請不要查看日曆或時鐘，也不要請別人提示。":["Do not look at a calendar or clock, or ask anyone for hints while answering.","",""],"接下來會出現 10 張圖片，請記住圖片及名稱。":["You will see 10 pictures. Remember each picture and its name.","",""],"每張圖片會顯示 2 秒，請記住圖片和名稱。":["Each picture will appear for 2 seconds. Remember the picture and its name.","",""],"時間結束後，輸入記得的圖片名稱，順序不限。":["When time is up, enter the names of the pictures you remember. Any order is acceptable.","",""],"請按照以下步驟，完成時鐘繪製。":["Follow these steps to complete the clock drawing.","",""],"先畫一個完整的圓形。":["First, draw a complete circle.","",""],"依照指定時間，畫出時針和分針。":["Draw the hour and minute hands to show the specified time.","",""],"開始畫時鐘":["Start drawing the clock","",""],"使用國語語音回答":["Answer using Mandarin voice input","",""],"可回答年份、月份、日期、生肖、星期或目前所在的地點。":["You can answer with the year, month, date, Chinese zodiac animal, day of the week, or your current location.","",""],"秒後開始":["seconds until start","",""],"請看著螢幕，準備記住圖片及名稱。":["Please look at the screen and get ready to remember the pictures and their names.","",""],"使用國語語音輸入圖片名稱":["Use Mandarin voice input to enter picture names","",""],"點擊麥克風，使用國語說出一個圖片名稱。":["Tap the microphone and say one picture name in Mandarin.","",""],"請依照指定時間畫出時鐘，可使用下方工具修改，完成後送出答案。":["Draw a clock showing the specified time. Use the tools below to make changes, then submit your answer.","",""],"請先在畫布上完成時鐘。":["Please draw the clock on the canvas first.","",""]});
+  Object.assign(EXAM_TEXT_TRANSLATIONS, {"回答今年的年份、月份、日期、星期，以及您目前所在的地方。":["Answer the current year, month, date, day of the week, and your current location.","",""],"通過標準：前四題需全部答對；第五題地點由施測人員核對，不列入計分。":["Passing standard: All first four questions must be answered correctly. Question 5 (location) is verified by staff and is not scored.","",""],"依序觀看 10 張圖片，每張圖片呈現 2 秒。休息 2 分鐘後，請輸入您記得的圖片名稱。":["View 10 pictures in sequence, each for 2 seconds. After a 2-minute break, enter the names you remember.","",""],"通過標準：10 張圖片中答對 3 張即可通過。":["Passing standard: Correctly recall at least 3 of the 10 pictures.","",""],"依照指定時間，畫出時鐘外框、1 到 12 的數字，以及時針和分針。":["Draw the clock outline, numbers 1 through 12, and the hour and minute hands to show the specified time.","",""],"請依照您的使用情況，選擇適合的練習方式。":["Choose the practice mode that best suits your situation.","",""],"自己操作，依照畫面指示完成練習（最常用）":["Practice independently by following the on-screen instructions (most common).","",""],"在監理站、醫院或有人協助時":["At a motor vehicle office, hospital, or with assistance.","",""],"由工作人員或家人幫忙設定":["A staff member or family member can help with setup.","",""],"最多可設定 4 組，無須填滿。":["You can add up to 4 groups of common aliases. You do not need to fill every group.","",""],"＋ 新增別名組":["＋ Add alias group","",""],"請先選擇練習方式":["Please choose a practice mode first.","",""],"第一關共有 5 題，請仔細聽題目，並依自己知道的內容回答。":["Stage 1 has 5 questions. Listen carefully and answer based on what you know.","",""],"作答時請不要查看日曆或時鐘，也不要請別人提示。":["Do not look at a calendar or clock, or ask anyone for hints while answering.","",""],"接下來會出現 10 張圖片，請記住圖片及名稱。":["You will see 10 pictures. Remember each picture and its name.","",""],"每張圖片會顯示 2 秒，請記住圖片和名稱。":["Each picture will appear for 2 seconds. Remember the picture and its name.","",""],"時間結束後，輸入記得的圖片名稱，順序不限。":["When time is up, enter the names of the pictures you remember. Any order is acceptable.","",""],"請依照以下步驟畫時鐘。":["Follow these steps to complete the clock drawing.","",""],"先畫一個完整的圓形。":["First, draw a complete circle.","",""],"依照指定時間，畫出時針和分針。":["Draw the hour and minute hands to show the specified time.","",""],"開始畫時鐘":["Start drawing the clock","",""],"使用國語語音回答":["Answer using Mandarin voice input","",""],"可回答年份、月份、日期、生肖、星期或目前所在的地點。":["You can answer with the year, month, date, Chinese zodiac animal, day of the week, or your current location.","",""],"秒後開始":["seconds until start","",""],"請看著螢幕，準備記住圖片及名稱。":["Please look at the screen and get ready to remember the pictures and their names.","",""],"使用國語語音輸入圖片名稱":["Use Mandarin voice input to enter picture names","",""],"點擊麥克風，每次說出一個圖片名稱。":["Tap the microphone and say one picture name in Mandarin.","",""],"請依指定時間畫出時鐘，可使用下方工具修改，完成後送出。":["Draw a clock showing the specified time. Use the tools below to make changes, then submit your answer.","",""],"請先在畫布上完成時鐘。":["Please draw the clock on the canvas first.","",""]});
   Object.assign(EXAM_TEXT_TRANSLATIONS, {
     "請選擇練習方式": ["Choose a practice mode", "練習方法を選択", "연습 방식을 선택하세요"],
     "剩餘時間：": ["Time remaining: ", "残り時間：", "남은 시간: "]
@@ -17390,12 +17565,66 @@ if (typeof EXAM_TEXT_TRANSLATIONS !== 'undefined') {
 
 <script id="english-recall-empty-hint-fix">
 if (typeof EXAM_TEXT_TRANSLATIONS !== 'undefined') {
-  EXAM_TEXT_TRANSLATIONS['加入的圖片名稱會顯示在這裡。'] = [
-    'Your added picture names will appear here.',
-    '追加した画像名がここに表示されます。',
-    '추가한 그림 이름이 여기에 표시됩니다.'
-  ];
+  Object.assign(EXAM_TEXT_TRANSLATIONS, {
+    '加入的圖片名稱會顯示在這裡。': [
+      'Your added picture names will appear here.',
+      '追加した画像名がここに表示されます。',
+      '추가한 그림 이름이 여기에 표시됩니다.'
+    ],
+    '請選擇符合目前情況的方式。': [
+      'Please choose the option that matches your current situation.',
+      '現在の状況に合った方法を選択してください。',
+      '현재 상황에 맞는 방법을 선택하세요.'
+    ],
+    '自己操作，依照畫面指示完成': [
+      'Practice independently by following the on-screen instructions.',
+      '画面の案内に従って、ご自身で操作してください。',
+      '직접 조작하고 화면 안내에 따라 진행하세요.'
+    ],
+    '最常用': [
+      'Most common',
+      '最も一般的',
+      '가장 일반적'
+    ],
+    '在監理站、醫院等場所': [
+      'At a motor vehicle office, hospital, or similar location',
+      '運転免許関連機関・病院など',
+      '운전면허시험장·병원 등에서'
+    ],
+    '由工作人員或家人協助設定': [
+      'Setup assistance from staff or a family member',
+      'スタッフまたはご家族が設定をサポートします',
+      '직원 또는 가족이 설정을 도와드립니다'
+    ]
+  });
 }
+</script>
+<script>
+(function () {
+  if (typeof EXAM_TEXT_TRANSLATIONS === 'undefined') return;
+  Object.assign(EXAM_TEXT_TRANSLATIONS, {
+    '請問今年是哪一年？': [
+      'What year is it?',
+      '今年は何年ですか？',
+      '올해는 몇 년인가요?'
+    ],
+    '請選擇一種方式回答：': [
+      'Choose one way to answer:',
+      '回答方法を1つ選んでください：',
+      '한 가지 답변 방법을 선택하세요:'
+    ],
+    '點擊麥克風開始回答。': [
+      'Tap the microphone to start answering.',
+      'マイクをタップして回答を開始してください。',
+      '마이크를 눌러 답변을 시작하세요.'
+    ],
+    '例如：鼠、牛、虎': [
+      'For example: Rat, Ox, Tiger',
+      '例：ねずみ、うし、とら',
+      '예: 쥐, 소, 호랑이'
+    ]
+  });
+})();
 </script>
 <script id="exam-translation-index">
 /*
@@ -17501,7 +17730,7 @@ if (typeof EXAM_TEXT_TRANSLATIONS !== 'undefined') {
       '指定された時刻を示すように、時針と分針を描いてください。',
       '지정된 시간을 나타내도록 시침과 분침을 그리세요.'
     ],
-    '請按照以下步驟，完成時鐘繪製。': [
+    '請依照以下步驟畫時鐘。': [
       'Follow these steps to complete the clock drawing.',
       '以下の手順に従って、時計を描いてください。',
       '다음 단계를 따라 시계 그리기를 완료하세요.'
@@ -17511,7 +17740,7 @@ if (typeof EXAM_TEXT_TRANSLATIONS !== 'undefined') {
       'まず、閉じた円を描いてください。',
       '먼저 완전한 원을 그리세요.'
     ],
-    '請依照指定時間畫出時鐘，可使用下方工具修改，完成後送出答案。': [
+    '請依指定時間畫出時鐘，可使用下方工具修改，完成後送出。': [
       'Draw a clock showing the specified time. Use the tools below to make changes, then submit your answer.',
       '指定された時刻を示す時計を描いてください。下のツールで修正し、完成したら回答を送信してください。',
       '지정된 시간을 나타내는 시계를 그리세요. 아래 도구로 수정한 다음 답안을 제출하세요.'
@@ -17546,17 +17775,17 @@ if (typeof EXAM_TEXT_TRANSLATIONS !== 'undefined') {
       '指定された時刻に合わせて、時計の外枠、1から12までの数字、時針と分針を描いてください。',
       '지정된 시간을 나타내도록 시계 테두리와 1부터 12까지의 숫자, 시침과 분침을 그리세요.'
     ],
-    '第一關共有 5 題，請仔細聽題目，依照記憶回答。': [
-      'Stage 1 has 5 questions. Listen carefully and answer from memory.',
-      '第1段階は全5問です。問題をよく聞き、記憶を頼りに回答してください。',
-      '1단계는 총 5문항입니다. 질문을 잘 듣고 기억을 바탕으로 답하세요.'
+    '第一關共有 5 題，請仔細聽題目，並依自己知道的內容回答。': [
+      'Stage 1 has 5 questions. Listen carefully and answer based on what you know.',
+      '第1段階は全5問です。問題をよく聞き、自分が知っている内容に基づいて回答してください。',
+      '1단계는 총 5문항입니다. 질문을 잘 듣고 자신이 알고 있는 내용을 바탕으로 답하세요.'
     ],
     '作答時請不要查看日曆或時鐘，也不要請別人提示。': [
       'Do not look at a calendar or clock, or ask anyone for hints while answering.',
       '回答中はカレンダーや時計を見たり、ほかの人にヒントを求めたりしないでください。',
       '답변하는 동안 달력이나 시계를 보거나 다른 사람에게 힌트를 요청하지 마세요.'
     ],
-    '最多設定 4 組常用別名，不需要填滿。': [
+    '最多可設定 4 組，無須填滿。': [
       'You can add up to 4 groups of common aliases. You do not need to fill every group.',
       'よく使う別名は最大4グループまで設定できます。すべて入力する必要はありません。',
       '자주 사용하는 별칭은 최대 4개 그룹까지 설정할 수 있으며, 모든 그룹을 입력할 필요는 없습니다.'
@@ -17591,7 +17820,7 @@ if (typeof EXAM_TEXT_TRANSLATIONS !== 'undefined') {
       '中国語（標準語）の音声入力で画像名を入力',
       '표준 중국어 음성 입력으로 그림 이름 입력'
     ],
-    '點擊麥克風，使用國語說出一個圖片名稱。': [
+    '點擊麥克風，每次說出一個圖片名稱。': [
       'Tap the microphone and say one picture name in Mandarin.',
       'マイクをタップして、中国語（標準語）で画像名を1つ話してください。',
       '마이크를 누르고 표준 중국어로 그림 이름 하나를 말하세요.'
@@ -17630,5 +17859,131 @@ if (typeof EXAM_TEXT_TRANSLATIONS !== 'undefined') {
 })();
 </script>
 
+<script>
+(function () {
+  if (typeof EXAM_TEXT_TRANSLATIONS === 'undefined') return;
+  Object.assign(EXAM_TEXT_TRANSLATIONS, {
+    '回答目前的年份、月份、日期、星期及所在地。': [
+      'Answer the current year, month, date, day of the week, and current location.',
+      '現在の年、月、日、曜日、現在地を回答してください。',
+      '현재 연도, 월, 날짜, 요일 및 현재 위치를 답하세요.'
+    ],
+    '通過標準：前四題須全部答對；地點由施測人員核對，不列入計分。': [
+      'Passing standard: All first four questions must be correct. Staff will verify the location answer; it is not scored.',
+      '合格基準：最初の4問すべてに正解してください。場所の回答は担当者が確認し、採点対象外です。',
+      '통과 기준: 앞의 4문항을 모두 맞혀야 합니다. 장소 답변은 담당자가 확인하며 점수에 포함되지 않습니다.'
+    ],
+    '依序觀看 10 張圖片，每張顯示 2 秒。休息 2 分鐘後，輸入記得的圖片名稱。': [
+      'View 10 pictures in sequence, each displayed for 2 seconds. After a 2-minute break, enter the picture names you remember.',
+      '10枚の画像を順番に見ます。各画像は2秒間表示されます。2分間休憩した後、覚えている画像の名前を入力してください。',
+      '그림 10장을 차례로 보며 각 그림은 2초 동안 표시됩니다. 2분간 휴식한 뒤 기억나는 그림 이름을 입력하세요.'
+    ],
+    '依指定時間，畫出時鐘外框、1 至 12 的數字，以及時針和分針。': [
+      'Draw the clock outline, numbers 1 through 12, and the hour and minute hands to show the specified time.',
+      '指定された時刻に合わせて、時計の外枠、1から12までの数字、時針と分針を描いてください。',
+      '지정된 시간에 맞춰 시계 테두리와 1부터 12까지의 숫자, 시침과 분침을 그리세요.'
+    ],
+    '通過標準：滿分 7 分，須達 4 分以上。作答時間 4 分鐘。': [
+      'Passing standard: At least 4 out of 7 points. Time limit: 4 minutes.',
+      '合格基準：7点満点中4点以上。制限時間は4分です。',
+      '통과 기준: 7점 만점에 4점 이상입니다. 제한 시간은 4분입니다.'
+    ]
+  });
+  if (typeof window.applyExamDisplayLanguage === 'function') {
+    window.applyExamDisplayLanguage();
+  }
+})();
+</script>
+<script>
+(function(){
+  if (typeof EXAM_TEXT_TRANSLATIONS === 'undefined') return;
+  Object.assign(EXAM_TEXT_TRANSLATIONS, {
+    "本關共有 10 張圖片。":[
+      "This stage has 10 pictures.",
+      "この段階では画像を10枚使用します。",
+      "이 단계에는 그림이 10장 있습니다."
+    ],
+    "每張圖片顯示 2 秒，請記住圖片及名稱。":[
+      "Each picture is displayed for 2 seconds. Remember the picture and its name.",
+      "各画像は2秒間表示されます。画像と名前を覚えてください。",
+      "각 그림은 2초 동안 표시됩니다. 그림과 이름을 기억하세요."
+    ],
+    "休息結束後，輸入記得的圖片名稱，順序不限。":[
+      "After the break, enter the names of the pictures you remember. Any order is fine.",
+      "休憩後、思い出した画像の名前を順不同で入力してください。",
+      "휴식이 끝나면 기억나는 그림 이름을 순서에 관계없이 입력하세요."
+    ],
+    "圖片即將開始":[
+      "Pictures are about to begin.",
+      "まもなく画像が始まります。",
+      "그림이 곧 시작됩니다."
+    ],
+    "請看著螢幕，記住圖片和名稱。":[
+      "Look at the screen and remember the pictures and their names.",
+      "画面を見て、画像と名前を覚えてください。",
+      "화면을 보고 그림과 이름을 기억하세요."
+    ],
+    "共 10 張圖片，順序不限；答對 3 張即可通過。":[
+      "There are 10 pictures. Answer in any order; recall 3 correctly to pass.",
+      "画像は全部で10枚です。順不同で回答でき、3枚正解すると合格です。",
+      "그림은 총 10장입니다. 순서에 관계없이 답할 수 있으며 3개를 맞히면 통과합니다."
+    ],
+    "再聽一次作答說明":[
+      "Replay the answer instructions",
+      "回答方法の説明をもう一度聞く",
+      "답변 안내 다시 듣기"
+    ],
+    "點擊麥克風，每次說出一個圖片名稱。":[
+      "Tap the microphone and say one picture name at a time.",
+      "マイクをタップし、画像の名前を1つずつ話してください。",
+      "마이크를 누르고 그림 이름을 한 번에 하나씩 말하세요."
+    ]
+  });
+})();
+</script>
+
 </body>
 </html>
+<script>
+(function () {
+  if (typeof EXAM_TEXT_TRANSLATIONS === 'undefined') return;
+  Object.assign(EXAM_TEXT_TRANSLATIONS, {
+    '常用別名': [
+      'Common aliases',
+      'よく使う別名',
+      '자주 사용하는 별칭'
+    ],
+    '最多可設定 4 組，無須填滿。': [
+      'Up to 4 groups. You do not need to fill them all.',
+      '最大4組まで設定できます。すべて入力する必要はありません。',
+      '최대 4개 그룹까지 설정할 수 있으며, 모두 입력할 필요는 없습니다.'
+    ],
+    '國語語音輸入別名': [
+      'Enter alias using Mandarin voice input',
+      '中国語音声で別名を入力',
+      '중국어 음성으로 별칭 입력'
+    ],
+    '請說出常用地點名稱，確認辨識結果後，按「儲存別名設定」。': [
+      'Say the commonly used location name. Check the recognized text, then select “Save alias settings.”',
+      'よく使う場所の名称を話してください。認識結果を確認してから「別名設定を保存」を選択してください。',
+      '자주 사용하는 장소 이름을 말한 후 인식 결과를 확인하고 “별칭 설정 저장”을 누르세요.'
+    ],
+    '辨識完成，請確認別名，再按「儲存別名設定」。': [
+      'Recognition complete. Check the alias, then select “Save alias settings.”',
+      '認識が完了しました。別名を確認してから「別名設定を保存」を選択してください。',
+      '인식이 완료되었습니다. 별칭을 확인한 후 “별칭 설정 저장”을 누르세요.'
+    ],
+    '需人工確認的名稱': [
+      'Names requiring staff verification',
+      'スタッフによる確認が必要な名称',
+      '직원 확인이 필요한 명칭'
+    ],
+    '若只回答「衛生所、醫院、診所、監理所、監理站」等通用名稱，系統會交由工作人員確認。': [
+      'If the answer is only a general term such as health center, hospital, clinic, or motor vehicle office, staff will verify it.',
+      '保健所、病院、診療所、運転免許事務所などの一般名称のみの場合は、スタッフが確認します。',
+      '보건소, 병원, 의원, 운전면허시험장 등 일반 명칭만 답한 경우 직원이 확인합니다.'
+    ]
+  });
+  if (typeof window.applyExamDisplayLanguage === 'function') window.applyExamDisplayLanguage();
+})();
+</script>
