@@ -11820,8 +11820,7 @@ function requestHakkaAudioFromOriginalApi(text, activeAccent, requestId, current
 
   // 第一關第 4 題：唯一的開放式文字輸入（已移除原本星期一至星期日七選一元件）。
   function renderWeekdayTextInput(input,control){
-    var label=document.createElement('label');label.className='weekday-answer-label';label.htmlFor='p1-answer-input';label.textContent='請輸入星期幾：';
-    control.appendChild(label);
+    // 星期題沿用既有 #p1-input-label，不在輸入框容器內重複建立第二個提示。
     input.type='text';input.readOnly=false;input.style.display='block';
     input.setAttribute('inputmode','text');input.setAttribute('lang','zh-Hant');
     input.setAttribute('autocomplete','off');input.setAttribute('enterkeyhint','done');
@@ -12404,7 +12403,6 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
 .single-progress-banner .progress-banner-progress,.single-progress-banner .progress-banner-stage{white-space:nowrap}
 .single-progress-banner .progress-banner-sep{white-space:nowrap}
 /* 第一關第 4 題：單一文字輸入框 */
-#step-p1 .weekday-answer-label{display:block;margin:4px 0 10px;color:var(--color-dark);font-size:20px;font-weight:900;line-height:1.6}
 #step-p1 #p1-answer-input.weekday-text-input{display:block!important;box-sizing:border-box;width:100%!important;flex:none;min-height:64px!important;font-size:22px!important;text-align:left!important;padding:12px 16px!important;background:#FFFFFF!important;border:2px solid var(--color-dark)!important;border-radius:12px!important}
 /* 第二關回想作答：輸入框＋加入答案 */
 #step-p2-sop5 .p2-recall-count{font-size:20px;font-weight:900;color:var(--color-dark);line-height:1.6;margin:4px 0 0}
@@ -13330,7 +13328,6 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
 #step-p1 #p1-answer-input.p1-open-text-input{display:block!important;width:100%!important;min-width:0!important;min-height:64px!important;box-sizing:border-box!important;padding:12px 16px!important;background:#FFFFFF!important;border:2px solid var(--color-dark)!important;border-radius:12px!important;color:var(--color-dark)!important;font-size:22px!important;line-height:1.6!important;text-align:left!important}
 #step-p1 .p1-date-keypad-hint{display:block!important;margin:8px 0 0!important;padding:0!important;border:0!important;background:transparent!important;color:var(--color-dark)!important;font-size:18px!important;font-weight:700!important;line-height:1.6!important}
 #step-p1 #p1-submit-hint.is-copy-suppressed{display:none!important;margin:0!important;padding:0!important;border:0!important;height:0!important;min-height:0!important}
-#step-p1 .weekday-answer-label{font-size:20px!important;line-height:1.6!important}
 #step-p1 .type-btn[data-mode="solar"]:focus-visible,
 #step-p1 .type-btn[data-mode="lunar"]:focus-visible{outline:3px solid #4F7058!important;outline-offset:3px!important;box-shadow:none!important}
 #step-p1 .type-btn[data-mode="solar"]:focus:not(:focus-visible),
@@ -13522,9 +13519,11 @@ Object.assign(EXAM_TEXT_TRANSLATIONS, {
       removeDateKeypadHint();
       if (wrapper) wrapper.style.display = 'none';
       if (questionHint) { questionHint.textContent = ''; questionHint.style.display = 'none'; }
-      if (label) { label.classList.remove('date-input-label', 'q5-answer-label'); label.style.display = 'none'; }
-      var weekdayLabel = control && control.querySelector('.weekday-answer-label');
-      if (weekdayLabel) weekdayLabel.textContent = t('請輸入星期幾：');
+      if (label) {
+        label.textContent = t('請輸入星期幾：');
+        label.classList.remove('date-input-label', 'q5-answer-label', 'month-input-label');
+        label.style.display = 'block';
+      }
       if (input) {
         input.classList.add('p1-open-text-input', 'weekday-text-input');
         input.placeholder = t('例如：星期一');
